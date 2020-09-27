@@ -1,0 +1,6 @@
+if (!defined(webnn_root)) {
+  webnn_root = get_path_info("..", "abspath")
+}
+webnn_gen_root = get_path_info("${webnn_root}", "gen_dir")
+
+webnn_standalone = true

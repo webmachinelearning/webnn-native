@@ -1,0 +1,260 @@
+# Copyright 2020 The Dawn Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
+
+import("//build_overrides/build.gni")
+import("${dawn_root}/scripts/dawn_component.gni")
+import("${dawn_root}/scripts/dawn_features.gni")
+import("${webnn_root}/build_overrides/webnn_features.gni")
+import("${webnn_root}/generator/webnn_generator.gni")
+
+# Import mac_min_system_version
+if (is_mac) {
+  if (dawn_has_build) {
+    import("//build/config/mac/mac_sdk.gni")
+  } else {
+    mac_min_system_version = "10.11.0"
+  }
+}
+
+config("webnn_native_internal") {
+  configs = [ "${webnn_root}/src/common:dawn_internal" ]
+
+  # Suppress warnings that Metal isn't in the deployment target of Chrome:
+  # initialization of the Metal backend is behind a IsMetalSupported check so
+  # Dawn won't call Metal functions on macOS 10.10.
+  # At the time this is written Chromium supports 10.10.0 and above, so if we
+  # aren't on 10.11 it means we are on 10.11 and above, and Metal is available.
+  # Skipping this check on 10.11 and above is important as it allows getting
+  # proper compilation warning when using 10.12 and above feature for example.
+  # TODO(cwallez@chromium.org): Consider using API_AVAILABLE annotations on all
+  # metal code in dawn once crbug.com/1004024 is sorted out if Chromium still
+  # supports 10.10 then.
+  if (is_mac && mac_min_system_version == "10.10.0") {
+    cflags_objcc = [ "-Wno-unguarded-availability" ]
+  }
+}
+
+webnn_json_generator("webnn_native_utils_gen") {
+  target = "webnn_native_utils"
+  outputs = [
+    "src/webnn_native/ProcTable.cpp",
+    "src/webnn_native/webnn_structs_autogen.h",
+    "src/webnn_native/webnn_structs_autogen.cpp",
+    "src/webnn_native/ValidationUtils_autogen.h",
+    "src/webnn_native/ValidationUtils_autogen.cpp",
+  ]
+}
+
+# Public webnn_native headers so they can be publicly visible for
+# dependencies of webnn_native
+source_set("webnn_native_headers") {
+  public_deps = [ "${webnn_root}/src/webnn:webnncpp_headers" ]
+  all_dependent_configs =
+      [ "${webnn_root}/src/common:dawn_public_include_dirs" ]
+  sources = [
+    "${webnn_root}/src/include/webnn_native/WebnnNative.h",
+    "${webnn_root}/src/include/webnn_native/webnn_native_export.h",
+  ]
+}
+
+# The meat of the compilation for webnn_native so that we can cheaply have
+# shared_library / static_library versions of it. It compiles all the files
+# except those that define exported symbols.
+source_set("webnn_native_sources") {
+  deps = [
+    ":webnn_native_headers",
+    ":webnn_native_utils_gen",
+    "${webnn_root}/src/common",
+  ]
+  defines = []
+  libs = []
+  data_deps = []
+
+  configs += [ ":webnn_native_internal" ]
+
+  sources = get_target_outputs(":webnn_native_utils_gen")
+
+  sources += [
+    "Compilation.cpp",
+    "Compilation.h",
+    "Error.cpp",
+    "Error.h",
+    "ErrorData.cpp",
+    "ErrorData.h",
+    "ErrorScope.cpp",
+    "ErrorScope.h",
+    "Model.cpp",
+    "Model.h",
+    "ModelBuilder.cpp",
+    "ModelBuilder.h",
+    "NamedInputs.h",
+    "NamedOutputs.h",
+    "NamedRecords.h",
+    "NamedResults.h",
+    "NeuralNetworkContext.cpp",
+    "NeuralNetworkContext.h",
+    "ObjectBase.cpp",
+    "ObjectBase.h",
+    "Operand.cpp",
+    "Operand.h",
+    "Result.cpp",
+    "Result.h",
+  ]
+
+  sources += [
+    "ops/Binary.cpp",
+    "ops/Binary.h",
+    "ops/Constant.cpp",
+    "ops/Constant.h",
+    "ops/Conv2d.cpp",
+    "ops/Conv2d.h",
+    "ops/Input.cpp",
+    "ops/Input.h",
+    "ops/Pool2d.cpp",
+    "ops/Pool2d.h",
+    "ops/Reshape.cpp",
+    "ops/Reshape.h",
+    "ops/Transpose.cpp",
+    "ops/Transpose.h",
+    "ops/Unary.cpp",
+    "ops/Unary.h",
+  ]
+
+  if (webnn_enable_null) {
+    sources += [
+      "null/NeuralNetworkContextNull.cpp",
+      "null/NeuralNetworkContextNull.h",
+    ]
+  }
+
+  if (webnn_enable_openvino) {
+    sources += [
+      "openvino/CompilationIE.cpp",
+      "openvino/CompilationIE.h",
+      "openvino/ErrorIE.cpp",
+      "openvino/ErrorIE.h",
+      "openvino/ModelBuilderIE.cpp",
+      "openvino/ModelBuilderIE.h",
+      "openvino/ModelIE.cpp",
+      "openvino/ModelIE.h",
+      "openvino/NeuralNetworkContextIE.cpp",
+      "openvino/NeuralNetworkContextIE.h",
+    ]
+
+    sources += [
+      "openvino/ienn_symbol_table/ienn_symbol_table.cc",
+      "openvino/ienn_symbol_table/ienn_symbol_table.h",
+      "openvino/ienn_symbol_table/late_binding_symbol_table.cc",
+      "openvino/ienn_symbol_table/late_binding_symbol_table.h",
+    ]
+    if (is_linux) {
+      assert(
+          is_component_build == false,
+          "`is_component_build=false` must be set for OpenVINO backend on Linux.")
+    }
+  }
+
+  if (webnn_enable_dml) {
+    sources += [
+      "dml/deps/src/device.cpp",
+      "dml/deps/src/device.h",
+      "dml/deps/src/model.h",
+      "dml/deps/src/precomp.h",
+      "dml/deps/src/typeconvert.h",
+      "dml/deps/src/util.cpp",
+      "dml/deps/src/util.h",
+    ]
+
+    sources += [
+      "dml/CompilationDML.cpp",
+      "dml/CompilationDML.h",
+      "dml/ModelBuilderDML.cpp",
+      "dml/ModelBuilderDML.h",
+      "dml/ModelDML.cpp",
+      "dml/ModelDML.h",
+      "dml/NeuralNetworkContextDML.cpp",
+      "dml/NeuralNetworkContextDML.h",
+    ]
+
+    include_dirs = [
+      "//third_party/DirectML/Libraries",
+      "//third_party/microsoft.ai.directml.1.4.1/include",
+    ]
+
+    lib_dirs = [ "//third_party/microsoft.ai.directml.1.4.1/bin/x64-win" ]
+
+    libs = [
+      "dxgi.lib",
+      "d3d12.lib",
+      "directml.lib",
+    ]
+
+    cflags = [
+      "/std:c++17",
+      "-Wno-address-of-temporary",
+      "-Wno-logical-not-parentheses",
+      "-Wno-macro-redefined",
+    ]
+  }
+}
+
+# The static and shared libraries for webnn_native. Most of the files are
+# already compiled in webnn_native_sources, but we still need to compile
+# files defining exported symbols.
+dawn_component("webnn_native") {
+  DEFINE_PREFIX = "WEBNN_NATIVE"
+
+  #Make headers publically visible
+  public_deps = [ ":webnn_native_headers" ]
+
+  deps = [
+    ":webnn_native_sources",
+    "${webnn_root}/src/common",
+  ]
+  sources = [ "WebnnNative.cpp" ]
+  configs = [ ":webnn_native_internal" ]
+  defines = [
+    "WEBNN_NATIVE_SHARED_LIBRARY",
+    "WEBNN_NATIVE_IMPLEMENTATION",
+  ]
+}
+
+if (webnn_enable_openvino) {
+  if (is_win) {
+    ie_nn_dll = "ie_nn_c_api.dll"
+    os_folder = "Windows64"
+  } else if (is_linux) {
+    ie_nn_dll = "libie_nn_c_api.so"
+    os_folder = "Linux64"
+  }
+  if (is_win || is_linux) {
+    ie_nn_dll_path = "//src/webnn_native/openvino/ienn/lib/${os_folder}"
+    copy("copy_ie_nn_dll") {
+      sources = [ "${ie_nn_dll_path}/${ie_nn_dll}" ]
+      outputs = [ "$root_out_dir/{{source_file_part}}" ]
+    }
+  }
+}
+
+if (webnn_enable_dml) {
+  dml_dll = "DirectML.dll"
+  os_folder = "x64-win"
+  dml_dll_path = "//third_party/microsoft.ai.directml.1.4.1/bin/${os_folder}"
+  copy("copy_dml_dll") {
+    sources = [ "${dml_dll_path}/${dml_dll}" ]
+    outputs = [ "$root_out_dir/{{source_file_part}}" ]
+  }
+}

@@ -1,0 +1,419 @@
+{
+  "error type": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "no error"},
+        {"value": 1, "name": "validation"},
+        {"value": 2, "name": "out of memory"},
+        {"value": 3, "name": "unknown"},
+        {"value": 4, "name": "device lost"}
+    ]
+  },
+  "char": {
+    "category": "native"
+  },
+  "void": {
+    "category": "native"
+  },
+  "const void*": {
+    "category": "native"
+  },
+  "uint32_t": {
+    "category": "native"
+  },
+  "const uint32_t*": {
+    "category": "native"
+  },
+  "const int32_t*": {
+    "category": "native"
+  },
+  "int32_t": {
+    "category": "native"
+  },
+  "size_t": {
+    "category": "native"
+  },
+  "bool": {
+    "category": "native"
+  },
+  "error filter": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "none"},
+        {"value": 1, "name": "validation"},
+        {"value": 2, "name": "out of memory"}
+    ]
+  },
+  "error callback": {
+    "category": "callback",
+    "args": [
+        {"name": "type", "type": "error type"},
+        {"name": "message", "type": "char", "annotation": "const*"},
+        {"name": "userdata", "type": "void", "annotation": "*"}
+    ]
+  },
+  "neural network context": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "create model builder",
+        "returns": "model builder"
+      },
+      {
+        "name": "set uncaptured error callback",
+        "args": [
+            {"name": "callback", "type": "error callback"},
+            {"name": "userdata", "type": "void", "annotation": "*"}
+        ]
+      },
+      {
+          "name": "push error scope",
+          "args": [
+              {"name": "filter", "type": "error filter"}
+          ]
+      },
+      {
+          "name": "pop error scope",
+          "returns": "bool",
+          "args": [
+              {"name": "callback", "type": "error callback"},
+              {"name": "userdata", "type": "void", "annotation": "*"}
+          ]
+      }
+    ]
+  },
+  "operand type": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "float32"},
+      {"value": 1, "name": "float16"},
+      {"value": 2, "name": "int32"},
+      {"value": 3, "name": "uint32"}
+    ]
+  },
+  "operand descriptor": {
+    "category": "structure",
+    "members": [
+      {"name": "type", "type": "operand type"},
+      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count"},
+      {"name": "dimensions count", "type": "uint32_t", "default": 0}
+    ]
+  },
+  "operand": {
+    "category": "object"
+  },
+  "power preference": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "default"},
+      {"value": 1, "name": "low_power"},
+      {"value": 2, "name": "high_performance"}
+    ]
+  },
+  "compilation options": {
+    "category": "structure",
+    "members": [
+      {"name": "power preference", "type": "power preference"}
+    ]
+  },
+  "named operands": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "set",
+        "args": [
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "operand", "type": "operand"}
+        ]
+      }
+    ]
+  },
+  "operand layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "nchw"},
+      {"value": 1, "name": "nhwc"}
+    ]
+  },
+  "conv2d options": {
+    "category": "structure",
+    "members": [
+      {"name": "padding count", "type": "uint32_t", "default": 0},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "strides count", "type": "uint32_t", "default": 0},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "dilations count", "type": "uint32_t", "default": 0},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "groups", "type": "int32_t", "default": 1},
+      {"name": "layout", "type": "operand layout", "default": "nchw"}
+    ]
+  },
+  "pool2d options": {
+    "category": "structure",
+    "members": [
+      {"name": "window dimensions count", "type": "uint32_t", "default": 0},
+      {"name": "window dimensions", "type": "int32_t", "annotation": "const*", "length": "window dimensions count", "optional": true},
+      {"name": "padding count", "type": "uint32_t", "default": 0},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "strides count", "type": "uint32_t", "default": 0},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "dilations count", "type": "uint32_t", "default": 0},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "layout", "type": "operand layout", "default": "nchw"}
+    ]
+  },
+  "transpose options": {
+    "category": "structure",
+    "members": [
+      {"name": "permutation count", "type": "uint32_t", "default": 0},
+      {"name": "permutation", "type": "int32_t", "annotation": "const*", "length": "permutation count", "optional": true}
+    ]
+  },
+  "model builder": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "input",
+        "returns": "operand",
+        "args": [
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "desc", "type": "operand descriptor", "annotation": "const*"}
+        ]
+      },
+      {
+        "name": "constant",
+        "returns": "operand",
+        "args": [
+          {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
+          {"name": "value", "type": "void", "annotation": "const*"},
+          {"name": "size", "type": "size_t"}
+        ]
+      },
+      {
+        "name": "matmul",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
+        "name": "add",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
+        "name": "mul",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
+        "name": "conv2d",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "filter", "type": "operand"},
+          {"name": "options", "type": "conv2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "average pool2d",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "max pool2d",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "relu",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"}
+        ]
+      },
+      {
+        "name": "reshape",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "new shape", "type": "int32_t", "annotation": "const*", "length": "new shape count"},
+          {"name": "new shape count", "type": "uint32_t"}
+        ]
+      },
+      {
+        "name": "softmax",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"}
+        ]
+      },
+      {
+        "name": "transpose",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "transpose options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "createModel",
+        "returns": "model",
+        "args": [
+          {"name": "named operands", "type": "named operands"}
+        ]
+      }
+    ]
+  },
+  "compile callback": {
+    "category": "callback",
+    "args": [
+      {"name": "status", "type": "compile status"},
+      {"name": "compilation", "type": "compilation"},
+      {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
+      {"name": "userdata", "type": "void", "annotation": "*"}
+    ]
+  },
+  "compile status": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "success"},
+        {"value": 1, "name": "error"},
+        {"value": 2, "name": "context lost"},
+        {"value": 3, "name": "unknown"}
+    ]
+  },
+  "model": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "compile",
+        "args": [
+          {"name": "callback", "type": "compile callback"},
+          {"name": "userdata", "type": "void", "annotation": "*"},
+          {"name": "options", "type": "compilation options", "annotation": "const*", "optional": true}
+        ]
+      }
+    ]
+  },
+  "input": {
+    "category": "structure",
+    "members": [
+      {"name": "buffer", "type": "void", "annotation": "const*", "length": "size"},
+      {"name": "size", "type": "size_t"},
+      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
+      {"name": "dimensions count", "type": "uint32_t", "default": 0}
+    ]
+  },
+  "output": {
+    "category": "structure",
+    "members": [
+      {"name": "buffer", "type": "void", "annotation": "*", "length": "size", "optional": true},
+      {"name": "size", "type": "size_t"},
+      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
+      {"name": "dimensions count", "type": "uint32_t", "default": 0}
+    ]
+  },
+  "named inputs": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "set",
+        "args": [
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "input", "type": "input", "annotation": "const*"}
+        ]
+      }
+    ]
+  },
+  "named outputs": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "set",
+        "args": [
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "output", "type": "output", "annotation": "const*"}
+        ]
+      }
+    ]
+  },
+  "result": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "bufferSize",
+        "returns": "uint32_t"
+      },
+      {
+        "name": "buffer",
+        "returns": "const void*"
+      },
+      {
+        "name": "dimensionsSize",
+        "returns": "uint32_t"
+      },
+      {
+        "name": "dimensions",
+        "returns": "const int32_t*"
+      }
+    ]
+  },
+  "named results": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "get",
+        "returns": "result",
+        "args": [
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"}
+        ]
+      }
+    ]
+  },
+  "compute callback": {
+    "category": "callback",
+    "args": [
+      {"name": "status", "type": "compute status"},
+      {"name": "outputs", "type": "named results"},
+      {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
+      {"name": "userdata", "type": "void", "annotation": "*"}
+    ]
+  },
+  "compute status": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "success"},
+        {"value": 1, "name": "error"},
+        {"value": 2, "name": "context lost"},
+        {"value": 3, "name": "unknown"}
+    ]
+  },
+  "compilation": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "compute",
+        "args": [
+          {"name": "inputs", "type": "named inputs"},
+          {"name": "callback", "type": "compute callback"},
+          {"name": "userdata", "type": "void", "annotation": "*"},
+          {"name": "outputs", "type": "named outputs", "optional": true}
+        ]
+      }
+    ]
+  }
+}

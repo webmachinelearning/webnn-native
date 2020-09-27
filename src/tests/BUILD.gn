@@ -1,0 +1,205 @@
+# Copyright 2012 The Dawn Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
+
+import("//testing/test.gni")
+import("${dawn_root}/scripts/dawn_features.gni")
+import("${webnn_root}/generator/webnn_generator.gni")
+
+group("webnn_tests") {
+  testonly = true
+  deps = [
+    ":webnn_end2end_tests",
+
+    # TODO: ":webnn_perf_tests",
+    ":webnn_unittests",
+  ]
+}
+
+###############################################################################
+# Gtest Gmock - Handle building inside and outside of Chromium.
+###############################################################################
+
+# When building outside of Chromium we need to define our own targets for GTest
+# and GMock. However when compiling inside of Chromium we need to reuse the
+# existing targets, both because Chromium has a special harness for swarming
+# and because otherwise the "gn check" fails.
+
+if (!build_with_chromium) {
+  # When we aren't in Chromium we define out own targets based on the location
+  # of the googletest repo.
+  googletest_dir = dawn_googletest_dir
+
+  config("gtest_config") {
+    include_dirs = [
+      "${googletest_dir}/googletest",
+      "${googletest_dir}/googletest/include",
+    ]
+  }
+
+  static_library("gtest") {
+    testonly = true
+    sources = [ "${googletest_dir}/googletest/src/gtest-all.cc" ]
+    public_configs = [ ":gtest_config" ]
+  }
+
+  config("gmock_config") {
+    include_dirs = [
+      "${googletest_dir}/googlemock",
+      "${googletest_dir}/googlemock/include",
+      "${googletest_dir}/googletest/include",
+    ]
+  }
+
+  static_library("gmock") {
+    testonly = true
+    sources = [ "${googletest_dir}/googlemock/src/gmock-all.cc" ]
+    public_configs = [ ":gmock_config" ]
+  }
+
+  group("gmock_and_gtest") {
+    testonly = true
+    public_deps = [
+      ":gmock",
+      ":gtest",
+    ]
+  }
+} else {
+  # When we are in Chromium we reuse its targets, and also add some deps that
+  # are needed to launch the test in swarming mode.
+  group("gmock_and_gtest") {
+    testonly = true
+    public_deps = [
+      "//base",
+      "//base/test:test_support",
+      "//testing/gmock",
+      "//testing/gtest",
+    ]
+  }
+}
+
+###############################################################################
+# WebNN unittests
+###############################################################################
+
+webnn_json_generator("mock_webnn_gen") {
+  target = "mock_webnn"
+  outputs = [
+    "src/webnn/mock_webnn.h",
+    "src/webnn/mock_webnn.cpp",
+  ]
+}
+
+test("webnn_unittests") {
+  configs += [ "${webnn_root}/src/common:dawn_internal" ]
+
+  deps = [
+    ":gmock_and_gtest",
+    ":mock_webnn_gen",
+    "${webnn_root}/src/common",
+    "${webnn_root}/src/webnn:webnn_proc",
+    "${webnn_root}/src/webnn:webnncpp",
+    "${webnn_root}/src/webnn_native",
+    "${webnn_root}/src/webnn_native:webnn_native_sources",
+  ]
+
+  # Add internal webnn_native config for internal unittests.
+  configs += [ "${webnn_root}/src/webnn_native:webnn_native_internal" ]
+
+  sources = get_target_outputs(":mock_webnn_gen")
+  sources += [
+    "unittests/ErrorTests.cpp",
+    "unittests/ObjectBaseTests.cpp",
+    "unittests/ResultTests.cpp",
+    "unittests/validation/BinaryValidationTests.cpp",
+    "unittests/validation/Conv2dValidationTests.cpp",
+    "unittests/validation/ErrorScopeValidationTests.cpp",
+    "unittests/validation/ModelValidationTests.cpp",
+    "unittests/validation/PoolValidationTests.cpp",
+    "unittests/validation/ReshapeValidationTests.cpp",
+    "unittests/validation/TransposeValidationTests.cpp",
+    "unittests/validation/UnaryValidationTests.cpp",
+    "unittests/validation/ValidationTest.cpp",
+    "unittests/validation/ValidationTest.h",
+  ]
+
+  # When building inside Chromium, use their gtest main function because it is
+  # needed to run in swarming correctly.
+  if (build_with_chromium) {
+    deps += [ ":webnn_unittests_main" ]
+  } else {
+    sources += [ "UnittestsMain.cpp" ]
+  }
+}
+
+###############################################################################
+# WebNN end2end tests targets
+###############################################################################
+
+source_set("webnn_end2end_tests_sources") {
+  configs += [ "${webnn_root}/src/common:dawn_internal" ]
+  testonly = true
+
+  deps = [
+    ":gmock_and_gtest",
+    "${webnn_root}/src/common",
+    "${webnn_root}/src/webnn:webnn_proc",
+    "${webnn_root}/src/webnn:webnncpp",
+    "${webnn_root}/src/webnn_native",
+  ]
+
+  sources = [
+    "${webnn_root}/examples/SampleUtils.cpp",
+    "${webnn_root}/examples/SampleUtils.h",
+    "WebnnTest.cpp",
+    "WebnnTest.h",
+    "end2end/AddTests.cpp",
+    "end2end/Conv2dTests.cpp",
+    "end2end/MatMulTests.cpp",
+    "end2end/MulTests.cpp",
+    "end2end/Pool2dTests.cpp",
+    "end2end/ReluTests.cpp",
+    "end2end/ReshapeTests.cpp",
+    "end2end/SoftmaxTests.cpp",
+    "end2end/TransposeTests.cpp",
+  ]
+
+  # Validation tests that need OS windows live in end2end tests.
+
+  libs = []
+}
+
+test("webnn_end2end_tests") {
+  configs += [ "${webnn_root}/src/common:dawn_internal" ]
+
+  deps = [
+    ":gmock_and_gtest",
+    ":webnn_end2end_tests_sources",
+    "${webnn_root}/src/common",
+    "${webnn_root}/src/webnn:webnn_proc",
+    "${webnn_root}/src/webnn:webnncpp",
+    "${webnn_root}/src/webnn_native",
+  ]
+
+  libs = []
+
+  # When building inside Chromium, use their gtest main function because it is
+  # needed to run in swarming correctly.
+  if (build_with_chromium) {
+    deps += [ ":webnn_end2end_tests_main" ]
+  } else {
+    sources = [ "End2EndTestsMain.cpp" ]
+  }
+}
