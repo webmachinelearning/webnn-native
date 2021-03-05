@@ -40,40 +40,6 @@ namespace {
 ProcTableAsClass::~ProcTableAsClass() {
 }
 
-void ProcTableAsClass::CompilationCompute(WebnnCompilation self,
-                                WebnnNamedInputs inputs,
-                                WebnnComputeCallback callback,
-                                void* userdata, WebnnNamedOutputs outputs){
-   auto object = reinterpret_cast<ProcTableAsClass::Object*>(self);
-   object->computeCallback = callback;
-   object->userdata = userdata;
-
-   OnCompilationComputeCallback(self, inputs, callback, userdata, outputs);
-
-}
-
-void ProcTableAsClass::ModelCompile(WebnnModel self, WebnnCompileCallback callback,
-                          void* userdata,
-                          WebnnCompilationOptions const * options){
-   auto object = reinterpret_cast<ProcTableAsClass::Object*>(self);
-   object->compileCallback = callback;
-   object->userdata = userdata;
-
-   OnModelCompileCallback(self, callback, userdata, options);
-
-}
-
-bool ProcTableAsClass::NeuralNetworkContextPopErrorScope(WebnnNeuralNetworkContext neuralNetworkContext,
-                                               WebnnErrorCallback callback, void * userdata){
-  return OnNeuralNetworkContextPopErrorScopeCallback(neuralNetworkContext, callback, userdata);
-}
-
-void ProcTableAsClass::NeuralNetworkContextSetUncapturedErrorCallback(
-		       WebnnNeuralNetworkContext neuralNetworkContext,
-                       WebnnErrorCallback callback, void * userdata){
-}
-
-
 void ProcTableAsClass::GetProcTableAndDevice(WebnnProcTable* table) {
     // *device = GetNewDevice();
 
@@ -84,6 +50,46 @@ void ProcTableAsClass::GetProcTableAndDevice(WebnnProcTable* table) {
     {% endfor %}
 }
 
+{% for type in by_category["object"] %}
+    {% for method in type.methods if has_callback_arguments(method) %}
+        {% set Suffix = as_MethodSuffix(type.name, method.name) %}
+
+        {{as_cType(method.return_type.name)}} ProcTableAsClass::{{Suffix}}(
+            {{-as_cType(type.name)}} {{as_varName(type.name)}}
+            {%- for arg in method.arguments -%}
+                , {{as_annotated_cType(arg)}}
+            {%- endfor -%}
+        ) {
+            ProcTableAsClass::Object* object = reinterpret_cast<ProcTableAsClass::Object*>({{as_varName(type.name)}});
+            {% for callback_arg in method.arguments if callback_arg.type.category == 'callback' %}
+                object->m{{as_MethodSuffix(type.name, method.name)}}Callback = {{as_varName(callback_arg.name)}};
+            {% endfor %}
+            object->userdata = userdata;
+            return On{{as_MethodSuffix(type.name, method.name)}}(
+                {{-as_varName(type.name)}}
+                {%- for arg in method.arguments -%}
+                    , {{as_varName(arg.name)}}
+                {%- endfor -%}
+            );
+        }
+
+        {% for callback_arg in method.arguments if callback_arg.type.category == 'callback' %}
+            void ProcTableAsClass::Call{{Suffix}}Callback(
+                {{-as_cType(type.name)}} {{as_varName(type.name)}}
+                {%- for arg in callback_arg.type.arguments -%}
+                    {%- if not loop.last -%}, {{as_annotated_cType(arg)}}{%- endif -%}
+                {%- endfor -%}
+            ) {
+                ProcTableAsClass::Object* object = reinterpret_cast<ProcTableAsClass::Object*>({{as_varName(type.name)}});
+                object->m{{Suffix}}Callback(
+                    {%- for arg in callback_arg.type.arguments -%}
+                        {%- if not loop.last -%}{{as_varName(arg.name)}}, {% endif -%}
+                    {%- endfor -%}
+                    object->userdata);
+            }
+        {% endfor %}
+    {% endfor %}
+{% endfor %}
 
 {% for type in by_category["object"] %}
     {{as_cType(type.name)}} ProcTableAsClass::GetNew{{type.name.CamelCase()}}() {

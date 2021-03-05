@@ -39,7 +39,7 @@ class ProcTableAsClass {
         {% endfor %}
 
         {% for type in by_category["object"] %}
-            {% for method in type.methods if len(method.arguments) < 10 and not has_callback_arguments(method) %}
+            {% for method in type.methods if not has_callback_arguments(method) %}
                 virtual {{as_cType(method.return_type.name)}} {{as_MethodSuffix(type.name, method.name)}}(
                     {{-as_cType(type.name)}} {{as_varName(type.name)}}
                     {%- for arg in method.arguments -%}
@@ -47,44 +47,49 @@ class ProcTableAsClass {
                     {%- endfor -%}
                 ) = 0;
             {% endfor %}
+
             virtual void {{as_MethodSuffix(type.name, Name("reference"))}}({{as_cType(type.name)}} self) = 0;
             virtual void {{as_MethodSuffix(type.name, Name("release"))}}({{as_cType(type.name)}} self) = 0;
+
+            {% for method in type.methods if has_callback_arguments(method) %}
+                {% set Suffix = as_MethodSuffix(type.name, method.name) %}
+                //* Stores callback and userdata and calls the On* method.
+                {{as_cType(method.return_type.name)}} {{Suffix}}(
+                    {{-as_cType(type.name)}} {{as_varName(type.name)}}
+                    {%- for arg in method.arguments -%}
+                        , {{as_annotated_cType(arg)}}
+                    {%- endfor -%}
+                );
+                //* The virtual function to call after saving the callback and userdata in the proc.
+                //* This function can be mocked.
+                virtual {{as_cType(method.return_type.name)}} On{{Suffix}}(
+                    {{-as_cType(type.name)}} {{as_varName(type.name)}}
+                    {%- for arg in method.arguments -%}
+                        , {{as_annotated_cType(arg)}}
+                    {%- endfor -%}
+                ) = 0;
+
+                //* Calls the stored callback.
+                {% for callback_arg in method.arguments if callback_arg.type.category == 'callback' %}
+                    void Call{{as_MethodSuffix(type.name, method.name)}}Callback(
+                        {{-as_cType(type.name)}} {{as_varName(type.name)}}
+                        {%- for arg in callback_arg.type.arguments -%}
+                            {%- if not loop.last -%}, {{as_annotated_cType(arg)}}{%- endif -%}
+                        {%- endfor -%}
+                    );
+                {% endfor %}
+            {% endfor %}
         {% endfor %}
 
-	// Special cased mockable methods
-        virtual void OnCompilationComputeCallback(WebnnCompilation self,
-                                WebnnNamedInputs inputs,
-                                WebnnComputeCallback callback,
-                                void* userdata, WebnnNamedOutputs outputs) = 0; 	
-
-	virtual void  OnModelCompileCallback(WebnnModel self, WebnnCompileCallback callback,
-                          void* userdata,
-                          WebnnCompilationOptions const * options) = 0;
- 
-	virtual bool OnNeuralNetworkContextPopErrorScopeCallback(WebnnNeuralNetworkContext 
-		         neuralNetworkContext,
-                         WebnnErrorCallback callback, void * userdata) = 0;
-
-	void CompilationCompute(WebnnCompilation self, 
-			        WebnnNamedInputs inputs, 
-				WebnnComputeCallback callback, 
-				void* userdata, WebnnNamedOutputs outputs);
-
-	void ModelCompile(WebnnModel self, WebnnCompileCallback callback, 
-			  void* userdata, 
-			  WebnnCompilationOptions const * options);
-
-	bool NeuralNetworkContextPopErrorScope(WebnnNeuralNetworkContext neuralNetworkContext, 
-			                       WebnnErrorCallback callback, void * userdata);
-
-	void NeuralNetworkContextSetUncapturedErrorCallback(WebnnNeuralNetworkContext neuralNetworkContext, 
-			                       WebnnErrorCallback callback, void * userdata);
-
-	struct Object {
+        struct Object {
             ProcTableAsClass* procs = nullptr;
-	    WebnnComputeCallback computeCallback = nullptr;
-	    WebnnCompileCallback compileCallback = nullptr;
-	    WebnnErrorCallback errorCallback = nullptr;
+            {% for type in by_category["object"] %}
+                {% for method in type.methods if has_callback_arguments(method) %}
+                    {% for callback_arg in method.arguments if callback_arg.type.category == 'callback' %}
+                        {{as_cType(callback_arg.type.name)}} m{{as_MethodSuffix(type.name, method.name)}}Callback = nullptr;
+                    {% endfor %}
+                {% endfor %}
+            {% endfor %}
             void* userdata = 0;
         };
 
@@ -101,7 +106,7 @@ class MockProcTable : public ProcTableAsClass {
         void IgnoreAllReleaseCalls();
 
         {% for type in by_category["object"] %}
-            {% for method in type.methods if len(method.arguments) < 10 and not has_callback_arguments(method) %}
+            {% for method in type.methods if not has_callback_arguments(method) %}
                 MOCK_METHOD({{as_cType(method.return_type.name)}},{{" "}}
                     {{-as_MethodSuffix(type.name, method.name)}}, (
                         {{-as_cType(type.name)}} {{as_varName(type.name)}}
@@ -113,28 +118,17 @@ class MockProcTable : public ProcTableAsClass {
 
             MOCK_METHOD(void, {{as_MethodSuffix(type.name, Name("reference"))}}, ({{as_cType(type.name)}} self), (override));
             MOCK_METHOD(void, {{as_MethodSuffix(type.name, Name("release"))}}, ({{as_cType(type.name)}} self), (override));
+
+            {% for method in type.methods if has_callback_arguments(method) %}
+                MOCK_METHOD({{as_cType(method.return_type.name)}},{{" "-}}
+                    On{{as_MethodSuffix(type.name, method.name)}}, (
+                        {{-as_cType(type.name)}} {{as_varName(type.name)}}
+                        {%- for arg in method.arguments -%}
+                            , {{as_annotated_cType(arg)}}
+                        {%- endfor -%}
+                    ), (override));
+            {% endfor %}
         {% endfor %}
-
-	 MOCK_METHOD(void, 
-		     OnCompilationComputeCallback, 
-		     (WebnnCompilation self,
-                     WebnnNamedInputs inputs,
-                     WebnnComputeCallback callback,
-                     void* userdata, WebnnNamedOutputs outputs), (override));
-
-	 MOCK_METHOD(void,
-                     OnModelCompileCallback,
-                     (WebnnModel self, 
-		     WebnnCompileCallback callback,
-                     void* userdata,
-                     WebnnCompilationOptions const * options), (override));
-
-	 MOCK_METHOD(bool,
-                     OnNeuralNetworkContextPopErrorScopeCallback,
-                     (WebnnNeuralNetworkContext neuralNetworkContext,
-                      WebnnErrorCallback callback, void * userdata), (override));
-
-
 };
 
 #endif  // MOCK_WEBNN_H
