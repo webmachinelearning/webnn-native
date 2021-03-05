@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import("//build_overrides/webnn.gni")
 import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
 
 group("all") {
