@@ -37,10 +37,6 @@ class MnistUbyte {
         return mWidth * mHeight * 1;
     }
 
-    void Release() {
-        delete this;
-    }
-
     std::shared_ptr<unsigned char> GetData() {
         return mData;
     }
