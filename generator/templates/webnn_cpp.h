@@ -215,6 +215,10 @@ namespace webnn {
 
     {% endfor %}
 
+    NamedInputs CreateNamedInputs();
+    NamedOperands CreateNamedOperands();
+    NamedOutputs CreateNamedOutputs();
+
 }  // namespace webnn
 
 #endif // WEBNN_CPP_H_

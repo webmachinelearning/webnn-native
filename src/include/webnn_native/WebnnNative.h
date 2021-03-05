@@ -24,12 +24,9 @@
 namespace webnn_native {
 
     // Backend-agnostic API for webnn_native
-    WEBNN_NATIVE_EXPORT WebnnProcTable GetProcs();
+    WEBNN_NATIVE_EXPORT const WebnnProcTable& GetProcs();
 
     WEBNN_NATIVE_EXPORT WebnnNeuralNetworkContext CreateNeuralNetworkContext();
-    WEBNN_NATIVE_EXPORT WebnnNamedInputs CreateNamedInputs();
-    WEBNN_NATIVE_EXPORT WebnnNamedOperands CreateNamedOperands();
-    WEBNN_NATIVE_EXPORT WebnnNamedOutputs CreateNamedOutputs();
 
 }  // namespace webnn_native
 

@@ -59,8 +59,7 @@ class ModelValidationTest : public ValidationTest {
 
 // Test the simple success case.
 TEST_F(ModelValidationTest, CompileCallBackSuccess) {
-    webnn::NamedOperands namedOperands =
-        webnn::NamedOperands::Acquire(webnn_native::CreateNamedOperands());
+    webnn::NamedOperands namedOperands = webnn::CreateNamedOperands();
     namedOperands.Set("output", mOutput);
     webnn::Model model = mBuilder.CreateModel(namedOperands);
     EXPECT_CALL(*mockModelCompileCallback, Call(WebnnCompileStatus_Success, _, nullptr, this))
@@ -70,8 +69,7 @@ TEST_F(ModelValidationTest, CompileCallBackSuccess) {
 
 // Create model with null nameOperands
 TEST_F(ModelValidationTest, CompileCallBackError) {
-    webnn::NamedOperands namedOperands =
-        webnn::NamedOperands::Acquire(webnn_native::CreateNamedOperands());
+    webnn::NamedOperands namedOperands = webnn::CreateNamedOperands();
     webnn::Model model = mBuilder.CreateModel(namedOperands);
     EXPECT_CALL(*mockModelCompileCallback, Call(WebnnCompileStatus_Error, _, _, this)).Times(1);
     model.Compile(ToMockModelCompileCallback, this);

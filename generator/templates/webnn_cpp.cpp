@@ -129,4 +129,16 @@ namespace webnn {
         }
     {% endfor %}
 
+    NamedInputs CreateNamedInputs() {
+        return NamedInputs::Acquire(webnnCreateNamedInputs());
+    }
+
+    NamedOperands CreateNamedOperands() {
+        return NamedOperands::Acquire(webnnCreateNamedOperands());
+    }
+
+    NamedOutputs CreateNamedOutputs() {
+        return NamedOutputs::Acquire(webnnCreateNamedOutputs());
+    }
+
 }

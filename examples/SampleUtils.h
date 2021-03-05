@@ -26,12 +26,6 @@ uint32_t product(const std::vector<int32_t>& dims);
 
 webnn::NeuralNetworkContext CreateCppNeuralNetworkContext();
 
-webnn::NamedInputs CreateCppNamedInputs();
-
-webnn::NamedOperands CreateCppNamedOperands();
-
-webnn::NamedOutputs CreateCppNamedOutputs();
-
 void DumpMemoryLeaks();
 
 bool Expected(float output, float expected);

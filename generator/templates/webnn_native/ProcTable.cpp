@@ -93,14 +93,31 @@ namespace webnn_native {
         return result;
     }
 
-    WebnnProcTable GetProcsAutogen() {
-        WebnnProcTable table;
+    WebnnNamedInputs NativeCreateNamedInputs() {
+        return reinterpret_cast<WebnnNamedInputs>(new NamedInputsBase());
+    }
+
+    WebnnNamedOperands NativeCreateNamedOperands() {
+         return reinterpret_cast<WebnnNamedOperands>(new NamedOperandsBase());
+    }
+
+    WebnnNamedOutputs NativeCreateNamedOutputs() {
+         return reinterpret_cast<WebnnNamedOutputs>(new NamedOutputsBase());
+    }
+
+    static WebnnProcTable gProcTable = {
+        NativeCreateNamedInputs,
+        NativeCreateNamedOperands,
+        NativeCreateNamedOutputs,
         {% for type in by_category["object"] %}
             {% for method in c_methods(type) %}
-                table.{{as_varName(type.name, method.name)}} = Native{{as_MethodSuffix(type.name, method.name)}};
+                Native{{as_MethodSuffix(type.name, method.name)}},
             {% endfor %}
         {% endfor %}
-        return table;
+    };
+
+    const WebnnProcTable& GetProcsAutogen() {
+        return gProcTable;
     }
 
 }

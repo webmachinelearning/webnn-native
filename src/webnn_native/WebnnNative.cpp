@@ -22,9 +22,9 @@
 
 // Contains the entry-points into webnn_native
 namespace webnn_native {
-    WebnnProcTable GetProcsAutogen();
+    const WebnnProcTable& GetProcsAutogen();
 
-    WebnnProcTable GetProcs() {
+    const WebnnProcTable& GetProcs() {
         return GetProcsAutogen();
     }
 
@@ -49,18 +49,6 @@ namespace webnn_native {
 #else
         return nullptr;
 #endif
-    }
-
-    WebnnNamedInputs CreateNamedInputs() {
-        return reinterpret_cast<WebnnNamedInputs>(new NamedInputsBase());
-    }
-
-    WebnnNamedOperands CreateNamedOperands() {
-        return reinterpret_cast<WebnnNamedOperands>(new NamedOperandsBase());
-    }
-
-    WebnnNamedOutputs CreateNamedOutputs() {
-        return reinterpret_cast<WebnnNamedOutputs>(new NamedOutputsBase());
     }
 
 }  // namespace webnn_native

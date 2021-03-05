@@ -40,18 +40,6 @@ webnn::NeuralNetworkContext CreateCppNeuralNetworkContext() {
     return webnn::NeuralNetworkContext();
 }
 
-webnn::NamedInputs CreateCppNamedInputs() {
-    return webnn::NamedInputs::Acquire(webnn_native::CreateNamedInputs());
-}
-
-webnn::NamedOperands CreateCppNamedOperands() {
-    return webnn::NamedOperands::Acquire(webnn_native::CreateNamedOperands());
-}
-
-webnn::NamedOutputs CreateCppNamedOutputs() {
-    return webnn::NamedOutputs::Acquire(webnn_native::CreateNamedOutputs());
-}
-
 void DumpMemoryLeaks() {
 #if defined(_WIN32) && defined(_DEBUG)
     // Send all reports to STDOUT.
@@ -92,7 +80,7 @@ namespace utils {
 
     webnn::Model CreateModel(const webnn::ModelBuilder& builder,
                              const std::vector<NamedOutput>& outputs) {
-        webnn::NamedOperands namedOperands = CreateCppNamedOperands();
+        webnn::NamedOperands namedOperands = webnn::CreateNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }
@@ -133,7 +121,7 @@ namespace utils {
         } ComputeData;
 
         ComputeData computeData;
-        webnn::NamedInputs namedInputs = CreateCppNamedInputs();
+        webnn::NamedInputs namedInputs = webnn::CreateNamedInputs();
         for (auto& input : inputs) {
             namedInputs.Set(input.name.c_str(), &input.input);
         }
