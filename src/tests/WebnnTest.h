@@ -18,7 +18,21 @@
 
 class WebnnTest : public testing::Test {
   protected:
+    ~WebnnTest() override;
+
+    void SetUp() override;
+    void TearDown() override;
+
     const webnn::NeuralNetworkContext& GetContext();
+    void StartExpectContextError();
+    bool EndExpectContextError();
+    std::string GetLastErrorMessage() const;
+
+  private:
+    static void ErrorCallback(WebnnErrorType type, const char* message, void* userdata);
+    std::string mErrorMessage;
+    bool mExpectError = false;
+    bool mError = false;
 };
 
 void InitWebnnEnd2EndTestEnvironment();

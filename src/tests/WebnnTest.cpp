@@ -19,19 +19,47 @@ void InitWebnnEnd2EndTestEnvironment() {
     testing::AddGlobalTestEnvironment(gTestEnv);
 }
 
-static void ErrorCallback(WebnnErrorType type, char const* message, void* userdata) {
-    if (type != WebnnErrorType_NoError) {
-        dawn::ErrorLog() << "error type is " << type << ", messages are " << message;
-    }
-}
-
 const webnn::NeuralNetworkContext& WebnnTest::GetContext() {
     return gTestEnv->GetContext();
 }
 
+void WebnnTest::SetUp() {
+    const webnn::NeuralNetworkContext& context = GetContext();
+    context.SetUncapturedErrorCallback(ErrorCallback, this);
+}
+
+WebnnTest::~WebnnTest() {
+}
+
+void WebnnTest::TearDown() {
+    ASSERT_FALSE(mExpectError);
+}
+
+void WebnnTest::StartExpectContextError() {
+    mExpectError = true;
+    mError = false;
+}
+bool WebnnTest::EndExpectContextError() {
+    mExpectError = false;
+    return mError;
+}
+
+std::string WebnnTest::GetLastErrorMessage() const {
+    return mErrorMessage;
+}
+
+void WebnnTest::ErrorCallback(WebnnErrorType type, char const* message, void* userdata) {
+    ASSERT(type != WebnnErrorType_NoError);
+    auto self = static_cast<WebnnTest*>(userdata);
+    self->mErrorMessage = message;
+
+    ASSERT_TRUE(self->mExpectError) << "Got unexpected error: " << message;
+    ASSERT_FALSE(self->mError) << "Got two errors in expect block";
+    self->mError = true;
+}
+
 void WebnnTestEnvironment::SetUp() {
     mContext = CreateCppNeuralNetworkContext();
-    mContext.SetUncapturedErrorCallback(ErrorCallback, nullptr);
     DAWN_ASSERT(mContext);
 }
 
