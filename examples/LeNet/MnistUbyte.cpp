@@ -1,4 +1,6 @@
 // Copyright (C) 2018-2020 Intel Corporation
+// Copyright 2021 The WebNN-native Authors
+//
 // SPDX-License-Identifier: Apache-2.0
 //
 

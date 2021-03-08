@@ -1,6 +1,6 @@
-# WebNN Native
+# WebNN-native
 
-WebNN Native is a native implementation of the [Web Neural Network API](https://webmachinelearning.github.io/webnn/).
+WebNN-native is a native implementation of the [Web Neural Network API](https://webmachinelearning.github.io/webnn/).
 
 It provides several building blocks:
 
@@ -12,7 +12,7 @@ It provides several building blocks:
    - **OpenVINO** on Windows 10 and Linux
    - _Other backends are to be added_
 
-WebNN Native uses the code of other open source projects:
+WebNN-native uses the code of other open source projects:
 
  * The code generator and infrastructure code of [Dawn](https://dawn.googlesource.com/dawn/) project.
  * The DirectMLX and device wrapper of [DirectML](https://github.com/microsoft/DirectML) project.
@@ -21,7 +21,7 @@ WebNN Native uses the code of other open source projects:
 
 ### Install `depot_tools`
 
-WebNN Native uses the Chromium build system and dependency management so you need to [install depot_tools] and add it to the PATH.
+WebNN-native uses the Chromium build system and dependency management so you need to [install depot_tools] and add it to the PATH.
 
 [install depot_tools]: http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up
 
@@ -52,7 +52,7 @@ To build with OpenVINO backend, set build option `webnn_enable_openvino=true`.
 
 ### Build
 
-Then use `ninja -C out/Release` or `ninja -C out/Debug` to build WebNN Native.
+Then use `ninja -C out/Release` or `ninja -C out/Debug` to build WebNN-native.
 
 ### Run tests
 
