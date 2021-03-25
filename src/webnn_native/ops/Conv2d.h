@@ -28,7 +28,7 @@ namespace webnn_native { namespace op {
                Conv2dOptions const* options);
         ~Conv2d() override = default;
 
-        MaybeError AddToGraph(GraphBase* model) const override;
+        MaybeError AddToGraph(GraphBase* graph) const override;
         MaybeError ValidateAndInferTypes() override;
 
         Conv2dOptions const* GetOptions() const;

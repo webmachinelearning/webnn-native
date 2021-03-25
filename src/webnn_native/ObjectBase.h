@@ -34,7 +34,7 @@ namespace webnn_native {
         ~ObjectBase() override = default;
 
       private:
-        ContextBase* mContext;
+        Ref<ContextBase> mContext;
     };
 
 }  // namespace webnn_native

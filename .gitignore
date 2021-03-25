@@ -16,6 +16,10 @@ third_party/markupsafe/
 third_party/dawn
 third_party/DirectML
 third_party/microsoft.ai.directml*
+third_party/oneDNN
+third_party/XNNPACK
+third_party/stb
+node/third_party/webnn-polyfill
 tools
 out
 
@@ -91,3 +95,5 @@ $RECYCLE.BIN/
 ### Node ###
 node/generator/specifications
 node/PATH_TO_DAWN
+node/third_party/webnn-polyfill
+node/node_modules

@@ -16,7 +16,6 @@
 #include "tests/WebnnTest.h"
 
 int main(int argc, char** argv) {
-    DumpMemoryLeaks();
     InitWebnnEnd2EndTestEnvironment();
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

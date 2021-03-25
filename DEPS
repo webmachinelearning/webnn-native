@@ -11,12 +11,32 @@ vars = {
 }
 
 deps = {
+  # Dependencies required for tests.
+  'node/third_party/webnn-polyfill/test-data': {
+    'url': '{github_git}/webmachinelearning/test-data.git@4b096f6fed4551bf055c43c34b8b4cd58d2e4a58'
+  },
+  'node/third_party/webnn-polyfill': {
+    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@5c5e9f6f5dbbe9dc67c448c8f7a55b6ddf4dee25'
+  },
+  'third_party/stb': {
+    'url': '{github_git}/nothings/stb@b42009b3b9d4ca35bc703f5310eedc74f584be58'
+  },
+
+  # Dependencies required for code generator and infrastructure code.
   'third_party/dawn': {
     'url': '{dawn_git}/dawn.git@bf1c0cf52377b4db2bf3a433dc5056620aad7cdd'
   },
+
+  # Dependencies required for backends.
   'third_party/DirectML': {
     'url': '{github_git}/microsoft/DirectML.git@e1b29b20a21bd2fb669a0c774f9870f8e9731da6',
     'condition': 'checkout_win',
+  },
+  'third_party/oneDNN': {
+    'url': '{github_git}/oneapi-src/oneDNN.git@4a129541fd4e67e6897072186ea2817a3154eddd',
+  },
+  'third_party/XNNPACK': {
+    'url': '{github_git}/google/XNNPACK.git@60fc61373f21f0ad3164cc719de464f4b787dc04'
   },
 
   # Dependencies required to use GN/Clang in standalone
@@ -163,7 +183,7 @@ hooks = [
     'pattern': '.',
     'condition': 'checkout_win',
     'action': ['python3', 'src/webnn_native/dml/deps/script/download_dml.py'],
-  },
+  }
 ]
 
 recursedeps = [

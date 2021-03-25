@@ -36,8 +36,8 @@ namespace webnn_native { namespace op {
         }
         ~Input() override = default;
 
-        MaybeError AddToGraph(GraphBase* model) const override {
-            return model->AddInput(this);
+        MaybeError AddToGraph(GraphBase* graph) const override {
+            return graph->AddInput(this);
         }
         MaybeError ValidateAndInferTypes() override;
 

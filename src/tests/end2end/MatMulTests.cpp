@@ -24,6 +24,7 @@ TEST_F(MatMulTests, MatMul1d) {
         utils::BuildConstant(builder, {4}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.9025404, 0.89538723, 0.16789329, 0.7440875};
     const ml::Input input = {aData.data(), aData.size() * sizeof(float)};
     const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
@@ -43,6 +44,7 @@ TEST_F(MatMulTests, MatMul1dx2d) {
         utils::BuildConstant(builder, {4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.1309212, 0.9090703, 0.62183434, 0.9195683};
     const ml::Input input = {aData.data(), aData.size() * sizeof(float)};
     const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
@@ -59,6 +61,7 @@ TEST_F(MatMulTests, MatMul2dx1d) {
         utils::BuildConstant(builder, {4}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {
         0.3582649, 0.83665735, 0.30253866, 0.6446781, 0.4684662,  0.94761264,
         0.4122941, 0.6787481,  0.15072346, 0.2820577, 0.67296237, 0.3856028,
@@ -80,6 +83,7 @@ TEST_F(MatMulTests, MatMul2d) {
         utils::BuildConstant(builder, {4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.9602246,  0.97682184, -0.33201018, 0.8248904,
                                       0.40872088, 0.18995902, 0.69355214,  -0.37210146,
                                       0.18104352, 3.270753,   -0.803097,   -0.7268995};
@@ -104,6 +108,7 @@ TEST_F(MatMulTests, MatMul3d) {
         utils::BuildConstant(builder, {2, 4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {
         0.19521078, 0.11637875, 0.54684865,  0.13257395, -0.05654722, -0.64351636,
         -1.0019655, -1.6156989, 0.01625126,  1.2386297,  -0.1242797,  0.40350053,
@@ -131,6 +136,7 @@ TEST_F(MatMulTests, MatMul3dx2d) {
         utils::BuildConstant(builder, {4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {
         -0.57675153, -0.40231872, 0.10705414, -0.66516143, 0.3206562,   0.43695804,
         -1.8614748,  0.77510875,  -1.2424866, -0.58930343, 0.40949076,  0.5517746,
@@ -156,6 +162,7 @@ TEST_F(MatMulTests, MatMul3dx2dGet3d) {
         utils::BuildConstant(builder, {4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.25500464,  -1.105212,   -0.5368534, -0.01583702,
                                       0.9875369,   1.3744136,   0.61079186, 0.74018836,
                                       -0.56111795, -0.16432828, 1.3176169,  -0.249416};
@@ -182,6 +189,7 @@ TEST_F(MatMulTests, MatMul4d) {
         utils::BuildConstant(builder, {1, 2, 4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {
         -0.8074054,  -0.72524256, 0.4510249,  1.6203358,  1.9851393,  0.501528,
         1.3975041,   -2.3231244,  0.70866925, 0.24667543, -0.6271161, -0.9634111,
@@ -210,6 +218,7 @@ TEST_F(MatMulTests, MatMul4dx2d) {
         utils::BuildConstant(builder, {4, 3}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Matmul(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> aData = {
         -0.40162078, -0.5607968,  -1.4350457, -0.22855183, -0.1357853,  -1.3434876,
         1.0602195,   -0.17137937, 0.44751146, 0.78427273,  -0.49435133, -0.9062699,

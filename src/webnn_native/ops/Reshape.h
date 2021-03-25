@@ -31,8 +31,8 @@ namespace webnn_native { namespace op {
         }
         ~Reshape() override = default;
 
-        MaybeError AddToGraph(GraphBase* model) const override {
-            return model->AddReshape(this);
+        MaybeError AddToGraph(GraphBase* graph) const override {
+            return graph->AddReshape(this);
         }
         MaybeError ValidateAndInferTypes() override;
         int32_t const* GetNewShape() const {

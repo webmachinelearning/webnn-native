@@ -16,12 +16,20 @@
 import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
 
 group("webnn_samples") {
-  deps = [ ":LeNet" ]
+  deps = [
+    ":LeNet",
+    ":MobileNetV2",
+    ":SqueezeNet",
+  ]
 }
 
 # Static library to contain code and dependencies common to all samples
 static_library("webnn_sample_utils") {
   sources = [
+    "../third_party/cnpy/cnpy.cpp",
+    "../third_party/cnpy/cnpy.h",
+    "../third_party/stb/stb_image.h",
+    "../third_party/stb/stb_image_resize.h",
     "SampleUtils.cpp",
     "SampleUtils.h",
   ]
@@ -33,6 +41,21 @@ static_library("webnn_sample_utils") {
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
   ]
+
+  defines = [
+    "STB_IMAGE_IMPLEMENTATION",
+    "STB_IMAGE_RESIZE_IMPLEMENTATION",
+  ]
+
+  if (is_clang) {
+    cflags_cc = [
+      "-Wno-extra-semi-stmt",
+      "-Wno-sign-compare",
+      "-Wno-implicit-fallthrough",
+      "-Wno-string-conversion",
+    ]
+  }
+
   public_configs = [ "${webnn_root}/src/common:dawn_internal" ]
 }
 
@@ -55,5 +78,19 @@ webnn_sample("LeNet") {
     "LeNet/Main.cpp",
     "LeNet/MnistUbyte.cpp",
     "LeNet/MnistUbyte.h",
+  ]
+}
+webnn_sample("SqueezeNet") {
+  sources = [
+    "SqueezeNet/Main.cpp",
+    "SqueezeNet/SqueezeNet.cpp",
+    "SqueezeNet/SqueezeNet.h",
+  ]
+}
+webnn_sample("MobileNetV2") {
+  sources = [
+    "MobileNetV2/Main.cpp",
+    "MobileNetV2/MobileNetV2.cpp",
+    "MobileNetV2/MobileNetV2.h",
   ]
 }

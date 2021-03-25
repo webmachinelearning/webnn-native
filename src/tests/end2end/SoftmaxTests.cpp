@@ -21,6 +21,7 @@ TEST_F(SoftmaxTests, Softmax) {
     const ml::Operand a = utils::BuildInput(builder, "a", {3, 4});
     const ml::Operand b = builder.Softmax(a);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
+    ASSERT_TRUE(graph);
     const std::vector<float> inputData = {0.4301911,   0.54719144,  -1.1637765, 0.18390046,
                                           0.58390397,  0.1735679,   0.539724,   -0.953514,
                                           -0.59202826, -0.17344485, 0.14395015, -0.37920907};

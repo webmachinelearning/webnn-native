@@ -23,7 +23,7 @@
 
 inline void ThrowIfNull(void* p)
 {
-    DAWN_ASSERT (!p);
+    DAWN_ASSERT (p != nullptr);
 }
 
 // DML_BUFFER_TENSOR_DESC (DML_TENSOR_TYPE_BUFFER)

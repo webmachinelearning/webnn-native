@@ -37,8 +37,8 @@ namespace webnn_native { namespace op {
         }
         ~Binary() override = default;
 
-        MaybeError AddToGraph(GraphBase* model) const override {
-            return model->AddBinary(this);
+        MaybeError AddToGraph(GraphBase* graph) const override {
+            return graph->AddBinary(this);
         }
         BinaryOpType GetType() const {
             return mOpType;

@@ -52,10 +52,15 @@ namespace webnn_native { namespace null {
         virtual MaybeError AddReshape(const op::Reshape* relu) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
+        virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
+        virtual MaybeError AddLeakyRelu(const op::LeakyRelu* unary) override;
+        virtual MaybeError AddConcat(const op::Concat* concat) override;
+        virtual MaybeError AddGemm(const op::Gemm* gemm) override;
+        virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError Finish() override;
 
       private:
-        void CompileImpl(BuildGraphCallbackDelgate delgate) override;
+        void CompileImpl(BuildGraphCallbackDelegate delegate) override;
         void ComputeImpl(NamedInputsBase* inputs,
                          MLComputeGraphCallback callback,
                          void* userdata,

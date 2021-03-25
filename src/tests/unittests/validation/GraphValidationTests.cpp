@@ -62,14 +62,13 @@ class GraphValidationTest : public ValidationTest {
 TEST_F(GraphValidationTest, BuildCallBackSuccess) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
     namedOperands.Set("output", mOutput);
+    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Error, _, _, this)).Times(1);
     mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
-    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Success, _, nullptr, this))
-        .Times(1);
 }
 
 // Create model with null nameOperands
 TEST_F(GraphValidationTest, BuildCallBackError) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
-    mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
     EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Error, _, _, this)).Times(1);
+    mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
 }

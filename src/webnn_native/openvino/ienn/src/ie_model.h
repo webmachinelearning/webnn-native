@@ -39,9 +39,14 @@ class Model {
   ie_operand_t* AddInput(ie_operand_descriptor_t const* desc);
   void AddOutput(ie_operand_t* operand);
   ie_operand_t* AddMatMul(ie_operand_t* a, ie_operand_t* b);
+  ie_operand_t* AddBatchNorm(ie_operand_t* input,
+                             ie_operand_t* mean,
+                             ie_operand_t* variance,
+                             ie_batch_norm_options_t* options);
   ie_operand_t* AddBinary(ie_binary_type type,
                           ie_operand_t* a,
                           ie_operand_t* b);
+  ie_operand_t* AddClamp(ie_operand_t* input, ie_clamp_options_t* options);
   ie_operand_t* AddConv2d(ie_operand_t* input,
                           ie_operand_t* filter,
                           ie_conv2d_options_t* options);
@@ -55,6 +60,14 @@ class Model {
   ie_operand_t* AddSoftmax(ie_operand_t* input);
   ie_operand_t* AddTranspose(ie_operand_t* input,
                              ie_transpose_options_t* options);
+  ie_operand_t* AddLeakyRelu(ie_operand_t* input,
+                             ie_leaky_relu_options_t* options);
+  ie_operand_t* AddConcat(const ie_operand_t* inputs,
+                          uint32_t inputs_count,
+                          uint32_t axis);
+  ie_operand_t* AddGemm(const ie_operand_t* inputs,
+                        uint32_t inputs_count,
+                        const ie_gemm_options_t* options);
   void Finish();
   size_t GetOutputsNumber();
   IEStatusCode GetOutputName(const size_t number, char** name);

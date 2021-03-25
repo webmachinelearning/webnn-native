@@ -23,12 +23,13 @@
 
 #include "common/Log.h"
 #include "common/RefCounted.h"
+#include "third_party/cnpy/cnpy.h"
+#include "third_party/stb/stb_image.h"
+#include "third_party/stb/stb_image_resize.h"
 
 uint32_t product(const std::vector<int32_t>& dims);
 
 ml::Context CreateCppContext();
-
-void DumpMemoryLeaks();
 
 bool Expected(float output, float expected);
 
@@ -51,7 +52,9 @@ namespace utils {
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
         int32_t groups = 1;
-        ml::InputOperandLayout layout = ml::InputOperandLayout::Nchw;
+        ml::AutoPad autoPad = ml::AutoPad::Explicit;
+        ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
+        ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
 
         const ml::Conv2dOptions* AsPtr() {
             if (!padding.empty()) {
@@ -67,7 +70,9 @@ namespace utils {
                 mOptions.dilations = dilations.data();
             }
             mOptions.groups = groups;
-            mOptions.layout = layout;
+            mOptions.autoPad = autoPad;
+            mOptions.inputLayout = inputLayout;
+            mOptions.filterLayout = filterLayout;
             return &mOptions;
         }
 
@@ -81,6 +86,7 @@ namespace utils {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
+        ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout layout = ml::InputOperandLayout::Nchw;
 
         const ml::Pool2dOptions* AsPtr() {
@@ -101,6 +107,7 @@ namespace utils {
                 mOptions.dilations = dilations.data();
             }
             mOptions.layout = layout;
+            mOptions.autoPad = autoPad;
             return &mOptions;
         }
 
@@ -111,22 +118,31 @@ namespace utils {
     typedef struct {
         const std::string& name;
         const ml::Operand& operand;
-    } NamedOutput;
+    } NamedOperand;
 
-    ml::Graph AwaitBuild(const ml::GraphBuilder& builder, const std::vector<NamedOutput>& outputs);
+    ml::Graph AwaitBuild(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
 
     typedef struct {
-        const std::string& name;
-        const ml::Input& input;
+        const std::string name;
+        const ml::Input input;
     } NamedInput;
 
+    typedef struct {
+        const std::string name;
+        const ml::Output output;
+    } NamedOutput;
+
     ml::NamedResults AwaitCompute(const ml::Graph& compilation,
-                                  const std::vector<NamedInput>& inputs);
+                                  const std::vector<NamedInput>& inputs,
+                                  const std::vector<NamedOutput>& outputs = {});
 
     bool CheckShape(const ml::Result& result, const std::vector<int32_t>& expectedShape);
 
     template <class T>
     bool CheckValue(const ml::Result& result, const std::vector<T>& expectedValue) {
+        if (result.GetHandle() == nullptr) {
+            return false;
+        }
         size_t size = result.BufferSize() / sizeof(T);
         if (size != expectedValue.size()) {
             dawn::ErrorLog() << "The size of output data is expected as " << expectedValue.size()
@@ -138,6 +154,23 @@ namespace utils {
             if (!Expected(value, expectedValue[i])) {
                 dawn::ErrorLog() << "The output value at index " << i << " is expected as "
                                  << expectedValue[i] << ", but got " << value;
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template <class T>
+    bool CheckValue(const std::vector<T>& value, const std::vector<T>& expectedValue) {
+        if (value.size() != expectedValue.size()) {
+            dawn::ErrorLog() << "The size of output data is expected as " << expectedValue.size()
+                             << ", but got " << value.size();
+            return false;
+        }
+        for (size_t i = 0; i < value.size(); ++i) {
+            if (!Expected(value[i], expectedValue[i])) {
+                dawn::ErrorLog() << "The output value at index " << i << " is expected as "
+                                 << expectedValue[i] << ", but got " << value[i];
                 return false;
             }
         }
@@ -157,6 +190,30 @@ namespace utils {
         std::mutex mMutex;
         bool mDone;
     };
+
+    struct ImagePreprocessOptions {
+        bool nchw = true;
+        bool normalization = false;
+        size_t modelHeight;
+        size_t modelWidth;
+        size_t modelChannels;
+        size_t modelSize;
+        std::vector<float> mean = {0, 0, 0};  // Average values of pixels on channels.
+        std::vector<float> std = {1, 1, 1};   // Variance values of pixels on channels.
+        std::string channelScheme = "RGB";
+    };
+
+    std::vector<std::string> ReadTopKLabel(const std::vector<size_t>& topKIndex,
+                                           const std::string& labelPath);
+
+    void SelectTopKData(std::vector<float>& outputData,
+                        std::vector<size_t>& topKIndex,
+                        std::vector<float>& topKData);
+
+    void PrintResult(ml::Result output, const std::string& labelPath = "");
+
+    float* LoadAndPreprocessImage(const std::string& imagePath,
+                                  const ImagePreprocessOptions& options);
 }  // namespace utils
 
 #endif  // WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_

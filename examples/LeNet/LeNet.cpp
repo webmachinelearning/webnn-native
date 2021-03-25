@@ -141,15 +141,10 @@ bool LeNet::Load(const std::string& weigthsPath) {
 
     const ml::Operand softmax = builder.Softmax(add4);
 
-    const std::chrono::time_point<std::chrono::high_resolution_clock> startTime =
-        std::chrono::high_resolution_clock::now();
     mGraph = utils::AwaitBuild(builder, {{"output", softmax}});
     if (!mGraph) {
         return false;
     }
-    const std::chrono::duration<double, std::milli> elapsedTime =
-        std::chrono::high_resolution_clock::now() - startTime;
-    dawn::InfoLog() << "Compilation Time: " << elapsedTime.count() << " ms";
     return true;
 }
 
@@ -158,14 +153,9 @@ ml::Result LeNet::Compute(const void* inputData, size_t inputLength) {
         dawn::ErrorLog() << "Graph is not ready.";
         return ml::Result();
     }
-    const std::chrono::time_point<std::chrono::high_resolution_clock> startTime =
-        std::chrono::high_resolution_clock::now();
     mResults = utils::AwaitCompute(mGraph, {{"input", {inputData, inputLength}}});
     if (!mResults) {
         return ml::Result();
     }
-    const std::chrono::duration<double, std::milli> elapsedTime =
-        std::chrono::high_resolution_clock::now() - startTime;
-    dawn::InfoLog() << "Execution Time: " << elapsedTime.count() << " ms";
     return mResults.Get("output");
 }

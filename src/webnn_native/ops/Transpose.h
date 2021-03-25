@@ -39,8 +39,8 @@ namespace webnn_native { namespace op {
         }
         ~Transpose() override = default;
 
-        MaybeError AddToGraph(GraphBase* model) const override {
-            return model->AddTranspose(this);
+        MaybeError AddToGraph(GraphBase* graph) const override {
+            return graph->AddTranspose(this);
         }
         MaybeError ValidateAndInferTypes() override;
 

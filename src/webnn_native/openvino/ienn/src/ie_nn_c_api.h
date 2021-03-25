@@ -55,7 +55,7 @@ typedef enum {
 } IEStatusCode;
 
 typedef struct ie_operand {
-  char* name;
+  char* name = nullptr;
 } ie_operand_t;
 
 typedef enum {
@@ -78,10 +78,39 @@ typedef struct ie_operand_descriptor {
   uint32_t dimensionsCount = 0;
 } ie_operand_descriptor_t;
 
-enum ie_operand_layout : uint32_t {
+enum ie_input_operand_layout : uint32_t {
   Nchw = 0x00000000,
   Nhwc = 0x00000001,
 };
+
+enum ie_filter_operand_layout : uint32_t {
+  Oihw = 0x00000000,
+  Hwio = 0x00000001,
+  Ohwi = 0x00000002,
+  Ihwo = 0x00000003,
+};
+
+enum ie_auto_pad : uint32_t {
+  Explicit = 0x00000000,
+  SameUpper = 0x00000001,
+  SameLower = 0x00000002,
+};
+
+typedef struct ie_clamp_options {
+  const float* minValue = nullptr;
+  const float* maxValue = nullptr;
+  const int32_t* minDimensions;
+  const int32_t* maxDimensions;
+  uint32_t minDimensionsCount = 0;
+  uint32_t maxDimensionsCount = 0;
+} ie_clamp_options_t;
+
+typedef struct ie_batch_norm_options {
+  ie_operand_t scale;
+  ie_operand_t bias;
+  long axis = 1;
+  double epsilon = 1e-5;
+} ie_batch_norm_options_t;
 
 typedef struct ie_conv2d_options {
   uint32_t paddingCount = 4;
@@ -91,7 +120,9 @@ typedef struct ie_conv2d_options {
   uint32_t dilationsCount = 2;
   int32_t const* dilations;
   int32_t groups = 1;
-  ie_operand_layout layout = ie_operand_layout::Nchw;
+  ie_auto_pad autoPad = ie_auto_pad::Explicit;
+  ie_input_operand_layout inputLayout = ie_input_operand_layout::Nchw;
+  ie_filter_operand_layout filterLayout = ie_filter_operand_layout::Oihw;
 } ie_conv2d_options_t;
 
 enum ie_pool_type {
@@ -109,13 +140,25 @@ typedef struct ie_pool2d_options {
   int32_t const* strides;
   uint32_t dilationsCount = 2;
   int32_t const* dilations;
-  ie_operand_layout layout = ie_operand_layout::Nchw;
+  ie_auto_pad autoPad = ie_auto_pad::Explicit;
+  ie_input_operand_layout layout = ie_input_operand_layout::Nchw;
 } ie_pool2d_options_t;
 
 typedef struct ie_transpose_options {
   uint32_t permutationCount = 0;
   int32_t const* permutation;
 } ie_transpose_options_t;
+
+typedef struct ie_leaky_relu_options {
+  float alpha = 0.01;
+} ie_leaky_relu_options_t;
+
+typedef struct ie_gemm_options {
+  float alpha = 1.0;
+  float beta = 1.0;
+  bool aTranspose = false;
+  bool bTranspose = false;
+} ie_gemm_options_t;
 
 typedef struct ie_model ie_model_t;
 typedef struct ie_compilation ie_compilation_t;
@@ -207,6 +250,25 @@ ie_model_add_mat_mul(ie_model_t* model,
                      ie_operand_t** operand);
 
 /**
+ * @brief Add batch_norm node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @param ie_operand_t The mean operand.
+ * @param ie_operand_t The variance operand.
+ * @param ie_operand_t The scale operand.
+ * @param ie_operand_t The bias operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_batch_norm(ie_model_t* model,
+                        ie_operand_t* input,
+                        ie_operand_t* mean,
+                        ie_operand_t* variance,
+                        ie_batch_norm_options* options,
+                        ie_operand_t** operand);
+
+/**
  * @brief Add binary node to nGraph. Use the ie_operand_free() method to
  *  free the operand memory.
  * @ingroup model
@@ -220,6 +282,19 @@ ie_model_add_binary(ie_model_t* model,
                     ie_operand_t* a,
                     ie_operand_t* b,
                     ie_operand_t** operand);
+
+/**
+ * @brief Add clamp node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_clamp(ie_model_t* model,
+                   ie_operand_t* inputs,
+                   ie_clamp_options* options,
+                   ie_operand_t** operand);
 
 /**
  * @brief Add conv2d node to nGraph. Use the ie_operand_free() method to
@@ -301,6 +376,47 @@ ie_model_add_transpose(ie_model_t* model,
                        ie_operand_t* input,
                        ie_transpose_options* options,
                        ie_operand_t** operand);
+
+/**
+ * @brief Add leakyRelu node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_leaky_relu(ie_model_t* model,
+                        ie_operand_t* input,
+                        ie_leaky_relu_options* options,
+                        ie_operand_t** operand);
+
+/**
+ * @brief Add concat node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_concat(const ie_model_t* model,
+                    const ie_operand_t* inputs,
+                    uint32_t inputs_count,
+                    uint32_t axis,
+                    ie_operand_t** operand);
+
+/**
+ * @brief Add gemm node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_gemm(const ie_model_t* model,
+                  const ie_operand_t* inputs,
+                  uint32_t inputs_count,
+                  const ie_gemm_options_t* options,
+                  ie_operand_t** operand);
 
 /**
  * @brief Releases memory occupied by operand.

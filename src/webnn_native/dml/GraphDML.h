@@ -22,9 +22,13 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
+#include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
+#include "webnn_native/ops/Clamp.h"
+#include "webnn_native/ops/Concat.h"
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
+#include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reshape.h"
@@ -44,20 +48,39 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
         virtual MaybeError AddOutput(const std::string& name, const OperandBase* output) override;
+        virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReshape(const op::Reshape* relu) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
+        virtual MaybeError AddGemm(const op::Gemm* Gemm) override;
+        virtual MaybeError AddConcat(const op::Concat* concat) override;
+        virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError Finish() override;
 
       private:
-        void CompileImpl(BuildGraphCallbackDelgate delgate) override;
+        void CompileImpl(BuildGraphCallbackDelegate delegate) override;
         void ComputeImpl(NamedInputsBase* inputs,
                          MLComputeGraphCallback callback,
                          void* userdata,
                          NamedOutputsBase* outputs) override;
+
+        MLBuildGraphStatus CompileSyncImpl() override;
+        MLComputeGraphStatus ComputeSyncImpl(NamedInputsBase* inputs,
+                                             NamedOutputsBase* outputs) override;
+
+        MLBuildGraphStatus GenericCompileImpl();
+        MLComputeGraphStatus GenericComputeImpl(NamedInputsBase* inputs,
+                                                NamedOutputsBase* outputs,
+                                                MLComputeGraphCallback callback = nullptr,
+                                                void* userdata = nullptr);
+
+        ::dml::Expression BindingConstant(DML_TENSOR_DATA_TYPE dmlTensorType,
+                                          ::dml::TensorDimensions dmlTensorDims,
+                                          void const* value,
+                                          size_t size);
 
         std::shared_ptr<::pydml::Device> mDevice;
         std::unique_ptr<::dml::Graph> mGraph;
