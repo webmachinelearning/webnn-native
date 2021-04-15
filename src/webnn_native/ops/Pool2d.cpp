@@ -19,7 +19,7 @@
 
 namespace webnn_native { namespace op {
 
-    Pool2d::Pool2d(ModelBuilderBase* builder,
+    Pool2d::Pool2d(GraphBuilderBase* builder,
                    Pool2dType opType,
                    OperandBase* input,
                    Pool2dOptions const* options)
@@ -61,13 +61,13 @@ namespace webnn_native { namespace op {
         mOptions.dilationsCount = mDilations.size();
 
         if (options == nullptr) {
-            mOptions.layout = webnn::OperandLayout::Nchw;
+            mOptions.layout = ml::InputOperandLayout::Nchw;
         } else {
             mOptions.layout = options->layout;
         }
     }
 
-    MaybeError Pool2d::AddToModel(ModelBase* model) const {
+    MaybeError Pool2d::AddToGraph(GraphBase* model) const {
         return model->AddPool2d(this);
     }
 

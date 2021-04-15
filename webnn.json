@@ -68,13 +68,23 @@
         {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
-  "neural network context": {
+  "power preference": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "default"},
+      {"value": 1, "name": "high_performance"},
+      {"value": 2, "name": "low_power"}
+    ]
+  },
+  "context options": {
+    "category": "structure",
+    "members": [
+      {"name": "power preference", "type": "power preference", "default": "default"}
+    ]
+  },
+  "context": {
     "category": "object",
     "methods": [
-      {
-        "name": "create model builder",
-        "returns": "model builder"
-      },
       {
         "name": "set uncaptured error callback",
         "args": [
@@ -98,13 +108,22 @@
       }
     ]
   },
+  "input operand layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "nchw"},
+      {"value": 1, "name": "nhwc"}
+    ]
+  },
   "operand type": {
     "category": "enum",
     "values": [
       {"value": 0, "name": "float32"},
       {"value": 1, "name": "float16"},
       {"value": 2, "name": "int32"},
-      {"value": 3, "name": "uint32"}
+      {"value": 3, "name": "uint32"},
+      {"value": 4, "name": "int8"},
+      {"value": 5, "name": "uint8"}
     ]
   },
   "operand descriptor": {
@@ -118,20 +137,6 @@
   "operand": {
     "category": "object"
   },
-  "power preference": {
-    "category": "enum",
-    "values": [
-      {"value": 0, "name": "default"},
-      {"value": 1, "name": "low_power"},
-      {"value": 2, "name": "high_performance"}
-    ]
-  },
-  "compilation options": {
-    "category": "structure",
-    "members": [
-      {"name": "power preference", "type": "power preference"}
-    ]
-  },
   "named operands": {
     "category": "object",
     "methods": [
@@ -144,13 +149,6 @@
       }
     ]
   },
-  "operand layout": {
-    "category": "enum",
-    "values": [
-      {"value": 0, "name": "nchw"},
-      {"value": 1, "name": "nhwc"}
-    ]
-  },
   "conv2d options": {
     "category": "structure",
     "members": [
@@ -161,7 +159,7 @@
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
       {"name": "groups", "type": "int32_t", "default": 1},
-      {"name": "layout", "type": "operand layout", "default": "nchw"}
+      {"name": "layout", "type": "input operand layout", "default": "nchw"}
     ]
   },
   "pool2d options": {
@@ -175,7 +173,7 @@
       {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
-      {"name": "layout", "type": "operand layout", "default": "nchw"}
+      {"name": "layout", "type": "input operand layout", "default": "nchw"}
     ]
   },
   "transpose options": {
@@ -185,7 +183,7 @@
       {"name": "permutation", "type": "int32_t", "annotation": "const*", "length": "permutation count", "optional": true}
     ]
   },
-  "model builder": {
+  "graph builder": {
     "category": "object",
     "methods": [
       {
@@ -286,43 +284,31 @@
         ]
       },
       {
-        "name": "createModel",
-        "returns": "model",
+        "name": "build",
         "args": [
-          {"name": "named operands", "type": "named operands"}
+          {"name": "named operands", "type": "named operands"},
+          {"name": "callback", "type": "build callback"},
+          {"name": "userdata", "type": "void", "annotation": "*"}
         ]
       }
     ]
   },
-  "compile callback": {
+  "build callback": {
     "category": "callback",
     "args": [
-      {"name": "status", "type": "compile status"},
-      {"name": "compilation", "type": "compilation"},
+      {"name": "status", "type": "build status"},
+      {"name": "graph", "type": "graph"},
       {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
       {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
-  "compile status": {
+  "build status": {
     "category": "enum",
     "values": [
         {"value": 0, "name": "success"},
         {"value": 1, "name": "error"},
         {"value": 2, "name": "context lost"},
         {"value": 3, "name": "unknown"}
-    ]
-  },
-  "model": {
-    "category": "object",
-    "methods": [
-      {
-        "name": "compile",
-        "args": [
-          {"name": "callback", "type": "compile callback"},
-          {"name": "userdata", "type": "void", "annotation": "*"},
-          {"name": "options", "type": "compilation options", "annotation": "const*", "optional": true}
-        ]
-      }
     ]
   },
   "input": {
@@ -418,7 +404,7 @@
         {"value": 3, "name": "unknown"}
     ]
   },
-  "compilation": {
+  "graph": {
     "category": "object",
     "methods": [
       {

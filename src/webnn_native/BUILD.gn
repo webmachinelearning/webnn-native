@@ -89,24 +89,22 @@ source_set("webnn_native_sources") {
   sources = get_target_outputs(":webnn_native_utils_gen")
 
   sources += [
-    "Compilation.cpp",
-    "Compilation.h",
+    "Context.cpp",
+    "Context.h",
     "Error.cpp",
     "Error.h",
     "ErrorData.cpp",
     "ErrorData.h",
     "ErrorScope.cpp",
     "ErrorScope.h",
-    "Model.cpp",
-    "Model.h",
-    "ModelBuilder.cpp",
-    "ModelBuilder.h",
+    "Graph.cpp",
+    "Graph.h",
+    "GraphBuilder.cpp",
+    "GraphBuilder.h",
     "NamedInputs.h",
     "NamedOutputs.h",
     "NamedRecords.h",
     "NamedResults.h",
-    "NeuralNetworkContext.cpp",
-    "NeuralNetworkContext.h",
     "ObjectBase.cpp",
     "ObjectBase.h",
     "Operand.cpp",
@@ -136,23 +134,19 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_null) {
     sources += [
-      "null/NeuralNetworkContextNull.cpp",
-      "null/NeuralNetworkContextNull.h",
+      "null/ContextNull.cpp",
+      "null/ContextNull.h",
     ]
   }
 
   if (webnn_enable_openvino) {
     sources += [
-      "openvino/CompilationIE.cpp",
-      "openvino/CompilationIE.h",
+      "openvino/ContextIE.cpp",
+      "openvino/ContextIE.h",
       "openvino/ErrorIE.cpp",
       "openvino/ErrorIE.h",
-      "openvino/ModelBuilderIE.cpp",
-      "openvino/ModelBuilderIE.h",
-      "openvino/ModelIE.cpp",
-      "openvino/ModelIE.h",
-      "openvino/NeuralNetworkContextIE.cpp",
-      "openvino/NeuralNetworkContextIE.h",
+      "openvino/GraphIE.cpp",
+      "openvino/GraphIE.h",
     ]
 
     sources += [
@@ -180,14 +174,10 @@ source_set("webnn_native_sources") {
     ]
 
     sources += [
-      "dml/CompilationDML.cpp",
-      "dml/CompilationDML.h",
-      "dml/ModelBuilderDML.cpp",
-      "dml/ModelBuilderDML.h",
-      "dml/ModelDML.cpp",
-      "dml/ModelDML.h",
-      "dml/NeuralNetworkContextDML.cpp",
-      "dml/NeuralNetworkContextDML.h",
+      "dml/ContextDML.cpp",
+      "dml/ContextDML.h",
+      "dml/GraphDML.cpp",
+      "dml/GraphDML.h",
     ]
 
     include_dirs = [

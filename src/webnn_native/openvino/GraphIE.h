@@ -19,9 +19,9 @@
 #include <set>
 
 #include "webnn_native/Error.h"
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/openvino/ModelBuilderIE.h"
+#include "webnn_native/openvino/ContextIE.h"
 #include "webnn_native/openvino/ienn/src/ie_nn_c_api.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Constant.h"
@@ -34,10 +34,10 @@
 
 namespace webnn_native { namespace ie {
 
-    class Model : public ModelBase {
+    class Graph : public GraphBase {
       public:
-        explicit Model(ModelBuilder* model_builder);
-        ~Model() override;
+        explicit Graph(Context* context);
+        ~Graph() override;
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
@@ -50,18 +50,14 @@ namespace webnn_native { namespace ie {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
-        ie_model_t* GetInferenceEngineModel();
-        size_t GetOutputsNumber();
-        std::string GetOutputId(size_t index);
-
-        friend class Compilation;
-
       private:
-        void CompileImpl(WebnnCompileCallback callback,
+        void ComputeImpl(NamedInputsBase* inputs,
+                         MLComputeCallback callback,
                          void* userdata,
-                         CompilationOptions const* options) override;
+                         NamedOutputsBase* outputs) override;
 
         ie_model_t* mIeModel;
+        ie_compilation_t* mIeCompilation;
 
         // Map the input name to IE internal id
         std::map<std::string, std::string> mInputIdMap;

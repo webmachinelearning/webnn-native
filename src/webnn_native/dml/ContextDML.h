@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_NEURAL_NETWORK_CONTEXT_DML_H_
-#define WEBNN_NATIVE_DML_NEURAL_NETWORK_CONTEXT_DML_H_
+#ifndef WEBNN_NATIVE_DML_CONTEXT_DML_H_
+#define WEBNN_NATIVE_DML_CONTEXT_DML_H_
 
-#include "webnn_native/NeuralNetworkContext.h"
+#include "webnn_native/Context.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 
 namespace webnn_native { namespace dml {
 
-    class NeuralNetworkContext : public NeuralNetworkContextBase {
+    class Context : public ContextBase {
       public:
-        NeuralNetworkContext() = default;
-        ~NeuralNetworkContext() override = default;
-
-        ModelBuilderBase* CreateModelBuilderImpl() override;
+        Context(ContextOptions const* options);
+        ~Context() override = default;
 
         HRESULT CreateDevice();
+        GraphBase* CreateGraphImpl() override;
 
         std::shared_ptr<::pydml::Device> GetDevice() {
             return mDevice;
@@ -35,8 +35,9 @@ namespace webnn_native { namespace dml {
 
       private:
         std::shared_ptr<::pydml::Device> mDevice;
+        ContextOptions mOptions;
     };
 
 }}  // namespace webnn_native::dml
 
-#endif  // WEBNN_NATIVE_DML_NEURAL_NETWORK_CONTEXT_DML_H_
+#endif  // WEBNN_NATIVE_DML_CONTEXT_DML_H_

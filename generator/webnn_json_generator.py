@@ -46,7 +46,7 @@ def as_cType(name):
     if name.native:
         return name.concatcase()
     else:
-        return 'Webnn' + name.CamelCase()
+        return 'ML' + name.CamelCase()
 
 
 def as_cTypeDawn(name):
@@ -119,7 +119,7 @@ def annotated(typ, arg):
 
 def as_cEnum(type_name, value_name):
     assert not type_name.native and not value_name.native
-    return 'Webnn' + type_name.CamelCase() + '_' + value_name.CamelCase()
+    return 'ML' + type_name.CamelCase() + '_' + value_name.CamelCase()
 
 
 def as_cEnumDawn(type_name, value_name):
@@ -137,7 +137,7 @@ def as_cppEnum(value_name):
 
 def as_cMethod(type_name, method_name):
     assert not type_name.native and not method_name.native
-    return 'webnn' + type_name.CamelCase() + method_name.CamelCase()
+    return 'ml' + type_name.CamelCase() + method_name.CamelCase()
 
 
 def as_cMethodDawn(type_name, method_name):
@@ -164,7 +164,7 @@ def as_frontendType(typ):
     if typ.category == 'object':
         return typ.name.CamelCase() + 'Base*'
     elif typ.category in ['bitmask', 'enum']:
-        return 'webnn::' + typ.name.CamelCase()
+        return 'ml::' + typ.name.CamelCase()
     elif typ.category == 'structure':
         return as_cppType(typ.name)
     else:

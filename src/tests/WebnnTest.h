@@ -25,13 +25,13 @@ class WebnnTest : public testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    const webnn::NeuralNetworkContext& GetContext();
+    const ml::Context& GetContext();
     void StartExpectContextError();
     bool EndExpectContextError();
     std::string GetLastErrorMessage() const;
 
   private:
-    static void ErrorCallback(WebnnErrorType type, const char* message, void* userdata);
+    static void ErrorCallback(MLErrorType type, const char* message, void* userdata);
     std::string mErrorMessage;
     bool mExpectError = false;
     bool mError = false;
@@ -43,10 +43,10 @@ class WebnnTestEnvironment : public testing::Environment {
   public:
     void SetUp() override;
 
-    const webnn::NeuralNetworkContext& GetContext();
+    const ml::Context& GetContext();
 
   protected:
-    webnn::NeuralNetworkContext mContext;
+    ml::Context mContext;
 };
 
 #endif  // TESTS_WEBNN_TEST_H_

@@ -17,8 +17,8 @@
 class MulTests : public WebnnTest {};
 
 TEST_F(MulTests, MulInputAndConstant) {
-    webnn::ModelBuilder builder = GetContext().CreateModelBuilder();
-    webnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         2.0435283,  0.07213961,  -1.1644137,  -1.2209045,  0.8982674,   0.21796915,  0.27658972,
         0.7744382,  -0.52159035, -0.969913,   0.6081186,   -0.04225572, 0.3275312,   -0.06443629,
@@ -29,11 +29,10 @@ TEST_F(MulTests, MulInputAndConstant) {
         0.78826934, -0.18788454, 0.38178417,  0.9748209,   1.0242884,   0.7939937,   0.24449475,
         -1.3840157, 1.9665064,   0.35833818,  -0.87076694, -0.76727265, 0.6157508,   -0.5558823,
         0.18417479, -0.93904793, -0.00859687, 0.5034271};
-    webnn::Operand b =
+    ml::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, dataB.data(), dataB.size() * sizeof(float));
-    webnn::Operand c = builder.Mul(a, b);
-    webnn::Model model = utils::CreateModel(builder, {{"c", c}});
-    webnn::Compilation compiledModel = utils::AwaitCompile(model);
+    ml::Operand c = builder.Mul(a, b);
+    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
         7.4952751e-01,  -2.8509337e-01, -1.6272701e+00, 1.0271618e+00,  4.2815253e-01,
@@ -47,8 +46,8 @@ TEST_F(MulTests, MulInputAndConstant) {
         3.4815140e-04,  -5.6024802e-01, 1.0848801e+00,  -5.1780093e-01, -3.8996863e-01,
         5.3133094e-01,  2.3897937e-01,  -1.3832775e+00, 6.3414145e-01,  1.0691971e+00,
         5.7040757e-01,  3.0711100e-01,  8.8405716e-01,  -2.1583509e+00, 4.3243581e-01};
-    webnn::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    webnn::Result result = utils::AwaitCompute(compiledModel, {{"a", input}}).Get("c");
+    ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
+    ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
     EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
     std::vector<float> expectedData = {
         1.1491189e+00,  9.4631165e-03,  1.6490275e+00,  -2.4890469e-02, 8.1811851e-01,
@@ -67,12 +66,11 @@ TEST_F(MulTests, MulInputAndConstant) {
 }
 
 TEST_F(MulTests, MulTwoInputs) {
-    webnn::ModelBuilder builder = GetContext().CreateModelBuilder();
-    webnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    webnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
-    webnn::Operand c = builder.Mul(a, b);
-    webnn::Model model = utils::CreateModel(builder, {{"c", c}});
-    webnn::Compilation compiledModel = utils::AwaitCompile(model);
+    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
+    ml::Operand c = builder.Mul(a, b);
+    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
         7.4952751e-01,  -2.8509337e-01, -1.6272701e+00, 1.0271618e+00,  4.2815253e-01,
@@ -96,10 +94,9 @@ TEST_F(MulTests, MulTwoInputs) {
         0.78826934, -0.18788454, 0.38178417,  0.9748209,   1.0242884,   0.7939937,   0.24449475,
         -1.3840157, 1.9665064,   0.35833818,  -0.87076694, -0.76727265, 0.6157508,   -0.5558823,
         0.18417479, -0.93904793, -0.00859687, 0.5034271};
-    webnn::Input inputA = {dataA.data(), dataA.size() * sizeof(float)};
-    webnn::Input inputB = {dataB.data(), dataB.size() * sizeof(float)};
-    webnn::Result result =
-        utils::AwaitCompute(compiledModel, {{"a", inputA}, {"b", inputB}}).Get("c");
+    ml::Input inputA = {dataA.data(), dataA.size() * sizeof(float)};
+    ml::Input inputB = {dataB.data(), dataB.size() * sizeof(float)};
+    ml::Result result = utils::AwaitCompute(graph, {{"a", inputA}, {"b", inputB}}).Get("c");
     EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
     std::vector<float> expectedData = {
         1.1491189e+00,  9.4631165e-03,  1.6490275e+00,  -2.4890469e-02, 8.1811851e-01,
@@ -118,16 +115,14 @@ TEST_F(MulTests, MulTwoInputs) {
 }
 
 TEST_F(MulTests, MulBroadcast) {
-    webnn::ModelBuilder builder = GetContext().CreateModelBuilder();
-    webnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         0.6338172, 1.630534, -1.3819867, -1.0427561, 1.058136,
     };
-    webnn::Operand b =
-        utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
-    webnn::Operand c = builder.Mul(a, b);
-    webnn::Model model = utils::CreateModel(builder, {{"c", c}});
-    webnn::Compilation compiledModel = utils::AwaitCompile(model);
+    ml::Operand b = utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
+    ml::Operand c = builder.Mul(a, b);
+    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
     std::vector<float> dataA = {
         -0.08539673, 0.11800674,  -1.2358714,  0.30089188,  -0.73443925, 1.4894297,   0.16823359,
         -2.2034893,  1.0740992,   -0.35457978, 0.61524934,  0.462153,    0.5992003,   -0.81047946,
@@ -139,8 +134,8 @@ TEST_F(MulTests, MulBroadcast) {
         -1.8408557,  -0.85080767, -1.3341717,  0.54687303,  -0.14426671, -0.15728855, 0.323939,
         1.167636,    0.03020451,  0.91373825,  1.0675793,
     };
-    webnn::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    webnn::Result result = utils::AwaitCompute(compiledModel, {{"a", input}}).Get("c");
+    ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
+    ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
     EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
     std::vector<float> expectedData = {
         -0.05412592, 0.192414,    1.707958,    -0.31375682, -0.7771366,  0.9440262,   0.2743106,

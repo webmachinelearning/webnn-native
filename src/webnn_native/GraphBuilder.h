@@ -25,10 +25,10 @@
 
 namespace webnn_native {
 
-    class ModelBuilderBase : public ObjectBase {
+    class GraphBuilderBase : public ObjectBase {
       public:
-        ModelBuilderBase(NeuralNetworkContextBase* context);
-        virtual ~ModelBuilderBase() = default;
+        GraphBuilderBase(ContextBase* context);
+        virtual ~GraphBuilderBase() = default;
 
         // WebNN API
         OperandBase* Constant(OperandDescriptor const* desc, void const* value, size_t size);
@@ -43,12 +43,11 @@ namespace webnn_native {
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Softmax(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
-        ModelBase* CreateModel(NamedOperandsBase const* named_operands);
+        void Build(NamedOperandsBase const* named_operands,
+                   MLBuildCallback callback,
+                   void* userdata);
 
       private:
-        // Create concrete model.
-        virtual ModelBase* CreateModelImpl() = 0;
-
         // Topological sort of nodes needed to compute rootNodes
         std::vector<const OperandBase*> TopologicalSort(std::vector<const OperandBase*>& rootNodes);
     };

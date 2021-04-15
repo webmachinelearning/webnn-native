@@ -39,12 +39,12 @@ namespace webnn_native {
     class ErrorScope final : public RefCounted {
       public:
         ErrorScope();  // Constructor for the root error scope.
-        ErrorScope(webnn::ErrorFilter errorFilter, ErrorScope* parent);
+        ErrorScope(ml::ErrorFilter errorFilter, ErrorScope* parent);
 
-        void SetCallback(webnn::ErrorCallback callback, void* userdata);
+        void SetCallback(ml::ErrorCallback callback, void* userdata);
         ErrorScope* GetParent();
 
-        void HandleError(webnn::ErrorType type, const char* message);
+        void HandleError(ml::ErrorType type, const char* message);
         void UnlinkForShutdown();
 
       private:
@@ -52,17 +52,17 @@ namespace webnn_native {
         bool IsRoot() const;
         void RunNonRootCallback();
 
-        static void HandleErrorImpl(ErrorScope* scope, webnn::ErrorType type, const char* message);
+        static void HandleErrorImpl(ErrorScope* scope, ml::ErrorType type, const char* message);
         static void UnlinkForShutdownImpl(ErrorScope* scope);
 
-        webnn::ErrorFilter mErrorFilter = webnn::ErrorFilter::None;
+        ml::ErrorFilter mErrorFilter = ml::ErrorFilter::None;
         Ref<ErrorScope> mParent = nullptr;
         bool mIsRoot;
 
-        webnn::ErrorCallback mCallback = nullptr;
+        ml::ErrorCallback mCallback = nullptr;
         void* mUserdata = nullptr;
 
-        webnn::ErrorType mErrorType = webnn::ErrorType::NoError;
+        ml::ErrorType mErrorType = ml::ErrorType::NoError;
         std::string mErrorMessage = "";
     };
 

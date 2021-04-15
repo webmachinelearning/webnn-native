@@ -153,7 +153,7 @@ if (is_win || is_linux || is_chromeos || is_mac || is_fuchsia || is_android) {
     sources = [
       "//third_party/dawn/src/common/Assert.cpp",
       "//third_party/dawn/src/common/Assert.h",
-      "//third_party/dawn/src/common/Compiler.h",
+      "//third_party/dawn/src/common/Computer.h",
       "//third_party/dawn/src/common/Log.cpp",
       "//third_party/dawn/src/common/Log.h",
       "//third_party/dawn/src/common/Math.cpp",

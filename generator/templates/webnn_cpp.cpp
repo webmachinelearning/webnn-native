@@ -14,7 +14,7 @@
 //* limitations under the License.
 #include "webnn/webnn_cpp.h"
 
-namespace webnn {
+namespace ml {
     {% for type in by_category["enum"] %}
         {% set CppType = as_cppType(type.name) %}
         {% set CType = as_cType(type.name) %}
@@ -129,6 +129,10 @@ namespace webnn {
             }
         }
     {% endfor %}
+
+    GraphBuilder CreateGraphBuilder(Context context) {
+        return GraphBuilder::Acquire(webnnCreateGraphBuilder(context.GetHandle()));
+    }
 
     NamedInputs CreateNamedInputs() {
         return NamedInputs::Acquire(webnnCreateNamedInputs());

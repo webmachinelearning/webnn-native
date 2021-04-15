@@ -18,7 +18,7 @@
 #include "webnn/webnn.h"
 #include "webnn/EnumClassBitmasks.h"
 
-namespace webnn {
+namespace ml {
 
     {% for type in by_category["enum"] %}
         enum class {{as_cppType(type.name)}} : uint32_t {
@@ -216,6 +216,7 @@ namespace webnn {
 
     {% endfor %}
 
+    GraphBuilder CreateGraphBuilder(Context context);
     NamedInputs CreateNamedInputs();
     NamedOperands CreateNamedOperands();
     NamedOutputs CreateNamedOutputs();

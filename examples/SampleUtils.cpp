@@ -32,14 +32,14 @@ uint32_t product(const std::vector<int32_t>& dims) {
     return prod;
 }
 
-webnn::NeuralNetworkContext CreateCppNeuralNetworkContext() {
+ml::Context CreateCppContext() {
     WebnnProcTable backendProcs = webnn_native::GetProcs();
     webnnProcSetProcs(&backendProcs);
-    WebnnNeuralNetworkContext context = webnn_native::CreateNeuralNetworkContext();
+    MLContext context = webnn_native::CreateContext();
     if (context) {
-        return webnn::NeuralNetworkContext::Acquire(context);
+        return ml::Context::Acquire(context);
     }
-    return webnn::NeuralNetworkContext();
+    return ml::Context();
 }
 
 void DumpMemoryLeaks() {
@@ -63,77 +63,72 @@ bool Expected(float output, float expected) {
 
 namespace utils {
 
-    webnn::Operand BuildInput(const webnn::ModelBuilder& builder,
+    ml::Operand BuildInput(const ml::GraphBuilder& builder,
                               std::string name,
                               const std::vector<int32_t>& dimensions,
-                              webnn::OperandType type) {
-        webnn::OperandDescriptor desc = {type, dimensions.data(), (uint32_t)dimensions.size()};
+                              ml::OperandType type) {
+        ml::OperandDescriptor desc = {type, dimensions.data(), (uint32_t)dimensions.size()};
         return builder.Input(name.c_str(), &desc);
     }
 
-    webnn::Operand BuildConstant(const webnn::ModelBuilder& builder,
+    ml::Operand BuildConstant(const ml::GraphBuilder& builder,
                                  const std::vector<int32_t>& dimensions,
                                  const void* value,
                                  size_t size,
-                                 webnn::OperandType type) {
-        webnn::OperandDescriptor desc = {type, dimensions.data(), (uint32_t)dimensions.size()};
+                                 ml::OperandType type) {
+        ml::OperandDescriptor desc = {type, dimensions.data(), (uint32_t)dimensions.size()};
         return builder.Constant(&desc, value, size);
     }
 
-    webnn::Model CreateModel(const webnn::ModelBuilder& builder,
+    ml::Graph AwaitBuild(const ml::GraphBuilder& builder,
                              const std::vector<NamedOutput>& outputs) {
-        webnn::NamedOperands namedOperands = webnn::CreateNamedOperands();
+        typedef struct {
+            Async async;
+            ml::Graph graph;
+        } BuildData;
+
+        BuildData buildData;
+        ml::NamedOperands namedOperands = ml::CreateNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }
-        return builder.CreateModel(namedOperands);
-    }
-
-    webnn::Compilation AwaitCompile(const webnn::Model& model,
-                                    webnn::CompilationOptions const* options) {
-        typedef struct {
-            Async async;
-            webnn::Compilation compilation;
-        } CompilationData;
-
-        CompilationData compilationData;
-        model.Compile(
-            [](WebnnCompileStatus status, WebnnCompilation impl, char const* message,
+        builder.Build(namedOperands,
+            [](MLBuildStatus status, MLGraph impl, char const* message,
                void* userData) {
-                CompilationData* compilationDataPtr = reinterpret_cast<CompilationData*>(userData);
-                DAWN_ASSERT(compilationDataPtr);
-                if (status != WebnnCompileStatus_Success) {
-                    dawn::ErrorLog() << "Compile failed: " << message;
+                BuildData* buildDataPtr = reinterpret_cast<BuildData*>(userData);
+                DAWN_ASSERT(buildDataPtr);
+                if (status != MLBuildStatus_Success) {
+                    dawn::ErrorLog() << "Compute failed: " << message;
                 } else {
-                    compilationDataPtr->compilation = compilationDataPtr->compilation.Acquire(impl);
+                    buildDataPtr->graph = buildDataPtr->graph.Acquire(impl);
                 }
-                compilationDataPtr->async.Finish();
+                buildDataPtr->async.Finish();
                 return;
             },
-            &compilationData, options);
-        compilationData.async.Wait();
-        return compilationData.compilation;
+            &buildData);
+        buildData.async.Wait();
+        return buildData.graph;
     }
 
-    webnn::NamedResults AwaitCompute(const webnn::Compilation& compilation,
+    ml::NamedResults AwaitCompute(const ml::Graph& graph,
                                      const std::vector<NamedInput>& inputs) {
         typedef struct {
             Async async;
-            webnn::NamedResults results;
+            ml::NamedResults results;
         } ComputeData;
 
         ComputeData computeData;
-        webnn::NamedInputs namedInputs = webnn::CreateNamedInputs();
+        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
         for (auto& input : inputs) {
             namedInputs.Set(input.name.c_str(), &input.input);
         }
-        compilation.Compute(
+        graph.Compute(
             namedInputs,
-            [](WebnnComputeStatus status, WebnnNamedResults impl, char const* message,
+            [](MLComputeStatus status, MLNamedResults impl, char const* message,
                void* userData) {
                 ComputeData* computeDataPtr = reinterpret_cast<ComputeData*>(userData);
                 DAWN_ASSERT(computeDataPtr);
-                if (status != WebnnComputeStatus_Success) {
+                if (status != MLComputeStatus_Success) {
                     dawn::ErrorLog() << "Compute failed: " << message;
                 } else {
                     computeDataPtr->results = computeDataPtr->results.Acquire(impl);
@@ -146,7 +141,7 @@ namespace utils {
         return computeData.results;
     }
 
-    bool CheckShape(const webnn::Result& result, const std::vector<int32_t>& expectedShape) {
+    bool CheckShape(const ml::Result& result, const std::vector<int32_t>& expectedShape) {
         if (expectedShape.size() != result.DimensionsSize()) {
             dawn::ErrorLog() << "The output rank is expected as " << expectedShape.size()
                              << ", but got " << result.DimensionsSize();

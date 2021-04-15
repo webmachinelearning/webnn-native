@@ -17,11 +17,10 @@
 class ReluTests : public WebnnTest {};
 
 TEST_F(ReluTests, Relu) {
-    const webnn::ModelBuilder builder = GetContext().CreateModelBuilder();
-    const webnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const webnn::Operand b = builder.Relu(a);
-    const webnn::Model model = utils::CreateModel(builder, {{"b", b}});
-    const webnn::Compilation compiledModel = utils::AwaitCompile(model);
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const ml::Operand b = builder.Relu(a);
+    const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
     const std::vector<float> inputData = {
         -1.483762,   0.6447428,   -1.2266507,  -1.7132527,  0.9777725,   -0.34438756, -0.99921757,
         -1.2882805,  1.3725083,   -0.06386258, -0.44738683, -0.6776338,  0.5027815,   -1.0428967,
@@ -32,8 +31,8 @@ TEST_F(ReluTests, Relu) {
         0.7993208,   -0.31359985, 0.9019325,   -0.02042965, 0.5222995,   1.3394557,   -1.0482218,
         1.1774449,   0.8999488,   -1.1143959,  1.0122099,   -0.48604885, -0.06009902, -0.1766853,
         1.4515465,   -0.7182982,  2.0361354,   0.7899623};
-    const webnn::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-    const webnn::Result result = utils::AwaitCompute(compiledModel, {{"a", input}}).Get("b");
+    const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
+    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("b");
     EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
     const std::vector<float> expectedData(
         {0.,        0.6447428, 0.,        0.,        0.9777725,  0.,         0.,         0.,

@@ -12,26 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/dml/ModelDML.h"
+#include "webnn_native/dml/GraphDML.h"
 
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
-#include "webnn_native/dml/CompilationDML.h"
-#include "webnn_native/dml/NeuralNetworkContextDML.h"
+#include "webnn_native/NamedInputs.h"
+#include "webnn_native/NamedOutputs.h"
+#include "webnn_native/NamedResults.h"
+#include "webnn_native/Operand.h"
+#include "webnn_native/Result.h"
+#include "webnn_native/dml/ContextDML.h"
+#include "webnn_native/dml/deps/src/precomp.h"
 
 namespace webnn_native { namespace dml {
+    class Result : public ResultBase {
+      public:
+        explicit Result(void* buffer, uint32_t buffer_size, std::vector<int32_t>& dimensions)
+            : ResultBase(buffer, buffer_size, dimensions) {
+        }
+        ~Result() {
+            free(mBuffer);
+        }
+    };
 
     namespace {
-        bool GetDmlTensorDataType(webnn::OperandType operandType,
+        bool GetDmlTensorDataType(ml::OperandType operandType,
                                   DML_TENSOR_DATA_TYPE& dmlTensorDataType) {
-            if (operandType == webnn::OperandType::Float32) {
+            if (operandType == ml::OperandType::Float32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_FLOAT32;
-            } else if (operandType == webnn::OperandType::Float16) {
+            } else if (operandType == ml::OperandType::Float16) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_FLOAT16;
-            } else if (operandType == webnn::OperandType::Int32) {
+            } else if (operandType == ml::OperandType::Int32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_INT32;
-            } else if (operandType == webnn::OperandType::Uint32) {
+            } else if (operandType == ml::OperandType::Uint32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_UINT32;
             } else {
                 return false;
@@ -230,12 +244,12 @@ namespace webnn_native { namespace dml {
         return std::to_string(type);
     }
 
-    Model::Model(ModelBuilder* modelBuilder) : ModelBase(modelBuilder) {
-        mDevice = reinterpret_cast<NeuralNetworkContext*>(modelBuilder->GetContext())->GetDevice();
+    Graph::Graph(Context* context) : GraphBase(context) {
+        mDevice = context->GetDevice();
         mGraph.reset(new ::dml::Graph(mDevice->GetDevice()));
     }
 
-    MaybeError Model::AddConstant(const op::Constant* constant) {
+    MaybeError Graph::AddConstant(const op::Constant* constant) {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
         DML_TENSOR_DATA_TYPE dmlTensorType;
         if (!GetDmlTensorDataType(desc->type, dmlTensorType)) {
@@ -260,7 +274,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddInput(const op::Input* input) {
+    MaybeError Graph::AddInput(const op::Input* input) {
         const OperandDescriptor* desc = input->GetOperandDescriptor();
         DML_TENSOR_DATA_TYPE dmlTensorType;
         if (!GetDmlTensorDataType(desc->type, dmlTensorType)) {
@@ -280,14 +294,14 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
         DAWN_ASSERT(mExpression.find(output) != mExpression.end());
         ::dml::Expression dmlOutput = mExpression.at(output);
         mOutputs.insert(std::make_pair(name, dmlOutput));
         return {};
     }
 
-    MaybeError Model::AddBinary(const op::Binary* binary) {
+    MaybeError Graph::AddBinary(const op::Binary* binary) {
         DAWN_ASSERT(binary->Inputs().size() == 2);
         DAWN_ASSERT(mExpression.find(binary->Inputs()[0].Get()) != mExpression.end());
         ::dml::Expression a = mExpression.at(binary->Inputs()[0].Get());
@@ -393,7 +407,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddConv2d(const op::Conv2d* conv2d) {
+    MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
         DAWN_ASSERT(conv2d->Inputs().size() == 2);
         const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -428,7 +442,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddPool2d(const op::Pool2d* pool2d) {
+    MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         DAWN_ASSERT(pool2d->Inputs().size() == 1);
         const OperandBase* inputOperand = pool2d->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -476,7 +490,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddReshape(const op::Reshape* reshape) {
+    MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         DAWN_ASSERT(reshape->Inputs().size() == 1);
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -519,7 +533,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddTranspose(const op::Transpose* transpose) {
+    MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
         DAWN_ASSERT(transpose->Inputs().size() == 1);
         const OperandBase* inputOperand = transpose->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -577,7 +591,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::AddUnary(const op::Unary* unary) {
+    MaybeError Graph::AddUnary(const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         const OperandBase* inputOperand = unary->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -597,7 +611,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Model::Finish() {
+    MaybeError Graph::Finish() {
         if (mOutputs.size() == 1) {
             auto output = mOutputs.begin();
             if (output->second.Impl()->GetNode().type == ::dml::detail::NodeType::Reinterpret) {
@@ -608,25 +622,84 @@ namespace webnn_native { namespace dml {
                 mOutputs[name] = ::dml::ActivationIdentity(reshape);
             }
         }
-        return {};
-    }
 
-    void Model::CompileImpl(WebnnCompileCallback callback,
-                            void* userdata,
-                            CompilationOptions const* options) {
         // FIXME(nhu): implement async
-        WebnnCompileStatus status = WebnnCompileStatus_Success;
-        Compilation* compilation = new Compilation(this);
+        std::vector<::dml::Expression> outputs;
+        for (auto& output : mOutputs) {
+            outputs.push_back(output.second);
+        }
+        // TODO(nhu): investigate other execution flag,
+        // e.g. DML_EXECUTION_FLAG_ALLOW_HALF_PRECISION_COMPUTATION
+        mCompiledModel.reset(new pydml::CompiledModel(*(mGraph), DML_EXECUTION_FLAG_NONE, outputs));
+
         std::vector<pydml::Binding*> inputBindings;
         for (auto& binding : mBindings) {
             inputBindings.push_back(binding.get());
         }
-        if (FAILED(
-                mDevice->InitializeOperator(compilation->GetCompiledOperator(), inputBindings))) {
-            callback(WebnnCompileStatus_Error, nullptr, "Failed to initialize operator", userdata);
-        } else {
-            callback(status, reinterpret_cast<WebnnCompilation>(compilation), nullptr, userdata);
+        if (FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))) {
+            return DAWN_INTERNAL_ERROR("Failed to initialize operator");
         }
+
+        return {};
+    }
+
+    void Graph::ComputeImpl(NamedInputsBase* inputs,
+                            MLComputeCallback callback,
+                            void* userdata,
+                            NamedOutputsBase* outputs) {
+        for (auto& input : inputs->GetRecords()) {
+            ::pydml::Binding* inputBinding = mInputs.at(input.first);
+            inputBinding->data.buffer = const_cast<void*>(input.second->buffer);
+            inputBinding->data.size = input.second->size;
+        }
+        std::vector<pydml::Binding*> inputBindings;
+        for (auto& binding : mBindings) {
+            inputBindings.push_back(binding.get());
+        }
+        std::vector<::dml::Expression*> outputExpressions;
+        std::vector<std::string> outputNames;
+        if (outputs != nullptr) {
+            for (auto& output : outputs->GetRecords()) {
+                outputNames.push_back(output.first);
+                outputExpressions.push_back(&(mOutputs.at(output.first)));
+            }
+        } else {
+            for (auto& output : mOutputs) {
+                outputNames.push_back(output.first);
+                outputExpressions.push_back(&(output.second));
+            }
+        }
+        std::vector<pydml::TensorData*> outputTensors;
+        if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
+                                             outputExpressions, outputTensors))) {
+            callback(MLComputeStatus_Error, nullptr, "Failed to dispatch operator", userdata);
+            return;
+        }
+
+        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
+        for (size_t i = 0; i < outputNames.size(); ++i) {
+            std::string outputName = outputNames[i];
+            pydml::TensorData* tensor = outputTensors[i];
+            void* outputBuffer = tensor->Get();
+            size_t bufferLength = tensor->Size();
+            std::vector<int32_t> dimensions;
+            for (auto size : tensor->Desc()->sizes) {
+                // convert from uint32_t to int32_t.
+                dimensions.push_back(static_cast<int32_t>(size));
+            }
+            Ref<ResultBase> result = AcquireRef(new Result(outputBuffer, bufferLength, dimensions));
+            results->Set(outputName.c_str(), result.Detach());
+            if (outputs != nullptr) {
+                const Output* output = outputs->GetRecords().at(outputName);
+                if (output->size >= bufferLength) {
+                    memcpy(output->buffer, outputBuffer, bufferLength);
+                }
+            }
+            delete tensor;
+        }
+        callback(MLComputeStatus_Success, reinterpret_cast<MLNamedResults>(results.Detach()),
+                 nullptr, userdata);
+        return;
     }
 
 }}  // namespace webnn_native::dml

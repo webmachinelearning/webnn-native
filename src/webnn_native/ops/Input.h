@@ -18,14 +18,14 @@
 #include <memory>
 #include <string>
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
 
     class Input final : public OperandBase {
       public:
-        Input(ModelBuilderBase* builder, const std::string& name, const OperandDescriptor* desc)
+        Input(GraphBuilderBase* builder, const std::string& name, const OperandDescriptor* desc)
             : OperandBase(builder), mName(name) {
             mDescriptor.type = desc->type;
             mType = desc->type;
@@ -36,7 +36,7 @@ namespace webnn_native { namespace op {
         }
         ~Input() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddInput(this);
         }
         MaybeError ValidateAndInferTypes() override;

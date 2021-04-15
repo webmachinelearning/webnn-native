@@ -15,14 +15,14 @@
 #ifndef WEBNN_NATIVE_OPS_RESHAPE_H_
 #define WEBNN_NATIVE_OPS_RESHAPE_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
 
     class Reshape final : public OperandBase {
       public:
-        Reshape(ModelBuilderBase* builder,
+        Reshape(GraphBuilderBase* builder,
                 OperandBase* input,
                 int32_t const* newShape,
                 size_t newShapeCount)
@@ -31,7 +31,7 @@ namespace webnn_native { namespace op {
         }
         ~Reshape() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddReshape(this);
         }
         MaybeError ValidateAndInferTypes() override;

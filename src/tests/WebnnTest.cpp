@@ -21,12 +21,12 @@ void InitWebnnEnd2EndTestEnvironment() {
     testing::AddGlobalTestEnvironment(gTestEnv);
 }
 
-const webnn::NeuralNetworkContext& WebnnTest::GetContext() {
+const ml::Context& WebnnTest::GetContext() {
     return gTestEnv->GetContext();
 }
 
 void WebnnTest::SetUp() {
-    const webnn::NeuralNetworkContext& context = GetContext();
+    const ml::Context& context = GetContext();
     context.SetUncapturedErrorCallback(ErrorCallback, this);
 }
 
@@ -50,8 +50,8 @@ std::string WebnnTest::GetLastErrorMessage() const {
     return mErrorMessage;
 }
 
-void WebnnTest::ErrorCallback(WebnnErrorType type, char const* message, void* userdata) {
-    ASSERT(type != WebnnErrorType_NoError);
+void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userdata) {
+    ASSERT(type != MLErrorType_NoError);
     auto self = static_cast<WebnnTest*>(userdata);
     self->mErrorMessage = message;
 
@@ -61,10 +61,10 @@ void WebnnTest::ErrorCallback(WebnnErrorType type, char const* message, void* us
 }
 
 void WebnnTestEnvironment::SetUp() {
-    mContext = CreateCppNeuralNetworkContext();
+    mContext = CreateCppContext();
     DAWN_ASSERT(mContext);
 }
 
-const webnn::NeuralNetworkContext& WebnnTestEnvironment::GetContext() {
+const ml::Context& WebnnTestEnvironment::GetContext() {
     return mContext;
 }

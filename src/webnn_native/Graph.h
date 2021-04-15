@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_MODEL_H_
-#define WEBNN_NATIVE_MODEL_H_
+#ifndef WEBNN_NATIVE_GRAPH_H_
+#define WEBNN_NATIVE_GRAPH_H_
 
 #include "common/RefCounted.h"
-#include "webnn_native/Compilation.h"
+#include "webnn_native/Context.h"
 #include "webnn_native/Error.h"
 #include "webnn_native/Forward.h"
-#include "webnn_native/ModelBuilder.h"
 #include "webnn_native/ObjectBase.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/webnn_platform.h"
@@ -37,18 +36,16 @@ namespace webnn_native {
         class Unary;
     }  // namespace op
 
-    class ModelBase : public ObjectBase {
+    class GraphBase : public ObjectBase {
       public:
-        explicit ModelBase(ModelBuilderBase* modelBuilder);
-        virtual ~ModelBase() = default;
+        explicit GraphBase(ContextBase* context);
+        virtual ~GraphBase() = default;
 
-        // static
-        static ModelBase* MakeError(ModelBuilderBase* modelBuilder);
-
-        // Dawn API
-        void Compile(WebnnCompileCallback callback,
+        // Webnn API
+        void Compute(NamedInputsBase* inputs,
+                     MLComputeCallback callback,
                      void* userdata,
-                     CompilationOptions const* options);
+                     NamedOutputsBase* outputs = nullptr);
 
         virtual MaybeError AddConstant(const op::Constant* constant);
         virtual MaybeError AddInput(const op::Input* input);
@@ -62,10 +59,10 @@ namespace webnn_native {
         virtual MaybeError Finish();
 
       private:
-        ModelBase(ModelBuilderBase* modelBuilder, ObjectBase::ErrorTag tag);
-        virtual void CompileImpl(WebnnCompileCallback callback,
+        virtual void ComputeImpl(NamedInputsBase* inputs,
+                                 MLComputeCallback callback,
                                  void* userdata,
-                                 CompilationOptions const* options);
+                                 NamedOutputsBase* outputs) = 0;
     };
 }  // namespace webnn_native
 
