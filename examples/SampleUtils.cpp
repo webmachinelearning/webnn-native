@@ -93,11 +93,11 @@ namespace utils {
             namedOperands.Set(output.name.c_str(), output.operand);
         }
         builder.Build(namedOperands,
-            [](MLBuildStatus status, MLGraph impl, char const* message,
+            [](MLBuildGraphStatus status, MLGraph impl, char const* message,
                void* userData) {
                 BuildData* buildDataPtr = reinterpret_cast<BuildData*>(userData);
                 DAWN_ASSERT(buildDataPtr);
-                if (status != MLBuildStatus_Success) {
+                if (status != MLBuildGraphStatus_Success) {
                     dawn::ErrorLog() << "Compute failed: " << message;
                 } else {
                     buildDataPtr->graph = buildDataPtr->graph.Acquire(impl);
@@ -124,11 +124,11 @@ namespace utils {
         }
         graph.Compute(
             namedInputs,
-            [](MLComputeStatus status, MLNamedResults impl, char const* message,
+            [](MLComputeGraphStatus status, MLNamedResults impl, char const* message,
                void* userData) {
                 ComputeData* computeDataPtr = reinterpret_cast<ComputeData*>(userData);
                 DAWN_ASSERT(computeDataPtr);
-                if (status != MLComputeStatus_Success) {
+                if (status != MLComputeGraphStatus_Success) {
                     dawn::ErrorLog() << "Compute failed: " << message;
                 } else {
                     computeDataPtr->results = computeDataPtr->results.Acquire(impl);

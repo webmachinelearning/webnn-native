@@ -287,22 +287,22 @@
         "name": "build",
         "args": [
           {"name": "named operands", "type": "named operands"},
-          {"name": "callback", "type": "build callback"},
+          {"name": "callback", "type": "build graph callback"},
           {"name": "userdata", "type": "void", "annotation": "*"}
         ]
       }
     ]
   },
-  "build callback": {
+  "build graph callback": {
     "category": "callback",
     "args": [
-      {"name": "status", "type": "build status"},
+      {"name": "status", "type": "build graph status"},
       {"name": "graph", "type": "graph"},
       {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
       {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
-  "build status": {
+  "build graph status": {
     "category": "enum",
     "values": [
         {"value": 0, "name": "success"},
@@ -386,16 +386,16 @@
       }
     ]
   },
-  "compute callback": {
+  "compute graph callback": {
     "category": "callback",
     "args": [
-      {"name": "status", "type": "compute status"},
+      {"name": "status", "type": "compute graph status"},
       {"name": "outputs", "type": "named results"},
       {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
       {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
-  "compute status": {
+  "compute graph status": {
     "category": "enum",
     "values": [
         {"value": 0, "name": "success"},
@@ -411,7 +411,7 @@
         "name": "compute",
         "args": [
           {"name": "inputs", "type": "named inputs"},
-          {"name": "callback", "type": "compute callback"},
+          {"name": "callback", "type": "compute graph callback"},
           {"name": "userdata", "type": "void", "annotation": "*"},
           {"name": "outputs", "type": "named outputs", "optional": true}
         ]

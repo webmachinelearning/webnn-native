@@ -23,11 +23,11 @@ class MockGraphBuildCallback {
   public:
     MOCK_METHOD(void,
                 Call,
-                (MLBuildStatus status, MLGraph impl, const char* message, void* userdata));
+                (MLBuildGraphStatus status, MLGraph impl, const char* message, void* userdata));
 };
 
 static std::unique_ptr<MockGraphBuildCallback> mockGraphBuildCallback;
-static void ToMockGraphBuildCallback(MLBuildStatus status,
+static void ToMockGraphBuildCallback(MLBuildGraphStatus status,
                                      MLGraph impl,
                                      const char* message,
                                      void* userdata) {
@@ -63,12 +63,13 @@ TEST_F(GraphValidationTest, BuildCallBackSuccess) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
     namedOperands.Set("output", mOutput);
     mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
-    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildStatus_Success, _, nullptr, this)).Times(1);
+    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Success, _, nullptr, this))
+        .Times(1);
 }
 
 // Create model with null nameOperands
 TEST_F(GraphValidationTest, BuildCallBackError) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
     mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
-    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildStatus_Error, _, _, this)).Times(1);
+    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Error, _, _, this)).Times(1);
 }

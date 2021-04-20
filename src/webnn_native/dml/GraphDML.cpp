@@ -623,6 +623,10 @@ namespace webnn_native { namespace dml {
             }
         }
 
+        return {};
+    }
+
+    void Graph::CompileImpl(BuildGraphCallbackDelgate delgate) {
         // FIXME(nhu): implement async
         std::vector<::dml::Expression> outputs;
         for (auto& output : mOutputs) {
@@ -636,15 +640,15 @@ namespace webnn_native { namespace dml {
         for (auto& binding : mBindings) {
             inputBindings.push_back(binding.get());
         }
-        if (FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))) {
-            return DAWN_INTERNAL_ERROR("Failed to initialize operator");
-        }
-
-        return {};
+        MLBuildGraphStatus status =
+            FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))
+                ? MLBuildGraphStatus_Error
+                : MLBuildGraphStatus_Success;
+        delgate(status, this);
     }
 
     void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeCallback callback,
+                            MLComputeGraphCallback callback,
                             void* userdata,
                             NamedOutputsBase* outputs) {
         for (auto& input : inputs->GetRecords()) {
@@ -672,7 +676,7 @@ namespace webnn_native { namespace dml {
         std::vector<pydml::TensorData*> outputTensors;
         if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
                                              outputExpressions, outputTensors))) {
-            callback(MLComputeStatus_Error, nullptr, "Failed to dispatch operator", userdata);
+            callback(MLComputeGraphStatus_Error, nullptr, "Failed to dispatch operator", userdata);
             return;
         }
 
@@ -697,7 +701,7 @@ namespace webnn_native { namespace dml {
             }
             delete tensor;
         }
-        callback(MLComputeStatus_Success, reinterpret_cast<MLNamedResults>(results.Detach()),
+        callback(MLComputeGraphStatus_Success, reinterpret_cast<MLNamedResults>(results.Detach()),
                  nullptr, userdata);
         return;
     }

@@ -51,8 +51,9 @@ namespace webnn_native { namespace ie {
         virtual MaybeError Finish() override;
 
       private:
+        void CompileImpl(BuildGraphCallbackDelgate delgate);
         void ComputeImpl(NamedInputsBase* inputs,
-                         MLComputeCallback callback,
+                         MLComputeGraphCallback callback,
                          void* userdata,
                          NamedOutputsBase* outputs) override;
 

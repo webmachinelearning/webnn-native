@@ -52,11 +52,10 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
-        friend class Compilation;
-
       private:
+        void CompileImpl(BuildGraphCallbackDelgate delgate) override;
         void ComputeImpl(NamedInputsBase* inputs,
-                         MLComputeCallback callback,
+                         MLComputeGraphCallback callback,
                          void* userdata,
                          NamedOutputsBase* outputs) override;
 

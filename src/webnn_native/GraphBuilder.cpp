@@ -43,10 +43,10 @@
     for (;;)                                                        \
     break
 
-#define BUILD_ERROR_AND_CALLBACK(message)                          \
-    do {                                                           \
-        callback(MLBuildStatus_Error, nullptr, message, userdata); \
-        return;                                                    \
+#define BUILD_ERROR_AND_CALLBACK(message)                               \
+    do {                                                                \
+        callback(MLBuildGraphStatus_Error, nullptr, message, userdata); \
+        return;                                                         \
     } while (0)
 
 namespace webnn_native {
@@ -111,7 +111,7 @@ namespace webnn_native {
     }
 
     void GraphBuilderBase::Build(NamedOperandsBase const* namedOperands,
-                                 MLBuildCallback callback,
+                                 MLBuildGraphCallback callback,
                                  void* userdata) {
         if (DAWN_UNLIKELY(this->IsError())) {
             BUILD_ERROR_AND_CALLBACK("This Graph object is an error");
@@ -140,8 +140,14 @@ namespace webnn_native {
         if (GetContext()->ConsumedError(graph->Finish())) {
             BUILD_ERROR_AND_CALLBACK("Failed to finish building graph.");
         }
-        callback(MLBuildStatus_Success, reinterpret_cast<MLGraph>(graph.Detach()), nullptr,
-                 userdata);
+        graph.Detach()->Compile([callback, userdata](MLBuildGraphStatus status, GraphBase* graph) {
+            if (status == MLBuildGraphStatus_Success) {
+                callback(status, reinterpret_cast<MLGraph>(graph), nullptr, userdata);
+            } else {
+                delete graph;
+                callback(status, nullptr, "Failed to compile graph", userdata);
+            }
+        });
     }
 
     // The implementation derives from nGraph topological_sort in

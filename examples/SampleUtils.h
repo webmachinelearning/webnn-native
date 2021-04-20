@@ -35,15 +35,15 @@ bool Expected(float output, float expected);
 namespace utils {
 
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
-                              std::string name,
-                              const std::vector<int32_t>& dimensions,
-                              ml::OperandType type = ml::OperandType::Float32);
+                           std::string name,
+                           const std::vector<int32_t>& dimensions,
+                           ml::OperandType type = ml::OperandType::Float32);
 
     ml::Operand BuildConstant(const ml::GraphBuilder& builder,
-                                 const std::vector<int32_t>& dimensions,
-                                 const void* value,
-                                 size_t size,
-                                 ml::OperandType type = ml::OperandType::Float32);
+                              const std::vector<int32_t>& dimensions,
+                              const void* value,
+                              size_t size,
+                              ml::OperandType type = ml::OperandType::Float32);
 
     struct Conv2dOptions {
       public:
@@ -113,8 +113,7 @@ namespace utils {
         const ml::Operand& operand;
     } NamedOutput;
 
-    ml::Graph AwaitBuild(const ml::GraphBuilder& builder,
-                             const std::vector<NamedOutput>& outputs);
+    ml::Graph AwaitBuild(const ml::GraphBuilder& builder, const std::vector<NamedOutput>& outputs);
 
     typedef struct {
         const std::string& name;
@@ -122,7 +121,7 @@ namespace utils {
     } NamedInput;
 
     ml::NamedResults AwaitCompute(const ml::Graph& compilation,
-                                     const std::vector<NamedInput>& inputs);
+                                  const std::vector<NamedInput>& inputs);
 
     bool CheckShape(const ml::Result& result, const std::vector<int32_t>& expectedShape);
 

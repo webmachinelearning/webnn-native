@@ -19,6 +19,7 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Error.h"
 #include "webnn_native/Forward.h"
+#include "webnn_native/GraphBuilder.h"
 #include "webnn_native/ObjectBase.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/webnn_platform.h"
@@ -43,7 +44,7 @@ namespace webnn_native {
 
         // Webnn API
         void Compute(NamedInputsBase* inputs,
-                     MLComputeCallback callback,
+                     MLComputeGraphCallback callback,
                      void* userdata,
                      NamedOutputsBase* outputs = nullptr);
 
@@ -57,10 +58,12 @@ namespace webnn_native {
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);
         virtual MaybeError Finish();
+        virtual void Compile(BuildGraphCallbackDelgate delgate);
 
       private:
+        virtual void CompileImpl(BuildGraphCallbackDelgate delgate) = 0;
         virtual void ComputeImpl(NamedInputsBase* inputs,
-                                 MLComputeCallback callback,
+                                 MLComputeGraphCallback callback,
                                  void* userdata,
                                  NamedOutputsBase* outputs) = 0;
     };

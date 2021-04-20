@@ -21,9 +21,13 @@
 #include "webnn_native/ObjectBase.h"
 #include "webnn_native/webnn_platform.h"
 
+#include <functional>
 #include <vector>
 
 namespace webnn_native {
+
+    using BuildGraphCallbackDelgate =
+        std::function<void(MLBuildGraphStatus status, GraphBase* graph)>;
 
     class GraphBuilderBase : public ObjectBase {
       public:
@@ -44,7 +48,7 @@ namespace webnn_native {
         OperandBase* Softmax(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         void Build(NamedOperandsBase const* named_operands,
-                   MLBuildCallback callback,
+                   MLBuildGraphCallback callback,
                    void* userdata);
 
       private:

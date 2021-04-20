@@ -25,7 +25,7 @@ namespace webnn_native {
     }
 
     void GraphBase::Compute(NamedInputsBase* inputs,
-                            MLComputeCallback callback,
+                            MLComputeGraphCallback callback,
                             void* userdata,
                             NamedOutputsBase* outputs) {
         ComputeImpl(inputs, callback, userdata, outputs);
@@ -69,6 +69,10 @@ namespace webnn_native {
 
     MaybeError GraphBase::Finish() {
         UNREACHABLE();
+    }
+
+    void GraphBase::Compile(BuildGraphCallbackDelgate delgate) {
+        CompileImpl(delgate);
     }
 
 }  // namespace webnn_native
