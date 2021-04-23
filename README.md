@@ -25,6 +25,9 @@ WebNN-native uses the Chromium build system and dependency management so you nee
 
 [install depot_tools]: http://commondatastorage.googleapis.com/chrome-infra-docs/flat/depot_tools/docs/html/depot_tools_tutorial.html#_setting_up
 
+**Notes**:
+ * On Windows, you'll need to set the environment variable `DEPOT_TOOLS_WIN_TOOLCHAIN=0`. This tells depot_tools to use your locally installed version of Visual Studio (by default, depot_tools will try to download a Google-internal version).
+
 ### Get the code
 
 Get the source code as follows:
