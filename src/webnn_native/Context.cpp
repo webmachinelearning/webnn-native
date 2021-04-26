@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/NeuralNetworkContext.h"
+#include "webnn_native/Context.h"
 
 #include <sstream>
 
@@ -21,27 +21,23 @@
 
 namespace webnn_native {
 
-    NeuralNetworkContextBase::NeuralNetworkContextBase() {
+    ContextBase::ContextBase() {
         mRootErrorScope = AcquireRef(new ErrorScope());
         mCurrentErrorScope = mRootErrorScope.Get();
     }
 
-    ModelBuilderBase* NeuralNetworkContextBase::CreateModelBuilder() {
-        return CreateModelBuilderImpl();
+    GraphBase* ContextBase::CreateGraph() {
+        return CreateGraphImpl();
     }
 
-    ModelBuilderBase* NeuralNetworkContextBase::CreateModelBuilderImpl() {
-        UNREACHABLE();
-    }
-
-    void NeuralNetworkContextBase::PushErrorScope(webnn::ErrorFilter filter) {
+    void ContextBase::PushErrorScope(ml::ErrorFilter filter) {
         if (ConsumedError(ValidateErrorFilter(filter))) {
             return;
         }
         mCurrentErrorScope = AcquireRef(new ErrorScope(filter, mCurrentErrorScope.Get()));
     }
 
-    bool NeuralNetworkContextBase::PopErrorScope(webnn::ErrorCallback callback, void* userdata) {
+    bool ContextBase::PopErrorScope(ml::ErrorCallback callback, void* userdata) {
         if (DAWN_UNLIKELY(mCurrentErrorScope.Get() == mRootErrorScope.Get())) {
             return false;
         }
@@ -51,12 +47,11 @@ namespace webnn_native {
         return true;
     }
 
-    void NeuralNetworkContextBase::SetUncapturedErrorCallback(webnn::ErrorCallback callback,
-                                                              void* userdata) {
+    void ContextBase::SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata) {
         mRootErrorScope->SetCallback(callback, userdata);
     }
 
-    void NeuralNetworkContextBase::HandleError(std::unique_ptr<ErrorData> error) {
+    void ContextBase::HandleError(std::unique_ptr<ErrorData> error) {
         ASSERT(error != nullptr);
         std::ostringstream ss;
         ss << error->GetMessage();
@@ -67,7 +62,7 @@ namespace webnn_native {
 
         // Still forward device loss and internal errors to the error scopes so they
         // all reject.
-        mCurrentErrorScope->HandleError(ToWebnnErrorType(error->GetType()), ss.str().c_str());
+        mCurrentErrorScope->HandleError(ToMLErrorType(error->GetType()), ss.str().c_str());
     }
 
 }  // namespace webnn_native

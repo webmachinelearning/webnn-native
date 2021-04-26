@@ -17,16 +17,15 @@
 class SoftmaxTests : public WebnnTest {};
 
 TEST_F(SoftmaxTests, Softmax) {
-    const webnn::ModelBuilder builder = GetContext().CreateModelBuilder();
-    const webnn::Operand a = utils::BuildInput(builder, "a", {3, 4});
-    const webnn::Operand b = builder.Softmax(a);
-    const webnn::Model model = utils::CreateModel(builder, {{"b", b}});
-    const webnn::Compilation compiledModel = utils::AwaitCompile(model);
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4});
+    const ml::Operand b = builder.Softmax(a);
+    const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
     const std::vector<float> inputData = {0.4301911,   0.54719144,  -1.1637765, 0.18390046,
                                           0.58390397,  0.1735679,   0.539724,   -0.953514,
                                           -0.59202826, -0.17344485, 0.14395015, -0.37920907};
-    const webnn::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-    const webnn::Result result = utils::AwaitCompute(compiledModel, {{"a", input}}).Get("b");
+    const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
+    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("b");
     EXPECT_TRUE(utils::CheckShape(result, {3, 4}));
     const std::vector<float> expectedData = {0.32165375, 0.36157736, 0.0653337,  0.25143513,
                                              0.35271573, 0.23400122, 0.33747196, 0.07581109,

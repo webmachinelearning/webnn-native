@@ -23,12 +23,12 @@
 #include <string>
 #include <vector>
 
-namespace webnn {
+namespace ml {
     enum class ErrorType : uint32_t;
 }
 
 namespace dawn {
-    using ErrorType = webnn::ErrorType;
+    using ErrorType = ml::ErrorType;
 }
 
 namespace webnn_native {

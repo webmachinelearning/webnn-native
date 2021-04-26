@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NEURAL_NETWORK_CONTEXT_H_
-#define WEBNN_NATIVE_NEURAL_NETWORK_CONTEXT_H_
+#ifndef WEBNN_NATIVE_CONTEXT_H_
+#define WEBNN_NATIVE_CONTEXT_H_
 
 #include "common/RefCounted.h"
 #include "webnn_native/Error.h"
 #include "webnn_native/ErrorScope.h"
 #include "webnn_native/webnn_platform.h"
 
+class WebGLRenderingContext;
 namespace webnn_native {
 
-    class NeuralNetworkContextBase : public RefCounted {
+    class ContextBase : public RefCounted {
       public:
-        NeuralNetworkContextBase();
-        virtual ~NeuralNetworkContextBase() = default;
+        ContextBase();
+        virtual ~ContextBase() = default;
 
         bool ConsumedError(MaybeError maybeError) {
             if (DAWN_UNLIKELY(maybeError.IsError())) {
@@ -35,15 +36,18 @@ namespace webnn_native {
             return false;
         }
 
+        GraphBase* CreateGraph();
+
         // Dawn API
-        ModelBuilderBase* CreateModelBuilder();
-        void PushErrorScope(webnn::ErrorFilter filter);
-        bool PopErrorScope(webnn::ErrorCallback callback, void* userdata);
-        void SetUncapturedErrorCallback(webnn::ErrorCallback callback, void* userdata);
+        void PushErrorScope(ml::ErrorFilter filter);
+        bool PopErrorScope(ml::ErrorCallback callback, void* userdata);
+        void SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata);
 
       private:
+        // Create concrete model.
+        virtual GraphBase* CreateGraphImpl() = 0;
+
         void HandleError(std::unique_ptr<ErrorData> error);
-        virtual ModelBuilderBase* CreateModelBuilderImpl();
 
         Ref<ErrorScope> mRootErrorScope;
         Ref<ErrorScope> mCurrentErrorScope;
@@ -51,4 +55,4 @@ namespace webnn_native {
 
 }  // namespace webnn_native
 
-#endif  // WEBNN_NATIVE_NEURAL_NETWORK_CONTEXT_H_
+#endif  // WEBNN_NATIVE_CONTEXT_H_

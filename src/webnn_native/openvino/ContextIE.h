@@ -12,22 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_MODEL_BUILDER_DML_H_
-#define WEBNN_NATIVE_DML_MODEL_BUILDER_DML_H_
+#ifndef WEBNN_NATIVE_IE_CONTEXT_IE_H_
+#define WEBNN_NATIVE_IE_CONTEXT_IE_H_
 
-#include "webnn_native/ModelBuilder.h"
+#include "webnn_native/Context.h"
+#include "webnn_native/Graph.h"
 
-namespace webnn_native { namespace dml {
+namespace webnn_native { namespace ie {
 
-    class ModelBuilder : public ModelBuilderBase {
+    class Context : public ContextBase {
       public:
-        explicit ModelBuilder(NeuralNetworkContextBase* context);
-        ~ModelBuilder() override = default;
+        explicit Context(ContextOptions const* options);
+        ~Context() override = default;
 
       private:
-        ModelBase* CreateModelImpl() override;
+        GraphBase* CreateGraphImpl() override;
+
+        ContextOptions mOptions;
     };
 
-}}  // namespace webnn_native::dml
+}}  // namespace webnn_native::ie
 
-#endif  // WEBNN_NATIVE_DML_MODEL_BUILDER_DML_H_
+#endif  // WEBNN_NATIVE_IE_CONTEXT_IE_H_

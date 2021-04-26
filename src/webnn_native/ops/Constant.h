@@ -15,14 +15,14 @@
 #ifndef WEBNN_NATIVE_OPS_CONSTANT_H_
 #define WEBNN_NATIVE_OPS_CONSTANT_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
 
     class Constant final : public OperandBase {
       public:
-        Constant(ModelBuilderBase* builder,
+        Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  void const* value,
                  size_t size)
@@ -36,7 +36,7 @@ namespace webnn_native { namespace op {
         }
         ~Constant() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddConstant(this);
         }
 

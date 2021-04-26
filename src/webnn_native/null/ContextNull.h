@@ -12,41 +12,37 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_NULL_NEURAL_NETWORK_CONTEXT_NULL_H_
-#define WEBNN_NATIVE_NULL_NEURAL_NETWORK_CONTEXT_NULL_H_
+#ifndef WEBNN_NATIVE_NULL_CONTEXT_NULL_H_
+#define WEBNN_NATIVE_NULL_CONTEXT_NULL_H_
 
-#include "webnn_native/Compilation.h"
-#include "webnn_native/Model.h"
-#include "webnn_native/ModelBuilder.h"
-#include "webnn_native/NeuralNetworkContext.h"
+#include "webnn_native/Context.h"
+#include "webnn_native/Graph.h"
+#include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native { namespace null {
 
-    // NeuralNetworkContext
-    class NeuralNetworkContext : public NeuralNetworkContextBase {
+    // Context
+    class Context : public ContextBase {
       public:
-        NeuralNetworkContext() = default;
-        ~NeuralNetworkContext() override = default;
+        explicit Context(ContextOptions const* options);
+        ~Context() override = default;
 
       private:
-        ModelBuilderBase* CreateModelBuilderImpl() override;
+        GraphBase* CreateGraphImpl() override;
     };
 
-    // ModelBuilder
-    class ModelBuilder : public ModelBuilderBase {
+    // GraphBuilder
+    class GraphBuilder : public GraphBuilderBase {
       public:
-        explicit ModelBuilder(NeuralNetworkContextBase* context);
-        ~ModelBuilder() override = default;
-
-      private:
-        ModelBase* CreateModelImpl() override;
+        explicit GraphBuilder(ContextBase* context);
+        ~GraphBuilder() override = default;
     };
 
-    // Model
-    class Model : public ModelBase {
+    // Graph
+    class Graph : public GraphBase {
       public:
-        explicit Model(ModelBuilder* model_builder);
-        ~Model() override = default;
+        explicit Graph(Context* context);
+        ~Graph() override = default;
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
         virtual MaybeError AddOutput(const std::string& name, const OperandBase* ouput) override;
@@ -57,30 +53,15 @@ namespace webnn_native { namespace null {
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
-        friend class Compilation;
 
       private:
-        void CompileImpl(WebnnCompileCallback callback,
-                         void* userdata,
-                         CompilationOptions const* options) override;
-    };
-
-    // Compilation
-    class Compilation : public CompilationBase {
-      public:
-        Compilation() = default;
-        ~Compilation() override = default;
-        void Compile(WebnnCompileCallback callback,
-                     void* userdata,
-                     CompilationOptions const* options);
-
-      private:
+        void CompileImpl(BuildGraphCallbackDelgate delgate) override;
         void ComputeImpl(NamedInputsBase* inputs,
-                         WebnnComputeCallback callback,
+                         MLComputeGraphCallback callback,
                          void* userdata,
                          NamedOutputsBase* outputs = nullptr) override;
     };
 
 }}  // namespace webnn_native::null
 
-#endif  // WEBNN_NATIVE_NULL_NEURAL_NETWORK_CONTEXT_NULL_H_
+#endif  // WEBNN_NATIVE_NULL_CONTEXT_NULL_H_

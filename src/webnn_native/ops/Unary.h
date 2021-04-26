@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_UNARY_H_
 #define WEBNN_NATIVE_OPS_UNARY_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
@@ -27,12 +27,12 @@ namespace webnn_native { namespace op {
 
     class Unary final : public OperandBase {
       public:
-        Unary(ModelBuilderBase* builder, UnaryOpType opType, OperandBase* input)
+        Unary(GraphBuilderBase* builder, UnaryOpType opType, OperandBase* input)
             : OperandBase(builder, {input}), mOpType(opType) {
         }
         ~Unary() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddUnary(this);
         }
         MaybeError ValidateAndInferTypes() override;

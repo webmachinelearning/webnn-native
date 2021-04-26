@@ -26,12 +26,10 @@ class LeNet {
     ~LeNet() = default;
 
     bool Load(const std::string& weigthsPath);
-    bool Compile(webnn::CompilationOptions const* options = nullptr);
-    webnn::Result Compute(const void* inputData, size_t inputLength);
+    ml::Result Compute(const void* inputData, size_t inputLength);
 
   private:
-    webnn::NeuralNetworkContext mContext;
-    webnn::Model mModel;
-    webnn::Compilation mCompilation;
-    webnn::NamedResults mResults;
+    ml::Context mContext;
+    ml::Graph mGraph;
+    ml::NamedResults mResults;
 };

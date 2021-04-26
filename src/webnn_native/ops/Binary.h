@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_BINARY_H_
 #define WEBNN_NATIVE_OPS_BINARY_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
@@ -32,12 +32,12 @@ namespace webnn_native { namespace op {
 
     class Binary final : public OperandBase {
       public:
-        Binary(ModelBuilderBase* builder, BinaryOpType opType, OperandBase* a, OperandBase* b)
+        Binary(GraphBuilderBase* builder, BinaryOpType opType, OperandBase* a, OperandBase* b)
             : OperandBase(builder, {a, b}), mOpType(opType) {
         }
         ~Binary() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddBinary(this);
         }
         BinaryOpType GetType() const {

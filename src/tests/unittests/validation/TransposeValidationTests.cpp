@@ -23,19 +23,19 @@ class TransposeValidationTest : public ValidationTest {
     void SetUp() override {
         ValidationTest::SetUp();
         std::vector<int32_t> shape = {2, 3, 4};
-        webnn::OperandDescriptor inputDesc = {webnn::OperandType::Float32, shape.data(),
-                                              (uint32_t)shape.size()};
+        ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
+                                           (uint32_t)shape.size()};
         mInput = mBuilder.Input("input", &inputDesc);
     }
-    webnn::Operand mInput;
+    ml::Operand mInput;
 };
 
 TEST_F(TransposeValidationTest, CreateByDefaultOptions) {
     // success
-    { webnn::Operand transpose = mBuilder.Transpose(mInput); }
+    { ml::Operand transpose = mBuilder.Transpose(mInput); }
     {
-        webnn::TransposeOptions options = {};
-        webnn::Operand transpose = mBuilder.Transpose(mInput, &options);
+        ml::TransposeOptions options = {};
+        ml::Operand transpose = mBuilder.Transpose(mInput, &options);
     }
 }
 
@@ -43,15 +43,15 @@ TEST_F(TransposeValidationTest, InvalidOptions) {
     // success
     {
         std::vector<int32_t> permutation = {2, 0, 1};
-        webnn::TransposeOptions options;
+        ml::TransposeOptions options;
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
-        webnn::Operand transpose = mBuilder.Transpose(mInput, &options);
+        ml::Operand transpose = mBuilder.Transpose(mInput, &options);
     }
     // permutation size is invalid
     {
         std::vector<int32_t> permutation = {2, 0, 1, 3};
-        webnn::TransposeOptions options;
+        ml::TransposeOptions options;
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
         ASSERT_CONTEXT_ERROR(mBuilder.Transpose(mInput, &options));
@@ -59,7 +59,7 @@ TEST_F(TransposeValidationTest, InvalidOptions) {
     // permutation value is invalid
     {
         std::vector<int32_t> permutation = {3, 2, 2};
-        webnn::TransposeOptions options;
+        ml::TransposeOptions options;
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
         ASSERT_CONTEXT_ERROR(mBuilder.Transpose(mInput, &options));
@@ -67,7 +67,7 @@ TEST_F(TransposeValidationTest, InvalidOptions) {
     // permutation value is invalid
     {
         std::vector<int32_t> permutation = {3, 2, 4};
-        webnn::TransposeOptions options;
+        ml::TransposeOptions options;
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
         ASSERT_CONTEXT_ERROR(mBuilder.Transpose(mInput, &options));

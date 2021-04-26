@@ -21,11 +21,11 @@ using namespace testing;
 
 class MockContextPopErrorScopeCallback {
   public:
-    MOCK_METHOD(void, Call, (WebnnErrorType type, const char* message, void* userdata));
+    MOCK_METHOD(void, Call, (MLErrorType type, const char* message, void* userdata));
 };
 
 static std::unique_ptr<MockContextPopErrorScopeCallback> mockContextPopErrorScopeCallback;
-static void ToMockContextPopErrorScopeCallback(WebnnErrorType type,
+static void ToMockContextPopErrorScopeCallback(MLErrorType type,
                                                const char* message,
                                                void* userdata) {
     mockContextPopErrorScopeCallback->Call(type, message, userdata);
@@ -48,38 +48,37 @@ class ErrorScopeValidationTest : public ValidationTest {
 
 // Test the simple success case.
 TEST_F(ErrorScopeValidationTest, Success) {
-    mContext.PushErrorScope(webnn::ErrorFilter::Validation);
+    mContext.PushErrorScope(ml::ErrorFilter::Validation);
 
-    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(WebnnErrorType_NoError, _, this)).Times(1);
+    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(MLErrorType_NoError, _, this)).Times(1);
     mContext.PopErrorScope(ToMockContextPopErrorScopeCallback, this);
 }
 
 // Test the simple case where the error scope catches an error.
 TEST_F(ErrorScopeValidationTest, CatchesError) {
-    mContext.PushErrorScope(webnn::ErrorFilter::Validation);
+    mContext.PushErrorScope(ml::ErrorFilter::Validation);
 
     std::vector<int32_t> shape = {2, 2, 2};
-    webnn::OperandDescriptor inputDesc = {webnn::OperandType::Float32, shape.data(),
-                                          (uint32_t)shape.size()};
-    webnn::Operand a = mBuilder.Input("input", &inputDesc);
+    ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
+                                       (uint32_t)shape.size()};
+    ml::Operand a = mBuilder.Input("input", &inputDesc);
     mBuilder.Softmax(a);
 
-    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(WebnnErrorType_Validation, _, this))
-        .Times(1);
+    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(MLErrorType_Validation, _, this)).Times(1);
     mContext.PopErrorScope(ToMockContextPopErrorScopeCallback, this);
 }
 
 // Test that if no error scope handles an error, it goes to the context UncapturedError callback
 TEST_F(ErrorScopeValidationTest, UnhandledErrorsMatchUncapturedErrorCallback) {
-    mContext.PushErrorScope(webnn::ErrorFilter::OutOfMemory);
+    mContext.PushErrorScope(ml::ErrorFilter::OutOfMemory);
 
     std::vector<int32_t> shape = {2, 2, 2};
-    webnn::OperandDescriptor inputDesc = {webnn::OperandType::Float32, shape.data(),
-                                          (uint32_t)shape.size()};
-    webnn::Operand a = mBuilder.Input("input", &inputDesc);
+    ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
+                                       (uint32_t)shape.size()};
+    ml::Operand a = mBuilder.Input("input", &inputDesc);
     ASSERT_CONTEXT_ERROR(mBuilder.Softmax(a));
 
-    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(WebnnErrorType_NoError, _, this)).Times(1);
+    EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(MLErrorType_NoError, _, this)).Times(1);
     mContext.PopErrorScope(ToMockContextPopErrorScopeCallback, this);
 }
 
@@ -90,9 +89,9 @@ TEST_F(ErrorScopeValidationTest, PushPopBalanced) {
 
     // Too many pops
     {
-        mContext.PushErrorScope(webnn::ErrorFilter::Validation);
+        mContext.PushErrorScope(ml::ErrorFilter::Validation);
 
-        EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(WebnnErrorType_NoError, _, this + 1))
+        EXPECT_CALL(*mockContextPopErrorScopeCallback, Call(MLErrorType_NoError, _, this + 1))
             .Times(1);
         mContext.PopErrorScope(ToMockContextPopErrorScopeCallback, this + 1);
 

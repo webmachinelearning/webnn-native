@@ -18,7 +18,7 @@
 
 #include "webnn/webnn_cpp.h"
 
-class Object : public webnn::ObjectBase<Object, int*> {
+class Object : public ml::ObjectBase<Object, int*> {
   public:
     using ObjectBase::ObjectBase;
     using ObjectBase::operator=;

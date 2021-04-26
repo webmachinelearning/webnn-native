@@ -25,7 +25,7 @@ namespace webnn_native {
     {%- if member.annotation in ["*", "const*", "const*const*"] and member.optional -%}
         {{" "}}= nullptr
     {%- elif member.type.category in ["enum", "bitmask"] and member.default_value != None -%}
-        {{" "}}= webnn::{{as_cppType(member.type.name)}}::{{as_cppEnum(Name(member.default_value))}}
+        {{" "}}= ml::{{as_cppType(member.type.name)}}::{{as_cppEnum(Name(member.default_value))}}
     {%- elif member.type.category == "native" and member.default_value != None -%}
         {{" "}}= {{member.default_value}}
     {%- else -%}
@@ -41,7 +41,7 @@ namespace webnn_native {
         {% if type.chained %}
             struct {{as_cppType(type.name)}} : ChainedStruct {
                 {{as_cppType(type.name)}}() {
-                    sType = webnn::SType::{{type.name.CamelCase()}};
+                    sType = ml::SType::{{type.name.CamelCase()}};
                 }
         {% else %}
             struct {{as_cppType(type.name)}} {

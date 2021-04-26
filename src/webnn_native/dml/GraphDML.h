@@ -18,9 +18,9 @@
 #include <map>
 #include <set>
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/dml/ModelBuilderDML.h"
+#include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Constant.h"
@@ -36,10 +36,10 @@ namespace webnn_native { namespace dml {
     std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
     std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
 
-    class Model : public ModelBase {
+    class Graph : public GraphBase {
       public:
-        explicit Model(ModelBuilder* model_builder);
-        ~Model() override = default;
+        explicit Graph(Context* context);
+        ~Graph() override = default;
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
@@ -52,12 +52,12 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
-        friend class Compilation;
-
       private:
-        void CompileImpl(WebnnCompileCallback callback,
+        void CompileImpl(BuildGraphCallbackDelgate delgate) override;
+        void ComputeImpl(NamedInputsBase* inputs,
+                         MLComputeGraphCallback callback,
                          void* userdata,
-                         CompilationOptions const* options) override;
+                         NamedOutputsBase* outputs) override;
 
         std::shared_ptr<::pydml::Device> mDevice;
         std::unique_ptr<::dml::Graph> mGraph;
@@ -66,6 +66,7 @@ namespace webnn_native { namespace dml {
         std::vector<std::unique_ptr<char>> mConstantBuffers;
         std::map<std::string, ::pydml::Binding*> mInputs;
         std::map<std::string, ::dml::Expression> mOutputs;
+        std::unique_ptr<pydml::CompiledModel> mCompiledModel;
     };
 
 }}  // namespace webnn_native::dml

@@ -12,23 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/dml/NeuralNetworkContextDML.h"
+#include "webnn_native/dml/ContextDML.h"
 
 #include "common/RefCounted.h"
-#include "webnn_native/dml/ModelBuilderDML.h"
+#include "webnn_native/dml/GraphDML.h"
 
 namespace webnn_native { namespace dml {
 
-    NeuralNetworkContextBase* Create() {
-        Ref<NeuralNetworkContextBase> context = AcquireRef(new NeuralNetworkContext());
-        if (FAILED(reinterpret_cast<NeuralNetworkContext*>(context.Get())->CreateDevice())) {
+    ContextBase* Create(MLContextOptions const* options) {
+        Ref<ContextBase> context =
+            AcquireRef(new Context(reinterpret_cast<ContextOptions const*>(options)));
+        if (FAILED(reinterpret_cast<Context*>(context.Get())->CreateDevice())) {
             dawn::ErrorLog() << "Failed to create DirectML device.";
             return nullptr;
         }
         return context.Detach();
     }
 
-    HRESULT NeuralNetworkContext::CreateDevice() {
+    Context::Context(ContextOptions const* options) {
+        if (options == nullptr) {
+            return;
+        }
+        mOptions = *options;
+    }
+
+    HRESULT Context::CreateDevice() {
 #if defined(_DEBUG)
         mDevice.reset(new ::pydml::Device(true, true));
 #else
@@ -37,8 +45,8 @@ namespace webnn_native { namespace dml {
         return mDevice->Init();
     }
 
-    ModelBuilderBase* NeuralNetworkContext::CreateModelBuilderImpl() {
-        return new ModelBuilder(this);
+    GraphBase* Context::CreateGraphImpl() {
+        return new Graph(this);
     }
 
 }}  // namespace webnn_native::dml

@@ -19,6 +19,7 @@
 #include "webnn/webnn.h"
 
 typedef struct WebnnProcTable {
+    WebnnProcCreateGraphBuilder createGraphBuilder;
     WebnnProcCreateNamedInputs createNamedInputs;
     WebnnProcCreateNamedOperands createNamedOperands;
     WebnnProcCreateNamedOutputs createNamedOutputs;

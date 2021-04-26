@@ -23,12 +23,12 @@ void ValidationTest::SetUp() {
     WebnnProcTable backendProcs = webnn_native::GetProcs();
     ASSERT_NE(&backendProcs, nullptr);
     webnnProcSetProcs(&backendProcs);
-    WebnnNeuralNetworkContext context = webnn_native::CreateNeuralNetworkContext();
+    MLContext context = webnn_native::CreateContext();
     // GTest will not run test body if fail to create context.
     ASSERT_TRUE(context != nullptr);
-    mContext = webnn::NeuralNetworkContext::Acquire(context);
+    mContext = ml::Context::Acquire(context);
     mContext.SetUncapturedErrorCallback(ErrorCallback, this);
-    mBuilder = mContext.CreateModelBuilder();
+    mBuilder = ml::CreateGraphBuilder(mContext);
 }
 
 ValidationTest::~ValidationTest() {
@@ -51,8 +51,8 @@ std::string ValidationTest::GetLastErrorMessage() const {
     return mErrorMessage;
 }
 
-void ValidationTest::ErrorCallback(WebnnErrorType type, char const* message, void* userdata) {
-    ASSERT(type != WebnnErrorType_NoError);
+void ValidationTest::ErrorCallback(MLErrorType type, char const* message, void* userdata) {
+    ASSERT(type != MLErrorType_NoError);
     auto self = static_cast<ValidationTest*>(userdata);
     self->mErrorMessage = message;
 

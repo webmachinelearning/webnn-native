@@ -15,14 +15,14 @@
 #ifndef WEBNN_NATIVE_OPS_TRANSPOSE_H_
 #define WEBNN_NATIVE_OPS_TRANSPOSE_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
 
     class Transpose final : public OperandBase {
       public:
-        Transpose(ModelBuilderBase* builder, OperandBase* input, TransposeOptions const* options)
+        Transpose(GraphBuilderBase* builder, OperandBase* input, TransposeOptions const* options)
             : OperandBase(builder, {input}) {
             if (options == nullptr || options->permutation == nullptr) {
                 int32_t rank = input->Rank();
@@ -39,7 +39,7 @@ namespace webnn_native { namespace op {
         }
         ~Transpose() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override {
+        MaybeError AddToGraph(GraphBase* model) const override {
             return model->AddTranspose(this);
         }
         MaybeError ValidateAndInferTypes() override;

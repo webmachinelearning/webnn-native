@@ -15,20 +15,20 @@
 #ifndef WEBNN_NATIVE_OPS_CONV2D_H_
 #define WEBNN_NATIVE_OPS_CONV2D_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
 
     class Conv2d final : public OperandBase {
       public:
-        Conv2d(ModelBuilderBase* builder,
+        Conv2d(GraphBuilderBase* builder,
                OperandBase* input,
                OperandBase* filter,
                Conv2dOptions const* options);
         ~Conv2d() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override;
+        MaybeError AddToGraph(GraphBase* model) const override;
         MaybeError ValidateAndInferTypes() override;
 
         Conv2dOptions const* GetOptions() const;

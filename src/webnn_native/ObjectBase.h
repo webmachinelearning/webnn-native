@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_OBJECT_BASE_H_
 #define WEBNN_NATIVE_OBJECT_BASE_H_
 
-#include "webnn_native/NeuralNetworkContext.h"
+#include "webnn_native/Context.h"
 
 namespace webnn_native {
 
@@ -24,17 +24,17 @@ namespace webnn_native {
         struct ErrorTag {};
         static constexpr ErrorTag kError = {};
 
-        explicit ObjectBase(NeuralNetworkContextBase* context);
-        ObjectBase(NeuralNetworkContextBase* context, ErrorTag tag);
+        explicit ObjectBase(ContextBase* context);
+        ObjectBase(ContextBase* context, ErrorTag tag);
 
-        NeuralNetworkContextBase* GetContext() const;
+        ContextBase* GetContext() const;
         bool IsError() const;
 
       protected:
         ~ObjectBase() override = default;
 
       private:
-        NeuralNetworkContextBase* mContext;
+        ContextBase* mContext;
     };
 
 }  // namespace webnn_native

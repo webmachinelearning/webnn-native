@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_POOL2d_H_
 #define WEBNN_NATIVE_OPS_POOL2d_H_
 
-#include "webnn_native/Model.h"
+#include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
 namespace webnn_native { namespace op {
@@ -28,13 +28,13 @@ namespace webnn_native { namespace op {
 
     class Pool2d final : public OperandBase {
       public:
-        Pool2d(ModelBuilderBase* builder,
+        Pool2d(GraphBuilderBase* builder,
                Pool2dType type,
                OperandBase* input,
                Pool2dOptions const* options);
         ~Pool2d() override = default;
 
-        MaybeError AddToModel(ModelBase* model) const override;
+        MaybeError AddToGraph(GraphBase* model) const override;
         MaybeError ValidateAndInferTypes() override;
 
         Pool2dOptions const* GetOptions() const;

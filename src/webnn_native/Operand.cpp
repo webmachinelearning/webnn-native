@@ -17,23 +17,24 @@
 
 #include "common/Assert.h"
 #include "common/Log.h"
+#include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native {
 
-    OperandBase::OperandBase(ModelBuilderBase* modelBuilder, std::vector<Ref<OperandBase>> inputs)
-        : ObjectBase(modelBuilder->GetContext()), mInputs(std::move(inputs)) {
+    OperandBase::OperandBase(GraphBuilderBase* graphBuilder, std::vector<Ref<OperandBase>> inputs)
+        : ObjectBase(graphBuilder->GetContext()), mInputs(std::move(inputs)) {
     }
 
-    OperandBase::OperandBase(ModelBuilderBase* modelBuilder, ObjectBase::ErrorTag tag)
-        : ObjectBase(modelBuilder->GetContext(), tag) {
+    OperandBase::OperandBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)
+        : ObjectBase(graphBuilder->GetContext(), tag) {
     }
 
     // static
-    OperandBase* OperandBase::MakeError(ModelBuilderBase* modelBuilder) {
-        return new OperandBase(modelBuilder, ObjectBase::kError);
+    OperandBase* OperandBase::MakeError(GraphBuilderBase* GraphBuilder) {
+        return new OperandBase(GraphBuilder, ObjectBase::kError);
     }
 
-    MaybeError OperandBase::AddToModel(ModelBase* model) const {
+    MaybeError OperandBase::AddToGraph(GraphBase* model) const {
         DAWN_UNREACHABLE();
     }
 

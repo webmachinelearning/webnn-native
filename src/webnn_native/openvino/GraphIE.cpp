@@ -12,36 +12,73 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/openvino/ModelIE.h"
+#include "webnn_native/openvino/GraphIE.h"
 
 #include <vector>
 
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
+#include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOperands.h"
-#include "webnn_native/openvino/CompilationIE.h"
+#include "webnn_native/NamedOutputs.h"
+#include "webnn_native/NamedResults.h"
+#include "webnn_native/Result.h"
 #include "webnn_native/openvino/ErrorIE.h"
 #include "webnn_native/openvino/ienn_symbol_table/ienn_symbol_table.h"
 
+#define COMPUTE_ERROR_CALLBACK(code, messages)                                                    \
+    {                                                                                             \
+        MaybeError maybeError = CheckStatusCode(code, messages);                                  \
+        if (maybeError.IsError()) {                                                               \
+            std::unique_ptr<ErrorData> error = maybeError.AcquireError();                         \
+            callback(MLComputeGraphStatus_Error, nullptr, error->GetMessage().c_str(), userdata); \
+            return;                                                                               \
+        }                                                                                         \
+    }                                                                                             \
+    for (;;)                                                                                      \
+    break
+
 namespace webnn_native { namespace ie {
+    class Result : public ResultBase {
+      public:
+        using ResultBase::Reference;
+        ~Result() {
+            ie_compilation_free_buffer(&mBuffer);
+        }
+    };
 
     namespace {
+
+        std::string GetOutputId(ie_model_t* model, size_t index) {
+            char* outputName;
+            IEStatusCode code = IE(ie_model_get_output_name)(model, index, &outputName);
+            if (code != IEStatusCode::OK) {
+                dawn::ErrorLog() << "Failing to get output name for IE.";
+                return std::string();
+            }
+            std::string name(outputName);
+            // The name has been kept in outputs object, so it can be free.
+            IE(ie_model_free_name)(&outputName);
+
+            return name;
+        }
+
         ie_operand_descriptor ConvertTo(OperandDescriptor const* desc) {
             ie_operand_descriptor ieDesc;
             ieDesc.dimensions = desc->dimensions;
             ieDesc.dimensionsCount = desc->dimensionsCount;
             switch (desc->type) {
-                case webnn::OperandType::Float32:
+                case ml::OperandType::Float32:
                     ieDesc.type = ie_operand_type::Float32;
                     break;
-                case webnn::OperandType::Int32:
+                case ml::OperandType::Int32:
                     ieDesc.type = ie_operand_type::Int32;
                     break;
-                case webnn::OperandType::Float16:
+                case ml::OperandType::Float16:
                     ieDesc.type = ie_operand_type::Float16;
                     break;
-                case webnn::OperandType::Uint32:
+                case ml::OperandType::Uint32:
                     ieDesc.type = ie_operand_type::Uint32;
                     break;
                 default:
@@ -81,7 +118,7 @@ namespace webnn_native { namespace ie {
 
     }  // namespace
 
-    Model::Model(ModelBuilder* modelBuilder) : ModelBase(modelBuilder) {
+    Graph::Graph(Context* context) : GraphBase(context) {
         // Create model.
         IEStatusCode code = IE(ie_create_model)(&mIeModel);
         if (code != IEStatusCode::OK) {
@@ -90,11 +127,12 @@ namespace webnn_native { namespace ie {
         }
     }
 
-    Model::~Model() {
+    Graph::~Graph() {
         IE(ie_model_free)(mIeModel);
+        IE(ie_compilation_free)(mIeCompilation);
     }
 
-    MaybeError Model::AddConstant(const op::Constant* constant) {
+    MaybeError Graph::AddConstant(const op::Constant* constant) {
         ie_operand_descriptor ieDesc = ConvertTo(constant->GetOperandDescriptor());
         ie_operand_t* ieOperand;
         IEStatusCode code = IE(ie_model_add_constant)(mIeModel, &ieDesc, constant->GetValue(),
@@ -105,7 +143,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddInput(const op::Input* input) {
+    MaybeError Graph::AddInput(const op::Input* input) {
         ie_operand_descriptor ieDesc = ConvertTo(input->GetOperandDescriptor());
         ie_operand_t* ieOperand;
         IEStatusCode code = IE(ie_model_add_input)(mIeModel, &ieDesc, &ieOperand);
@@ -116,7 +154,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
         ie_operand_t ieOperand;
         ieOperand.name = const_cast<char*>(mOperandIdMap[output].c_str());
         IEStatusCode code = IE(ie_model_add_output)(mIeModel, &ieOperand);
@@ -126,7 +164,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddBinary(const op::Binary* binary) {
+    MaybeError Graph::AddBinary(const op::Binary* binary) {
         auto inputs = binary->Inputs();
         ie_operand_t primary;
         primary.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -146,7 +184,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddConv2d(const op::Conv2d* conv2d) {
+    MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
         auto inputs = conv2d->Inputs();
         ie_operand_t input;
         input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -162,7 +200,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddPool2d(const op::Pool2d* pool2d) {
+    MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         auto inputs = pool2d->Inputs();
         ie_operand_t input;
         input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -176,7 +214,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddUnary(const op::Unary* unary) {
+    MaybeError Graph::AddUnary(const op::Unary* unary) {
         auto inputs = unary->Inputs();
         ie_operand_t input;
         input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -193,7 +231,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddReshape(const op::Reshape* reshape) {
+    MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         auto inputs = reshape->Inputs();
         ie_operand_t input;
         input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -206,7 +244,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::AddTranspose(const op::Transpose* transpose) {
+    MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
         auto inputs = transpose->Inputs();
         ie_operand_t input;
         input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
@@ -219,44 +257,74 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Model::Finish() {
+    MaybeError Graph::Finish() {
         IEStatusCode code = IE(ie_model_finish)(mIeModel);
         DAWN_TRY(CheckStatusCode(code, "IE finish creating model"));
+
         return {};
     }
 
-    void Model::CompileImpl(WebnnCompileCallback callback,
+    void Graph::CompileImpl(BuildGraphCallbackDelgate delgate) {
+        // TODO(junwei): We may leverage https://dawn-review.googlesource.com/c/dawn/+/36360 to
+        // implement async compilation as standle-alone component.
+        // Create compilation for IE backend.
+        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation);
+        delgate(code == IEStatusCode::OK ? MLBuildGraphStatus_Success : MLBuildGraphStatus_Error,
+                this);
+    }
+
+    void Graph::ComputeImpl(NamedInputsBase* inputs,
+                            MLComputeGraphCallback callback,
                             void* userdata,
-                            CompilationOptions const* options) {
-        Compilation* compilation = new Compilation(this);
-        compilation->Compile(callback, userdata, options);
-    }
+                            NamedOutputsBase* outputs) {
+        // Set input data to nGraph.
+        for (auto& input : inputs->GetRecords()) {
+            ie_operand_t ieOperand;
+            ieOperand.name = const_cast<char*>(mInputIdMap[input.first].c_str());
+            IEStatusCode code = IE(ie_compilation_set_input)(
+                mIeCompilation, &ieOperand, input.second->buffer, input.second->size);
+            COMPUTE_ERROR_CALLBACK(code, "IE set input");
+        }
 
-    ie_model_t* Model::GetInferenceEngineModel() {
-        return mIeModel;
-    }
+        // Compute the compiled model.
+        IEStatusCode code = IE(ie_compilation_compute)(mIeCompilation);
+        COMPUTE_ERROR_CALLBACK(code, "IE compute model");
+        // Get Data from nGraph with output.
+        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
 
-    size_t Model::GetOutputsNumber() {
         size_t outputNumber = 0;
-        IEStatusCode code = IE(ie_model_get_outputs_number)(mIeModel, &outputNumber);
-        if (code != IEStatusCode::OK) {
-            dawn::ErrorLog() << "Failing to get output number for IE.";
+        code = IE(ie_model_get_outputs_number)(mIeModel, &outputNumber);
+        COMPUTE_ERROR_CALLBACK(code, "Failing to get output number for IE.");
+        for (size_t i = 0; i < outputNumber; ++i) {
+            std::string outputId = GetOutputId(mIeModel, i);
+            void* outputBuffer;
+            size_t bufferLength;
+            IEStatusCode code = IE(ie_compilation_get_buffer)(mIeCompilation, outputId.data(),
+                                                              &outputBuffer, &bufferLength);
+            COMPUTE_ERROR_CALLBACK(code, "IE get buffer");
+            ie_dimensions_t ieDimensions;
+            code =
+                IE(ie_compilation_get_dimensions)(mIeCompilation, outputId.data(), &ieDimensions);
+            COMPUTE_ERROR_CALLBACK(code, "IE get dimensions");
+            std::vector<int32_t> dimensions(ieDimensions.dims,
+                                            ieDimensions.dims + ieDimensions.ranks);
+            code = IE(ie_compilation_free_dimensions)(&ieDimensions);
+            Ref<ResultBase> result =
+                AcquireRef(new Result::ResultBase(outputBuffer, bufferLength, dimensions));
+            std::string outputName = mOutputNameMap[outputId];
+            results->Set(outputName.c_str(), result.Detach());
+            if (outputs != nullptr) {
+                const Output* output = outputs->GetRecords().at(outputName);
+                ie_operand_t ieOperand;
+                ieOperand.name = const_cast<char*>(outputId.c_str());
+                IEStatusCode code = IE(ie_compilation_get_output)(mIeCompilation, &ieOperand,
+                                                                  output->buffer, output->size);
+                COMPUTE_ERROR_CALLBACK(code, "IE get output");
+            }
         }
-        return outputNumber;
-    }
-
-    std::string Model::GetOutputId(size_t index) {
-        char* outputName;
-        IEStatusCode code = IE(ie_model_get_output_name)(mIeModel, index, &outputName);
-        if (code != IEStatusCode::OK) {
-            dawn::ErrorLog() << "Failing to get output name for IE.";
-            return std::string();
-        }
-        std::string name(outputName);
-        // The name has been kept in outputs object, so it can be free.
-        IE(ie_model_free_name)(&outputName);
-
-        return name;
+        callback(MLComputeGraphStatus_Success, reinterpret_cast<MLNamedResults>(results.Detach()),
+                 nullptr, userdata);
+        return;
     }
 
 }}  // namespace webnn_native::ie

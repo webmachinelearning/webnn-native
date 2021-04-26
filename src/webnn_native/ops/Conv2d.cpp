@@ -19,7 +19,7 @@
 
 namespace webnn_native { namespace op {
 
-    Conv2d::Conv2d(ModelBuilderBase* builder,
+    Conv2d::Conv2d(GraphBuilderBase* builder,
                    OperandBase* input,
                    OperandBase* filter,
                    Conv2dOptions const* options)
@@ -55,13 +55,13 @@ namespace webnn_native { namespace op {
         }
 
         if (options == nullptr) {
-            mOptions.layout = webnn::OperandLayout::Nchw;
+            mOptions.layout = ml::InputOperandLayout::Nchw;
         } else {
             mOptions.layout = options->layout;
         }
     }
 
-    MaybeError Conv2d::AddToModel(ModelBase* model) const {
+    MaybeError Conv2d::AddToGraph(GraphBase* model) const {
         return model->AddConv2d(this);
     }
 
