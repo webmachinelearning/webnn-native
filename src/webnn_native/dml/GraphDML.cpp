@@ -14,8 +14,6 @@
 
 #include "webnn_native/dml/GraphDML.h"
 
-#include <time.h>
-
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
@@ -342,7 +340,7 @@ namespace webnn_native { namespace dml {
             uint32_t outSize = (inputSize + stride - 1) / stride;
             uint32_t effectiveFilter = (filterSize - 1) * dilation + 1;
             uint32_t neededInput = (outSize - 1) * stride + effectiveFilter;
-            uint32_t totalPadding = neededInput - inputSize > 0 ? neededInput - inputSize : 0;
+            uint32_t totalPadding = neededInput > inputSize ? neededInput - inputSize : 0;
             uint32_t paddingBegin = 0;
             uint32_t paddingEnd = 0;
             switch (autoPad) {
@@ -754,9 +752,9 @@ namespace webnn_native { namespace dml {
         ::dml::Expression padding = mExpression.at(inputsOperand[1].Get());
 
         // Workaround(mingming): If padding was added in mGraph, it must be used.
-        // Use time(NULL) to generate a unique name for the output node.
-        // This may be a dml issue: https://github.com/microsoft/DirectML/issues/133.
-        std::string name = std::to_string(time(NULL));
+        // Use "Pad_"+std::to_string(mExpression.size()) to generate a unique name for the output
+        // node. This may be a dml issue: https://github.com/microsoft/DirectML/issues/133.
+        std::string name = "Pad_" + std::to_string(mExpression.size());
         mOutputs[name] = ::dml::Identity(padding);
 
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;

@@ -29,6 +29,7 @@
 #include "ops/Gemm.h"
 #include "ops/Input.h"
 #include "ops/LeakyRelu.h"
+#include "ops/Pad.h"
 #include "ops/Pool2d.h"
 #include "ops/ReduceMean.h"
 #include "ops/Reshape.h"
@@ -42,7 +43,7 @@ Napi::FunctionReference node::GraphBuilder::constructor;
     ml::Operand a;                                                                  \
     WEBNN_NODE_ASSERT(GetOperand(info[0], a, args), "The a parameter is invalid."); \
     ml::Operand b;                                                                  \
-    WEBNN_NODE_ASSERT(GetOperand(info[1], b, args), "The a parameter is invalid."); \
+    WEBNN_NODE_ASSERT(GetOperand(info[1], b, args), "The b parameter is invalid."); \
     Napi::Object object = Operand::constructor.New(args);                           \
     Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);                   \
     operand->SetImpl(mImpl.op(a, b));                                               \
@@ -188,6 +189,10 @@ namespace node {
         return op::LeakyRelu::Build(info, mImpl);
     }
 
+    Napi::Value GraphBuilder::Pad(const Napi::CallbackInfo& info) {
+        return op::Pad::Build(info, mImpl);
+    }
+
     Napi::Value GraphBuilder::Reshape(const Napi::CallbackInfo& info) {
         return op::Reshape::Build(info, mImpl);
     }
@@ -246,6 +251,7 @@ namespace node {
              InstanceMethod("reduceMean", &GraphBuilder::ReduceMean, napi_enumerable),
              InstanceMethod("relu", &GraphBuilder::Relu, napi_enumerable),
              InstanceMethod("leakyRelu", &GraphBuilder::LeakyRelu, napi_enumerable),
+             InstanceMethod("pad", &GraphBuilder::Pad, napi_enumerable),
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
              InstanceMethod("softmax", &GraphBuilder::Softmax, napi_enumerable),
              InstanceMethod("transpose", &GraphBuilder::Transpose, napi_enumerable),

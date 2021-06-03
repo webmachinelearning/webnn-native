@@ -89,11 +89,11 @@ namespace webnn_native { namespace op {
         }
         // strides: a sequence of long of length 2
         if (mOptions.stridesCount != 2) {
-            return DAWN_VALIDATION_ERROR("windowDimensionsCount is incorrect.");
+            return DAWN_VALIDATION_ERROR("stridesCount is incorrect.");
         }
         // dilations: a sequence of long of length 2
         if (mOptions.dilationsCount != 2) {
-            return DAWN_VALIDATION_ERROR("windowDimensionsCount is incorrect.");
+            return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
 
         return {};

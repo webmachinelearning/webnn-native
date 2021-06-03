@@ -2,7 +2,7 @@
 
 This example showcases the MobileNet V2-based image classification by WebNN API.
 
-This example leverages the network topology of [MobileNet V2](https://storage.googleapis.com/download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224.tgz) from TFLite models with "nhwc" layout and [MobileNet V2](https://github.com/onnx/models/tree/master/vision/classification/mobilenet) from ONNX models with "nchw" layout. It loads an image as the input by [stb](https://github.com/nothings/stb) library, and loads weights/biases from .npy [files](/examples/MobileNetV2/weights) by [cnpy](https://github.com/rogersce/cnpy) library.
+This example leverages the network topology of [MobileNet V2](https://storage.googleapis.com/download.tensorflow.org/models/tflite_11_05_08/mobilenet_v2_1.0_224.tgz) from TFLite models with "nhwc" layout and [MobileNet V2](https://github.com/onnx/models/tree/master/vision/classification/mobilenet) from ONNX models with "nchw" layout. It loads an image as the input by [stb](https://github.com/nothings/stb) library, and loads mobilenetv2_nhwc weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/mobilenetv2_nhwc/weights) or mobilenetv2_nchw weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/mobilenetv2_nchw/weights) by [cnpy](https://github.com/rogersce/cnpy) library.
 
 ## Usage
 

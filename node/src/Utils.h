@@ -109,6 +109,19 @@ namespace node {
         return GetMappedValue(AutoPadMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
+    inline bool GetPaddingMode(const Napi::Value& jsValue, ml::PaddingMode& value) {
+        const std::unordered_map<std::string, ml::PaddingMode> paddingModeMap = {
+            {"constant", ml::PaddingMode::Constant},
+            {"edge", ml::PaddingMode::Edge},
+            {"reflection", ml::PaddingMode::Reflection},
+            {"symmetric", ml::PaddingMode::Symmetric},
+        };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(paddingModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
+    };
+
     inline bool GetInt32(const Napi::Value& jsValue, int32_t& value) {
         if (!jsValue.IsNumber()) {
             return false;

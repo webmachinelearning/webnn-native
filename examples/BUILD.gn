@@ -97,3 +97,10 @@ webnn_sample("MobileNetV2") {
     "MobileNetV2/MobileNetV2.h",
   ]
 }
+webnn_sample("ResNet") {
+  sources = [
+    "ResNet/Main.cpp",
+    "ResNet/ResNet.cpp",
+    "ResNet/ResNet.h",
+  ]
+}

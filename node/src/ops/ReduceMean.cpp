@@ -14,31 +14,12 @@
 
 #include "ops/ReduceMean.h"
 
-#include "Operand.h"
 #include "Utils.h"
 
 namespace node { namespace op {
-    struct ReduceMeanOptions {
-      public:
-        std::vector<int32_t> axes;
-        bool keepDimensions = false;
-
-        const ml::ReduceMeanOptions* AsPtr() {
-            if (!axes.empty()) {
-                reduceMeanOptions.axesCount = axes.size();
-                reduceMeanOptions.axes = axes.data();
-            }
-            reduceMeanOptions.keepDimensions = keepDimensions;
-
-            return &reduceMeanOptions;
-        }
-
-      private:
-        ml::ReduceMeanOptions reduceMeanOptions;
-    };
 
     Napi::Value ReduceMean::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
-        // Operand ReduceMean(Operand const& input, ReduceMeanOptions const * options = nullptr)
+        // Operand reduceMean(Operand input, optional ReduceMeanOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
@@ -47,27 +28,30 @@ namespace node { namespace op {
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary ReduceMeanOptions {
-        //   sequence<int> axes;
-        //   boolean keepDimensions;
+        //   sequence<long> axes;
+        //   boolean keepDimensions = false;
         // };
-        ReduceMeanOptions options;
-        if (info.Length() == 2) {
+        ml::ReduceMeanOptions options;
+        std::vector<int32_t> axes;
+        if (info.Length() == 2 && !info[1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[1].As<Napi::Object>();
-            if (HasOptionMember(jsOptions, "keepDimensions")) {
-                WEBNN_NODE_ASSERT(
-                    GetBoolean(jsOptions.Get("keepDimensions"), options.keepDimensions),
-                    "The keepDimensions parameter is invalid.");
-            }
             if (HasOptionMember(jsOptions, "axes")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("axes"), options.axes, 1),
+                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("axes"), axes),
+                                  "The axes parameter is invalid.");
+                WEBNN_NODE_ASSERT(axes.empty() == false, "The axes is empty.");
+                options.axes = axes.data();
+                options.axesCount = axes.size();
+            }
+            if (HasOptionMember(jsOptions, "keepDimensions")) {
+                WEBNN_NODE_ASSERT(GetBoolean(jsOptions.Get("keepDimensions"), options.keepDimensions),
                                   "The keepDimensions parameter is invalid.");
             }
         }
 
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.ReduceMean(input, options.AsPtr()));
+        operand->SetImpl(builder.ReduceMean(input, &options));
         return object;
     }
 
