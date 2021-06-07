@@ -66,8 +66,7 @@ TEST_F(ReluTests, ReluWithPreallocatedBuffer) {
     const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
     std::vector<float> outputBuffer(3 * 4 * 5);
     const ml::Output output = {outputBuffer.data(), outputBuffer.size() * sizeof(float)};
-    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}, {{"b", output}}).Get("b");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    utils::AwaitCompute(graph, {{"a", input}}, {{"b", output}}).Get("b");
     const std::vector<float> expectedData(
         {0.,        0.6447428, 0.,        0.,        0.9777725,  0.,         0.,         0.,
          1.3725083, 0.,        0.,        0.,        0.5027815,  0.,         0.,         0.00880813,
@@ -77,6 +76,5 @@ TEST_F(ReluTests, ReluWithPreallocatedBuffer) {
          0.,        0.,        0.7993208, 0.,        0.9019325,  0.,         0.5222995,  1.3394557,
          0.,        1.1774449, 0.8999488, 0.,        1.0122099,  0.,         0.,         0.,
          1.4515465, 0.,        2.0361354, 0.7899623});
-    EXPECT_TRUE(utils::CheckValue(result, expectedData));
     EXPECT_TRUE(utils::CheckValue(outputBuffer, expectedData));
 }

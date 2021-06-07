@@ -84,14 +84,14 @@ TEST_F(ConcatTests, ConcatTwo3DIuputs) {
     }
 }
 
-TEST_F(ConcatTests, ConcatTwo1DConstants) {
+TEST_F(ConcatTests, DISABLED_ConcatTwo1DConstants) {
     const std::vector<TensorDescriptor> inputs = {{{2}, {1, 2}}, {{2}, {3, 4}}};
     const std::vector<int32_t> expectedShape = {4};
     const std::vector<float> expectedValue = {1, 2, 3, 4};
     CheckConcat(inputs, 0, expectedShape, expectedValue, false);
 }
 
-TEST_F(ConcatTests, ConcatTwo2DConstants) {
+TEST_F(ConcatTests, DISABLED_ConcatTwo2DConstants) {
     const std::vector<TensorDescriptor> inputs = {{{2, 2}, {1, 2, 3, 4}}, {{2, 2}, {5, 6, 7, 8}}};
     const std::vector<std::vector<int32_t>> expectedShape = {{4, 2}, {2, 4}};
     const std::vector<std::vector<float>> expectedValue = {{1, 2, 3, 4, 5, 6, 7, 8},
@@ -102,7 +102,7 @@ TEST_F(ConcatTests, ConcatTwo2DConstants) {
     }
 }
 
-TEST_F(ConcatTests, ConcatTwo3DConstants) {
+TEST_F(ConcatTests, DISABLED_ConcatTwo3DConstants) {
     const std::vector<TensorDescriptor> inputs = {{{2, 2, 2}, {1, 2, 3, 4, 5, 6, 7, 8}},
                                                   {{2, 2, 2}, {9, 10, 11, 12, 13, 14, 15, 16}}};
     const std::vector<std::vector<int32_t>> expectedShape = {{4, 2, 2}, {2, 4, 2}, {2, 2, 4}};

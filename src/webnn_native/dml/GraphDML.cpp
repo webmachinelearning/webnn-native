@@ -320,16 +320,17 @@ namespace webnn_native { namespace dml {
         }
 
         void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
-                                              uint32_t& paddingBegin,
-                                              uint32_t& paddingEnd,
                                               uint32_t dilation,
                                               uint32_t inputSize,
                                               uint32_t filterSize,
-                                              uint32_t stride) {
+                                              uint32_t stride,
+                                              std::vector<uint32_t>& padding) {
             uint32_t outSize = (inputSize + stride - 1) / stride;
             uint32_t effectiveFilter = (filterSize - 1) * dilation + 1;
             uint32_t neededInput = (outSize - 1) * stride + effectiveFilter;
             uint32_t totalPadding = neededInput - inputSize > 0 ? neededInput - inputSize : 0;
+            uint32_t paddingBegin = 0;
+            uint32_t paddingEnd = 0;
             switch (autoPad) {
                 case ml::AutoPad::SameUpper:
                     paddingBegin = totalPadding / 2;
@@ -343,6 +344,50 @@ namespace webnn_native { namespace dml {
                     assert(0);
                     break;
             }
+            padding.push_back(paddingBegin);
+            padding.push_back(paddingEnd);
+        }
+
+        template <typename T>
+        std::vector<const uint32_t> ImplicitPadding(const T* options,
+                                                    ::dml::Expression input,
+                                                    std::vector<uint32_t> filterSize) {
+            ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
+                                                options->stridesCount);
+            ::dml::Span<const uint32_t> dilations(
+                reinterpret_cast<const uint32_t*>(options->dilations), options->dilationsCount);
+            ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+            // {paddingTop, paddingBottom, paddingLeft, paddingRight,}
+            std::vector<uint32_t> padding;
+            padding.reserve(options->paddingCount);
+            ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
+                                             filterSize[0], strides[0], padding);
+            ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
+                                             filterSize[1], strides[1], padding);
+            return {
+                static_cast<const uint32_t>(padding[0]), static_cast<const uint32_t>(padding[1]),
+                static_cast<const uint32_t>(padding[2]), static_cast<const uint32_t>(padding[3])};
+        }
+
+        template <typename T>
+        std::vector<const uint32_t> ImplicitPadding(const T* options,
+                                                    ::dml::Expression input,
+                                                    ::dml::Expression filter) {
+            ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
+            return ImplicitPadding(options, input, {filterDims[2], filterDims[3]});
+        }
+
+        template <typename T>
+        std::vector<const uint32_t> ExplicitPadding(const T* options) {
+            uint32_t paddingTop = static_cast<uint32_t>(options->padding[0]);
+            uint32_t paddingBottom = static_cast<uint32_t>(options->padding[1]);
+            uint32_t paddingLeft = static_cast<uint32_t>(options->padding[2]);
+            uint32_t paddingRight = static_cast<uint32_t>(options->padding[3]);
+
+            return {static_cast<const uint32_t>(paddingTop),
+                    static_cast<const uint32_t>(paddingBottom),
+                    static_cast<const uint32_t>(paddingLeft),
+                    static_cast<const uint32_t>(paddingRight)};
         }
 
     }  // namespace
@@ -658,26 +703,13 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
                                               options->dilationsCount);
 
-        uint32_t paddingTop = static_cast<uint32_t>(options->padding[0]);
-        uint32_t paddingBottom = static_cast<uint32_t>(options->padding[1]);
-        uint32_t paddingLeft = static_cast<uint32_t>(options->padding[2]);
-        uint32_t paddingRight = static_cast<uint32_t>(options->padding[3]);
-        if (options->autoPad != ml::AutoPad::Explicit) {
-            ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
-            ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
-            ComputeImplicitPaddingForAutoPad(options->autoPad, paddingTop, paddingBottom,
-                                             dilations[0], inputDims[2], filterDims[2], strides[0]);
-            ComputeImplicitPaddingForAutoPad(options->autoPad, paddingLeft, paddingRight,
-                                             dilations[1], inputDims[3], filterDims[3], strides[1]);
-        }
-
+        auto padding = options->autoPad == ml::AutoPad::Explicit
+                           ? ExplicitPadding<Conv2dOptions>(options)
+                           : ImplicitPadding<Conv2dOptions>(options, input, filter);
         // dml::Span just holds the refernces, need a variable to hold the memory.
-        std::vector<const uint32_t> startPaddingVector(
-            {static_cast<const uint32_t>(paddingTop), static_cast<const uint32_t>(paddingLeft)});
-        std::vector<const uint32_t> endPaddingVector({static_cast<const uint32_t>(paddingBottom),
-                                                      static_cast<const uint32_t>(paddingRight)});
-
+        std::vector<const uint32_t> startPaddingVector = {padding[0], padding[2]};
         ::dml::Span<const uint32_t> startPadding(startPaddingVector);
+        std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output = ::dml::Convolution(
             input, filter, ::dml::NullOpt, DML_CONVOLUTION_MODE_CROSS_CORRELATION,
@@ -719,13 +751,13 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> windowSizes(windowSizesVector);
         ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
                                               options->dilationsCount);
-        std::vector<const uint32_t> startPaddingVector(
-            {static_cast<const uint32_t>(options->padding[0]),
-             static_cast<const uint32_t>(options->padding[2])});
-        std::vector<const uint32_t> endPaddingVector(
-            {static_cast<const uint32_t>(options->padding[1]),
-             static_cast<const uint32_t>(options->padding[3])});
+        auto padding = options->autoPad == ml::AutoPad::Explicit
+                           ? ExplicitPadding<Pool2dOptions>(options)
+                           : ImplicitPadding<Pool2dOptions>(options, input, windowSizesVector);
+        // dml::Span just holds the refernces, need a variable to hold the memory.
+        std::vector<const uint32_t> startPaddingVector = {padding[0], padding[2]};
         ::dml::Span<const uint32_t> startPadding(startPaddingVector);
+        std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output;
         if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {

@@ -19,7 +19,6 @@ third_party/microsoft.ai.directml*
 third_party/oneDNN
 third_party/XNNPACK
 third_party/stb
-node/third_party/webnn-polyfill
 tools
 out
 
