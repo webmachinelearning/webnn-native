@@ -169,6 +169,15 @@
       {"value": 2, "name": "same lower"}
     ]
   },
+  "padding mode": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "constant"},
+      {"value": 1, "name": "edge"},
+      {"value": 2, "name": "reflection"},
+      {"value": 3, "name": "symmetric"}
+    ]
+  },
   "clamp options": {
     "category": "structure",
     "members": [
@@ -189,6 +198,13 @@
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
       {"name": "filter layout", "type": "filter operand layout", "default": "oihw"}
+    ]
+  },
+  "pad options": {
+    "category": "structure",
+    "members": [
+      {"name": "mode", "type": "padding mode", "default": "constant"},
+      {"name": "value", "type": "float", "default": 0}
     ]
   },
   "pool2d options": {
@@ -341,6 +357,15 @@
           {"name": "input", "type": "operand"},
           {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
         ]
+      },
+      {
+      "name": "pad",
+      "returns": "operand",
+      "args": [
+        {"name": "input", "type": "operand"},
+        {"name": "padding", "type": "operand"},
+        {"name": "options", "type": "pad options", "annotation": "const*", "optional": true}
+      ]
       },
       {
         "name": "reduce mean",

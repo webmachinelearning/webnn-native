@@ -342,8 +342,10 @@ ie_operand_t* Model::AddConv2d(ie_operand_t* input,
     case SameLower:
       auto_pad = op::PadType::SAME_LOWER;
       break;
-    default:
+    case Explicit:
       auto_pad = op::PadType::EXPLICIT;
+    default:
+      assert(0);
   }
   std::shared_ptr<ngraph::Node> conv2d_node;
   if (options->groups > 1) {
@@ -367,6 +369,43 @@ ie_operand_t* Model::AddConv2d(ie_operand_t* input,
                   : conv2d_node;
   std::string node_name = node->get_name();
   name_node_map_[node_name] = node->output(0);
+  return CreateOperand(node_name);
+}
+
+ie_operand_t* Model::AddPad(ie_operand_t* input, ie_pad_options_t* options) {
+  auto input_node = name_node_map_[input->name];
+  SizeVector padBegin, padEnd;
+  for (size_t i = 0; i < options->padCount / 2; ++i) {
+    padBegin.push_back(options->padding[2 * i]);
+    padEnd.push_back(options->padding[2 * i + 1]);
+  }
+  auto pad_begin_node =
+      op::Constant::create(element::u32, Shape{padBegin.size()}, padBegin);
+  auto pad_end_node =
+      op::Constant::create(element::u32, Shape{padEnd.size()}, padEnd);
+  auto pad_value_node =
+      op::Constant::create(element::f32, Shape{}, {options->padValue});
+  op::PadMode pad_mode;
+  switch (options->mode) {
+    case Edge:
+      pad_mode = op::PadMode::EDGE;
+      break;
+    case Reflection:
+      pad_mode = op::PadMode::REFLECT;
+      break;
+    case Symmetric:
+      pad_mode = op::PadMode::SYMMETRIC;
+      break;
+    case Constant:
+      pad_mode = op::PadMode::CONSTANT;
+      break;
+    default:
+      assert(0);
+  }
+  std::shared_ptr<ngraph::Node> pad_node = std::make_shared<op::v1::Pad>(
+      input_node, pad_begin_node, pad_end_node, pad_value_node, pad_mode);
+  std::string node_name = pad_node->get_name();
+  name_node_map_[node_name] = pad_node->output(0);
   return CreateOperand(node_name);
 }
 
@@ -411,8 +450,10 @@ ie_operand_t* Model::AddPool2d(ie_pool_type type,
     case SameLower:
       auto_pad = op::PadType::SAME_LOWER;
       break;
-    default:
+    case Explicit:
       auto_pad = op::PadType::EXPLICIT;
+    default:
+      assert(0);
   }
 
   std::shared_ptr<ngraph::Node> pool2d_node;

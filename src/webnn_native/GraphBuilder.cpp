@@ -34,6 +34,7 @@
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Reshape.h"
@@ -160,6 +161,12 @@ namespace webnn_native {
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::BatchNorm(this, input, mean, variance, options));
+    }
+
+    OperandBase* GraphBuilderBase::Pad(OperandBase* input,
+                                       OperandBase* padding,
+                                       PadOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Pad(this, input, padding, options));
     }
 
     GraphBase* GraphBuilderBase::GenericBuildImpl(NamedOperandsBase const* namedOperands,

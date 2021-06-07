@@ -18,6 +18,7 @@
 #include <map>
 #include <mutex>
 #include <set>
+#include <unordered_set>
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
@@ -31,6 +32,7 @@
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
+#include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Reshape.h"
@@ -53,6 +55,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
+        virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
@@ -92,6 +95,7 @@ namespace webnn_native { namespace dml {
         std::map<const OperandBase*, ::dml::Expression> mExpression;
         std::vector<std::unique_ptr<::pydml::Binding>> mBindings;
         std::vector<std::unique_ptr<char>> mConstantBuffers;
+        std::unordered_set<const OperandBase*> mConstantSet;
         std::map<std::string, ::pydml::Binding*> mInputs;
         std::map<std::string, ::dml::Expression> mOutputs;
         std::unique_ptr<pydml::CompiledModel> mCompiledModel;

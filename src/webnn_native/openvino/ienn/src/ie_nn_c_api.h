@@ -125,6 +125,20 @@ typedef struct ie_conv2d_options {
   ie_filter_operand_layout filterLayout = ie_filter_operand_layout::Oihw;
 } ie_conv2d_options_t;
 
+enum ie_padding_mode {
+  Constant = 0x00000000,
+  Edge = 0x00000001,
+  Reflection = 0x00000002,
+  Symmetric = 0x00000003,
+};
+
+typedef struct ie_pad_options {
+  ie_padding_mode mode = ie_padding_mode::Constant;
+  int32_t const* padding;
+  uint32_t padCount = 4;
+  int32_t padValue = 0;
+} ie_pad_options_t;
+
 enum ie_pool_type {
   AVERAGE_POOL = 0,
   L2_POOL,
@@ -318,6 +332,20 @@ ie_model_add_conv2d(ie_model_t* model,
                     ie_operand_t** operand);
 
 /**
+ * @brief Add pad node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @param ie_operand_t The padding operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_pad(ie_model_t* model,
+                 ie_operand_t* input,
+                 ie_pad_options* options,
+                 ie_operand_t** operand);
+
+/**
  * @brief Add pool2d node to nGraph. Use the ie_operand_free() method to
  *  free the operand memory.
  * @ingroup model
@@ -341,9 +369,9 @@ ie_model_add_pool2d(ie_model_t* model,
  */
 NEURAL_NETWORK_C_API(IEStatusCode)
 ie_model_add_reduce_mean(ie_model_t* model,
-                 ie_operand_t* input,
-                 ie_reduce_mean_options* options,
-                 ie_operand_t** operand);
+                         ie_operand_t* input,
+                         ie_reduce_mean_options* options,
+                         ie_operand_t** operand);
 
 /**
  * @brief Add Relu node to nGraph. Use the ie_operand_free() method to

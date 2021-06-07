@@ -308,6 +308,39 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+    MaybeError Graph::AddPad(const op::Pad* pad) {
+        auto inputs = pad->Inputs();
+        ie_operand_t input;
+        input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
+        ie_operand_t padding;
+        padding.name = const_cast<char*>(mOperandIdMap[inputs[1].Get()].c_str());
+        ie_pad_options_t ieOptions;
+        auto options = pad->GetOptions();
+        ieOptions.padValue = options->value;
+        ieOptions.mode = static_cast<ie_padding_mode>(options->mode);
+        if (mConstantSet.find(inputs[1].Get()) != mConstantSet.end()) {
+            op::Constant* padding = reinterpret_cast<op::Constant*>(inputs[1].Get());
+            int32_t const* paddingDimensions = padding->GetOperandDescriptor()->dimensions;
+            uint32_t inputRank = inputs[0]->Rank();
+            uint32_t padCount = padding->GetSize() / sizeof(int32_t);
+            if (paddingDimensions[1] != 2 ||
+                paddingDimensions[0] != static_cast<int32_t>(inputRank)) {
+                return DAWN_INTERNAL_ERROR(
+                    "The padding should has shape [n, 2], where n is the rank of the input tensor");
+            }
+            ieOptions.padCount = padCount;
+            ieOptions.padding = static_cast<const int32_t*>(padding->GetValue());
+        } else {
+            return DAWN_INTERNAL_ERROR("The padding is not a constant");
+        }
+        ie_operand_t* ieOperand;
+        IEStatusCode code = IE(ie_model_add_pad)(mIeModel, &input, &ieOptions, &ieOperand);
+        DAWN_TRY(CheckStatusCode(code, "IE add pad"));
+
+        mOperandIdMap[pad] = std::string(ieOperand->name);
+        return {};
+    }
+
     MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         auto inputs = pool2d->Inputs();
         ie_operand_t input;
@@ -350,9 +383,9 @@ namespace webnn_native { namespace ie {
         ie_operand_t* ieOperand;
         ie_reduce_mean_options_t ieOptions;
         auto options = reduceMean->GetOptions();
-        ieOptions.keepDimensions=options->keepDimensions;
-        ieOptions.axesCount=options->axesCount;
-        ieOptions.axes=options->axes;
+        ieOptions.keepDimensions = options->keepDimensions;
+        ieOptions.axesCount = options->axesCount;
+        ieOptions.axes = options->axes;
         IEStatusCode code = IE(ie_model_add_reduce_mean)(mIeModel, &input, &ieOptions, &ieOperand);
         DAWN_TRY(CheckStatusCode(code, "IE add reduceMean"));
 
