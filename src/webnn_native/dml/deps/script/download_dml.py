@@ -23,7 +23,7 @@ import json
 
 dml_feed_url = 'https://api.nuget.org/v3/index.json'
 dml_resource_id = 'microsoft.ai.directml'
-dml_resource_version = '1.4.1'
+dml_resource_version = '1.5.1'
 
 dependency_dir = '../../../../../third_party'
 dml_bin_path = f'{dependency_dir}/{dml_resource_id}.{dml_resource_version}/bin/x64-win/'

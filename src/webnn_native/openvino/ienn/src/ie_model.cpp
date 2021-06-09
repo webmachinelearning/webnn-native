@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "ie_model.h"
+#include "transpose_sinking.h"
 
 #include <gna/gna_config.hpp>
 #include <string>
@@ -20,6 +21,8 @@
 
 #include "ngraph/ngraph.hpp"
 #include "ngraph/node.hpp"
+#include "ngraph/pass/manager.hpp"
+#include "ngraph/pass/pass.hpp"
 #include "utils.h"
 
 namespace InferenceEngine {
@@ -516,8 +519,15 @@ ie_operand_t* Model::AddGemm(const ie_operand_t* inputs,
   // operations as "alpha * A * B + beta * C". Transpose if it's necessary.
   auto a_node = name_node_map_[inputs[0].name];
   auto b_node = name_node_map_[inputs[1].name];
+  auto size = a_node.get_shape().size();
+  SizeVector input_order;
+  input_order.reserve(size);
+  for (uint32_t i = 0; i < size; ++i) {
+    input_order.push_back(size - i - 1);
+  }
+
   const auto order_node =
-      op::Constant::create(element::i64, Shape{0}, SizeVector());
+      op::Constant::create(element::i64, {size}, input_order);
   if (options->aTranspose) {
     a_node = std::make_shared<op::v1::Transpose>(a_node, order_node)->output(0);
   }
@@ -556,13 +566,33 @@ void Model::Finish() {
   auto ngraph_function =
       std::make_shared<Function>(ngraph_outputs_, ngraph_inputs_);
   network_ = std::make_unique<CNNNetwork>(ngraph_function);
+  // collect the OutputDataMap before passes
+  OutputsDataMap output_info_previous(network_->getOutputsInfo());
+  std::vector<std::string> output_node_names_previous;
+  output_node_names_previous.resize(output_info_previous.size());
+  for (auto itr : output_info_previous) {
+    output_node_names_previous.push_back(itr.first);
+  }
+  ngraph::pass::Manager passes;
+  passes
+      .register_pass<tensorflow::openvino_tensorflow::pass::TransposeSinking>();
+  passes.run_passes(ngraph_function);
+  network_ = std::make_unique<CNNNetwork>(ngraph_function);
   InputsDataMap input_info(network_->getInputsInfo());
   for (auto itr : input_info) {
     itr.second->setPrecision(Precision::FP32);
   }
-  OutputsDataMap output_info(network_->getOutputsInfo());
-  for (auto itr : output_info) {
+  OutputsDataMap output_info_after(network_->getOutputsInfo());
+  std::vector<std::string> output_node_names_after;
+  output_node_names_after.resize(output_info_after.size());
+  for (auto itr : output_info_after) {
     itr.second->setPrecision(Precision::FP32);
+    output_node_names_after.push_back(itr.first);
+  }
+
+  for (size_t i = 0; i < output_node_names_after.size(); i++) {
+    output_node_map_[output_node_names_previous[i]] =
+        output_node_names_after[i];
   }
 }
 

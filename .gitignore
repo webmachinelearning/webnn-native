@@ -96,3 +96,11 @@ node/generator/specifications
 node/PATH_TO_DAWN
 node/third_party/webnn-polyfill
 node/node_modules
+node/third_party
+node/package-lock.json
+node/examples/electron/lenet/node_modules
+node/examples/electron/lenet/package-lock.json
+node/examples/electron/image_classification/node_modules
+node/examples/electron/image_classification/package-lock.json
+node/examples/console/lenet/node_modules
+node/examples/console/lenet/package-lock.json
