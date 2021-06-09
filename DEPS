@@ -19,7 +19,7 @@ deps = {
     'url': '{github_git}/webmachinelearning/webnn-polyfill.git@5c5e9f6f5dbbe9dc67c448c8f7a55b6ddf4dee25'
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@8ac60606633f1822db7c76facd3ea3548f8359c2'
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@65cab3bb9ea626fb5b68c32169e7602bf3796b8f'
   },
   'third_party/stb': {
     'url': '{github_git}/nothings/stb@b42009b3b9d4ca35bc703f5310eedc74f584be58'
