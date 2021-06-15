@@ -28,6 +28,7 @@ class TransposeTests : public WebnnTest {
         options.permutationCount = permutation.size();
         const ml::Operand b = builder.Transpose(a, &options);
         const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
+        ASSERT_TRUE(graph);
         const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
         const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("b");
         EXPECT_TRUE(utils::CheckShape(result, expectedShape));

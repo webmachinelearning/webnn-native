@@ -130,6 +130,24 @@ IEStatusCode ie_model_add_mat_mul(ie_model_t* model,
   return IEStatusCode::OK;
 }
 
+IEStatusCode ie_model_add_batch_norm(ie_model_t* model,
+                                     ie_operand_t* input,
+                                     ie_operand_t* mean,
+                                     ie_operand_t* variance,
+                                     ie_batch_norm_options* options,
+                                     ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr || mean == nullptr ||
+      variance == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddBatchNorm(input, mean, variance, options);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
 IEStatusCode ie_model_add_binary(ie_model_t* model,
                                  ie_binary_type type,
                                  ie_operand_t* a,
@@ -141,6 +159,21 @@ IEStatusCode ie_model_add_binary(ie_model_t* model,
 
   BEGINE_TRY
   *operand = model->object->AddBinary(type, a, b);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
+IEStatusCode ie_model_add_clamp(ie_model_t* model,
+                                ie_operand_t* input,
+                                ie_clamp_options* options,
+                                ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddClamp(input, options);
   END_CATCH
 
   return IEStatusCode::OK;
@@ -232,6 +265,53 @@ IEStatusCode ie_model_add_transpose(ie_model_t* model,
 
   BEGINE_TRY
   *operand = model->object->AddTranspose(input, options);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
+IEStatusCode ie_model_add_leaky_relu(ie_model_t* model,
+                                     ie_operand_t* input,
+                                     ie_leaky_relu_options* options,
+                                     ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddLeakyRelu(input, options);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
+IEStatusCode ie_model_add_concat(const ie_model_t* model,
+                                 const ie_operand_t* inputs,
+                                 uint32_t inputs_count,
+                                 uint32_t axis,
+                                 ie_operand_t** operand) {
+  if (model == nullptr || inputs == nullptr || inputs_count == 0) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddConcat(inputs, inputs_count, axis);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
+IEStatusCode ie_model_add_gemm(const ie_model_t* model,
+                               const ie_operand_t* inputs,
+                               uint32_t inputs_count,
+                               const ie_gemm_options* options,
+                               ie_operand_t** operand) {
+  if (model == nullptr || inputs == nullptr || inputs_count == 0) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddGemm(inputs, inputs_count, options);
   END_CATCH
 
   return IEStatusCode::OK;

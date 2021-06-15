@@ -22,12 +22,11 @@
 namespace webnn_native { namespace op {
 
     MaybeError Transpose::ValidateAndInferTypes() {
-        auto input = mInputs[0];
-        if (input->IsError()) {
-            return DAWN_VALIDATION_ERROR("Argument input is invalid.");
+        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+        if (maybeError.IsError()) {
+            return maybeError;
         }
 
-        mRank = input->Rank();
         // the number of values in the sequence must be the same as the rank of the input tensor
         if (mPermutation.size() != size_t(mRank)) {
             return DAWN_VALIDATION_ERROR("permutation size is invalid.");
@@ -35,16 +34,14 @@ namespace webnn_native { namespace op {
 
         // the values in the sequence must be within the range from 0 to N-1
         // with no two or more same values found in the sequence.
-        std::vector<int32_t> newPermutation;
+        std::vector<uint32_t> newPermutation;
         newPermutation.assign(mPermutation.begin(), mPermutation.end());
         std::sort(newPermutation.begin(), newPermutation.end());
-        for (int32_t i = 0; i < mRank - 1; i++) {
+        for (uint32_t i = 0; i < mRank - 1; i++) {
             if (newPermutation[i] != i) {
                 return DAWN_VALIDATION_ERROR("permutation value is invalid.");
             }
         }
-
-        mType = input->Type();
 
         return {};
     }

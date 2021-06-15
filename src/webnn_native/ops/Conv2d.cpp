@@ -48,21 +48,16 @@ namespace webnn_native { namespace op {
         mOptions.dilations = mDilations.data();
         mOptions.dilationsCount = mDilations.size();
 
-        if (options == nullptr) {
-            mOptions.groups = 1;
-        } else {
-            mOptions.groups = options->groups;
-        }
-
-        if (options == nullptr) {
-            mOptions.layout = ml::InputOperandLayout::Nchw;
-        } else {
-            mOptions.layout = options->layout;
-        }
+        mOptions.groups = options == nullptr ? 1 : options->groups;
+        mOptions.inputLayout =
+            options == nullptr ? ml::InputOperandLayout::Nchw : options->inputLayout;
+        mOptions.filterLayout =
+            options == nullptr ? ml::FilterOperandLayout::Oihw : options->filterLayout;
+        mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
     }
 
-    MaybeError Conv2d::AddToGraph(GraphBase* model) const {
-        return model->AddConv2d(this);
+    MaybeError Conv2d::AddToGraph(GraphBase* graph) const {
+        return graph->AddConv2d(this);
     }
 
     Conv2dOptions const* Conv2d::GetOptions() const {
@@ -70,12 +65,13 @@ namespace webnn_native { namespace op {
     }
 
     MaybeError Conv2d::ValidateAndInferTypes() {
-        auto input = mInputs[0];
-        auto filter = mInputs[1];
-        if (input->IsError() || filter->IsError()) {
-            return DAWN_VALIDATION_ERROR("Argument inputs are invalid.");
+        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+        if (maybeError.IsError()) {
+            return maybeError;
         }
 
+        auto input = mInputs[0];
+        auto filter = mInputs[1];
         if (input->Type() != filter->Type()) {
             return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
         }
@@ -99,9 +95,6 @@ namespace webnn_native { namespace op {
         if (mOptions.dilationsCount != 2) {
             return DAWN_VALIDATION_ERROR("windowDimensionsCount is incorrect.");
         }
-
-        mType = input->Type();
-        mRank = 4;
 
         return {};
     }

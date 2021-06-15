@@ -34,13 +34,18 @@ namespace webnn_native {
   X(ie_compilation_set_input)      \
   X(ie_compilation_compute)        \
   X(ie_compilation_get_output)     \
+  X(ie_model_add_batch_norm)       \
   X(ie_model_add_binary)           \
+  X(ie_model_add_clamp)            \
   X(ie_model_add_conv2d)           \
+  X(ie_model_add_gemm)             \
   X(ie_model_add_pool2d)           \
   X(ie_model_add_relu)             \
   X(ie_model_add_reshape)          \
   X(ie_model_add_softmax)          \
   X(ie_model_add_transpose)        \
+  X(ie_model_add_leaky_relu)       \
+  X(ie_model_add_concat)           \
   X(ie_model_get_outputs_number)   \
   X(ie_model_get_output_name)      \
   X(ie_model_free_name)            \

@@ -12,6 +12,7 @@
 
 #if defined(__linux__) || defined(__APPLE__)
 #include <dlfcn.h>
+#include <unistd.h>
 #elif defined(_WIN32) || defined(_WIN64)
 #include <windows.h>
 #endif
@@ -38,7 +39,12 @@ inline static const char* GetDllError() {
 DllHandle InternalLoadDll(const char dll_name[]) {
   DllHandle handle = nullptr;
 #if defined(__linux__)
+  // Use absolute path to open library if file exists, otherwise find it in
+  // LD_LIBRARY_PATH such as node.js.
   std::string dll_path = GetExecutableDirectory().append(dll_name);
+  if (access(dll_path.data(), F_OK) != 0) {
+    dll_path = std::string(dll_name);
+  }
   handle = dlopen(dll_path.data(), RTLD_NOW);
 #elif defined(__APPLE__)
   // base::FilePath base_dir;

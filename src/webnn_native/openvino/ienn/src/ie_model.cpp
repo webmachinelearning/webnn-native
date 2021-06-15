@@ -37,6 +37,25 @@ SizeVector ToVector(int32_t const* value, uint32_t count) {
   return data;
 }
 
+std::shared_ptr<ngraph::Node> CreateConstantNode(const int32_t* dimensions,
+                                                 uint32_t dimensionsCount,
+                                                 const float* value) {
+  std::shared_ptr<ngraph::Node> constant;
+  SizeVector constant_dimensions(dimensions, dimensions + dimensionsCount);
+  SizeVector constant_value;
+  uint32_t size = 1;
+  for (uint32_t i = 0; i < dimensionsCount; ++i) {
+    size *= dimensions[i];
+  }
+  constant_value.reserve(size);
+  for (uint32_t i = 0; i < size; ++i) {
+    constant_value.push_back(value[i]);
+  }
+  constant =
+      op::Constant::create(element::f32, constant_dimensions, constant_value);
+  return constant;
+}
+
 ie_operand_t* CreateOperand(std::string& name) {
   ie_operand_t* operand = new ie_operand_t();
   std::unique_ptr<char[]> node_name(new char[name.length() + 1]);
@@ -54,6 +73,48 @@ ngraph::Output<ngraph::Node> Reshape(
       input_node, target_shape_node->output(0), true);
   return reshape_node->output(0);
 }
+
+// Transpose NHWC <=> NCHW.
+std::shared_ptr<ngraph::Node> TransposeInputLayout(
+    ngraph::Output<ngraph::Node> node,
+    bool nhwc_to_nchw) {
+  AxisVector order =
+      nhwc_to_nchw ? AxisVector{0, 3, 1, 2} : AxisVector{0, 2, 3, 1};
+  const auto order_node =
+      op::Constant::create(element::i64, Shape{order.size()}, order);
+  auto transpose_node = std::make_shared<op::v1::Transpose>(node, order_node);
+  return transpose_node;
+}
+
+// hwio => oihw or ohwi => oihw
+ngraph::Output<ngraph::Node> TransposeFilterLayout(
+    ngraph::Output<ngraph::Node> node,
+    ie_filter_operand_layout layout) {
+  if (layout == ie_filter_operand_layout::Oihw) {
+    return node;
+  }
+
+  AxisVector order;
+  switch (layout) {
+    case ie_filter_operand_layout::Hwio:
+      order = AxisVector{3, 2, 0, 1};
+      break;
+    case ie_filter_operand_layout::Ohwi:
+      order = AxisVector{0, 3, 1, 2};
+      break;
+    case ie_filter_operand_layout::Ihwo:
+      order = AxisVector{3, 0, 1, 2};
+      break;
+    default:
+      assert(0);
+      break;
+  }
+  const auto order_node =
+      op::Constant::create(element::i64, Shape{order.size()}, order);
+  auto transpose_node = std::make_shared<op::v1::Transpose>(node, order_node);
+  return transpose_node->output(0);
+}
+
 }  // namespace
 
 ie_operand_t* Model::AddConstant(ie_operand_descriptor_t const* desc,
@@ -78,11 +139,11 @@ ie_operand_t* Model::AddConstant(ie_operand_descriptor_t const* desc,
   if (fp32_precision) {
     float* dst = blob->buffer().as<float*>();
     CopyDataToBuffer<float>(dst, src, length);
-    node = std::make_shared<op::Constant>(element::f32, Shape(dims), dst);
+    node = std::make_shared<op::Constant>(element::f32, dims, dst);
   } else {
     int16_t* dst = blob->buffer().as<int16_t*>();
     CopyDataToBuffer<int16_t>(dst, src, length);
-    node = std::make_shared<op::Constant>(element::f16, Shape(dims), dst);
+    node = std::make_shared<op::Constant>(element::f16, dims, dst);
   }
 
   std::string node_name = node->get_name();
@@ -145,6 +206,40 @@ ie_operand_t* Model::AddMatMul(ie_operand_t* a, ie_operand_t* b) {
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddBatchNorm(ie_operand_t* input,
+                                  ie_operand_t* mean,
+                                  ie_operand_t* variance,
+                                  ie_batch_norm_options_t* options) {
+  // When input is a 4-D tensor of the "nchw" or "nhwc" layout,
+  // options.axis should be set to 1 or 3 respectively.
+  auto input_node = name_node_map_[input->name];
+  bool nhwc = options->axis == 3;
+  if (nhwc) {
+    options->axis = 1;
+    input_node =
+        TransposeInputLayout(name_node_map_[input->name], true)->output(0);
+  }
+  auto mean_node = name_node_map_[mean->name];
+  auto variance_node = name_node_map_[variance->name];
+  auto channel = input_node.get_shape()[options->axis];
+  auto scale_node =
+      options->scale.name != nullptr
+          ? name_node_map_[options->scale.name]
+          : op::Constant::create(element::f32, Shape{channel}, {1})->output(0);
+  auto bias_node =
+      options->bias.name != nullptr
+          ? name_node_map_[options->bias.name]
+          : op::Constant::create(element::f32, Shape{channel}, {0})->output(0);
+  auto batch_norm_node = std::make_shared<op::v0::BatchNormInference>(
+      input_node, scale_node, bias_node, mean_node, variance_node,
+      options->epsilon);
+  auto node = nhwc ? TransposeInputLayout(batch_norm_node->output(0), false)
+                   : batch_norm_node;
+  std::string node_name = node->get_name();
+  name_node_map_[node_name] = node->output(0);
+  return CreateOperand(node_name);
+}
+
 ie_operand_t* Model::AddBinary(ie_binary_type type,
                                ie_operand_t* a,
                                ie_operand_t* b) {
@@ -160,11 +255,53 @@ ie_operand_t* Model::AddBinary(ie_binary_type type,
           std::make_shared<op::v1::Multiply>(primary_node, secondary_node);
       break;
     default:
-      assert(0);
+      THROW_IE_EXCEPTION << "The operation isn't supported";
   }
 
   std::string node_name = binary_node->get_name();
   name_node_map_[node_name] = binary_node->output(0);
+  return CreateOperand(node_name);
+}
+
+ie_operand_t* Model::AddClamp(ie_operand_t* input,
+                              ie_clamp_options_t* options) {
+  auto input_node = name_node_map_[input->name];
+  std::shared_ptr<ngraph::Node> clamp_node;
+  if (options->minDimensionsCount == 0 && options->maxDimensionsCount == 0) {
+    float min = options->minValue == nullptr
+                    ? std::numeric_limits<float>::lowest()
+                    : options->minValue[0];
+    float max = options->maxValue == nullptr ? std::numeric_limits<float>::max()
+                                             : options->maxValue[0];
+    clamp_node = std::make_shared<op::v0::Clamp>(input_node, min, max);
+  } else {
+    std::shared_ptr<ngraph::Node> min_constant, max_constant;
+    if (options->minValue != nullptr) {
+      min_constant =
+          CreateConstantNode(options->minDimensions,
+                             options->minDimensionsCount, options->minValue);
+    }
+
+    if (options->maxValue != nullptr) {
+      max_constant =
+          CreateConstantNode(options->maxDimensions,
+                             options->maxDimensionsCount, options->maxValue);
+    }
+
+    // Compare input with min value.
+    auto max_node =
+        options->minValue != nullptr
+            ? std::make_shared<op::v1::Maximum>(input_node, min_constant)
+                  ->output(0)
+            : input_node;
+    // Compare input with max value.
+    clamp_node = options->maxValue != nullptr
+                     ? std::make_shared<op::v1::Minimum>(max_node, max_constant)
+                     : max_node.get_node_shared_ptr();
+  }
+
+  std::string node_name = clamp_node->get_name();
+  name_node_map_[node_name] = clamp_node->output(0);
   return CreateOperand(node_name);
 }
 
@@ -178,13 +315,45 @@ ie_operand_t* Model::AddConv2d(ie_operand_t* input,
   Strides dilations = {static_cast<size_t>(options->dilations[0]),
                        static_cast<size_t>(options->dilations[1])};
 
-  auto input_node = name_node_map_[input->name];
-  auto filter_node = name_node_map_[filter->name];
-  auto conv2d_node = std::make_shared<op::v1::Convolution>(
-      input_node, filter_node, strides, pad_begin, pad_end, dilations);
+  auto input_node =
+      options->inputLayout == ie_input_operand_layout::Nchw
+          ? name_node_map_[input->name]
+          : TransposeInputLayout(name_node_map_[input->name], true)->output(0);
+  auto filter_node = TransposeFilterLayout(name_node_map_[filter->name],
+                                           options->filterLayout);
+  op::PadType auto_pad;
+  switch (options->autoPad) {
+    case SameUpper:
+      auto_pad = op::PadType::SAME_UPPER;
+      break;
+    case SameLower:
+      auto_pad = op::PadType::SAME_LOWER;
+      break;
+    default:
+      auto_pad = op::PadType::EXPLICIT;
+  }
+  std::shared_ptr<ngraph::Node> conv2d_node;
+  if (options->groups > 1) {
+    // Insert the groups to the shape of filter as first item.
+    auto filters_shape = filter_node.get_shape();
+    filters_shape.at(0) = filters_shape.at(0) / options->groups;
+    filters_shape.insert(filters_shape.begin(), options->groups);
+    // Reshape the filter to support groups conv.
+    auto reshaped_filters = Reshape(filter_node, filters_shape);
+    conv2d_node = std::make_shared<op::v1::GroupConvolution>(
+        input_node, reshaped_filters, strides, pad_begin, pad_end, dilations,
+        auto_pad);
+  } else {
+    conv2d_node = std::make_shared<op::v1::Convolution>(
+        input_node, filter_node, strides, pad_begin, pad_end, dilations,
+        auto_pad);
+  }
 
-  std::string node_name = conv2d_node->get_name();
-  name_node_map_[node_name] = conv2d_node->output(0);
+  auto node = options->inputLayout == ie_input_operand_layout::Nhwc
+                  ? TransposeInputLayout(conv2d_node->output(0), false)
+                  : conv2d_node;
+  std::string node_name = node->get_name();
+  name_node_map_[node_name] = node->output(0);
   return CreateOperand(node_name);
 }
 
@@ -193,8 +362,10 @@ ie_operand_t* Model::AddPool2d(ie_pool_type type,
                                ie_pool2d_options_t* options) {
   // Use the height and width dimensions of the input shape as windowDimensions
   // if it is not present in options.
-  // TODO: Transpose to NCHW if the layout is NHWC.
-  auto input_node = name_node_map_[input->name];
+  auto input_node =
+      options->layout == ie_input_operand_layout::Nchw
+          ? name_node_map_[input->name]
+          : TransposeInputLayout(name_node_map_[input->name], true)->output(0);
   Shape window_dimensions;
   window_dimensions.reserve(2);
   if (options->windowDimensions == nullptr ||
@@ -219,25 +390,39 @@ ie_operand_t* Model::AddPool2d(ie_pool_type type,
                      static_cast<size_t>(options->strides[1])};
   Shape dilations = {static_cast<size_t>(options->dilations[0]),
                      static_cast<size_t>(options->dilations[1])};
+  op::PadType auto_pad;
+  switch (options->autoPad) {
+    case SameUpper:
+      auto_pad = op::PadType::SAME_UPPER;
+      break;
+    case SameLower:
+      auto_pad = op::PadType::SAME_LOWER;
+      break;
+    default:
+      auto_pad = op::PadType::EXPLICIT;
+  }
 
   std::shared_ptr<ngraph::Node> pool2d_node;
   switch (type) {
     case ie_pool_type::AVERAGE_POOL:
       pool2d_node = std::make_shared<op::v1::AvgPool>(
           input_node, strides, pad_begin, pad_end, window_dimensions, true,
-          op::RoundingType::FLOOR, op::PadType::EXPLICIT);
+          op::RoundingType::FLOOR, auto_pad);
       break;
     case ie_pool_type::MAX_POOL:
       pool2d_node = std::make_shared<op::v1::MaxPool>(
           input_node, strides, pad_begin, pad_end, window_dimensions,
-          op::RoundingType::FLOOR, op::PadType::EXPLICIT);
+          op::RoundingType::FLOOR, auto_pad);
       break;
     default:
       assert(0);
   }
 
-  std::string node_name = pool2d_node->get_name();
-  name_node_map_[node_name] = pool2d_node->output(0);
+  auto node = options->layout == ie_input_operand_layout::Nhwc
+                  ? TransposeInputLayout(pool2d_node->output(0), false)
+                  : pool2d_node;
+  std::string node_name = node->get_name();
+  name_node_map_[node_name] = node->output(0);
   return CreateOperand(node_name);
 }
 
@@ -296,7 +481,78 @@ ie_operand_t* Model::AddTranspose(ie_operand_t* input,
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddLeakyRelu(ie_operand_t* input,
+                                  ie_leaky_relu_options_t* options) {
+  auto input_node = name_node_map_[input->name];
+  const auto alpha_node =
+      op::Constant::create(element::f32, Shape{1}, {options->alpha});
+  auto leaky_relu_node =
+      std::make_shared<op::v0::PRelu>(input_node, alpha_node);
+
+  std::string node_name = leaky_relu_node->get_name();
+  name_node_map_[node_name] = leaky_relu_node->output(0);
+  return CreateOperand(node_name);
+}
+
+ie_operand_t* Model::AddConcat(const ie_operand_t* inputs,
+                               uint32_t inputs_count,
+                               uint32_t axis) {
+  ngraph::OutputVector inputs_vector;
+  inputs_vector.reserve(inputs_count);
+  for (uint32_t i = 0; i < inputs_count; ++i) {
+    inputs_vector.push_back(name_node_map_[inputs[i].name]);
+  }
+  auto concat_node = std::make_shared<op::v0::Concat>(inputs_vector, axis);
+
+  std::string node_name = concat_node->get_name();
+  name_node_map_[node_name] = concat_node->output(0);
+  return CreateOperand(node_name);
+}
+
+ie_operand_t* Model::AddGemm(const ie_operand_t* inputs,
+                             uint32_t inputs_count,
+                             const ie_gemm_options_t* options) {
+  // The behavior of Gemm can be generically emulated from the usage of other
+  // operations as "alpha * A * B + beta * C". Transpose if it's necessary.
+  auto a_node = name_node_map_[inputs[0].name];
+  auto b_node = name_node_map_[inputs[1].name];
+  const auto order_node =
+      op::Constant::create(element::i64, Shape{0}, SizeVector());
+  if (options->aTranspose) {
+    a_node = std::make_shared<op::v1::Transpose>(a_node, order_node)->output(0);
+  }
+  if (options->bTranspose) {
+    b_node = std::make_shared<op::v1::Transpose>(b_node, order_node)->output(0);
+  }
+  std::shared_ptr<ngraph::Node> matmul_node =
+      std::make_shared<op::v0::MatMul>(a_node, b_node);
+
+  const auto alpha_node =
+      op::Constant::create(element::f32, Shape{}, {options->alpha});
+  if (options->alpha != 1) {
+    matmul_node = std::make_shared<op::v1::Multiply>(matmul_node->output(0),
+                                                     alpha_node->output(0));
+  }
+
+  const auto beta_node =
+      op::Constant::create(element::f32, Shape{}, {options->beta});
+  Output<ngraph::Node> c_node =
+      inputs_count == 3 ? name_node_map_[inputs[2].name]
+                        : op::Constant::create(element::f32, Shape{}, {0});
+  auto beta_mul_c =
+      std::make_shared<op::v1::Multiply>(beta_node->output(0), c_node);
+  auto gemm_node = std::make_shared<op::v1::Add>(matmul_node->output(0),
+                                                 beta_mul_c->output(0));
+  std::string node_name = gemm_node->get_name();
+  name_node_map_[node_name] = gemm_node->output(0);
+  return CreateOperand(node_name);
+}
+
 void Model::Finish() {
+  if (ngraph_inputs_.empty()) {
+    THROW_IE_EXCEPTION << "The input must be set.";
+  }
+
   auto ngraph_function =
       std::make_shared<Function>(ngraph_outputs_, ngraph_inputs_);
   network_ = std::make_unique<CNNNetwork>(ngraph_function);

@@ -20,6 +20,11 @@
 namespace webnn_native { namespace op {
 
     MaybeError Reshape::ValidateAndInferTypes() {
+        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
+
         bool hasMinus1 = false;
         // Only one component of newShape can be the special value of -1
         for (auto i : mNewShape) {
@@ -32,12 +37,6 @@ namespace webnn_native { namespace op {
                 hasMinus1 = true;
             }
         }
-        auto input = mInputs[0];
-        if (input->IsError()) {
-            return DAWN_VALIDATION_ERROR("Argument input is invalid.");
-        }
-
-        mType = input->Type();
         mRank = mNewShape.size();
 
         return {};

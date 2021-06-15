@@ -46,6 +46,9 @@
   "int32_t": {
     "category": "native"
   },
+  "float": {
+    "category": "native"
+  },
   "size_t": {
     "category": "native"
   },
@@ -108,13 +111,6 @@
       }
     ]
   },
-  "input operand layout": {
-    "category": "enum",
-    "values": [
-      {"value": 0, "name": "nchw"},
-      {"value": 1, "name": "nhwc"}
-    ]
-  },
   "operand type": {
     "category": "enum",
     "values": [
@@ -149,6 +145,37 @@
       }
     ]
   },
+  "input operand layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "nchw"},
+      {"value": 1, "name": "nhwc"}
+    ]
+  },
+  "filter operand layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "oihw"},
+      {"value": 1, "name": "hwio"},
+      {"value": 2, "name": "ohwi"},
+      {"value": 3, "name": "ihwo"}
+    ]
+  },
+  "auto pad": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "explicit"},
+      {"value": 1, "name": "same upper"},
+      {"value": 2, "name": "same lower"}
+    ]
+  },
+  "clamp options": {
+    "category": "structure",
+    "members": [
+      {"name": "min value", "type": "operand"},
+      {"name": "max value", "type": "operand"}
+    ]
+  },
   "conv2d options": {
     "category": "structure",
     "members": [
@@ -158,8 +185,10 @@
       {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "groups", "type": "int32_t", "default": 1},
-      {"name": "layout", "type": "input operand layout", "default": "nchw"}
+      {"name": "input layout", "type": "input operand layout", "default": "nchw"},
+      {"name": "filter layout", "type": "filter operand layout", "default": "oihw"}
     ]
   },
   "pool2d options": {
@@ -173,7 +202,24 @@
       {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "layout", "type": "input operand layout", "default": "nchw"}
+    ]
+  },
+  "gemm options": {
+    "category": "structure",
+    "members": [
+      {"name": "c", "type": "operand", "optional": true},
+      {"name": "alpha", "type": "float", "default": 1.0},
+      {"name": "beta", "type": "float", "default": 1.0},
+      {"name": "aTranspose", "type": "bool", "default": "false"},
+      {"name": "bTranspose", "type": "bool", "default": "false"}
+    ]
+  },
+  "leakyRelu options": {
+    "category": "structure",
+    "members": [
+      {"name": "alpha", "type": "float", "default": 0.01}
     ]
   },
   "transpose options": {
@@ -181,6 +227,15 @@
     "members": [
       {"name": "permutation count", "type": "uint32_t", "default": 0},
       {"name": "permutation", "type": "int32_t", "annotation": "const*", "length": "permutation count", "optional": true}
+    ]
+  },
+  "batchNorm options": {
+    "category": "structure",
+    "members": [
+      {"name": "scale", "type": "operand"},
+      {"name": "bias", "type": "operand"},
+      {"name": "axis", "type": "uint32_t", "default": 1},
+      {"name": "epsilon", "type": "float", "default": 1e-5}
     ]
   },
   "graph builder": {
@@ -228,6 +283,14 @@
         ]
       },
       {
+        "name": "sub",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
         "name": "conv2d",
         "returns": "operand",
         "args": [
@@ -244,6 +307,25 @@
           {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
         ]
       },
+      {
+        "name": "gemm",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"},
+          {"name": "options", "type": "gemm options", "annotation": "const*", "optional": true}
+        ]
+      },
+
+      {
+        "name": "leaky relu",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "leakyRelu options", "annotation": "const*", "optional": true}
+        ]
+      },
+
       {
         "name": "max pool2d",
         "returns": "operand",
@@ -284,11 +366,45 @@
         ]
       },
       {
+        "name": "concat",
+        "returns": "operand",
+        "args": [
+          {"name": "inputs count", "type": "uint32_t"},
+          {"name": "inputs", "type": "operand", "annotation": "const*", "length": "inputs count"},
+          {"name": "axis", "type": "uint32_t"}
+        ]
+      },
+      {
+        "name": "clamp",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "clamp options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "batch norm",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "mean", "type": "operand"},
+          {"name": "variance", "type": "operand"},
+          {"name": "options", "type": "batchNorm options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
         "name": "build",
         "args": [
           {"name": "named operands", "type": "named operands"},
           {"name": "callback", "type": "build graph callback"},
           {"name": "userdata", "type": "void", "annotation": "*"}
+        ]
+      },
+      {
+        "name": "buildSync",
+        "returns": "graph",
+        "args": [
+          {"name": "named operands", "type": "named operands"}
         ]
       }
     ]
@@ -414,6 +530,14 @@
           {"name": "callback", "type": "compute graph callback"},
           {"name": "userdata", "type": "void", "annotation": "*"},
           {"name": "outputs", "type": "named outputs", "optional": true}
+        ]
+      },
+      {
+        "name": "computeSync",
+        "returns": "compute graph status",
+        "args": [
+          {"name": "inputs", "type": "named inputs"},
+          {"name": "outputs", "type": "named outputs"}
         ]
       }
     ]

@@ -33,6 +33,7 @@ TEST_F(AddTests, AddConstantAndInput) {
         utils::BuildConstant(builder, {3, 4, 5}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Add(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.08939514,  -1.5887482,  0.8545348,   0.20523034, -0.41728342, 1.01752,     0.19677015,
         0.5398451,   0.56893295,  1.2511084,   2.0092728,  1.0606714,   0.4893267,   0.09536829,
@@ -65,6 +66,7 @@ TEST_F(AddTests, AddTwoInputs) {
     const ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     const ml::Operand c = builder.Add(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.08939514,  -1.5887482,  0.8545348,   0.20523034, -0.41728342, 1.01752,     0.19677015,
         0.5398451,   0.56893295,  1.2511084,   2.0092728,  1.0606714,   0.4893267,   0.09536829,
@@ -108,6 +110,7 @@ TEST_F(AddTests, AddBroadcast) {
     const ml::Operand b = utils::BuildInput(builder, "b", {5});
     const ml::Operand c = builder.Add(a, b);
     const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         -0.08539673, 0.11800674,  -1.2358714,  0.30089188,  -0.73443925, 1.4894297,   0.16823359,
         -2.2034893,  1.0740992,   -0.35457978, 0.61524934,  0.462153,    0.5992003,   -0.81047946,

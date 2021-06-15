@@ -31,6 +31,8 @@ void WebnnTest::SetUp() {
 }
 
 WebnnTest::~WebnnTest() {
+    const ml::Context& context = GetContext();
+    context.SetUncapturedErrorCallback(ErrorCallback, nullptr);
 }
 
 void WebnnTest::TearDown() {
@@ -53,11 +55,15 @@ std::string WebnnTest::GetLastErrorMessage() const {
 void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userdata) {
     ASSERT(type != MLErrorType_NoError);
     auto self = static_cast<WebnnTest*>(userdata);
-    self->mErrorMessage = message;
+    if (self) {
+        self->mErrorMessage = message;
 
-    ASSERT_TRUE(self->mExpectError) << "Got unexpected error: " << message;
-    ASSERT_FALSE(self->mError) << "Got two errors in expect block";
-    self->mError = true;
+        ASSERT_TRUE(self->mExpectError) << "Got unexpected error: " << message;
+        ASSERT_FALSE(self->mError) << "Got two errors in expect block";
+        self->mError = true;
+    } else {
+        ASSERT_TRUE(type != MLErrorType_NoError) << "Got unexpected error: " << message;
+    }
 }
 
 void WebnnTestEnvironment::SetUp() {

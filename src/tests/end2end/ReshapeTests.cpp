@@ -23,6 +23,7 @@ class ReshapeTests : public WebnnTest {
         const ml::Operand a = utils::BuildInput(builder, "a", oldShape);
         const ml::Operand b = builder.Reshape(a, newShape.data(), newShape.size());
         const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
+        ASSERT_TRUE(graph);
         const std::vector<float> inputData = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
                                               13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
         const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};

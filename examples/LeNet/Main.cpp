@@ -12,76 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdlib.h>
+#include "examples/LeNet/LeNet.h"
+
 #include <algorithm>
-#include <chrono>
-#include <iomanip>
 #include <iostream>
-#include <memory>
-#include <numeric>
-#include <vector>
 
 #include "common/Log.h"
-#include "examples/LeNet/LeNet.h"
 #include "examples/LeNet/MnistUbyte.h"
-#include "examples/SampleUtils.h"
-
-const size_t TOP_NUMBER = 3;
-
-void SelectTopKData(std::vector<float> outputData,
-                    std::vector<size_t>& topKIndex,
-                    std::vector<float>& topKData) {
-    std::vector<size_t> indexes(outputData.size());
-    std::iota(std::begin(indexes), std::end(indexes), 0);
-    std::partial_sort(
-        std::begin(indexes), std::begin(indexes) + TOP_NUMBER, std::end(indexes),
-        [&outputData](unsigned l, unsigned r) { return outputData[l] > outputData[r]; });
-    std::sort(outputData.rbegin(), outputData.rend());
-
-    for (size_t i = 0; i < TOP_NUMBER; ++i) {
-        topKIndex[i] = indexes[i];
-        topKData[i] = outputData[i];
-    }
-}
-
-void PrintResult(ml::Result output) {
-    const float* outputBuffer = static_cast<const float*>(output.Buffer());
-    std::vector<float> outputData(outputBuffer, outputBuffer + output.BufferSize() / sizeof(float));
-    std::vector<size_t> topKIndex(TOP_NUMBER);
-    std::vector<float> topKData(TOP_NUMBER);
-    SelectTopKData(outputData, topKIndex, topKData);
-
-    std::cout << std::endl << "Prediction Result:" << std::endl;
-    std::cout << "#"
-              << "   "
-              << "Label"
-              << " "
-              << "Probability" << std::endl;
-    std::cout.precision(2);
-    for (size_t i = 0; i < TOP_NUMBER; ++i) {
-        std::cout << i << "   ";
-        std::cout << std::left << std::setw(5) << std::fixed << topKIndex[i] << " ";
-        std::cout << std::left << std::fixed << 100 * topKData[i] << "%" << std::endl;
-    }
-    std::cout << std::endl;
-}
 
 void ShowUsage() {
     std::cout << std::endl;
-    std::cout << "LeNet [OPTIONs]" << std::endl << std::endl;
+    std::cout << "LeNet [OPTION]" << std::endl << std::endl;
     std::cout << "Options:" << std::endl;
     std::cout << "    -h                      "
               << "Print this message." << std::endl;
     std::cout << "    -i \"<path>\"             "
               << "Required. Path to an image." << std::endl;
     std::cout << "    -m \"<path>\"             "
-              << "Required. Path to a .bin file with trained weights." << std::endl;
+              << "Required. Path to a .bin file with trained weights/biases." << std::endl;
+    std::cout
+        << "    -n \"<integer>\"          "
+        << "Optional. Number of iterations. The default value is 1, and should not be less than 1."
+        << std::endl;
 }
 
 int main(int argc, const char* argv[]) {
-    DumpMemoryLeaks();
-
     std::string imagePath, modelPath;
+    int nIter = 1;
     for (int i = 1; i < argc; ++i) {
         if (strcmp("-h", argv[i]) == 0) {
             ShowUsage();
@@ -91,10 +48,12 @@ int main(int argc, const char* argv[]) {
             imagePath = argv[i + 1];
         } else if (strcmp("-m", argv[i]) == 0 && i + 1 < argc) {
             modelPath = argv[i + 1];
+        } else if (strcmp("-n", argv[i]) == 0 && i + 1 < argc) {
+            nIter = atoi(argv[i + 1]);
         }
     }
 
-    if (imagePath.empty() || modelPath.empty()) {
+    if (imagePath.empty() || modelPath.empty() || nIter < 1) {
         dawn::ErrorLog() << "Invalid options.";
         ShowUsage();
         return -1;
@@ -111,17 +70,44 @@ int main(int argc, const char* argv[]) {
         return -1;
     }
 
+    const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
+        std::chrono::high_resolution_clock::now();
     LeNet lenet;
     if (!lenet.Load(modelPath)) {
         dawn::ErrorLog() << "Failed to load LeNet.";
         return -1;
     }
+
+    const std::chrono::duration<double, std::milli> compilationElapsedTime =
+        std::chrono::high_resolution_clock::now() - compilationStartTime;
+    dawn::InfoLog() << "Compilation Time: " << compilationElapsedTime.count() << " ms";
+    ml::Result result;
     std::vector<float> input(reader.GetData().get(), reader.GetData().get() + reader.Size());
-    ml::Result result = lenet.Compute(input.data(), input.size() * sizeof(float));
-    if (!result) {
-        dawn::ErrorLog() << "Failed to compute LeNet.";
-        return -1;
+    std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
+
+    for (int i = 0; i < nIter; ++i) {
+        std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
+            std::chrono::high_resolution_clock::now();
+        result = lenet.Compute(input.data(), input.size() * sizeof(float));
+        if (!result) {
+            dawn::ErrorLog() << "Failed to compute LeNet.";
+            return -1;
+        }
+        executionTimeVector.push_back(std::chrono::high_resolution_clock::now() -
+                                      executionStartTime);
     }
-    PrintResult(result);
+
+    if (nIter > 1) {
+        std::sort(executionTimeVector.begin(), executionTimeVector.end());
+        std::chrono::duration<double, std::milli> medianExecutionTime =
+            nIter % 2 != 0
+                ? executionTimeVector[floor(nIter / 2)]
+                : (executionTimeVector[nIter / 2 - 1] + executionTimeVector[nIter / 2]) / 2;
+        dawn::InfoLog() << "Median Execution Time of " << nIter
+                        << " Iterations: " << medianExecutionTime.count() << " ms";
+    } else {
+        dawn::InfoLog() << "Execution Time: " << executionTimeVector[0].count() << " ms";
+    }
+    utils::PrintResult(result);
     dawn::InfoLog() << "Done.";
 }

@@ -27,13 +27,14 @@ namespace webnn_native { namespace dml {
         ~Context() override = default;
 
         HRESULT CreateDevice();
-        GraphBase* CreateGraphImpl() override;
 
         std::shared_ptr<::pydml::Device> GetDevice() {
             return mDevice;
         }
 
       private:
+        GraphBase* CreateGraphImpl() override;
+
         std::shared_ptr<::pydml::Device> mDevice;
         ContextOptions mOptions;
     };

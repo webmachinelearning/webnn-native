@@ -20,20 +20,17 @@
 namespace webnn_native { namespace op {
 
     MaybeError Unary::ValidateAndInferTypes() {
-        auto input = mInputs[0];
-        if (input->IsError()) {
-            return DAWN_VALIDATION_ERROR("Argument input is invalid.");
+        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+        if (maybeError.IsError()) {
+            return maybeError;
         }
 
         if (mOpType == UnaryOpType::kSoftmax) {
+            auto input = mInputs[0];
             if (input->Rank() != 2) {
                 return DAWN_VALIDATION_ERROR("Input dimensions is incorrect.");
             }
         }
-
-        // only for softmax and relu
-        mType = input->Type();
-        mRank = input->Rank();
 
         return {};
     }

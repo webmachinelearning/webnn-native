@@ -33,6 +33,7 @@ TEST_F(MulTests, MulInputAndConstant) {
         utils::BuildConstant(builder, {3, 4, 5}, dataB.data(), dataB.size() * sizeof(float));
     ml::Operand c = builder.Mul(a, b);
     ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
         7.4952751e-01,  -2.8509337e-01, -1.6272701e+00, 1.0271618e+00,  4.2815253e-01,
@@ -71,6 +72,7 @@ TEST_F(MulTests, MulTwoInputs) {
     ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     ml::Operand c = builder.Mul(a, b);
     ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
         7.4952751e-01,  -2.8509337e-01, -1.6272701e+00, 1.0271618e+00,  4.2815253e-01,
@@ -123,6 +125,7 @@ TEST_F(MulTests, MulBroadcast) {
     ml::Operand b = utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
     ml::Operand c = builder.Mul(a, b);
     ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         -0.08539673, 0.11800674,  -1.2358714,  0.30089188,  -0.73443925, 1.4894297,   0.16823359,
         -2.2034893,  1.0740992,   -0.35457978, 0.61524934,  0.462153,    0.5992003,   -0.81047946,

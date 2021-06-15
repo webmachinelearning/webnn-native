@@ -81,6 +81,9 @@ StatusCode Compilation::GetOutput(ie_operand_t* operand,
   }
 
   Blob::Ptr output_blob = infer_request_->GetBlob(operand->name);
+  if (output_blob->byteSize() != length) {
+    THROW_IE_EXCEPTION << "The output buffer length is invalid.";
+  }
   memcpy(buffer, output_blob->buffer(), length);
 
   return StatusCode::OK;

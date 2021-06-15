@@ -19,6 +19,12 @@ declare_args() {
   # Enables the compilation of DirectML backend
   webnn_enable_dml = false
 
+  # Enables the compilation of oneDNN backend
+  webnn_enable_onednn = false
+
+  # Enables the compilation of XNNPACK backend
+  webnn_enable_xnnpack = false
+
   # Enables the compilation of WebNN's Null backend
   # (required for unittests, obviously non-conformant)
   webnn_enable_null = true
