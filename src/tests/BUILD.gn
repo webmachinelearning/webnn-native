@@ -105,6 +105,9 @@ webnn_json_generator("mock_webnn_gen") {
 
 test("webnn_unittests") {
   configs += [ "${webnn_root}/src/common:dawn_internal" ]
+  if (is_linux) {
+    configs += [ "//build/config//gcc:rpath_for_built_shared_libraries" ]
+  }
 
   deps = [
     ":gmock_and_gtest",
@@ -200,6 +203,9 @@ source_set("webnn_end2end_tests_sources") {
 
 test("webnn_end2end_tests") {
   configs += [ "${webnn_root}/src/common:dawn_internal" ]
+  if (is_linux) {
+    configs += [ "//build/config//gcc:rpath_for_built_shared_libraries" ]
+  }
 
   deps = [
     ":gmock_and_gtest",

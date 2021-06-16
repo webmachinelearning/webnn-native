@@ -57,6 +57,9 @@ static_library("webnn_sample_utils") {
   }
 
   public_configs = [ "${webnn_root}/src/common:dawn_internal" ]
+  if (is_linux) {
+    public_configs += [ "//build/config//gcc:rpath_for_built_shared_libraries" ]
+  }
 }
 
 # Template for samples to avoid listing webnn_sample_utils as a dep every time

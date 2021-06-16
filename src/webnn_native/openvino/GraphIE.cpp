@@ -25,8 +25,8 @@
 #include "webnn_native/NamedResults.h"
 #include "webnn_native/Result.h"
 #include "webnn_native/openvino/ErrorIE.h"
-#include "webnn_native/openvino/ienn_symbol_table/ienn_symbol_table.h"
 
+#define IE(sym) sym
 #define COMPUTE_ERROR_CALLBACK(code, messages)                                             \
     {                                                                                      \
         MaybeError maybeError = CheckStatusCode(code, messages);                           \

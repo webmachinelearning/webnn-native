@@ -42,24 +42,6 @@ The Node.js addon can also be built after install. For example, execute the foll
 
 ## Test
 
-### Setup environment variables
-
-The path of WebNN-native libraries need to be added into the environment variable before running the test.
-
-#### Windows
-
-```shell script
-> set PATH=\path\to\webnn-native\out\Release;%PATH%
-```
-
-#### Linux
-
-```sh
-$ export LD_LIBRARY_PATH=/path/to/webnn-native/out/Release:$LD_LIBRARY_PATH
-```
-
-### Test all tests
-
 ```shell script
 > npm test
 ```

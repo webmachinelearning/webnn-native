@@ -3,20 +3,6 @@
     'WEBNN_NATIVE_DIR': '<@(module_root_dir)/../',
     'WEBNN_NATIVE_LIB_PATH': '<@(module_root_dir)/../<(webnn_native_lib_path)',
   },
-  'conditions': [
-    [ 'OS=="win"',  {
-      'variables': {
-        'WEBNN_NATIVE_LIBRARY': '-lwebnn_native.dll.lib',
-        'WEBNN_PROC_LIBRARY': '-lwebnn_proc.dll.lib',
-      }}
-    ],
-    [ 'OS=="linux"', {
-      'variables': {
-        'WEBNN_NATIVE_LIBRARY': '-lwebnn_native',
-        'WEBNN_PROC_LIBRARY': '-lwebnn_proc',
-      }}
-    ]
-  ],
   'targets': [
     {
       'target_name': 'webnn_node',
@@ -58,15 +44,43 @@
       'library_dirs' : [
         '<(WEBNN_NATIVE_LIB_PATH)',
       ],
-      'libraries' : [
-        '<(WEBNN_NATIVE_LIBRARY)',
-        '<(WEBNN_PROC_LIBRARY)'
-      ],
       'conditions': [
         [ 'OS=="win"', {
+            'libraries' : [
+              '-lwebnn_native.dll.lib',
+              '-lwebnn_proc.dll.lib'
+            ],
             'copies': [ {
               'destination': '<(module_root_dir)/build/$(Configuration)/',
-              'files': [ '<(WEBNN_NATIVE_LIB_PATH)/DirectML.dll' ]
+              'files': [
+                  # webNN native.
+                  '<(WEBNN_NATIVE_LIB_PATH)/libc++.dll',
+                  '<(WEBNN_NATIVE_LIB_PATH)/webnn_native.dll',
+                  '<(WEBNN_NATIVE_LIB_PATH)/webnn_proc.dll',
+                  # DirectML.
+                  '<(WEBNN_NATIVE_LIB_PATH)/DirectML.dll',
+                  # OpenVINO
+                  '<(WEBNN_NATIVE_LIB_PATH)/ie_nn_c_api.dll',
+              ]
+            } ]
+          },
+          'OS=="linux"', {
+            'libraries' : [
+              "-Wl,-rpath,'$$ORIGIN'/..",
+              '-lwebnn_native',
+              '-lwebnn_proc'
+            ],
+            'copies': [ {
+              'destination': '<(module_root_dir)/build/$(Configuration)/',
+              'files': [
+                  # webNN native.
+                  # Component build has the libc++ binary.
+                  #'<(WEBNN_NATIVE_LIB_PATH)/libc++.so',
+                  '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_native.so',
+                  '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_proc.so',
+                  # OpenVINO
+                  '<(WEBNN_NATIVE_LIB_PATH)/libie_nn_c_api.so',
+              ]
             } ]
           }
         ]

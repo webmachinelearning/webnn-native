@@ -18,7 +18,6 @@
 #include <webnn_native/WebnnNative.h>
 #include <iostream>
 
-
 Napi::FunctionReference node::Context::constructor;
 
 namespace node {

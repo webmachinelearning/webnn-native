@@ -16,8 +16,8 @@
 #define NODE_UTILS_H_
 
 #define NAPI_EXPERIMENTAL
-#include <cmath>
 #include <napi.h>
+#include <cmath>
 #include <unordered_map>
 
 #include "Operand.h"
