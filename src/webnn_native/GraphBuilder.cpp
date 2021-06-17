@@ -35,6 +35,7 @@
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/LeakyRelu.h"
 #include "webnn_native/ops/Pool2d.h"
+#include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
@@ -104,6 +105,11 @@ namespace webnn_native {
     OperandBase* GraphBuilderBase::MaxPool2d(OperandBase* input, Pool2dOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(
             new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input, ReduceMeanOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(
+            new op::ReduceMean(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {

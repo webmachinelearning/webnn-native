@@ -343,6 +343,23 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+    MaybeError Graph::AddReduceMean(const op::ReduceMean* reduceMean) {
+        auto inputs = reduceMean->Inputs();
+        ie_operand_t input;
+        input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
+        ie_operand_t* ieOperand;
+        ie_reduce_mean_options_t ieOptions;
+        auto options = reduceMean->GetOptions();
+        ieOptions.keepDimensions=options->keepDimensions;
+        ieOptions.axesCount=options->axesCount;
+        ieOptions.axes=options->axes;
+        IEStatusCode code = IE(ie_model_add_reduce_mean)(mIeModel, &input, &ieOptions, &ieOperand);
+        DAWN_TRY(CheckStatusCode(code, "IE add reduceMean"));
+
+        mOperandIdMap[reduceMean] = std::string(ieOperand->name);
+        return {};
+    }
+
     MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         auto inputs = reshape->Inputs();
         ie_operand_t input;

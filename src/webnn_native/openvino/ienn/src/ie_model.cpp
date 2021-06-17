@@ -448,6 +448,21 @@ ie_operand_t* Model::AddRelu(ie_operand_t* input) {
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddReduceMean(ie_operand_t* input,
+                                   ie_reduce_mean_options_t* options) {
+  auto input_node = name_node_map_[input->name];
+  SizeVector axes = ToVector(options->axes, options->axesCount);
+  auto axes_node = op::Constant::create(element::i64, Shape{axes.size()}, axes);
+  // Issue: When input rank == 3 and keeDimensions == false, reduceMean produces
+  // a result with wrong shape. This will be fixed by
+  // https://github.com/openvinotoolkit/openvino/pull/5986 in OpenVINO 2021/4.
+  auto reduce_mean_node = std::make_shared<op::v1::ReduceMean>(
+      input_node, axes_node, options->keepDimensions);
+  std::string node_name = reduce_mean_node->get_name();
+  name_node_map_[node_name] = reduce_mean_node->output(0);
+  return CreateOperand(node_name);
+}
+
 ie_operand_t* Model::AddReshape(ie_operand_t* input,
                                 int32_t const* new_shape,
                                 uint32_t new_shape_count) {
