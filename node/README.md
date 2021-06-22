@@ -1,6 +1,6 @@
 # WebNN-native Binding for Node.js
 
-*WebNN-native Binding for Node.js is a Node.js [C++ addon](https://nodejs.org/api/addons.html). The implementation is based on WebNN-native C API and exposes [WebNN](https://webmachinelearning.github.io/webnn/) JavaScript API.
+*WebNN-native Binding for Node.js is a Node.js [C++ addon](https://nodejs.org/api/addons.html). The implementation is based on WebNN-native C++ API and exposes [WebNN](https://webmachinelearning.github.io/webnn/) JavaScript API.
 
 
 ## Prerequisites
@@ -48,5 +48,6 @@ The Node.js addon can also be built after install. For example, execute the foll
 
 ## Example
 
- * [LeNet in Electron.js](examples/lenet_electron/README.md)
- * [LeNet in Node.js](examples/lenet/README.md)
+ * [LeNet in Electron.js](examples/electron/lenet/README.md)
+ * [LeNet in Node.js](examples/console/lenet/README.md)
+ * [ImageClassification in Electron.js](examples/electron/image_classification/README.md)

@@ -201,7 +201,7 @@ namespace node {
                     return false;
                 }
 
-                /***Dimensions Check ***/
+                // Check dimensions.
                 if (jsElementLength) {
                     int dimensionSize = 1;
                     for (auto& dim : resource.dimensions) {

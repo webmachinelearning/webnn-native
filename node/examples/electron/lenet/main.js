@@ -13,7 +13,7 @@ function createWindow() {
     height: 840,
     webPreferences: {
       nodeIntegration: true,
-      preload: app.getAppPath().replace('lenet','setup.js')
+      preload: app.getAppPath().replace('lenet','../../node_setup.js')
     }
   })
 

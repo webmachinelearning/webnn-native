@@ -1,5 +1,5 @@
 {
-  "name": "webnn_electron",
+  "name": "image_classification",
   "version": "0.0.1",
   "description": "An Electon.js example of image_classification using webnn-native",
   "main": "main.js",

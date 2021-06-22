@@ -53,13 +53,10 @@
             'copies': [ {
               'destination': '<(module_root_dir)/build/$(Configuration)/',
               'files': [
-                  # webNN native.
                   '<(WEBNN_NATIVE_LIB_PATH)/libc++.dll',
                   '<(WEBNN_NATIVE_LIB_PATH)/webnn_native.dll',
                   '<(WEBNN_NATIVE_LIB_PATH)/webnn_proc.dll',
-                  # DirectML.
                   '<(WEBNN_NATIVE_LIB_PATH)/DirectML.dll',
-                  # OpenVINO
                   '<(WEBNN_NATIVE_LIB_PATH)/ie_nn_c_api.dll',
               ]
             } ]
@@ -73,12 +70,8 @@
             'copies': [ {
               'destination': '<(module_root_dir)/build/$(Configuration)/',
               'files': [
-                  # webNN native.
-                  # Component build has the libc++ binary.
-                  #'<(WEBNN_NATIVE_LIB_PATH)/libc++.so',
                   '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_native.so',
                   '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_proc.so',
-                  # OpenVINO
                   '<(WEBNN_NATIVE_LIB_PATH)/libie_nn_c_api.so',
               ]
             } ]

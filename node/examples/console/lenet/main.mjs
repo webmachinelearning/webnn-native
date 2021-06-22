@@ -14,10 +14,7 @@
 
 'use strict';
 
-import utils from '../../utils.js';
-import webnn from '../../../lib/webnn.js';
-global.navigator = webnn;
-global.MLGraphBuilder = webnn.MLGraphBuilder;
+import webnn from '../../../node_setup.js';
 
 (async function main() {
   let module = await import('../../../third_party/webnn-samples/lenet/lenet.js');
@@ -38,6 +35,7 @@ global.MLGraphBuilder = webnn.MLGraphBuilder;
   const inferenceTime = Date.now() - start.toFixed(2);
   console.log(`execution elapsed time: ${inferenceTime.toFixed(2)} ms`);
   const expected = [ 0, 0, 0, 1, 0, 0, 0, 0, 0, 0];
+  let utils = await import('../../../third_party/webnn-polyfill/test/utils.js');
   utils.checkValue(result, expected);
   console.log("success for outputs buffer " + result);
 })();

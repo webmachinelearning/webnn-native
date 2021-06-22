@@ -13,7 +13,7 @@ function createWindow() {
     height: 840,
     webPreferences: {
       nodeIntegration: true,
-      preload: app.getAppPath().replace('image_classification','setup.js')
+      preload: app.getAppPath().replace('image_classification','../../node_setup.js')
     }
   })
 

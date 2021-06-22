@@ -1,5 +1,5 @@
 {
-  "name": "webnn_node_examples",
+  "name": "lenet",
   "version": "0.0.1",
   "description": "A Node.js example of LeNet using webnn-native",
   "main": "main.mjs",
