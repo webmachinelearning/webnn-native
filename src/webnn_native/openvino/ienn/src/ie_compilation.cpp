@@ -51,6 +51,7 @@ Compilation::Compilation(std::shared_ptr<Model> model)
       ie_core_->LoadNetwork(*(model->network_), device_name, plugin_Config))));
   infer_request_.reset(new InferRequest(
       static_cast<IInferRequest::Ptr>(execution_->CreateInferRequest())));
+  output_node_map_ = std::move(model->output_node_map_);
 }
 
 Compilation::~Compilation() {
@@ -95,6 +96,11 @@ StatusCode Compilation::GetBuffer(const char* name,
   if (infer_request_ == nullptr) {
     return StatusCode::NETWORK_NOT_LOADED;
   }
+
+  if (output_node_map_.find(name) != output_node_map_.end()) {
+    name = output_node_map_.find(name)->second.data();
+  }
+
   Blob::Ptr output_blob = infer_request_->GetBlob(name);
   *byte_length = output_blob->byteSize();
   *buffer = malloc(*byte_length);
@@ -108,6 +114,10 @@ StatusCode Compilation::GetDimensions(const char* name,
   if (infer_request_ == nullptr) {
     return StatusCode::NETWORK_NOT_LOADED;
   }
+  if (output_node_map_.find(name) != output_node_map_.end()) {
+    name = output_node_map_.find(name)->second.data();
+  }
+
   Blob::Ptr output_blob = infer_request_->GetBlob(name);
   InferenceEngine::SizeVector dims = output_blob->getTensorDesc().getDims();
   dimensions->ranks = dims.size();

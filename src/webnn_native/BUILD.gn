@@ -159,13 +159,17 @@ source_set("webnn_native_sources") {
       "openvino/GraphIE.h",
     ]
 
-    sources += [
-      "openvino/ienn_symbol_table/ienn_symbol_table.cc",
-      "openvino/ienn_symbol_table/ienn_symbol_table.h",
-      "openvino/ienn_symbol_table/late_binding_symbol_table.cc",
-      "openvino/ienn_symbol_table/late_binding_symbol_table.h",
-    ]
+    include_dirs = [ "openvino/ienn/src" ]
+
+    if (is_win) {
+      lib_dirs = [ "openvino/ienn/lib/Windows64" ]
+      libs = [ "ie_nn_c_api.lib" ]
+    }
+
     if (is_linux) {
+      lib_dirs = [ "openvino/ienn/lib/Linux64" ]
+      libs = [ "ie_nn_c_api" ]
+
       assert(
           is_component_build == false,
           "`is_component_build=false` must be set for OpenVINO backend on Linux.")
@@ -192,10 +196,10 @@ source_set("webnn_native_sources") {
 
     include_dirs = [
       "//third_party/DirectML/Libraries",
-      "//third_party/microsoft.ai.directml.1.4.1/include",
+      "//third_party/microsoft.ai.directml.1.5.1/include",
     ]
 
-    lib_dirs = [ "//third_party/microsoft.ai.directml.1.4.1/bin/x64-win" ]
+    lib_dirs = [ "//third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
 
     libs = [
       "dxgi.lib",
@@ -320,7 +324,7 @@ if (webnn_enable_openvino) {
 if (webnn_enable_dml) {
   dml_dll = "DirectML.dll"
   os_folder = "x64-win"
-  dml_dll_path = "//third_party/microsoft.ai.directml.1.4.1/bin/${os_folder}"
+  dml_dll_path = "//third_party/microsoft.ai.directml.1.5.1/bin/${os_folder}"
   copy("copy_dml_dll") {
     sources = [ "${dml_dll_path}/${dml_dll}" ]
     outputs = [ "$root_out_dir/{{source_file_part}}" ]

@@ -18,6 +18,9 @@ deps = {
   'node/third_party/webnn-polyfill': {
     'url': '{github_git}/webmachinelearning/webnn-polyfill.git@5c5e9f6f5dbbe9dc67c448c8f7a55b6ddf4dee25'
   },
+  'node/third_party/webnn-samples': {
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@65cab3bb9ea626fb5b68c32169e7602bf3796b8f'
+  },
   'third_party/stb': {
     'url': '{github_git}/nothings/stb@b42009b3b9d4ca35bc703f5310eedc74f584be58'
   },
@@ -29,7 +32,7 @@ deps = {
 
   # Dependencies required for backends.
   'third_party/DirectML': {
-    'url': '{github_git}/microsoft/DirectML.git@e1b29b20a21bd2fb669a0c774f9870f8e9731da6',
+    'url': '{github_git}/microsoft/DirectML.git@af53ef743559079bd2ebb1aa83d9f98e87d774e1',
     'condition': 'checkout_win',
   },
   'third_party/oneDNN': {

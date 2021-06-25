@@ -1,0 +1,12 @@
+{
+  "name": "lenet",
+  "version": "0.0.1",
+  "description": "A Node.js example of LeNet using webnn-native",
+  "main": "main.mjs",
+  "author": "WebNN-native Authors",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "start": "node main.mjs"
+  }
+}

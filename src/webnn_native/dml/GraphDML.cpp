@@ -26,6 +26,18 @@
 #include "webnn_native/dml/deps/src/precomp.h"
 #include "webnn_native/ops/LeakyRelu.h"
 
+#define COMPUTE_DML_ERROR_CALLBACK(messages)                                   \
+    {                                                                          \
+        if (callback) {                                                        \
+            callback(MLComputeGraphStatus_Error, nullptr, messages, userdata); \
+        } else {                                                               \
+            dawn::ErrorLog() << messages;                                      \
+        }                                                                      \
+        return MLComputeGraphStatus_Error;                                     \
+    }                                                                          \
+    for (;;)                                                                   \
+    break
+
 namespace webnn_native { namespace dml {
     class Result : public ResultBase {
       public:
@@ -447,7 +459,12 @@ namespace webnn_native { namespace dml {
     }
 
     Graph::Graph(Context* context) : GraphBase(context) {
-        mDevice = context->GetDevice();
+#if defined(_DEBUG)
+        mDevice.reset(new ::pydml::Device(true, true));
+#else
+        mDevice.reset(new ::pydml::Device(true, false));
+#endif
+        mDevice->Init();
         mGraph.reset(new ::dml::Graph(mDevice->GetDevice()));
     }
 
@@ -1148,6 +1165,7 @@ namespace webnn_native { namespace dml {
         for (auto& binding : mBindings) {
             inputBindings.push_back(binding.get());
         }
+        std::lock_guard<std::mutex> lock(mMutex);
         return FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))
                    ? MLBuildGraphStatus_Error
                    : MLBuildGraphStatus_Success;
@@ -1169,10 +1187,16 @@ namespace webnn_native { namespace dml {
                                                    NamedOutputsBase* outputs,
                                                    MLComputeGraphCallback callback,
                                                    void* userdata) {
-        for (auto& input : inputs->GetRecords()) {
-            ::pydml::Binding* inputBinding = mInputs.at(input.first);
-            inputBinding->data.buffer = const_cast<void*>(input.second->buffer);
-            inputBinding->data.size = input.second->size;
+        auto namedInputs = inputs->GetRecords();
+        for (auto& input : mInputs) {
+            // All the inputs must be set.
+            if (namedInputs.find(input.first) == namedInputs.end()) {
+                COMPUTE_DML_ERROR_CALLBACK("The input must be set.");
+            }
+
+            ::pydml::Binding* inputBinding = input.second;
+            inputBinding->data.buffer = const_cast<void*>(namedInputs[input.first]->buffer);
+            inputBinding->data.size = namedInputs[input.first]->size;
         }
         std::vector<pydml::Binding*> inputBindings;
         for (auto& binding : mBindings) {
@@ -1182,6 +1206,9 @@ namespace webnn_native { namespace dml {
         std::vector<std::string> outputNames;
         if (outputs != nullptr) {
             for (auto& output : outputs->GetRecords()) {
+                if (mOutputs.find(output.first) == mOutputs.end()) {
+                    COMPUTE_DML_ERROR_CALLBACK("The output name is invalid.");
+                }
                 outputNames.push_back(output.first);
                 outputExpressions.push_back(&(mOutputs.at(output.first)));
             }
@@ -1192,6 +1219,7 @@ namespace webnn_native { namespace dml {
             }
         }
         std::vector<pydml::TensorData*> outputTensors;
+        std::lock_guard<std::mutex> lock(mMutex);
         if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
                                              outputExpressions, outputTensors))) {
             if (callback) {

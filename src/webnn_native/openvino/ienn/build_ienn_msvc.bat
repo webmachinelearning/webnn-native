@@ -151,6 +151,7 @@ if ERRORLEVEL 1 GOTO errorHandling
 :: copy the ie_nn_c_api.dll to ienn\lib\Windows64
 if exist "%ROOT_DIR%\lib\Windows64\ie_nn_c_api.dll" del "%ROOT_DIR%\lib\Windows64\ie_nn_c_api.dll"
 xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.dll" "%ROOT_DIR%\lib\Windows64"
+xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.lib" "%ROOT_DIR%\lib\Windows64"
 echo Done.
 goto :eof
 

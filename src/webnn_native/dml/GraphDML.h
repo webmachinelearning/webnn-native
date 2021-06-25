@@ -16,6 +16,7 @@
 #define WEBNN_NATIVE_DML_MODEL_DML_H_
 
 #include <map>
+#include <mutex>
 #include <set>
 
 #include "webnn_native/Graph.h"
@@ -83,6 +84,8 @@ namespace webnn_native { namespace dml {
                                           size_t size);
 
         std::shared_ptr<::pydml::Device> mDevice;
+        // The mutex is used to lock mDevice.
+        std::mutex mMutex;
         std::unique_ptr<::dml::Graph> mGraph;
         std::map<const OperandBase*, ::dml::Expression> mExpression;
         std::vector<std::unique_ptr<::pydml::Binding>> mBindings;

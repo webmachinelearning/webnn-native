@@ -48,6 +48,7 @@ class Compilation {
   std::unique_ptr<InferRequest> infer_request_;
   std::unique_ptr<ExecutableNetwork> execution_;
   std::unique_ptr<Core> ie_core_;
+  std::map<std::string, std::string> output_node_map_;
 
   DISALLOW_COPY_AND_ASSIGN(Compilation);
 };

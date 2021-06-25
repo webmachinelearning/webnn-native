@@ -78,6 +78,7 @@ class Model {
   std::vector<std::shared_ptr<ngraph::op::v0::Parameter>> ngraph_inputs_;
   std::vector<std::shared_ptr<ngraph::op::v0::Result>> ngraph_outputs_;
   std::unique_ptr<CNNNetwork> network_;
+  std::map<std::string, std::string> output_node_map_;
 
   DISALLOW_COPY_AND_ASSIGN(Model);
 };

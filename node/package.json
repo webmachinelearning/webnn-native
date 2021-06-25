@@ -1,0 +1,41 @@
+{
+  "name": "webnn-node",
+  "version": "0.1.0",
+  "description": "WebNN-native Binding for Node.js*",
+  "main": "lib/webnn.js",
+  "author": "WebNN-native Authors",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/webmachinelearning/webnn-native.git"
+  },
+  "directories": {
+    "example": "examples",
+    "lib": "lib",
+    "test": "third_party/webnn-polyfill/test"
+  },
+  "scripts": {
+    "build": "node-gyp configure && node-gyp build",
+    "build-debug": "node-gyp configure --debug && node-gyp build",
+    "start": "http-server",
+    "test": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/*/*.js third_party/webnn-polyfill/test/cts/from_nnapi/tests/cts.js third_party/webnn-polyfill/test/models/**/*.js",
+    "test-api": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/api/*.js",
+    "test-ops": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/ops/*.js",
+    "test-cts": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/cts/from_nnapi/tests/cts.js",
+    "test-models": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/models/**/*.js"
+  },
+  "dependencies": {
+    "bindings": "^1.5.0"
+  },
+  "gypfile": true,
+  "engines": {
+    "node": ">= 12.20.1"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "cross-env": "^7.0.3",
+    "http-server": "^0.12.3",
+    "mocha": "^7.1.1",
+    "node-addon-api": "^3.0.2"
+  }
+}
