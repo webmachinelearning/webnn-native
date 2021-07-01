@@ -42,6 +42,13 @@
 
 namespace node {
 
+    const int kMaxInt = 0x7FFFFFFF;
+    const int kMinInt = -kMaxInt - 1;
+    const int kMaxInt8 = (1 << 7) - 1;
+    const int kMinInt8 = -(1 << 7);
+    const int kMaxUInt8 = (1 << 8) - 1;
+    const uint32_t kMaxUInt32 = 0xFFFFFFFFu;
+
     template <class T>
     bool GetMappedValue(const std::unordered_map<std::string, T> map,
                         const std::string name,
@@ -109,9 +116,10 @@ namespace node {
 
         // Here is a workaround to check int32 following
         // https://github.com/nodejs/node-addon-api/issues/57.
-        float floatValue = jsValue.As<Napi::Number>().FloatValue();
+        double doubleValue = jsValue.As<Napi::Number>().DoubleValue();
         int32_t intValue = jsValue.As<Napi::Number>().Int32Value();
-        if (std::fabs(floatValue - intValue) > 1e-6) {
+        if (doubleValue < kMinInt || doubleValue > kMaxInt ||
+            std::fabs(doubleValue - intValue) > 1e-6) {
             // It's not integer type.
             return false;
         }
@@ -123,7 +131,45 @@ namespace node {
         if (!jsValue.IsNumber()) {
             return false;
         }
+
+        // Here is a algorithm to check uint32 refering to the Chronmium
+        double doubleValue = jsValue.As<Napi::Number>().DoubleValue();
+        uint32_t uIntValue = jsValue.As<Napi::Number>().Uint32Value();
+        if (doubleValue < 0 || doubleValue > kMaxUInt32 ||
+            std::fabs(doubleValue - uIntValue) > 1e-6) {
+            return false;
+        }
         value = jsValue.As<Napi::Number>().Uint32Value();
+        return true;
+    }
+
+    inline bool GetInt8(const Napi::Value& jsValue, int8_t& value) {
+        if (!jsValue.IsNumber()) {
+            return false;
+        }
+
+        double doubleValue = jsValue.As<Napi::Number>().DoubleValue();
+        uint32_t int8Value = jsValue.As<Napi::Number>().Int32Value();
+        if (doubleValue < kMinInt8 || doubleValue > kMaxInt8 ||
+            std::fabs(doubleValue - int8Value) > 1e-6) {
+            return false;
+        }
+        value = static_cast<int8_t>(jsValue.As<Napi::Number>().Int32Value());
+        return true;
+    }
+
+    inline bool GetUint8(const Napi::Value& jsValue, uint8_t& value) {
+        if (!jsValue.IsNumber()) {
+            return false;
+        }
+
+        double doubleValue = jsValue.As<Napi::Number>().DoubleValue();
+        uint32_t uIntValue = jsValue.As<Napi::Number>().Int32Value();
+        if (doubleValue < 0 || doubleValue > kMaxUInt8 ||
+            std::fabs(doubleValue - uIntValue) > 1e-6) {
+            return false;
+        }
+        value = static_cast<uint8_t>(jsValue.As<Napi::Number>().Uint32Value());
         return true;
     }
 
