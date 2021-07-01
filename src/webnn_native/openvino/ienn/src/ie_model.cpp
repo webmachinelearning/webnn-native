@@ -270,7 +270,14 @@ ie_operand_t* Model::AddClamp(ie_operand_t* input,
                               ie_clamp_options_t* options) {
   auto input_node = name_node_map_[input->name];
   std::shared_ptr<ngraph::Node> clamp_node;
-  if (options->minDimensionsCount == 0 && options->maxDimensionsCount == 0) {
+  // If minValue and maxValue are both scalars with shape {1} or shape {}, use
+  // native Clamp to create graph. Otherwise, due to the limitation of Clamp's
+  // attributes type, use Maximum and Minimum to implement Clamp as a
+  // emulation. Note that this emulation may cause performance decline in
+  // OpenVINO.
+  if ((options->minDimensionsCount == 0 && options->maxDimensionsCount == 0) ||
+      (options->minDimensionsCount == 1 && options->minDimensions[0] == 1 &&
+       options->maxDimensionsCount == 1 && options->maxDimensions[0] == 1)) {
     float min = options->minValue == nullptr
                     ? std::numeric_limits<float>::lowest()
                     : options->minValue[0];
@@ -301,6 +308,9 @@ ie_operand_t* Model::AddClamp(ie_operand_t* input,
     clamp_node = options->maxValue != nullptr
                      ? std::make_shared<op::v1::Minimum>(max_node, max_constant)
                      : max_node.get_node_shared_ptr();
+    std::cout << "Warning: Clamp has been emulated by Maximum and Minimum, "
+                 "this may cause performance decline in OpenVINO."
+              << std::endl;
   }
 
   std::string node_name = clamp_node->get_name();
