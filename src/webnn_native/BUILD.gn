@@ -163,15 +163,17 @@ source_set("webnn_native_sources") {
       "openvino/GraphIE.h",
     ]
 
-    include_dirs = [ "openvino/ienn/src" ]
+    include_dirs = [ "//third_party/openvino/ienn/src" ]
+
+    deps += [ ":build_ienn_binary" ]
 
     if (is_win) {
-      lib_dirs = [ "openvino/ienn/lib/Windows64" ]
+      lib_dirs = [ "//third_party/openvino/ienn/build/intel64/Release/" ]
       libs = [ "ie_nn_c_api.lib" ]
     }
 
     if (is_linux) {
-      lib_dirs = [ "openvino/ienn/lib/Linux64" ]
+      lib_dirs = [ "//third_party/openvino/ienn/build/intel64/Release/lib" ]
       libs = [ "ie_nn_c_api" ]
 
       assert(
@@ -308,21 +310,17 @@ dawn_component("webnn_native") {
   ]
 }
 
-if (webnn_enable_openvino) {
-  if (is_win) {
-    ie_nn_dll = "ie_nn_c_api.dll"
-    os_folder = "Windows64"
-  } else if (is_linux) {
-    ie_nn_dll = "libie_nn_c_api.so"
-    os_folder = "Linux64"
-  }
-  if (is_win || is_linux) {
-    ie_nn_dll_path = "//src/webnn_native/openvino/ienn/lib/${os_folder}"
-    copy("copy_ie_nn_dll") {
-      sources = [ "${ie_nn_dll_path}/${ie_nn_dll}" ]
-      outputs = [ "$root_out_dir/{{source_file_part}}" ]
-    }
-  }
+# An action that build ienn binary that is a c wrapper of nGraph.
+action("build_ienn_binary") {
+  script = "//third_party/openvino/ienn/build_ienn.py"
+
+  args = [
+    "--webnn-native-lib-path",
+    "$root_out_dir/{{source_file_part}}",
+  ]
+
+  # Output a stamp file to never need to be rebuilt.
+  outputs = [ "${webnn_gen_root}/build_ienn.stamp" ]
 }
 
 if (webnn_enable_dml) {

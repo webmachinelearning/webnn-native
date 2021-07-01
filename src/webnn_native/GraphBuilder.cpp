@@ -108,9 +108,9 @@ namespace webnn_native {
             new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
     }
 
-    OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input, ReduceMeanOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(
-            new op::ReduceMean(this, input, options));
+    OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input,
+                                              ReduceMeanOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::ReduceMean(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {

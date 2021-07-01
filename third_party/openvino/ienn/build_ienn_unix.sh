@@ -14,6 +14,9 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+OUT_DIR="$1"
+printf "$OUT_DIR"
+
 error() {
     local code="${3:-1}"
     if [[ -n "$2" ]];then
@@ -64,6 +67,10 @@ if [ "$OS_PATH" == "x86_64" ]; then
   NUM_THREADS="-j8"
 fi
 
+printf "\n"
+printf "\n###############^|^| Begin to build ienn ^|^|###############\n"
+printf "\n"
+
 if [ -e "$build_dir/CMakeCache.txt" ]; then
     rm -rf "$build_dir/CMakeCache.txt"
 fi
@@ -72,10 +79,13 @@ cd "$build_dir"
 cmake -DCMAKE_BUILD_TYPE=Release "$CURRENT_PATH"
 make $NUM_THREADS
 
-# copy the libie_nn_c_api.so to ienn\lib\Linux64
-if [ -e "$CURRENT_PATH/lib/Linux64/libie_nn_c_api.so" ]; then
-    rm -rf "$CURRENT_PATH/lib/Linux64/libie_nn_c_api.so"
+# copy the libie_nn_c_api.so to webnn native library directory.
+WEBNN_NATIVE_LIB_PATH="$CURRENT_PATH/../../../$OUT_DIR"
+if [ -e "$WEBNN_NATIVE_LIB_PATH/libie_nn_c_api.so" ]; then
+    rm -rf "$WEBNN_NATIVE_LIB_PATH/libie_nn_c_api.so"
 fi
-cp "$build_dir/$OS_PATH/Release/lib/libie_nn_c_api.so" "$CURRENT_PATH/lib/Linux64"
+cp "$build_dir/$OS_PATH/Release/lib/libie_nn_c_api.so" "$WEBNN_NATIVE_LIB_PATH"
 
-printf "\nBuild completed, you can find binaries for all samples in the $build_dir/%s/Release subfolder.\n\n" "$OS_PATH"
+printf "\n"
+printf "\n###############^|^| Build ienn succeeded ^|^|###############\n"
+printf "\n"
