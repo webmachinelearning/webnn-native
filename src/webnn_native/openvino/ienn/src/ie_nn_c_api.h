@@ -144,6 +144,12 @@ typedef struct ie_pool2d_options {
   ie_input_operand_layout layout = ie_input_operand_layout::Nchw;
 } ie_pool2d_options_t;
 
+typedef struct ie_reduce_mean_options {
+  bool keepDimensions = false;
+  uint32_t axesCount = 0;
+  int32_t const* axes;
+} ie_reduce_mean_options_t;
+
 typedef struct ie_transpose_options {
   uint32_t permutationCount = 0;
   int32_t const* permutation;
@@ -325,6 +331,19 @@ ie_model_add_pool2d(ie_model_t* model,
                     ie_operand_t* input,
                     ie_pool2d_options_t* options,
                     ie_operand_t** operand);
+
+/**
+ * @brief Add reduceMean node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_reduce_mean(ie_model_t* model,
+                 ie_operand_t* input,
+                 ie_reduce_mean_options* options,
+                 ie_operand_t** operand);
 
 /**
  * @brief Add Relu node to nGraph. Use the ie_operand_free() method to

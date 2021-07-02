@@ -222,6 +222,14 @@
       {"name": "alpha", "type": "float", "default": 0.01}
     ]
   },
+  "reduceMean options": {
+    "category": "structure",
+    "members": [
+      {"name": "axes count", "type": "uint32_t", "default": 0},
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count","optional": true},
+      {"name": "keepDimensions", "type": "bool", "default": "false"}
+    ]
+  },
   "transpose options": {
     "category": "structure",
     "members": [
@@ -332,6 +340,14 @@
         "args": [
           {"name": "input", "type": "operand"},
           {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce mean",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduceMean options", "annotation": "const*", "optional": true}
         ]
       },
       {

@@ -33,6 +33,7 @@ namespace webnn_native {
         class Binary;
         class Conv2d;
         class Pool2d;
+        class ReduceMean;
         class Reshape;
         class Transpose;
         class Unary;
@@ -61,7 +62,8 @@ namespace webnn_native {
         virtual MaybeError AddBinary(const op::Binary* binary);
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d);
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d);
-        virtual MaybeError AddReshape(const op::Reshape* relu);
+        virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean);
+        virtual MaybeError AddReshape(const op::Reshape* reshape);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);
         virtual MaybeError AddLeakyRelu(const op::LeakyRelu* leakyRelu);

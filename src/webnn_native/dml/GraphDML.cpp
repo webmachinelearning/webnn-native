@@ -874,6 +874,44 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddReduceMean(const op::ReduceMean* reduceMean) {
+        DAWN_ASSERT(reduceMean->Inputs().size() == 1);
+        const OperandBase* inputOperand = reduceMean->Inputs()[0].Get();
+        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputOperand);
+        const ReduceMeanOptions* options = reduceMean->GetOptions();
+        std::vector<std::uint32_t> axesVector;
+        size_t inputRank = input.GetOutputDesc().sizes.size();
+        for (size_t i = 0; i < options->axesCount; ++i) {
+            // Axes values must be in the range [0, InputTensor.DimensionCount - 1].
+            // The dimensions to reduce where -1 means the last dimension.
+            uint32_t axis = options->axes[i] == -1 ? inputRank - 1 : options->axes[i];
+            axesVector.push_back(axis);
+        }
+        ::dml::Span<const uint32_t> axes(axesVector);
+        ::dml::Expression output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_AVERAGE, axes);
+        ::dml::TensorDimensions outputDims = output.GetOutputDesc().sizes;
+        if (!options->keepDimensions) {
+            ::dml::TensorDimensions newDims;
+            for (size_t i = 0; i < outputDims.size(); ++i) {
+                // ReduceMean in DML always keep dimensions,
+                // manually remove the reduced dimension whose value is 1.
+                if (!(outputDims[i] == 1 && std::find(axes.begin(), axes.end(), i) != axes.end())) {
+                    newDims.push_back(outputDims[i]);
+                }
+            }
+            // DML doesn't support reinterpret a node for empty shape.
+            if (newDims.empty()) {
+                newDims.push_back(1);
+            }
+            auto strides = CalculateStrides(newDims);
+            output = ::dml::Reinterpret(output, newDims, strides);
+        }
+
+        mExpression.insert(std::make_pair(reduceMean, output));
+        return {};
+    }
+
     MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         DAWN_ASSERT(reshape->Inputs().size() == 1);
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();
