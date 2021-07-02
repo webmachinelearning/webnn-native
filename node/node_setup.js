@@ -1,7 +1,12 @@
-global.navigator = require('./lib/webnn');
-global.MLContext = global.navigator.MLContext
-global.MLGraphBuilder = global.navigator.MLGraphBuilder
-global.MLGraph = global.navigator.MLGraph
-global.MLOperand = global.navigator.MLOperand
+const webnn = require('./lib/webnn');
+// navigator is undefined in node.js, but defined in electron.js.
+if (global.navigator === undefined) {
+  global.navigator = {};
+}
+global.navigator.ml = webnn.ml;
+global.MLContext = webnn.MLContext
+global.MLGraphBuilder = webnn.MLGraphBuilder
+global.MLGraph = webnn.MLGraph
+global.MLOperand = webnn.MLOperand
 global.chai = require('chai');
 global.fs = require('fs');
