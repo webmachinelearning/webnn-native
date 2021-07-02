@@ -77,7 +77,7 @@ Run unit tests, for example `./out/Release/webnn_unittests`.
 Run end2end tests, for example `./out/Release/webnn_end2end_tests`.
 
 **Notes**:
- * For OpenVINO backend, please [install 2021.2 version](https://docs.openvinotoolkit.org/2021.2/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.2/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
+ * For OpenVINO backend, please [install 2021.4 version](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
  * The current implementation of XNNPACK and oneDNN backends is mainly for the investigation of WebNN [Operation Level Execution
 ](https://webmachinelearning.github.io/webnn/#usecase-op-level-exec) use case. So only a limited set of tests (such as of conv2d) is expected to pass.
 

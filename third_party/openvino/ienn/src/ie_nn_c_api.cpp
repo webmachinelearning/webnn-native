@@ -32,7 +32,7 @@ std::map<IE::StatusCode, IEStatusCode> status_map = {
 #define BEGINE_TRY try {
 #define END_CATCH                                          \
   }                                                        \
-  catch (const IE::details::InferenceEngineException& e) { \
+  catch (const IE::Exception& e) {                         \
     return e.hasStatus() ? status_map[e.getStatus()]       \
                          : IEStatusCode::UNEXPECTED;       \
   }                                                        \
