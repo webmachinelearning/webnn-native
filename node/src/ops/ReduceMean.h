@@ -1,5 +1,5 @@
-#ifndef NODE_OPS_ReduceMean_H_
-#define NODE_OPS_ReduceMean_H_
+#ifndef NODE_OPS_REDUCEMEAN_H_
+#define NODE_OPS_REDUCEMEAN_H_
 
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
@@ -12,4 +12,4 @@ namespace node { namespace op {
 
 }}  // namespace node::op
 
-#endif  // NODE_OPS_TRANSPOSE_H_
+#endif  // NODE_OPS_REDUCEMEAN_H_
