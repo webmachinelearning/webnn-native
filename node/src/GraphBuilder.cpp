@@ -30,6 +30,7 @@
 #include "ops/Input.h"
 #include "ops/LeakyRelu.h"
 #include "ops/Pool2d.h"
+#include "ops/ReduceMean.h"
 #include "ops/Reshape.h"
 #include "ops/Transpose.h"
 
@@ -171,6 +172,10 @@ namespace node {
         return op::Pool2d::Build(info, mImpl, op::Pool2dType::kAveragePool2d);
     }
 
+    Napi::Value GraphBuilder::ReduceMean(const Napi::CallbackInfo& info) {
+        return op::ReduceMean::Build(info, mImpl);
+    }
+
     Napi::Value GraphBuilder::Relu(const Napi::CallbackInfo& info) {
         BUILD_UNARY(Relu);
     }
@@ -238,6 +243,7 @@ namespace node {
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
              InstanceMethod("maxPool2d", &GraphBuilder::MaxPool2d, napi_enumerable),
              InstanceMethod("averagePool2d", &GraphBuilder::AveragePool2d, napi_enumerable),
+             InstanceMethod("reduceMean", &GraphBuilder::ReduceMean, napi_enumerable),
              InstanceMethod("relu", &GraphBuilder::Relu, napi_enumerable),
              InstanceMethod("leakyRelu", &GraphBuilder::LeakyRelu, napi_enumerable),
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
