@@ -32,6 +32,7 @@ namespace webnn_native {
         class BatchNorm;
         class Binary;
         class Conv2d;
+        class Pad;
         class Pool2d;
         class ReduceMean;
         class Reshape;
@@ -61,6 +62,7 @@ namespace webnn_native {
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm);
         virtual MaybeError AddBinary(const op::Binary* binary);
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d);
+        virtual MaybeError AddPad(const op::Pad* pad);
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d);
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
@@ -69,7 +71,7 @@ namespace webnn_native {
         virtual MaybeError AddLeakyRelu(const op::LeakyRelu* leakyRelu);
         virtual MaybeError AddConcat(const op::Concat* concat);
         virtual MaybeError AddGemm(const op::Gemm* gemm);
-        virtual MaybeError AddClamp(const op::Clamp* Clamp);
+        virtual MaybeError AddClamp(const op::Clamp* clamp);
         virtual MaybeError Finish();
         virtual void Compile(BuildGraphCallbackDelegate delegate);
         virtual MLBuildGraphStatus CompileSync();

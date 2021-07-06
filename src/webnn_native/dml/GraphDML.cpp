@@ -14,6 +14,8 @@
 
 #include "webnn_native/dml/GraphDML.h"
 
+#include <time.h>
+
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
@@ -500,6 +502,7 @@ namespace webnn_native { namespace dml {
         auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetValue(),
                                            constant->GetSize());
         mExpression.insert(std::make_pair(constant, dmlConstant));
+        mConstantSet.insert(constant);
         return {};
     }
 
@@ -696,13 +699,12 @@ namespace webnn_native { namespace dml {
     }
 
     MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
-        DAWN_ASSERT(conv2d->Inputs().size() == 2);
-        const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
-        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
-        ::dml::Expression input = mExpression.at(inputOperand);
-        const OperandBase* filterOperand = conv2d->Inputs()[1].Get();
-        DAWN_ASSERT(mExpression.find(filterOperand) != mExpression.end());
-        ::dml::Expression filter = mExpression.at(filterOperand);
+        auto inputsOperand = conv2d->Inputs();
+        DAWN_ASSERT(inputsOperand.size() == 2);
+        DAWN_ASSERT(mExpression.find(inputsOperand[0].Get()) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputsOperand[0].Get());
+        DAWN_ASSERT(mExpression.find(inputsOperand[1].Get()) != mExpression.end());
+        ::dml::Expression filter = mExpression.at(inputsOperand[1].Get());
         const Conv2dOptions* options = conv2d->GetOptions();
 
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
@@ -740,6 +742,73 @@ namespace webnn_native { namespace dml {
         }
 
         mExpression.insert(std::make_pair(conv2d, output));
+        return {};
+    }
+
+    MaybeError Graph::AddPad(const op::Pad* pad) {
+        auto inputsOperand = pad->Inputs();
+        DAWN_ASSERT(inputsOperand.size() == 2);
+        DAWN_ASSERT(mExpression.find(inputsOperand[0].Get()) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputsOperand[0].Get());
+        DAWN_ASSERT(mExpression.find(inputsOperand[1].Get()) != mExpression.end());
+        ::dml::Expression padding = mExpression.at(inputsOperand[1].Get());
+
+        // Workaround(mingming): If padding was added in mGraph, it must be used.
+        // Use time(NULL) to generate a unique name for the output node.
+        // This may be a dml issue: https://github.com/microsoft/DirectML/issues/133.
+        std::string name = std::to_string(time(NULL));
+        mOutputs[name] = ::dml::Identity(padding);
+
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        uint32_t inputRank = inputDims.size();
+        op::Constant* paddingConstant;
+        if (mConstantSet.find(inputsOperand[1].Get()) != mConstantSet.end()) {
+            paddingConstant = reinterpret_cast<op::Constant*>(inputsOperand[1].Get());
+        } else {
+            return DAWN_INTERNAL_ERROR("The padding constant is not found.");
+        }
+        ::dml::TensorDimensions paddingDims = padding.GetOutputDesc().sizes;
+        if (paddingDims[1] != 2 || paddingDims[0] != inputRank) {
+            return DAWN_INTERNAL_ERROR(
+                "The padding should has shape [n, 2], where n is the rank of the input tensor");
+        }
+
+        const PadOptions* options = pad->GetOptions();
+        DML_PADDING_MODE paddingMode;
+        switch (options->mode) {
+            case ml::PaddingMode::Edge:
+                paddingMode = DML_PADDING_MODE_EDGE;
+                break;
+            case ml::PaddingMode::Reflection:
+                paddingMode = DML_PADDING_MODE_REFLECTION;
+                break;
+            case ml::PaddingMode::Symmetric:
+                paddingMode = DML_PADDING_MODE_SYMMETRIC;
+                break;
+            case ml::PaddingMode::Constant:
+                paddingMode = DML_PADDING_MODE_CONSTANT;
+                break;
+            default:
+                DAWN_ASSERT(0);
+        }
+        float paddingValue = options->value;
+
+        // dml::Span just holds the refernces, need a variable to hold the memory.
+        std::vector<uint32_t> startPaddingVector;
+        std::vector<uint32_t> endPaddingVector;
+        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetValue());
+        for (size_t i = 0; i < inputRank; ++i) {
+            startPaddingVector.push_back(paddingData[2 * i]);
+            endPaddingVector.push_back(paddingData[2 * i + 1]);
+        }
+        ::dml::Span<const uint32_t> startPadding(startPaddingVector);
+        ::dml::Span<const uint32_t> endPadding(endPaddingVector);
+        ::dml::Expression output =
+            ::dml::Padding(input, paddingMode, paddingValue, startPadding, endPadding);
+        // Reshape back according to input rank if needed.
+        ::dml::TensorDimensions outputDims = output.GetOutputDesc().sizes;
+        mExpression.insert(std::make_pair(pad, output));
+        outputDims = output.GetOutputDesc().sizes;
         return {};
     }
 

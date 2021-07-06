@@ -33,6 +33,7 @@
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Reshape.h"
@@ -53,6 +54,7 @@ namespace webnn_native { namespace ie {
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
+        virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;

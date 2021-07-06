@@ -97,6 +97,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddClamp");
     }
 
+    MaybeError GraphBase::AddPad(const op::Pad* pad) {
+        UNREACHABLE();
+    }
+
     MaybeError GraphBase::Finish() {
         UNREACHABLE();
     }

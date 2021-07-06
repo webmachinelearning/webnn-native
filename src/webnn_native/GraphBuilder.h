@@ -44,6 +44,7 @@ namespace webnn_native {
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
         OperandBase* AveragePool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
+        OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
         OperandBase* ReduceMean(OperandBase*, ReduceMeanOptions const* options);
         OperandBase* Relu(OperandBase*);
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);

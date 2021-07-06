@@ -195,6 +195,21 @@ IEStatusCode ie_model_add_conv2d(ie_model_t* model,
   return IEStatusCode::OK;
 }
 
+IEStatusCode ie_model_add_pad(ie_model_t* model,
+                              ie_operand_t* input,
+                              ie_pad_options* options,
+                              ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddPad(input, options);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
 IEStatusCode ie_model_add_pool2d(ie_model_t* model,
                                  ie_pool_type type,
                                  ie_operand_t* input,
