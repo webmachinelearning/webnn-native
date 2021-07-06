@@ -68,7 +68,7 @@ if [ "$OS_PATH" == "x86_64" ]; then
 fi
 
 printf "\n"
-printf "\n###############^|^| Begin to build ienn ^|^|###############\n"
+printf "\n###############^|^| Begin to build ngraph_c_api ^|^|###############\n"
 printf "\n"
 
 if [ -e "$build_dir/CMakeCache.txt" ]; then
@@ -79,13 +79,17 @@ cd "$build_dir"
 cmake -DCMAKE_BUILD_TYPE=Release "$CURRENT_PATH"
 make $NUM_THREADS
 
-# copy the libie_nn_c_api.so to webnn native library directory.
+# copy the libngraph_c_api.so to webnn native library directory.
 WEBNN_NATIVE_LIB_PATH="$CURRENT_PATH/../../../$OUT_DIR"
-if [ -e "$WEBNN_NATIVE_LIB_PATH/libie_nn_c_api.so" ]; then
-    rm -rf "$WEBNN_NATIVE_LIB_PATH/libie_nn_c_api.so"
+if [ -e "$WEBNN_NATIVE_LIB_PATH/libngraph_c_api.so" ]; then
+    rm -rf "$WEBNN_NATIVE_LIB_PATH/libngraph_c_api.so"
 fi
-cp "$build_dir/$OS_PATH/Release/lib/libie_nn_c_api.so" "$WEBNN_NATIVE_LIB_PATH"
+cp "$build_dir/$OS_PATH/Release/lib/libngraph_c_api.so" "$WEBNN_NATIVE_LIB_PATH"
+mkdir -p "$WEBNN_NATIVE_LIB_PATH/inference_engine/include/"
+mkdir -p "$WEBNN_NATIVE_LIB_PATH/inference_engine/lib/intel64/"
+yes | cp -rf "$INTEL_OPENVINO_DIR/inference_engine/include/c_api" "$WEBNN_NATIVE_LIB_PATH/inference_engine/include/c_api"
+yes | cp "$INTEL_OPENVINO_DIR/inference_engine/lib/intel64/libinference_engine_c_api.so" "$WEBNN_NATIVE_LIB_PATH/inference_engine/lib/intel64/Release"
 
 printf "\n"
-printf "\n###############^|^| Build ienn succeeded ^|^|###############\n"
+printf "\n###############^|^| Build ngraph_c_api succeeded ^|^|###############\n"
 printf "\n"

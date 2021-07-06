@@ -10,5 +10,5 @@ To build the component, please follow below steps:
 
 2. [Set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables).
 
-3. Execute `build_ienn_msvc.bat` on Windows or `build_ienn_unix.sh` on Linux.
+3. Execute `build_ngraph_c_api_msvc.bat` on Windows or `build_ngraph_c_api_unix.sh` on Linux.
 

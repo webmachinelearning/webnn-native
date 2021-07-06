@@ -35,11 +35,8 @@ namespace webnn_native { namespace op {
             return graph->AddReshape(this);
         }
         MaybeError ValidateAndInferTypes() override;
-        int32_t const* GetNewShape() const {
-            return mNewShape.data();
-        }
-        size_t GetNewShapeCount() const {
-            return mNewShape.size();
+        std::vector<int32_t> GetNewShape() const {
+            return mNewShape;
         }
 
       private:

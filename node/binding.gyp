@@ -57,7 +57,7 @@
                   '<(WEBNN_NATIVE_LIB_PATH)/webnn_native.dll',
                   '<(WEBNN_NATIVE_LIB_PATH)/webnn_proc.dll',
                   '<(WEBNN_NATIVE_LIB_PATH)/DirectML.dll',
-                  '<(WEBNN_NATIVE_LIB_PATH)/ie_nn_c_api.dll',
+                  '<(WEBNN_NATIVE_LIB_PATH)/ngraph_c_api.dll',
               ]
             } ]
           },
@@ -72,7 +72,7 @@
               'files': [
                   '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_native.so',
                   '<(WEBNN_NATIVE_LIB_PATH)/libwebnn_proc.so',
-                  '<(WEBNN_NATIVE_LIB_PATH)/libie_nn_c_api.so',
+                  '<(WEBNN_NATIVE_LIB_PATH)/libngraph_c_api.so',
               ]
             } ]
           }

@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_IE_MODEL_IE_H_
 #define WEBNN_NATIVE_IE_MODEL_IE_H_
 
-#include <ie_nn_c_api.h>
+#include <ngraph_c_api.h>
 #include <map>
 #include <set>
 #include <unordered_set>
@@ -73,17 +73,24 @@ namespace webnn_native { namespace ie {
         MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
                                          NamedOutputsBase* outputs) override;
 
-        ie_model_t* mIeModel;
-        ie_compilation_t* mIeCompilation;
-
-        // Map the input name to IE internal id
-        std::map<std::string, std::string> mInputIdMap;
-        // Map the IE internal id to output name
+        // Map the input name to IE internal input number.
+        std::map<std::string, size_t> mInputIdMap;
+        // Map the output name to IE internal original output name that will be updated after
+        // TransposeSinking.
         std::map<std::string, std::string> mOutputNameMap;
+        // The outputs will be optimized after TransposeSinking, the name of it also will be
+        // updated, so the mOriginalNameMap is to get the index of output in network.
+        std::map<std::string, size_t> mOriginalNameMap;
         // Map the operand to IE internal id
         std::map<const OperandBase*, std::string> mOperandIdMap;
         // store the constant operands
         std::unordered_set<const OperandBase*> mConstantSet;
+        std::map<const OperandBase*, const ngraph_node_t*> mGraphNodeMap;
+        std::vector<ngraph_node_t*> mGraphOutputs;
+        std::vector<ngraph_node_t*> mGraphInputs;
+        ie_core_t* mInferEngineCore;
+        ie_network_t* mInferEngineNetwork;
+        ie_infer_request_t* mInferEngineRequest;
     };
 
 }}  // namespace webnn_native::ie

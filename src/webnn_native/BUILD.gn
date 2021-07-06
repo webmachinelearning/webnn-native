@@ -164,18 +164,33 @@ source_set("webnn_native_sources") {
       "openvino/GraphIE.h",
     ]
 
-    include_dirs = [ "//third_party/openvino/ienn/src" ]
+    include_dirs = [
+      "//third_party/openvino/ngraph_c_api/src",
+      "$root_out_dir/inference_engine/include",
+    ]
 
-    deps += [ ":build_ienn_binary" ]
+    deps += [ ":build_ngraph_c_api" ]
 
     if (is_win) {
-      lib_dirs = [ "//third_party/openvino/ienn/build/intel64/Release/" ]
-      libs = [ "ie_nn_c_api.lib" ]
+      lib_dirs = [
+        "//third_party/openvino/ngraph_c_api/build/intel64/Release/",
+        "$root_out_dir/inference_engine/lib/intel64/Release",
+      ]
+      libs = [
+        "ngraph_c_api.lib",
+        "inference_engine_c_api.lib",
+      ]
     }
 
     if (is_linux) {
-      lib_dirs = [ "//third_party/openvino/ienn/build/intel64/Release/lib" ]
-      libs = [ "ie_nn_c_api" ]
+      lib_dirs = [
+        "//third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
+        "$root_out_dir/inference_engine/lib/intel64/Release",
+      ]
+      libs = [
+        "ngraph_c_api",
+        "inference_engine_c_api",
+      ]
 
       assert(
           is_component_build == false,
@@ -311,9 +326,9 @@ dawn_component("webnn_native") {
   ]
 }
 
-# An action that build ienn binary that is a c wrapper of nGraph.
-action("build_ienn_binary") {
-  script = "//third_party/openvino/ienn/build_ienn.py"
+# An action that build ngraph_c_api binary that is a c wrapper of nGraph.
+action("build_ngraph_c_api") {
+  script = "//third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
 
   args = [
     "--webnn-native-lib-path",
@@ -321,7 +336,7 @@ action("build_ienn_binary") {
   ]
 
   # Output a stamp file to never need to be rebuilt.
-  outputs = [ "${webnn_gen_root}/build_ienn.stamp" ]
+  outputs = [ "${webnn_gen_root}/build_ngraph_c_api.stamp" ]
 }
 
 if (webnn_enable_dml) {
