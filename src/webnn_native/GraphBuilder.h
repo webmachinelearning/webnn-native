@@ -46,6 +46,7 @@ namespace webnn_native {
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
         OperandBase* ReduceMean(OperandBase*, ReduceMeanOptions const* options);
+        OperandBase* Resample(OperandBase*, ResampleOptions const* options);
         OperandBase* Relu(OperandBase*);
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Softmax(OperandBase*);

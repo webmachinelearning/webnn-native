@@ -981,6 +981,44 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddResample(const op::Resample* resample) {
+        DAWN_ASSERT(resample->Inputs().size() == 1);
+        const OperandBase* inputOperand = resample->Inputs()[0].Get();
+        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputOperand);
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        const ResampleOptions* options = resample->GetOptions();
+        ::dml::TensorDimensions outputSizes;
+        if (options->sizesCount == 0) {
+            for (size_t i = 0; i < 4; i++) {
+                outputSizes.push_back(static_cast<uint32_t>(inputDims[i] * options->scales[i]));
+            }
+        } else {
+            outputSizes.assign(options->sizes, options->sizes + options->sizesCount);
+        }
+
+        DML_INTERPOLATION_MODE mode;
+        switch (options->mode) {
+            case ml::InterpolationMode::NearestNeighbor:
+                mode = DML_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
+                break;
+            case ml::InterpolationMode::Linear:
+                mode = DML_INTERPOLATION_MODE_LINEAR;
+                break;
+            default:
+                assert(0);
+                break;
+        }
+
+        // If not specified, parameters are defaulted to the following values:
+        // Scales = computed by dividing the output sizes by the input sizes
+        // InputPixelOffsets = 0.5f for each dimension
+        // OutputPixelOffsets = -0.5f for each dimension
+        ::dml::Expression output = ::dml::Resample(input, outputSizes, mode, {}, {}, {});
+        mExpression.insert(std::make_pair(resample, output));
+        return {};
+    }
+
     MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         DAWN_ASSERT(reshape->Inputs().size() == 1);
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();

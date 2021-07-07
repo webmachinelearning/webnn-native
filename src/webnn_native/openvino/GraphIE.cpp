@@ -159,6 +159,18 @@ namespace webnn_native { namespace ie {
             return ieOptions;
         }
 
+        ie_resample_options ResampleOptionsForIE(ResampleOptions const* options) {
+            if (options == nullptr) {
+                return {};
+            }
+            ie_resample_options ieOptions;
+            ieOptions.mode = static_cast<ie_interpolation_mode>(options->mode);
+            ieOptions.scalesCount = options->scalesCount;
+            ieOptions.scales = options->scales;
+            ieOptions.sizesCount = options->sizesCount;
+            ieOptions.sizes = options->sizes;
+            return ieOptions;
+        }
     }  // namespace
 
     Graph::Graph(Context* context) : GraphBase(context), mIeCompilation(nullptr) {
@@ -390,6 +402,20 @@ namespace webnn_native { namespace ie {
         DAWN_TRY(CheckStatusCode(code, "IE add reduceMean"));
 
         mOperandIdMap[reduceMean] = std::string(ieOperand->name);
+        return {};
+    }
+
+    MaybeError Graph::AddResample(const op::Resample* resample) {
+        auto inputs = resample->Inputs();
+        ie_operand_t input;
+        input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
+        ie_operand_t* ieOperand;
+        ie_resample_options_t ieOptions = ResampleOptionsForIE(resample->GetOptions());
+        IEStatusCode code = IE(ie_model_add_resample)(mIeModel, &input, &ieOptions, &ieOperand);
+
+        DAWN_TRY(CheckStatusCode(code, "IE add resample"));
+
+        mOperandIdMap[resample] = std::string(ieOperand->name);
         return {};
     }
 

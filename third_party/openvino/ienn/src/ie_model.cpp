@@ -504,6 +504,66 @@ ie_operand_t* Model::AddReduceMean(ie_operand_t* input,
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddResample(ie_operand_t* input,
+                                 ie_resample_options_t* options) {
+  auto input_node = name_node_map_[input->name];
+  auto input_shape = input_node.get_shape();
+  SizeVector scales;
+  scales.reserve(4);
+  if (options->scalesCount == 0) {
+    for (uint32_t i = 0; i < 4; ++i) {
+      scales.push_back(static_cast<float>(options->sizes[i]) /
+                       static_cast<float>(input_shape[i]));
+    }
+  } else {
+    for (uint32_t i = 0; i < options->scalesCount; ++i) {
+      scales.push_back(options->scales[i]);
+    }
+  }
+  auto scales_node =
+      op::Constant::create(element::f32, Shape{scales.size()}, scales);
+
+  SizeVector sizes;
+  if (options->sizesCount == 0) {
+    sizes.reserve(4);
+    for (uint32_t i = 0; i < 4; ++i) {
+      sizes.push_back(int32_t(input_shape[i] * options->scales[i]));
+    }
+  } else {
+    sizes = ToVector(options->sizes, options->sizesCount);
+  }
+  auto sizes_node =
+      op::Constant::create(element::i64, Shape{sizes.size()}, sizes);
+
+  op::v4::Interpolate::InterpolateAttrs attrs;
+  switch (options->mode) {
+    case NearestNeighbor:
+      attrs.mode = op::v4::Interpolate::InterpolateMode::nearest;
+      break;
+    case Linear:
+      attrs.mode = op::v4::Interpolate::InterpolateMode::linear;
+      break;
+    default:
+      assert(0);
+      break;
+  }
+
+  if (options->sizesCount != 0) {
+    attrs.shape_calculation_mode =
+        ngraph::op::v4::Interpolate::ShapeCalcMode::sizes;
+  } else {
+    attrs.shape_calculation_mode =
+        ngraph::op::v4::Interpolate::ShapeCalcMode::scales;
+  }
+
+  auto resample_node = std::make_shared<op::v4::Interpolate>(
+      input_node, sizes_node, scales_node,
+      op::Constant::create(element::i64, Shape{4}, {0, 1, 2, 3}), attrs);
+  std::string node_name = resample_node->get_name();
+  name_node_map_[node_name] = resample_node->output(0);
+  return CreateOperand(node_name);
+}
+
 ie_operand_t* Model::AddReshape(ie_operand_t* input,
                                 int32_t const* new_shape,
                                 uint32_t new_shape_count) {
@@ -534,7 +594,7 @@ ie_operand_t* Model::AddTranspose(ie_operand_t* input,
   permutation.reserve(input_shape.size());
   if (options->permutationCount == 0) {
     // When it’s not specified, it’s set to [N-1...0].
-    for (int i = 0; i < input_shape.size(); ++i) {
+    for (size_t i = 0; i < input_shape.size(); ++i) {
       permutation.insert(permutation.begin(), i);
     }
   } else {

@@ -56,6 +56,9 @@ class Model {
                           ie_operand_t* input,
                           ie_pool2d_options_t* options);
   ie_operand_t* AddReduceMean(ie_operand_t* input, ie_reduce_mean_options_t* options);
+  ie_operand_t* AddResample(ie_operand_t* input,
+                            ie_resample_options_t* options);
+
   ie_operand_t* AddRelu(ie_operand_t* input);
   ie_operand_t* AddReshape(ie_operand_t* input,
                            int32_t const* new_shape,

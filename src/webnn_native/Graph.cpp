@@ -69,6 +69,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddReduceMean");
     }
 
+    MaybeError GraphBase::AddResample(const op::Resample* resample) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddResample");
+    }
+
     MaybeError GraphBase::AddReshape(const op::Reshape* reshape) {
         return DAWN_UNIMPLEMENTED_ERROR("AddReshape");
     }
