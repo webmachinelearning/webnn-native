@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_IE_MODEL_IE_H_
 #define WEBNN_NATIVE_IE_MODEL_IE_H_
 
+#include <ie_nn_c_api.h>
 #include <map>
 #include <set>
 #include <unordered_set>
@@ -23,7 +24,6 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/openvino/ContextIE.h"
-#include "webnn_native/openvino/ienn/src/ie_nn_c_api.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"

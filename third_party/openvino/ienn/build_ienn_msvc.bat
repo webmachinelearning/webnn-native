@@ -29,20 +29,6 @@ set MSBUILD_BIN=
 set VS_PATH=
 set VS_VERSION=
 
-if not "%1" == "" (
-   if "%1"=="VS2015" (
-      set "VS_VERSION=2015" 
-   ) else if "%1"=="VS2017" (
-      set "VS_VERSION=2017" 
-   ) else if "%1"=="VS2019" (
-      set "VS_VERSION=2019" 
-   ) else (
-      echo Unrecognized option specified "%1"
-      echo Supported command line options: VS2015, VS2017, VS2019
-      goto errorHandling
-   )
-)
-
 if "%INTEL_OPENVINO_DIR%"=="" (
     if exist "%OPENVINO_DIR%\bin\setupvars.bat" (
         call "%OPENVINO_DIR%\bin\setupvars.bat"
@@ -134,25 +120,29 @@ if "!MSBUILD_BIN!" == "" (
    GOTO errorHandling
 )
 
-if exist "%SOLUTION_DIR64%\CMakeCache.txt" del "%SOLUTION_DIR64%\CMakeCache.txt"
-
 echo Creating Visual Studio %MSBUILD_VERSION% %PLATFORM% files in %SOLUTION_DIR64%... && ^
 :: back to current source directory
 %DISK_SYMBOL%
 cd "%ROOT_DIR%" && cmake -E make_directory "%SOLUTION_DIR64%" && cd "%SOLUTION_DIR64%" && cmake -G "Visual Studio !MSBUILD_VERSION!" -A %PLATFORM% "%ROOT_DIR%"
 
 echo.
-echo ###############^|^| Build Inference Engine Neutal Network using MS Visual Studio (MSBuild.exe) ^|^|###############
+echo ###############^|^| Build ienn using MS Visual Studio (MSBuild.exe) ^|^|###############
 echo.
 echo "!MSBUILD_BIN!" ienn.sln /p:Configuration=Release
 "!MSBUILD_BIN!" ienn.sln /p:Configuration=Release
 if ERRORLEVEL 1 GOTO errorHandling
 
-:: copy the ie_nn_c_api.dll to ienn\lib\Windows64
-if exist "%ROOT_DIR%\lib\Windows64\ie_nn_c_api.dll" del "%ROOT_DIR%\lib\Windows64\ie_nn_c_api.dll"
-xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.dll" "%ROOT_DIR%\lib\Windows64"
-xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.lib" "%ROOT_DIR%\lib\Windows64"
-echo Done.
+:: copy the ie_nn_c_api.dll to webnn native library directory.
+set "WEBNN_NATIVE_LIB_PATH=%ROOT_DIR%\..\..\..\%1"
+set "WEBNN_NATIVE_LIB_PATH=%WEBNN_NATIVE_LIB_PATH:/=\%"
+if exist "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.dll" del "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.dll"
+if exist "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.lib" del "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.lib"
+xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.dll" "%WEBNN_NATIVE_LIB_PATH%"
+xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%"
+
+echo.
+echo ###############^|^| Build ienn succeeded ^|^|###############
+echo.
 goto :eof
 
 :errorHandling

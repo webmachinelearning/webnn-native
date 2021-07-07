@@ -15,8 +15,9 @@
 #ifndef WEBNN_NATIVE_IE_ERROR_IE_H_
 #define WEBNN_NATIVE_IE_ERROR_IE_H_
 
+#include <ie_nn_c_api.h>
+
 #include "webnn_native/Error.h"
-#include "webnn_native/openvino/ienn/src/ie_nn_c_api.h"
 
 namespace webnn_native { namespace ie {
 
