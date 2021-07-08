@@ -257,6 +257,10 @@ ie_operand_t* Model::AddBinary(ie_binary_type type,
       binary_node =
           std::make_shared<op::v1::Multiply>(primary_node, secondary_node);
       break;
+    case ie_binary_type::SUB:
+      binary_node =
+          std::make_shared<op::v1::Subtract>(primary_node, secondary_node);
+      break;
     default:
       THROW_IE_EXCEPTION << "The operation isn't supported";
   }
