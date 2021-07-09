@@ -32,7 +32,7 @@ namespace InferenceEngine {
 class Compilation {
  public:
   explicit Compilation(std::shared_ptr<Model> model);
-  ~Compilation();
+  ~Compilation() = default;
 
   StatusCode SetInput(ie_operand_t* operand,
                       const void* buffer,
@@ -45,9 +45,9 @@ class Compilation {
  private:
   prefer_t preference_;
 
-  std::unique_ptr<InferRequest> infer_request_;
-  std::unique_ptr<ExecutableNetwork> execution_;
-  std::unique_ptr<Core> ie_core_;
+  InferRequest infer_request_;
+  ExecutableNetwork executable_network_;
+  Core ie_core_;
   std::map<std::string, std::string> output_node_map_;
 
   DISALLOW_COPY_AND_ASSIGN(Compilation);

@@ -36,7 +36,6 @@ Compilation::Compilation(std::shared_ptr<Model> model)
   } else if (preference_ == prefer_t::PREFER_ULTRA_LOW_POWER) {
     device_name = "GNA";
   }
-  ie_core_.reset(new Core());
   std::map<std::string, std::string> plugin_Config = {};
   if (preference_ == prefer_t::PREFER_ULTRA_LOW_POWER) {
     // TODO(Junwei): The SCALE_FACTOR need to be set.
@@ -47,28 +46,16 @@ Compilation::Compilation(std::shared_ptr<Model> model)
     // removed in GNA hardware version 3 and higher.
     // gnaPluginConfig[GNAConfigParams::KEY_GNA_PRECISION] = "I8";
   }
-  execution_.reset(new ExecutableNetwork(static_cast<IExecutableNetwork::Ptr&>(
-      ie_core_->LoadNetwork(*(model->network_), device_name, plugin_Config))));
-  infer_request_.reset(new InferRequest(
-      static_cast<IInferRequest::Ptr>(execution_->CreateInferRequest())));
+  executable_network_ =
+      ie_core_.LoadNetwork(*(model->network_), device_name, plugin_Config);
+  infer_request_ = executable_network_.CreateInferRequest();
   output_node_map_ = std::move(model->output_node_map_);
-}
-
-Compilation::~Compilation() {
-  // Release in squence to avoid crash.
-  infer_request_.reset(nullptr);
-  execution_.reset(nullptr);
-  ie_core_.reset(nullptr);
 }
 
 StatusCode Compilation::SetInput(ie_operand_t* operand,
                                  const void* buffer,
                                  uint32_t length) {
-  if (infer_request_ == nullptr) {
-    return StatusCode::NETWORK_NOT_LOADED;
-  }
-
-  Blob::Ptr input_blob = infer_request_->GetBlob(operand->name);
+  Blob::Ptr input_blob = infer_request_.GetBlob(operand->name);
   memcpy(input_blob->buffer(), buffer, length);
 
   return StatusCode::OK;
@@ -77,11 +64,7 @@ StatusCode Compilation::SetInput(ie_operand_t* operand,
 StatusCode Compilation::GetOutput(ie_operand_t* operand,
                                   void* buffer,
                                   uint32_t length) {
-  if (infer_request_ == nullptr) {
-    return StatusCode::NETWORK_NOT_LOADED;
-  }
-
-  Blob::Ptr output_blob = infer_request_->GetBlob(operand->name);
+  Blob::Ptr output_blob = infer_request_.GetBlob(operand->name);
   if (output_blob->byteSize() != length) {
     THROW_IE_EXCEPTION << "The output buffer length is invalid.";
   }
@@ -93,15 +76,11 @@ StatusCode Compilation::GetOutput(ie_operand_t* operand,
 StatusCode Compilation::GetBuffer(const char* name,
                                   void** buffer,
                                   size_t* byte_length) {
-  if (infer_request_ == nullptr) {
-    return StatusCode::NETWORK_NOT_LOADED;
-  }
-
   if (output_node_map_.find(name) != output_node_map_.end()) {
     name = output_node_map_.find(name)->second.data();
   }
 
-  Blob::Ptr output_blob = infer_request_->GetBlob(name);
+  Blob::Ptr output_blob = infer_request_.GetBlob(name);
   *byte_length = output_blob->byteSize();
   *buffer = malloc(*byte_length);
   memcpy(*buffer, output_blob->buffer(), *byte_length);
@@ -111,14 +90,11 @@ StatusCode Compilation::GetBuffer(const char* name,
 
 StatusCode Compilation::GetDimensions(const char* name,
                                       ie_dimensions_t* dimensions) {
-  if (infer_request_ == nullptr) {
-    return StatusCode::NETWORK_NOT_LOADED;
-  }
   if (output_node_map_.find(name) != output_node_map_.end()) {
     name = output_node_map_.find(name)->second.data();
   }
 
-  Blob::Ptr output_blob = infer_request_->GetBlob(name);
+  Blob::Ptr output_blob = infer_request_.GetBlob(name);
   InferenceEngine::SizeVector dims = output_blob->getTensorDesc().getDims();
   dimensions->ranks = dims.size();
   dimensions->dims = (int32_t*)malloc(dimensions->ranks * sizeof(int32_t));
@@ -130,10 +106,7 @@ StatusCode Compilation::GetDimensions(const char* name,
 }
 
 StatusCode Compilation::Compute() {
-  if (infer_request_ == nullptr) {
-    return StatusCode::NETWORK_NOT_LOADED;
-  }
-  infer_request_->Infer();
+  infer_request_.Infer();
 
   return StatusCode::OK;
 }

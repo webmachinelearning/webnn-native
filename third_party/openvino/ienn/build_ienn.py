@@ -39,7 +39,7 @@ def run():
     output = subprocess.check_output(
         [os.path.join(os.path.abspath(os.path.dirname(__file__)), script_name),
         webnn_native_lib_path])
-    if output.find("Build ienn succeeded") == -1:
+    if output.find(b"Build ienn succeeded") == -1:
         print(output)
 
     return 0
