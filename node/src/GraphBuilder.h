@@ -44,6 +44,7 @@ namespace node {
         Napi::Value ReduceMean(const Napi::CallbackInfo& info);
         Napi::Value Relu(const Napi::CallbackInfo& info);
         Napi::Value LeakyRelu(const Napi::CallbackInfo& info);
+        Napi::Value Pad(const Napi::CallbackInfo& info);
         Napi::Value Reshape(const Napi::CallbackInfo& info);
         Napi::Value Softmax(const Napi::CallbackInfo& info);
         Napi::Value Transpose(const Napi::CallbackInfo& info);

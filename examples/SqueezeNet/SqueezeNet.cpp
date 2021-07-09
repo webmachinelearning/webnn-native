@@ -18,8 +18,7 @@
 
 #include "common/Log.h"
 
-SqueezeNet::SqueezeNet(bool nchw) {
-    mNchw = nchw;
+SqueezeNet::SqueezeNet(bool nchw) : mNCHW(nchw) {
     mContext = CreateCppContext();
     mContext.SetUncapturedErrorCallback(
         [](MLErrorType type, char const* message, void* userData) {
@@ -41,14 +40,14 @@ const ml::Operand SqueezeNet::BuildConv(const ml::GraphBuilder& builder,
                                         const ml::Operand& input,
                                         const std::string& name,
                                         utils::Conv2dOptions* options) {
-    std::string suffix = mNchw ? "_weight.npy" : "_kernel.npy";
+    std::string suffix = mNCHW ? "_weight.npy" : "_kernel.npy";
     const std::string weightsPath = mDataPath + name + suffix;
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
-    std::string biasSuffix = mNchw ? "_bias.npy" : "_Conv2D_bias.npy";
+    std::string biasSuffix = mNCHW ? "_bias.npy" : "_Conv2D_bias.npy";
     const std::string biasPath = mDataPath + name + biasSuffix;
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
     std::vector<int32_t> newShape;
-    mNchw ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
+    mNCHW ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
     const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
     const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
     const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
@@ -62,7 +61,7 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
                                         const std::string& conv1x1Name,
                                         const std::string& conv3x3Name) {
     utils::Conv2dOptions convOptions;
-    if (!mNchw) {
+    if (!mNCHW) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
         convOptions.filterLayout = ml::FilterOperandLayout::Ohwi;
     }
@@ -71,7 +70,7 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
     convOptions.padding = {1, 1, 1, 1};
     const ml::Operand conv3x3 = BuildConv(builder, conv, conv3x3Name, &convOptions);
     std::vector<ml::Operand> inputsOperand = {conv1x1, conv3x3};
-    uint32_t axis = mNchw ? 1 : 3;
+    uint32_t axis = mNCHW ? 1 : 3;
     return builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
 }
 

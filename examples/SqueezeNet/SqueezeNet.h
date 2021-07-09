@@ -41,7 +41,7 @@ class SqueezeNet {
     ml::Context mContext;
     ml::Graph mGraph;
     ml::NamedResults mResults;
-    bool mNchw = true;
+    bool mNCHW= true;
     std::vector<SHARED_DATA_TYPE> mConstants;
     std::string mDataPath;
 };
