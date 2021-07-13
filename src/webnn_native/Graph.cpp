@@ -101,6 +101,10 @@ namespace webnn_native {
         UNREACHABLE();
     }
 
+    MaybeError GraphBase::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddInstanceNorm");
+    }
+
     MaybeError GraphBase::Finish() {
         UNREACHABLE();
     }

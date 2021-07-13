@@ -32,6 +32,7 @@
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
+#include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
@@ -62,6 +63,7 @@ namespace webnn_native { namespace ie {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError AddConcat(const op::Concat* concat) override;
         virtual MaybeError AddGemm(const op::Gemm* Gemm) override;
+        virtual MaybeError AddInstanceNorm(const op::InstanceNorm* InstanceNorm) override;
         virtual MaybeError Finish() override;
 
       private:

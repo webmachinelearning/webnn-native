@@ -211,6 +211,30 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+    MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
+        auto inputs = instanceNorm->Inputs();
+        ie_operand_t input;
+        input.name = const_cast<char*>(mOperandIdMap[inputs[0].Get()].c_str());
+        ie_operand_t* ieOperand;
+        ie_instance_norm_options_t ieOptions;
+        auto options = instanceNorm->GetOptions();
+        if (options->scale != nullptr) {
+            ieOptions.scale = {const_cast<char*>(mOperandIdMap[inputs[1].Get()].c_str())};
+        }
+        if (options->bias != nullptr) {
+            size_t biasIndex = options->scale != nullptr ? 2 : 1;
+            ieOptions.bias = {const_cast<char*>(mOperandIdMap[inputs[biasIndex].Get()].c_str())};
+        }
+        ieOptions.epsilon = options->epsilon;
+        ieOptions.layout = static_cast<ie_input_operand_layout>(options->layout);
+
+        IEStatusCode code =
+            IE(ie_model_add_instance_norm)(mIeModel, &input, &ieOptions, &ieOperand);
+        DAWN_TRY(CheckStatusCode(code, "IE add instanceNorm"));
+        mOperandIdMap[instanceNorm] = std::string(ieOperand->name);
+        return {};
+    }
+
     MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
         auto inputs = batchNorm->Inputs();
         ie_operand_t input, mean, variance;

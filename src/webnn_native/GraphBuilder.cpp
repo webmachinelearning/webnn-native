@@ -33,6 +33,7 @@
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
+#include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
@@ -167,6 +168,11 @@ namespace webnn_native {
                                        OperandBase* padding,
                                        PadOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Pad(this, input, padding, options));
+    }
+
+    OperandBase* GraphBuilderBase::InstanceNorm(OperandBase* input,
+                                                InstanceNormOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::InstanceNorm(this, input, options));
     }
 
     GraphBase* GraphBuilderBase::GenericBuildImpl(NamedOperandsBase const* namedOperands,
