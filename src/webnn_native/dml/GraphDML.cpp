@@ -1106,6 +1106,63 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
+        auto inputs = instanceNorm->Inputs();
+        DAWN_ASSERT(inputs.size() == 1 || inputs.size() == 2 || inputs.size() == 3);
+        DAWN_ASSERT(mExpression.find(instanceNorm->Inputs()[0].Get()) != mExpression.end());
+        ::dml::Expression input = mExpression.at(instanceNorm->Inputs()[0].Get());
+        const InstanceNormOptions* options = instanceNorm->GetOptions();
+        if (options->layout == ml::InputOperandLayout::Nhwc) {
+            input = ReinterpretInputLayout(NhwcToNchw, input);
+        }
+
+        // The mean reductions happen over the spatial dimensions of the input
+        ::dml::Span<const uint32_t> axes({2, 3});
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        // Reshape 1D scale, bias to 4D with setting 1 to automatically broadcast.
+        std::vector<::dml::Expression> expressions;
+        expressions.reserve(inputs.size());
+        for (size_t i = 1; i < inputs.size(); ++i) {
+            DAWN_ASSERT(mExpression.find(instanceNorm->Inputs()[i].Get()) != mExpression.end());
+            ::dml::Expression expression = mExpression.at(instanceNorm->Inputs()[i].Get());
+            ::dml::TensorDimensions dimensions = expression.GetOutputDesc().sizes;
+            DAWN_ASSERT(dimensions.size() == 1);
+            if (dimensions[0] != inputDims[1]) {
+                return DAWN_INTERNAL_ERROR(
+                    "The 1-D tensor of the values whose length size is not equal to the size of "
+                    "feature dimension of the input ");
+            }
+            // This tensor's dimensions should be {BatchCount, ChannelCount, Height,Width}.
+            // Set 1 to automatically broadcast those dimensions across the input.
+            ::dml::TensorDimensions expandDimens(4, 1);
+            expandDimens[1] = dimensions[0];
+            auto expandStrides = CalculateStrides(expandDimens);
+            expressions.push_back(::dml::Reinterpret(expression, expandDimens, expandStrides));
+        }
+        // Set tensor's dimensions to {1, channel, 1, 1} if scale or bias is null.
+        const DML_TENSOR_DATA_TYPE type = DML_TENSOR_DATA_TYPE_FLOAT32;
+        if (options->scale == nullptr) {
+            std::vector<float> scale(inputDims[1], 1.0);
+            expressions.insert(expressions.begin(),
+                               BindingConstant(type, {1, inputDims[1], 1, 1}, scale,
+                                               sizeof(float) * inputDims[1]));
+        }
+        if (options->bias == nullptr) {
+            std::vector<float> bias(inputDims[1], 0.0);
+            expressions.push_back(
+                BindingConstant(type, {1, inputDims[1], 1, 1}, bias, sizeof(float) * inputDims[1]));
+        }
+
+        ::dml::Expression output = ::dml::MeanVarianceNormalization(
+            input, expressions[0], expressions[1], axes, true, options->epsilon);
+
+        if (options->layout == ml::InputOperandLayout::Nhwc) {
+            output = ReinterpretInputLayout(NchwToNhwc, output);
+        }
+        mExpression.insert(std::make_pair(instanceNorm, output));
+        return {};
+    }
+
     MaybeError Graph::AddUnary(const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         const OperandBase* inputOperand = unary->Inputs()[0].Get();
