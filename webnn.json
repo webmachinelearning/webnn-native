@@ -392,6 +392,13 @@
         ]
       },
       {
+        "name": "sigmoid",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"}
+        ]
+      },
+      {
         "name": "softmax",
         "returns": "operand",
         "args": [

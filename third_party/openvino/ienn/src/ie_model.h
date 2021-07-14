@@ -61,6 +61,7 @@ class Model {
                            int32_t const* new_shape,
                            uint32_t new_shape_count);
   ie_operand_t* AddSoftmax(ie_operand_t* input);
+  ie_operand_t* AddSigmoid(ie_operand_t* input);
   ie_operand_t* AddTranspose(ie_operand_t* input,
                              ie_transpose_options_t* options);
   ie_operand_t* AddLeakyRelu(ie_operand_t* input,

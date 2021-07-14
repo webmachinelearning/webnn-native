@@ -127,6 +127,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
     }
 
+    OperandBase* GraphBuilderBase::Sigmoid(OperandBase* input) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
+    }
+
     OperandBase* GraphBuilderBase::Transpose(OperandBase* input, TransposeOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Transpose(this, input, options));
     }
