@@ -327,6 +327,8 @@ namespace webnn_native { namespace dml {
                 return "relu";
             } else if (type == op::UnaryOpType::kSoftmax) {
                 return "softmax";
+            } else if (type == op::UnaryOpType::kSigmoid) {
+                return "sigmoid";
             }
             return std::to_string(type);
         }
@@ -1100,6 +1102,8 @@ namespace webnn_native { namespace dml {
             output = ::dml::ActivationLeakyRelu(input, leakyRelu->GetAlpha());
         } else if (unary->GetType() == op::UnaryOpType::kSoftmax) {
             output = ::dml::ActivationSoftmax(input);
+        } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
+            output = ::dml::ActivationSigmoid(input);
         } else {
             std::string errorMessage = std::string(" Unary op ") +
                                        OpTypeToString(unary->GetType()) +

@@ -24,6 +24,7 @@ namespace webnn_native { namespace op {
         kRelu = 0,
         kLeakyRelu,
         kSoftmax,
+        kSigmoid,
     };
 
     class Unary : public OperandBase {

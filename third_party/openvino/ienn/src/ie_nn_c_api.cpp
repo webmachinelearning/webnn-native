@@ -285,6 +285,20 @@ IEStatusCode ie_model_add_softmax(ie_model_t* model,
   return IEStatusCode::OK;
 }
 
+IEStatusCode ie_model_add_sigmoid(ie_model_t* model,
+                                  ie_operand_t* input,
+                                  ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddSigmoid(input);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
 IEStatusCode ie_model_add_transpose(ie_model_t* model,
                                     ie_operand_t* input,
                                     ie_transpose_options* options,
