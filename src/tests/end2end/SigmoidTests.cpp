@@ -16,7 +16,7 @@
 
 class SigmoidTests : public WebnnTest {};
 
-TEST_F(SigmoidTests, Sigmoid_1D) {
+TEST_F(SigmoidTests, SigmoidWith1DTensor) {
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
     const ml::Operand a = utils::BuildInput(builder, "a", {3});
     const ml::Operand b = builder.Sigmoid(a);
@@ -30,7 +30,7 @@ TEST_F(SigmoidTests, Sigmoid_1D) {
     EXPECT_TRUE(utils::CheckValue(result, expectedData));
 }
 
-TEST_F(SigmoidTests, Sigmoid_3D) {
+TEST_F(SigmoidTests, SigmoidWith3DTensor) {
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
     const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const ml::Operand b = builder.Sigmoid(a);
