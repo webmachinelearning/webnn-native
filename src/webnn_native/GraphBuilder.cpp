@@ -37,6 +37,7 @@
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
+#include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
@@ -115,6 +116,10 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kRelu, input));
+    }
+
+    OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Resample(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Reshape(OperandBase* input,

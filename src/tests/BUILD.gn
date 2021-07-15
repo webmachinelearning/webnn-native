@@ -187,6 +187,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/Pool2dTests.cpp",
     "end2end/ReduceMeanTests.cpp",
     "end2end/ReluTests.cpp",
+    "end2end/ResampleTests.cpp",
     "end2end/ReshapeTests.cpp",
     "end2end/SoftmaxTests.cpp",
     "end2end/SubTests.cpp",

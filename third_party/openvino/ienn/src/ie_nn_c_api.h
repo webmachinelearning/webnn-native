@@ -96,6 +96,11 @@ enum ie_auto_pad : uint32_t {
   SameLower = 0x00000002,
 };
 
+enum ie_interpolation_mode : uint32_t {
+  NearestNeighbor = 0x00000000,
+  Linear = 0x00000001,
+};
+
 typedef struct ie_clamp_options {
   const float* minValue = nullptr;
   const float* maxValue = nullptr;
@@ -179,6 +184,14 @@ typedef struct ie_gemm_options {
   bool aTranspose = false;
   bool bTranspose = false;
 } ie_gemm_options_t;
+
+typedef struct ie_resample_options {
+  ie_interpolation_mode mode = ie_interpolation_mode::NearestNeighbor;
+  uint32_t scalesCount = 0;
+  float const* scales;
+  uint32_t sizesCount = 0;
+  int32_t const* sizes;
+} ie_resample_options_t;
 
 typedef struct ie_model ie_model_t;
 typedef struct ie_compilation ie_compilation_t;
@@ -372,6 +385,19 @@ ie_model_add_reduce_mean(ie_model_t* model,
                          ie_operand_t* input,
                          ie_reduce_mean_options* options,
                          ie_operand_t** operand);
+
+/**
+ * @brief Add resample node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_resample(ie_model_t* model,
+                      ie_operand_t* input,
+                      ie_resample_options_t* options,
+                      ie_operand_t** operand);
 
 /**
  * @brief Add Relu node to nGraph. Use the ie_operand_free() method to

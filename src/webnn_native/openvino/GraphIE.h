@@ -36,6 +36,7 @@
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
+#include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
@@ -57,6 +58,7 @@ namespace webnn_native { namespace ie {
         virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean) override;
+        virtual MaybeError AddResample(const op::Resample* resample) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;

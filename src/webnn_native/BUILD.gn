@@ -138,6 +138,8 @@ source_set("webnn_native_sources") {
     "ops/Pool2d.h",
     "ops/ReduceMean.cpp",
     "ops/ReduceMean.h",
+    "ops/Resample.cpp",
+    "ops/Resample.h",
     "ops/Reshape.cpp",
     "ops/Reshape.h",
     "ops/Transpose.cpp",

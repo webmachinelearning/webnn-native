@@ -35,6 +35,7 @@ namespace webnn_native {
         class Pad;
         class Pool2d;
         class ReduceMean;
+        class Resample;
         class Reshape;
         class Transpose;
         class Unary;
@@ -65,6 +66,7 @@ namespace webnn_native {
         virtual MaybeError AddPad(const op::Pad* pad);
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d);
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean);
+        virtual MaybeError AddResample(const op::Resample* resample);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);

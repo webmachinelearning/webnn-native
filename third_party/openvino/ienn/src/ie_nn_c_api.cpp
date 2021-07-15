@@ -241,6 +241,21 @@ IEStatusCode ie_model_add_reduce_mean(ie_model_t* model,
   return IEStatusCode::OK;
 }
 
+IEStatusCode ie_model_add_resample(ie_model_t* model,
+                                   ie_operand_t* input,
+                                   ie_resample_options* options,
+                                   ie_operand_t** operand) {
+  if (model == nullptr || input == nullptr) {
+    return IEStatusCode::GENERAL_ERROR;
+  }
+
+  BEGINE_TRY
+  *operand = model->object->AddResample(input, options);
+  END_CATCH
+
+  return IEStatusCode::OK;
+}
+
 IEStatusCode ie_model_add_relu(ie_model_t* model,
                                ie_operand_t* input,
                                ie_operand_t** operand) {
