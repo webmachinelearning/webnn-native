@@ -81,6 +81,11 @@ Run end2end tests, for example `./out/Release/webnn_end2end_tests`.
  * The current implementation of XNNPACK and oneDNN backends is mainly for the investigation of WebNN [Operation Level Execution
 ](https://webmachinelearning.github.io/webnn/#usecase-op-level-exec) use case. So only a limited set of tests (such as of conv2d) is expected to pass.
 
+### Build and Run tests Status
+
+[![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
+[![DirectML backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
+
 ### Run examples
 
  * [LeNet](/examples/LeNet/README.md)
