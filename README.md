@@ -1,3 +1,6 @@
+[![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
+[![DirectML backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
+
 # WebNN-native
 
 WebNN-native is a native implementation of the [Web Neural Network API](https://webmachinelearning.github.io/webnn/).
@@ -80,11 +83,6 @@ Run end2end tests, for example `./out/Release/webnn_end2end_tests`.
  * For OpenVINO backend, please [install 2021.4 version](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
  * The current implementation of XNNPACK and oneDNN backends is mainly for the investigation of WebNN [Operation Level Execution
 ](https://webmachinelearning.github.io/webnn/#usecase-op-level-exec) use case. So only a limited set of tests (such as of conv2d) is expected to pass.
-
-### Build and Run tests Status
-
-[![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
-[![DirectML backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
 
 ### Run examples
 
