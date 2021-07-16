@@ -43,6 +43,8 @@ class Model {
                              ie_operand_t* mean,
                              ie_operand_t* variance,
                              ie_batch_norm_options_t* options);
+  ie_operand_t* AddInstanceNorm(ie_operand_t* input,
+                                ie_instance_norm_options_t* options);
   ie_operand_t* AddBinary(ie_binary_type type,
                           ie_operand_t* a,
                           ie_operand_t* b);

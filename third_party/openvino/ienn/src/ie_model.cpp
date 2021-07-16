@@ -209,6 +209,69 @@ ie_operand_t* Model::AddMatMul(ie_operand_t* a, ie_operand_t* b) {
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddInstanceNorm(ie_operand_t* input,
+                                     ie_instance_norm_options_t* options) {
+  auto input_node =
+      options->layout == ie_input_operand_layout::Nchw
+          ? name_node_map_[input->name]
+          : TransposeInputLayout(name_node_map_[input->name], true)->output(0);
+  auto channel = input_node.get_shape()[1];
+  auto scale_node =
+      options->scale.name != nullptr
+          ? name_node_map_[options->scale.name]
+          : op::Constant::create(element::f32, Shape{channel}, {1})->output(0);
+  auto bias_node =
+      options->bias.name != nullptr
+          ? name_node_map_[options->bias.name]
+          : op::Constant::create(element::f32, Shape{channel}, {0})->output(0);
+
+  SizeVector axes({2, 3});
+  auto axes_node =
+      op::Constant::create(element::i64, Shape{axes.size()}, axes)->output(0);
+  auto mean_node =
+      std::make_shared<op::v1::ReduceMean>(input_node, axes_node, true)
+          ->output(0);
+  auto sub_node =
+      std::make_shared<op::v1::Subtract>(input_node, mean_node)->output(0);
+  auto constant_node =
+      op::Constant::create(element::f32, Shape{}, {2})->output(0);
+  auto power_node =
+      std::make_shared<op::v1::Power>(sub_node, constant_node)->output(0);
+  auto variance_node =
+      std::make_shared<op::v1::ReduceMean>(power_node, axes_node, true)
+          ->output(0);
+
+  const std::vector<int32_t> shape({1, -1, 1, 1});
+  auto target_shape_node =
+      std::make_shared<op::Constant>(element::i64, Shape{shape.size()}, shape);
+  auto reshape_node = std::make_shared<op::v1::Reshape>(
+      scale_node, target_shape_node->output(0), true);
+
+  constant_node =
+      op::Constant::create(element::f32, Shape{}, {options->epsilon})
+          ->output(0);
+  auto add_node =
+      std::make_shared<op::v1::Add>(variance_node, constant_node)->output(0);
+  constant_node = op::Constant::create(element::f32, Shape{}, {0.5})->output(0);
+  power_node =
+      std::make_shared<op::v1::Power>(add_node, constant_node)->output(0);
+  auto div_node =
+      std::make_shared<op::v1::Divide>(sub_node, power_node)->output(0);
+  auto mul_node =
+      std::make_shared<op::v1::Multiply>(reshape_node, div_node)->output(0);
+  reshape_node = std::make_shared<op::v1::Reshape>(
+      bias_node, target_shape_node->output(0), true);
+
+  auto instance_norm_node =
+      std::make_shared<op::v1::Add>(mul_node, reshape_node);
+  auto node = options->layout == ie_input_operand_layout::Nhwc
+                  ? TransposeInputLayout(instance_norm_node->output(0), false)
+                  : instance_norm_node;
+  std::string node_name = node->get_name();
+  name_node_map_[node_name] = node->output(0);
+  return CreateOperand(node_name);
+}
+
 ie_operand_t* Model::AddBatchNorm(ie_operand_t* input,
                                   ie_operand_t* mean,
                                   ie_operand_t* variance,

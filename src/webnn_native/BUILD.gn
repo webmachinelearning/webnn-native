@@ -130,6 +130,8 @@ source_set("webnn_native_sources") {
     "ops/Gemm.h",
     "ops/Input.cpp",
     "ops/Input.h",
+    "ops/InstanceNorm.cpp",
+    "ops/InstanceNorm.h",
     "ops/LeakyRelu.cpp",
     "ops/LeakyRelu.h",
     "ops/Pad.cpp",
