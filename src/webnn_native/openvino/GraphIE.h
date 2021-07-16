@@ -81,7 +81,6 @@ namespace webnn_native { namespace ie {
                                                 NamedOutputsBase* outputs,
                                                 MLComputeGraphCallback callback = nullptr,
                                                 void* userdata = nullptr);
-
         ie_model_t* mIeModel;
         ie_compilation_t* mIeCompilation;
 

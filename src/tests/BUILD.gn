@@ -193,6 +193,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/SubTests.cpp",
     "end2end/SigmoidTests.cpp",
     "end2end/TanhTests.cpp",
+    "end2end/DeviceSelectionTests.cpp",
 
     # Disable to test unimplemented Sub.
     #"end2end/SubTests.cpp",

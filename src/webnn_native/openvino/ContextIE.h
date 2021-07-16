@@ -27,8 +27,6 @@ namespace webnn_native { namespace ie {
 
       private:
         GraphBase* CreateGraphImpl() override;
-
-        ContextOptions mOptions;
     };
 
 }}  // namespace webnn_native::ie

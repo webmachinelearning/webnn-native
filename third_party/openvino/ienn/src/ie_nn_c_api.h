@@ -566,7 +566,9 @@ NEURAL_NETWORK_C_API(IEStatusCode) ie_model_free_name(char** name);
  * @return Status code of the operation: OK(0) for success.
  */
 NEURAL_NETWORK_C_API(IEStatusCode)
-ie_create_compilation(ie_model_t* model, ie_compilation_t** compilation);
+ie_create_compilation(ie_model_t* model,
+                      ie_compilation_t** compilation,
+                      const char* deviceName);
 
 /**
  * @brief Releases memory occupied by compilation.

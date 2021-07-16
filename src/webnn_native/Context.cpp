@@ -21,7 +21,10 @@
 
 namespace webnn_native {
 
-    ContextBase::ContextBase() {
+    ContextBase::ContextBase(ContextOptions const* options) {
+        if (options != nullptr) {
+            mContextOptions = *options;
+        }
         mRootErrorScope = AcquireRef(new ErrorScope());
         mCurrentErrorScope = mRootErrorScope.Get();
     }

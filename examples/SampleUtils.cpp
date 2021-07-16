@@ -35,10 +35,11 @@ uint32_t product(const std::vector<int32_t>& dims) {
     return prod;
 }
 
-ml::Context CreateCppContext() {
+ml::Context CreateCppContext(ml::ContextOptions const* options) {
     WebnnProcTable backendProcs = webnn_native::GetProcs();
     webnnProcSetProcs(&backendProcs);
-    MLContext context = webnn_native::CreateContext();
+    MLContext context =
+        webnn_native::CreateContext(reinterpret_cast<MLContextOptions const*>(options));
     if (context) {
         return ml::Context::Acquire(context);
     }

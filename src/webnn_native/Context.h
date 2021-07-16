@@ -25,7 +25,7 @@ namespace webnn_native {
 
     class ContextBase : public RefCounted {
       public:
-        ContextBase();
+        explicit ContextBase(ContextOptions const* options = nullptr);
         virtual ~ContextBase() = default;
 
         bool ConsumedError(MaybeError maybeError) {
@@ -42,6 +42,9 @@ namespace webnn_native {
         void PushErrorScope(ml::ErrorFilter filter);
         bool PopErrorScope(ml::ErrorCallback callback, void* userdata);
         void SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata);
+        ContextOptions GetContextOptions(){
+            return mContextOptions;
+        }
 
       private:
         // Create concrete model.
@@ -51,6 +54,8 @@ namespace webnn_native {
 
         Ref<ErrorScope> mRootErrorScope;
         Ref<ErrorScope> mCurrentErrorScope;
+
+        ContextOptions mContextOptions;
     };
 
 }  // namespace webnn_native

@@ -71,6 +71,14 @@
         {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
+  "device preference": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "default"},
+      {"value": 1, "name": "gpu"},
+      {"value": 2, "name": "cpu"}
+    ]
+  },
   "power preference": {
     "category": "enum",
     "values": [
@@ -82,6 +90,7 @@
   "context options": {
     "category": "structure",
     "members": [
+      {"name": "device preference", "type": "device preference", "default": "default"},
       {"name": "power preference", "type": "power preference", "default": "default"}
     ]
   },

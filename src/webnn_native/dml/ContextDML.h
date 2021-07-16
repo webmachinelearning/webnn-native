@@ -23,13 +23,11 @@ namespace webnn_native { namespace dml {
 
     class Context : public ContextBase {
       public:
-        Context(ContextOptions const* options);
+        explicit Context(ContextOptions const* options);
         ~Context() override = default;
 
       private:
         GraphBase* CreateGraphImpl() override;
-
-        ContextOptions mOptions;
     };
 
 }}  // namespace webnn_native::dml
