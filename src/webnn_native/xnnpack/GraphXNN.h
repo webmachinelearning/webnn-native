@@ -52,20 +52,9 @@ namespace webnn_native { namespace xnnpack {
         virtual MaybeError Finish() override;
 
       private:
-        void CompileImpl(BuildGraphCallbackDelegate delegate) override;
-        void ComputeImpl(NamedInputsBase* inputs,
-                         MLComputeGraphCallback callback,
-                         void* userdata,
-                         NamedOutputsBase* outputs = nullptr) override;
-
-        MLBuildGraphStatus CompileSyncImpl() override;
-        MLComputeGraphStatus ComputeSyncImpl(NamedInputsBase* inputs,
-                                             NamedOutputsBase* outputs) override;
-
-        MLComputeGraphStatus GenericComputeImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs,
-                                                MLComputeGraphCallback callback = nullptr,
-                                                void* userdata = nullptr);
+        MaybeError CompileImpl() override;
+        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                         NamedOutputsBase* outputs) override;
 
         enum OperandType { INPUT, CONSTANT, BINARY, CLAMP, CONV2D, POOL2D, UNARY };
         struct OperandInfo {

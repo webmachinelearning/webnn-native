@@ -168,10 +168,10 @@ source_set("webnn_end2end_tests_sources") {
   sources = [
     "${webnn_root}/examples/MobileNetV2/MobileNetV2.cpp",
     "${webnn_root}/examples/MobileNetV2/MobileNetV2.h",
-    "${webnn_root}/examples/SqueezeNet/SqueezeNet.cpp",
-    "${webnn_root}/examples/SqueezeNet/SqueezeNet.h",
     "${webnn_root}/examples/ResNet/ResNet.cpp",
     "${webnn_root}/examples/ResNet/ResNet.h",
+    "${webnn_root}/examples/SqueezeNet/SqueezeNet.cpp",
+    "${webnn_root}/examples/SqueezeNet/SqueezeNet.h",
     "WebnnTest.cpp",
     "WebnnTest.h",
     "end2end/AddTests.cpp",
@@ -189,9 +189,9 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/ReluTests.cpp",
     "end2end/ResampleTests.cpp",
     "end2end/ReshapeTests.cpp",
+    "end2end/SigmoidTests.cpp",
     "end2end/SoftmaxTests.cpp",
     "end2end/SubTests.cpp",
-    "end2end/SigmoidTests.cpp",
     "end2end/TanhTests.cpp",
     "end2end/DeviceSelectionTests.cpp",
 
@@ -201,10 +201,10 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/models/MobileNetV2BatchNormNchw.cpp",
     "end2end/models/MobileNetV2Nchw.cpp",
     "end2end/models/MobileNetV2Nhwc.cpp",
-    "end2end/models/SqueezeNetNchw.cpp",
-    "end2end/models/SqueezeNetNhwc.cpp",
     "end2end/models/ResNetNchw.cpp",
     "end2end/models/ResNetNhwc.cpp",
+    "end2end/models/SqueezeNetNchw.cpp",
+    "end2end/models/SqueezeNetNhwc.cpp",
   ]
 
   # Validation tests that need OS windows live in end2end tests.

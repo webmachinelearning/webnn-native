@@ -233,6 +233,14 @@ namespace node {
         return true;
     }
 
+    inline uint32_t SizeOfShape(const std::vector<int32_t>& dimensions) {
+        uint32_t size = 1;
+        for (auto dim : dimensions) {
+            size *= dim;
+        }
+        return size;
+    }
+
     inline bool GetOperand(const Napi::Value& jsValue,
                            ml::Operand& operand,
                            std::vector<napi_value>& args) {
@@ -357,9 +365,7 @@ namespace node {
             default:
                 return false;
         }
-        for (auto dim : dimensions) {
-            expectedSize *= dim;
-        }
+        expectedSize *= SizeOfShape(dimensions);
         if (expectedSize != size) {
             return false;
         }

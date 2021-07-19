@@ -37,14 +37,12 @@ namespace webnn_native { namespace null {
     Graph::Graph(Context* context) : GraphBase(context) {
     }
 
-    void Graph::CompileImpl(BuildGraphCallbackDelegate delegate) {
-        delegate(MLBuildGraphStatus_Error, nullptr);
+    MaybeError Graph::CompileImpl() {
+        return {};
     }
 
-    void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
+    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        return MLComputeGraphStatus_Success;
     }
 
     MaybeError Graph::AddConstant(const op::Constant* constant) {

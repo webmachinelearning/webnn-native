@@ -22,12 +22,11 @@ class SqueezeNetNhwcTests : public WebnnTest {
         SqueezeNet squeezenet(false);
         const std::string nhwcPath =
             "node/third_party/webnn-polyfill/test-data/models/squeezenet1.0_nhwc/";
-        squeezenet.LoadNHWC(nhwcPath + "weights/");
+        ml::Graph graph = squeezenet.LoadNHWC(nhwcPath + "weights/");
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
-        const ml::Result result =
-            squeezenet.Compute(inputData.data(), inputData.size() * sizeof(float));
-        EXPECT_TRUE(utils::CheckShape(result, {1, 1001}));
+        const std::vector<float> result(utils::SizeOfShape({1, 1001}));
+        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
         const cnpy::NpyArray outputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + expectedFile);
         EXPECT_TRUE(utils::CheckValue(result, outputNpy.as_vec<float>()));
     }

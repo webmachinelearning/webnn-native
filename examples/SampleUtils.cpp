@@ -28,13 +28,6 @@
 #include "common/Assert.h"
 #include "common/Log.h"
 
-uint32_t product(const std::vector<int32_t>& dims) {
-    uint32_t prod = 1;
-    for (size_t i = 0; i < dims.size(); ++i)
-        prod *= dims[i];
-    return prod;
-}
-
 ml::Context CreateCppContext(ml::ContextOptions const* options) {
     WebnnProcTable backendProcs = webnn_native::GetProcs();
     webnnProcSetProcs(&backendProcs);
@@ -51,6 +44,13 @@ bool Expected(float output, float expected) {
 }
 
 namespace utils {
+
+    uint32_t SizeOfShape(const std::vector<int32_t>& dims) {
+        uint32_t prod = 1;
+        for (size_t i = 0; i < dims.size(); ++i)
+            prod *= dims[i];
+        return prod;
+    }
 
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
                            std::string name,
@@ -69,112 +69,44 @@ namespace utils {
         return builder.Constant(&desc, value, size);
     }
 
-    ml::Graph AwaitBuild(const ml::GraphBuilder& builder,
-                         const std::vector<NamedOperand>& outputs) {
-        typedef struct {
-            Async async;
-            ml::Graph graph;
-        } BuildData;
-
-        BuildData buildData;
+    ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
         ml::NamedOperands namedOperands = ml::CreateNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }
-        builder.Build(
-            namedOperands,
-            [](MLBuildGraphStatus status, MLGraph impl, char const* message, void* userData) {
-                BuildData* buildDataPtr = reinterpret_cast<BuildData*>(userData);
-                DAWN_ASSERT(buildDataPtr);
-                if (status != MLBuildGraphStatus_Success) {
-                    dawn::ErrorLog() << "Compute failed: " << message;
-                } else {
-                    buildDataPtr->graph = buildDataPtr->graph.Acquire(impl);
-                }
-                buildDataPtr->async.Finish();
-                return;
-            },
-            &buildData);
-        buildData.async.Wait();
-        return buildData.graph;
+        return builder.Build(namedOperands);
     }
 
-    ml::NamedResults AwaitCompute(const ml::Graph& graph,
-                                  const std::vector<NamedInput>& inputs,
-                                  const std::vector<NamedOutput>& outputs) {
+    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
+                                   const std::vector<NamedResource>& inputs,
+                                   const std::vector<NamedResource>& outputs) {
         if (graph.GetHandle() == nullptr) {
-            return ml::NamedResults();
+            dawn::ErrorLog() << "The graph is invaild.";
+            return ml::ComputeGraphStatus::Error;
         }
-        typedef struct {
-            Async async;
-            ml::NamedResults results;
-        } ComputeData;
 
-        ComputeData computeData;
+        // The `mlInputs` local variable to hold the input data util computing the graph.
+        std::vector<ml::Input> mlInputs;
+        mlInputs.reserve(inputs.size());
         ml::NamedInputs namedInputs = ml::CreateNamedInputs();
         for (auto& input : inputs) {
-            namedInputs.Set(input.name.c_str(), &input.input);
+            const ml::ArrayBufferView resource = {(void*)input.resource.data(),
+                                           input.resource.size() * sizeof(float)};
+            mlInputs.push_back({resource});
+            namedInputs.Set(input.name.c_str(), &mlInputs.back());
         }
-        ml::NamedOutputs namedOutputs;
-        if (outputs.size() > 0) {
-            namedOutputs = ml::CreateNamedOutputs();
-            for (auto& output : outputs) {
-                namedOutputs.Set(output.name.c_str(), &output.output);
-            }
+        DAWN_ASSERT(outputs.size() > 0);
+        // The `mlOutputs` local variable to hold the output data util computing the graph.
+        std::vector<ml::ArrayBufferView> mlOutputs;
+        mlOutputs.reserve(outputs.size());
+        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
+        for (auto& output : outputs) {
+            const ml::ArrayBufferView resource = {(void*)output.resource.data(),
+                                           output.resource.size() * sizeof(float)};
+            mlOutputs.push_back({resource});
+            namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        graph.Compute(
-            namedInputs,
-            [](MLComputeGraphStatus status, MLNamedResults impl, char const* message,
-               void* userData) {
-                ComputeData* computeDataPtr = reinterpret_cast<ComputeData*>(userData);
-                DAWN_ASSERT(computeDataPtr);
-                if (status != MLComputeGraphStatus_Success) {
-                    dawn::ErrorLog() << "Compute failed: " << message;
-                } else {
-                    computeDataPtr->results = computeDataPtr->results.Acquire(impl);
-                }
-                computeDataPtr->async.Finish();
-                return;
-            },
-            &computeData, namedOutputs ? namedOutputs : nullptr);
-        computeData.async.Wait();
-        return computeData.results;
-    }
-
-    bool CheckShape(const ml::Result& result, const std::vector<int32_t>& expectedShape) {
-        if (result.GetHandle() == nullptr) {
-            return false;
-        }
-        if (expectedShape.size() != result.DimensionsSize()) {
-            dawn::ErrorLog() << "The output rank is expected as " << expectedShape.size()
-                             << ", but got " << result.DimensionsSize();
-            return false;
-        } else {
-            for (size_t i = 0; i < result.DimensionsSize(); ++i) {
-                int32_t dimension = result.Dimensions()[i];
-                if (!Expected(expectedShape[i], dimension)) {
-                    dawn::ErrorLog() << "The output dimension of axis " << i << " is expected as "
-                                     << expectedShape[i] << ", but got " << dimension;
-                    return false;
-                }
-            }
-        }
-        return true;
-    }
-
-    void Async::Wait() {
-        // Wait for async callback.
-        std::unique_lock<std::mutex> lock(mMutex);
-        bool& done = mDone;
-        mCondVar.wait(lock, [&done] { return done; });
-        mDone = false;
-    }
-
-    void Async::Finish() {
-        std::lock_guard<std::mutex> lock(mMutex);
-        mDone = true;
-        mCondVar.notify_one();
-        return;
+        return graph.Compute(namedInputs, namedOutputs);
     }
 
     std::vector<std::string> ReadTopKLabel(const std::vector<size_t>& topKIndex,
@@ -220,13 +152,10 @@ namespace utils {
         }
     }
 
-    void PrintResult(ml::Result output, const std::string& labelPath) {
-        const float* outputBuffer = static_cast<const float*>(output.Buffer());
-        std::vector<float> outputData(outputBuffer,
-                                      outputBuffer + output.BufferSize() / sizeof(float));
+    void PrintResult(const std::vector<float>& output, const std::string& labelPath) {
         std::vector<size_t> topKIndex(TOP_NUMBER);
         std::vector<float> topKData(TOP_NUMBER);
-        SelectTopKData(outputData, topKIndex, topKData);
+        SelectTopKData(const_cast<std::vector<float>&>(output), topKIndex, topKData);
         std::vector<std::string> topKLabel = ReadTopKLabel(topKIndex, labelPath);
         std::cout << std::endl << "Prediction Result:" << std::endl;
         std::cout << "#"

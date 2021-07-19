@@ -611,26 +611,6 @@ NEURAL_NETWORK_C_API(IEStatusCode)
 ie_compilation_compute(ie_compilation_t* compilation);
 
 /**
- * @brief Get buffer with name.
- * @ingroup compilation
- * @param compliation A pointer to the specified ie_compilation_t.
- * @return Status code of the operation: OK(0) for success.
- */
-NEURAL_NETWORK_C_API(IEStatusCode)
-ie_compilation_get_buffer(const ie_compilation_t* compilation,
-                          const char* name,
-                          void** buffer,
-                          size_t* byte_length);
-
-/**
- * @brief free the buffer.
- * @ingroup compilation
- * @param compliation A pointer to the specified ie_compilation_t.
- * @return Status code of the operation: OK(0) for success.
- */
-NEURAL_NETWORK_C_API(IEStatusCode) ie_compilation_free_buffer(void** buffer);
-
-/**
  * @brief Get output dimensions with name.
  * @ingroup compilation
  * @param compliation A pointer to the specified ie_compilation_t.

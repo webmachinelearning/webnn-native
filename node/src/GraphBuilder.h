@@ -49,7 +49,6 @@ namespace node {
         Napi::Value Softmax(const Napi::CallbackInfo& info);
         Napi::Value Transpose(const Napi::CallbackInfo& info);
         Napi::Value Build(const Napi::CallbackInfo& info);
-        Napi::Value BuildSync(const Napi::CallbackInfo& info);
 
         ml::GraphBuilder mImpl;
     };

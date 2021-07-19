@@ -32,7 +32,7 @@ TEST_F(MulTests, MulInputAndConstant) {
     ml::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, dataB.data(), dataB.size() * sizeof(float));
     ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
@@ -47,9 +47,8 @@ TEST_F(MulTests, MulInputAndConstant) {
         3.4815140e-04,  -5.6024802e-01, 1.0848801e+00,  -5.1780093e-01, -3.8996863e-01,
         5.3133094e-01,  2.3897937e-01,  -1.3832775e+00, 6.3414145e-01,  1.0691971e+00,
         5.7040757e-01,  3.0711100e-01,  8.8405716e-01,  -2.1583509e+00, 4.3243581e-01};
-    ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     std::vector<float> expectedData = {
         1.1491189e+00,  9.4631165e-03,  1.6490275e+00,  -2.4890469e-02, 8.1811851e-01,
         1.6337387e-01,  -7.8853898e-02, -1.2602202e+00, -5.3575772e-01, -4.1527072e-01,
@@ -71,7 +70,7 @@ TEST_F(MulTests, MulTwoInputs) {
     ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
@@ -96,10 +95,8 @@ TEST_F(MulTests, MulTwoInputs) {
         0.78826934, -0.18788454, 0.38178417,  0.9748209,   1.0242884,   0.7939937,   0.24449475,
         -1.3840157, 1.9665064,   0.35833818,  -0.87076694, -0.76727265, 0.6157508,   -0.5558823,
         0.18417479, -0.93904793, -0.00859687, 0.5034271};
-    ml::Input inputA = {dataA.data(), dataA.size() * sizeof(float)};
-    ml::Input inputB = {dataB.data(), dataB.size() * sizeof(float)};
-    ml::Result result = utils::AwaitCompute(graph, {{"a", inputA}, {"b", inputB}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
     std::vector<float> expectedData = {
         1.1491189e+00,  9.4631165e-03,  1.6490275e+00,  -2.4890469e-02, 8.1811851e-01,
         1.6337387e-01,  -7.8853898e-02, -1.2602202e+00, -5.3575772e-01, -4.1527072e-01,
@@ -124,7 +121,7 @@ TEST_F(MulTests, MulBroadcast) {
     };
     ml::Operand b = utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
     ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         -0.08539673, 0.11800674,  -1.2358714,  0.30089188,  -0.73443925, 1.4894297,   0.16823359,
@@ -137,9 +134,8 @@ TEST_F(MulTests, MulBroadcast) {
         -1.8408557,  -0.85080767, -1.3341717,  0.54687303,  -0.14426671, -0.15728855, 0.323939,
         1.167636,    0.03020451,  0.91373825,  1.0675793,
     };
-    ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     std::vector<float> expectedData = {
         -0.05412592, 0.192414,    1.707958,    -0.31375682, -0.7771366,  0.9440262,   0.2743106,
         3.045193,    -1.1200235,  -0.37519363, 0.3899556,   0.7535562,   -0.82808685, 0.8451324,

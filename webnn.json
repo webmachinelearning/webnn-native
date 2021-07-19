@@ -483,14 +483,6 @@
       },
       {
         "name": "build",
-        "args": [
-          {"name": "named operands", "type": "named operands"},
-          {"name": "callback", "type": "build graph callback"},
-          {"name": "userdata", "type": "void", "annotation": "*"}
-        ]
-      },
-      {
-        "name": "buildSync",
         "returns": "graph",
         "args": [
           {"name": "named operands", "type": "named operands"}
@@ -498,40 +490,20 @@
       }
     ]
   },
-  "build graph callback": {
-    "category": "callback",
-    "args": [
-      {"name": "status", "type": "build graph status"},
-      {"name": "graph", "type": "graph"},
-      {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "userdata", "type": "void", "annotation": "*"}
-    ]
-  },
-  "build graph status": {
-    "category": "enum",
-    "values": [
-        {"value": 0, "name": "success"},
-        {"value": 1, "name": "error"},
-        {"value": 2, "name": "context lost"},
-        {"value": 3, "name": "unknown"}
-    ]
-  },
   "input": {
     "category": "structure",
     "members": [
-      {"name": "buffer", "type": "void", "annotation": "const*", "length": "size"},
-      {"name": "size", "type": "size_t"},
+      {"name": "resource", "type": "array buffer view"},
       {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
       {"name": "dimensions count", "type": "uint32_t", "default": 0}
     ]
   },
-  "output": {
+  "array buffer view": {
     "category": "structure",
     "members": [
-      {"name": "buffer", "type": "void", "annotation": "*", "length": "size", "optional": true},
-      {"name": "size", "type": "size_t"},
-      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
-      {"name": "dimensions count", "type": "uint32_t", "default": 0}
+      {"name": "buffer", "type": "void", "annotation": "*", "length": "byte length"},
+      {"name": "byte length", "type": "size_t"},
+      {"name": "byte offset", "type": "size_t", "default": 0}
     ]
   },
   "named inputs": {
@@ -553,51 +525,9 @@
         "name": "set",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-          {"name": "output", "type": "output", "annotation": "const*"}
+          {"name": "resource", "type": "array buffer view", "annotation": "const*"}
         ]
       }
-    ]
-  },
-  "result": {
-    "category": "object",
-    "methods": [
-      {
-        "name": "bufferSize",
-        "returns": "uint32_t"
-      },
-      {
-        "name": "buffer",
-        "returns": "const void*"
-      },
-      {
-        "name": "dimensionsSize",
-        "returns": "uint32_t"
-      },
-      {
-        "name": "dimensions",
-        "returns": "const int32_t*"
-      }
-    ]
-  },
-  "named results": {
-    "category": "object",
-    "methods": [
-      {
-        "name": "get",
-        "returns": "result",
-        "args": [
-          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"}
-        ]
-      }
-    ]
-  },
-  "compute graph callback": {
-    "category": "callback",
-    "args": [
-      {"name": "status", "type": "compute graph status"},
-      {"name": "outputs", "type": "named results"},
-      {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "userdata", "type": "void", "annotation": "*"}
     ]
   },
   "compute graph status": {
@@ -614,15 +544,6 @@
     "methods": [
       {
         "name": "compute",
-        "args": [
-          {"name": "inputs", "type": "named inputs"},
-          {"name": "callback", "type": "compute graph callback"},
-          {"name": "userdata", "type": "void", "annotation": "*"},
-          {"name": "outputs", "type": "named outputs", "optional": true}
-        ]
-      },
-      {
-        "name": "computeSync",
         "returns": "compute graph status",
         "args": [
           {"name": "inputs", "type": "named inputs"},

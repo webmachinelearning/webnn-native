@@ -22,9 +22,8 @@ class ResNet {
     ResNet();
     ~ResNet() = default;
 
-    bool LoadNCHW(const std::string& weightsPath, bool softmax = true);
-    bool LoadNHWC(const std::string& weightsPath, bool softmax = true);
-    ml::Result Compute(const void* inputData, size_t inputLength);
+    ml::Graph LoadNCHW(const std::string& weightsPath, bool softmax = true);
+    ml::Graph LoadNHWC(const std::string& weightsPath, bool softmax = true);
     const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
                                            const std::string& path);
     const ml::Operand BuildNchwConv(const ml::GraphBuilder& builder,
@@ -63,8 +62,6 @@ class ResNet {
 
   private:
     ml::Context mContext;
-    ml::Graph mGraph;
-    ml::NamedResults mResults;
     std::vector<SHARED_DATA_TYPE> mConstants;
     std::string mDataPath;
 };

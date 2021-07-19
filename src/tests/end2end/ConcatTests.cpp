@@ -30,7 +30,7 @@ class ConcatTests : public WebnnTest {
         std::vector<ml::Operand> inputsOperand;
         inputsOperand.reserve(inputs.size());
         size_t index = 0;
-        std::vector<utils::NamedInput> namedInputs;
+        std::vector<utils::NamedResource> namedInputs;
         for (auto& input : inputs) {
             std::string inputName = std::to_string(index);
             inputsDefined
@@ -38,16 +38,15 @@ class ConcatTests : public WebnnTest {
                 : inputsOperand.push_back(utils::BuildConstant(builder, input.shape,
                                                                input.value.data(),
                                                                input.value.size() * sizeof(float)));
-            namedInputs.push_back(
-                {inputName, {input.value.data(), input.value.size() * sizeof(float)}});
+            namedInputs.push_back({inputName, input.value});
             ++index;
         }
         const ml::Operand output = builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
         std::string outputName = std::to_string(inputs.size());
-        const ml::Graph graph = utils::AwaitBuild(builder, {{outputName, output}});
+        const ml::Graph graph = utils::Build(builder, {{outputName, output}});
         ASSERT_TRUE(graph);
-        const ml::Result result = utils::AwaitCompute(graph, namedInputs).Get(outputName.data());
-        EXPECT_TRUE(utils::CheckShape(result, expectedShape));
+        const std::vector<float> result(utils::SizeOfShape(expectedShape));
+        utils::Compute(graph, namedInputs, {{outputName, result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

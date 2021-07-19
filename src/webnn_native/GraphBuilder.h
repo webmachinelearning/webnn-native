@@ -26,9 +26,6 @@
 
 namespace webnn_native {
 
-    using BuildGraphCallbackDelegate =
-        std::function<void(MLBuildGraphStatus status, GraphBase* graph)>;
-
     class GraphBuilderBase : public ObjectBase {
       public:
         GraphBuilderBase(ContextBase* context);
@@ -61,15 +58,9 @@ namespace webnn_native {
                                OperandBase*,
                                OperandBase*,
                                BatchNormOptions const* options);
-        void Build(NamedOperandsBase const* namedOperands,
-                   MLBuildGraphCallback callback,
-                   void* userdata);
-        GraphBase* BuildSync(NamedOperandsBase const* namedOperands);
+        GraphBase* Build(NamedOperandsBase const* namedOperands);
 
       private:
-        GraphBase* GenericBuildImpl(NamedOperandsBase const* namedOperands,
-                                    MLBuildGraphCallback callback = nullptr,
-                                    void* userdata = nullptr);
         // Topological sort of nodes needed to compute rootNodes
         std::vector<const OperandBase*> TopologicalSort(std::vector<const OperandBase*>& rootNodes);
     };

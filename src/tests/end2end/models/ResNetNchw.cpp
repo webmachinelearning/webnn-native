@@ -22,12 +22,11 @@ class ResNetNchwTests : public WebnnTest {
         ResNet resnet;
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/resnet50v2_nchw/";
-        resnet.LoadNCHW(nchwPath + "weights/", false);
+        ml::Graph graph = resnet.LoadNCHW(nchwPath + "weights/", false);
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
-        const ml::Result result =
-            resnet.Compute(inputData.data(), inputData.size() * sizeof(float));
-        EXPECT_TRUE(utils::CheckShape(result, {1, 1000}));
+        const std::vector<float> result(utils::SizeOfShape({1, 1000}));
+        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
         const cnpy::NpyArray outputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + expectedFile);
         EXPECT_TRUE(utils::CheckValue(result, outputNpy.as_vec<float>()));
     }

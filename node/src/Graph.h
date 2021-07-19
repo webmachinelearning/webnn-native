@@ -37,7 +37,6 @@ namespace node {
         friend GraphBuilder;
 
         Napi::Value Compute(const Napi::CallbackInfo& info);
-        Napi::Value ComputeSync(const Napi::CallbackInfo& info);
 
         ml::Graph mImpl;
         std::vector<std::string> mOutputNames;

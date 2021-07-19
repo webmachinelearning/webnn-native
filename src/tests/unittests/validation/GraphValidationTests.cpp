@@ -15,30 +15,12 @@
 #include "examples/SampleUtils.h"
 #include "tests/unittests/validation/ValidationTest.h"
 
-#include <gmock/gmock.h>
-
 using namespace testing;
-
-class MockGraphBuildCallback {
-  public:
-    MOCK_METHOD(void,
-                Call,
-                (MLBuildGraphStatus status, MLGraph impl, const char* message, void* userdata));
-};
-
-static std::unique_ptr<MockGraphBuildCallback> mockGraphBuildCallback;
-static void ToMockGraphBuildCallback(MLBuildGraphStatus status,
-                                     MLGraph impl,
-                                     const char* message,
-                                     void* userdata) {
-    mockGraphBuildCallback->Call(status, impl, message, userdata);
-}
 
 class GraphValidationTest : public ValidationTest {
   protected:
     void SetUp() override {
         ValidationTest::SetUp();
-        mockGraphBuildCallback = std::make_unique<MockGraphBuildCallback>();
         std::vector<int32_t> shape = {2, 2};
         ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
                                            (uint32_t)shape.size()};
@@ -50,25 +32,20 @@ class GraphValidationTest : public ValidationTest {
 
     void TearDown() override {
         ValidationTest::TearDown();
-
-        // Delete mocks so that expectations are checked
-        mockGraphBuildCallback = nullptr;
     }
 
     ml::Operand mOutput;
 };
 
 // Test the simple success case.
-TEST_F(GraphValidationTest, BuildCallBackSuccess) {
+TEST_F(GraphValidationTest, BuildGraphSuccess) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
     namedOperands.Set("output", mOutput);
-    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Error, _, _, this)).Times(1);
-    mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
+    mBuilder.Build(namedOperands);
 }
 
 // Create model with null nameOperands
-TEST_F(GraphValidationTest, BuildCallBackError) {
+TEST_F(GraphValidationTest, BuildGraphError) {
     ml::NamedOperands namedOperands = ml::CreateNamedOperands();
-    EXPECT_CALL(*mockGraphBuildCallback, Call(MLBuildGraphStatus_Error, _, _, this)).Times(1);
-    mBuilder.Build(namedOperands, ToMockGraphBuildCallback, this);
+    DAWN_ASSERT(mBuilder.Build(namedOperands) == nullptr);
 }

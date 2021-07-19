@@ -22,37 +22,11 @@
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOperands.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NamedResults.h"
-#include "webnn_native/Result.h"
 #include "webnn_native/openvino/ErrorIE.h"
 
 #define IE(sym) sym
-#define COMPUTE_ERROR_CALLBACK(code, messages)                                             \
-    {                                                                                      \
-        MaybeError maybeError = CheckStatusCode(code, messages);                           \
-        if (maybeError.IsError()) {                                                        \
-            std::unique_ptr<ErrorData> error = maybeError.AcquireError();                  \
-            if (callback) {                                                                \
-                callback(MLComputeGraphStatus_Error, nullptr, error->GetMessage().c_str(), \
-                         userdata);                                                        \
-                return MLComputeGraphStatus_Error;                                         \
-            } else {                                                                       \
-                dawn::ErrorLog() << error->GetMessage();                                   \
-                return MLComputeGraphStatus_Error;                                         \
-            }                                                                              \
-        }                                                                                  \
-    }                                                                                      \
-    for (;;)                                                                               \
-    break
 
 namespace webnn_native { namespace ie {
-    class Result : public ResultBase {
-      public:
-        using ResultBase::Reference;
-        ~Result() {
-            ie_compilation_free_buffer(&mBuffer);
-        }
-    };
 
     namespace {
         std::string GetOutputId(const std::map<std::string, std::string>& outputNameMap,
@@ -64,32 +38,6 @@ namespace webnn_native { namespace ie {
             }
 
             return "";
-        }
-
-        IEStatusCode SetResult(const ie_compilation_t* compilation,
-                               const std::string& outputId,
-                               const std::string& outputName,
-                               Ref<NamedResultsBase>& results) {
-            void* outputBuffer;
-            size_t bufferLength;
-            IEStatusCode code = IE(ie_compilation_get_buffer)(compilation, outputId.data(),
-                                                              &outputBuffer, &bufferLength);
-            if (code != IEStatusCode::OK) {
-                return code;
-            }
-
-            ie_dimensions_t ieDimensions;
-            code = IE(ie_compilation_get_dimensions)(compilation, outputId.data(), &ieDimensions);
-            if (code != IEStatusCode::OK) {
-                return code;
-            }
-            std::vector<int32_t> dimensions(ieDimensions.dims,
-                                            ieDimensions.dims + ieDimensions.ranks);
-            code = IE(ie_compilation_free_dimensions)(&ieDimensions);
-            Ref<ResultBase> result =
-                AcquireRef(new Result::ResultBase(outputBuffer, bufferLength, dimensions));
-            results->Set(outputName.c_str(), result.Detach());
-            return IEStatusCode::OK;
         }
 
         ie_operand_descriptor ConvertTo(OperandDescriptor const* desc) {
@@ -493,96 +441,65 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    void Graph::CompileImpl(BuildGraphCallbackDelegate delegate) {
-        // TODO(junwei): We may leverage https://dawn-review.googlesource.com/c/dawn/+/36360 to
-        // implement async compilation as standle-alone component.
-        // Create compilation for IE backend.
+    MaybeError Graph::CompileImpl() {
         ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
         const char* deviceName = devicePreference == ml::DevicePreference::Cpu ||
                                          devicePreference == ml::DevicePreference::Default
                                      ? "CPU"
                                      : "GPU";
         IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation, deviceName);
-        delegate(code == IEStatusCode::OK ? MLBuildGraphStatus_Success : MLBuildGraphStatus_Error,
-                 this);
+        DAWN_TRY(CheckStatusCode(code, "IE finish compiling model"));
+
+        return {};
     }
 
-    void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
-        this->GenericComputeImpl(inputs, outputs, callback, userdata);
-    }
-
-    MLBuildGraphStatus Graph::CompileSyncImpl() {
-        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
-        const char* deviceName = devicePreference == ml::DevicePreference::Cpu ||
-                                         devicePreference == ml::DevicePreference::Default
-                                     ? "CPU"
-                                     : "GPU";
-        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation, deviceName);
-        return code == IEStatusCode::OK ? MLBuildGraphStatus_Success : MLBuildGraphStatus_Error;
-    }
-
-    MLComputeGraphStatus Graph::ComputeSyncImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs) {
-        return this->GenericComputeImpl(inputs, outputs);
-    }
-
-    MLComputeGraphStatus Graph::GenericComputeImpl(NamedInputsBase* inputs,
-                                                   NamedOutputsBase* outputs,
-                                                   MLComputeGraphCallback callback,
-                                                   void* userdata) {
+    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& input : mInputIdMap) {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
-                COMPUTE_ERROR_CALLBACK(IEStatusCode::GENERAL_ERROR, "The input isn't set");
+                dawn::ErrorLog() << "The input isn't set";
+                return MLComputeGraphStatus_Error;
             }
             ie_operand_t ieOperand;
             ieOperand.name = const_cast<char*>(input.second.c_str());
-            IEStatusCode code = IE(ie_compilation_set_input)(mIeCompilation, &ieOperand,
-                                                             namedInputs[input.first]->buffer,
-                                                             namedInputs[input.first]->size);
-            COMPUTE_ERROR_CALLBACK(code, "IE set input");
+            IEStatusCode code = IE(ie_compilation_set_input)(
+                mIeCompilation, &ieOperand, namedInputs[input.first]->resource.buffer,
+                namedInputs[input.first]->resource.byteLength);
+            if (code != IEStatusCode::OK) {
+                dawn::ErrorLog() << "IE Failed to set input";
+                return MLComputeGraphStatus_Error;
+            }
         }
 
         // Compute the compiled model.
         IEStatusCode code = IE(ie_compilation_compute)(mIeCompilation);
-        COMPUTE_ERROR_CALLBACK(code, "IE compute model");
+        if (code != IEStatusCode::OK) {
+            dawn::ErrorLog() << "IE Failed to compute model";
+            return MLComputeGraphStatus_Error;
+        }
+
         // Get Data from nGraph with output.
-        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
-        if (outputs != nullptr) {
-            for (auto namedOutput : outputs->GetRecords()) {
-                const Output* output = namedOutput.second;
-                // Get output id with friendly name.
-                std::string outputId = GetOutputId(mOutputNameMap, namedOutput.first);
-                if (outputId.empty()) {
-                    COMPUTE_ERROR_CALLBACK(IEStatusCode::GENERAL_ERROR, "Get output id");
-                }
-                // pre-allocated outputs.
-                if (output->buffer != nullptr && output->size != 0) {
-                    ie_operand_t ieOperand;
-                    ieOperand.name = const_cast<char*>(outputId.c_str());
-                    IEStatusCode code = IE(ie_compilation_get_output)(mIeCompilation, &ieOperand,
-                                                                      output->buffer, output->size);
-                    COMPUTE_ERROR_CALLBACK(code, "IE get output");
-                } else {
-                    // specified outputs.
-                    code = SetResult(mIeCompilation, outputId, namedOutput.first, results);
-                    COMPUTE_ERROR_CALLBACK(code, "IE get result");
-                }
+        for (auto namedOutput : outputs->GetRecords()) {
+            const ArrayBufferView* output = namedOutput.second;
+            DAWN_ASSERT(output->buffer != nullptr && output->byteLength != 0);
+            // Get output id with friendly name.
+            std::string outputId = GetOutputId(mOutputNameMap, namedOutput.first);
+            if (outputId.empty()) {
+                dawn::ErrorLog() << "The output id is empty";
+                return MLComputeGraphStatus_Error;
             }
-        } else {
-            for (auto& outputName : mOutputNameMap) {
-                code = SetResult(mIeCompilation, outputName.first, outputName.second, results);
-                COMPUTE_ERROR_CALLBACK(code, "IE get result");
+            // pre-allocated outputs.
+            ie_operand_t ieOperand;
+            ieOperand.name = const_cast<char*>(outputId.c_str());
+            IEStatusCode code = IE(ie_compilation_get_output)(mIeCompilation, &ieOperand,
+                                                              output->buffer, output->byteLength);
+            if (code != IEStatusCode::OK) {
+                dawn::ErrorLog() << "IE Failed to get output buffer";
+                return MLComputeGraphStatus_Error;
             }
         }
-        if (callback) {
-            callback(MLComputeGraphStatus_Success,
-                     reinterpret_cast<MLNamedResults>(results.Detach()), nullptr, userdata);
-        }
+
         return MLComputeGraphStatus_Success;
     }
 
