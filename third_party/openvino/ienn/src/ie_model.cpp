@@ -599,6 +599,15 @@ ie_operand_t* Model::AddSigmoid(ie_operand_t* input) {
   return CreateOperand(node_name);
 }
 
+ie_operand_t* Model::AddTanh(ie_operand_t* input) {
+  auto input_node = name_node_map_[input->name];
+  auto tanh_node = std::make_shared<op::v0::Tanh>(input_node);
+
+  std::string node_name = tanh_node->get_name();
+  name_node_map_[node_name] = tanh_node->output(0);
+  return CreateOperand(node_name);
+}
+
 ie_operand_t* Model::AddTranspose(ie_operand_t* input,
                                   ie_transpose_options_t* options) {
   auto input_node = name_node_map_[input->name];
