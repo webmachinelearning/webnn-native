@@ -51,6 +51,7 @@ namespace webnn_native {
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Softmax(OperandBase*);
         OperandBase* Sigmoid(OperandBase*);
+        OperandBase* Tanh(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);
         OperandBase* Concat(uint32_t inputsCount, OperandBase* const* inputs, uint32_t axis);

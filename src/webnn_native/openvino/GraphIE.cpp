@@ -383,6 +383,8 @@ namespace webnn_native { namespace ie {
             code = IE(ie_model_add_softmax)(mIeModel, &input, &ieOperand);
         } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
             code = IE(ie_model_add_sigmoid)(mIeModel, &input, &ieOperand);
+        } else if (unary->GetType() == op::UnaryOpType::kTanh) {
+            code = IE(ie_model_add_tanh)(mIeModel, &input, &ieOperand);
         }
         DAWN_TRY(CheckStatusCode(code, "IE add unary"));
 

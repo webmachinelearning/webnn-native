@@ -450,6 +450,18 @@ ie_model_add_sigmoid(ie_model_t* model,
                      ie_operand_t** operand);
 
 /**
+ * @brief Add Tanh node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_tanh(ie_model_t* model,
+                     ie_operand_t* input,
+                     ie_operand_t** operand);
+
+/**
  * @brief Add transpose node to nGraph. Use the ie_operand_free() method to
  *  free the operand memory.
  * @ingroup model

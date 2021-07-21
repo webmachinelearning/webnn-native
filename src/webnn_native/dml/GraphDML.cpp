@@ -329,6 +329,8 @@ namespace webnn_native { namespace dml {
                 return "softmax";
             } else if (type == op::UnaryOpType::kSigmoid) {
                 return "sigmoid";
+            } else if (type == op::UnaryOpType::kTanh) {
+                return "tanh";
             }
             return std::to_string(type);
         }
@@ -1142,6 +1144,8 @@ namespace webnn_native { namespace dml {
             output = ::dml::ActivationSoftmax(input);
         } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
             output = ::dml::ActivationSigmoid(input);
+        }  else if (unary->GetType() == op::UnaryOpType::kTanh) {
+            output = ::dml::ActivationTanh(input);
         } else {
             std::string errorMessage = std::string(" Unary op ") +
                                        OpTypeToString(unary->GetType()) +
