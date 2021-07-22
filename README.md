@@ -1,3 +1,4 @@
+[![clang format](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml)
 [![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
 [![DirectML backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
 
