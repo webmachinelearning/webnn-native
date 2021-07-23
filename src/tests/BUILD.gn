@@ -179,7 +179,6 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/ClampTests.cpp",
     "end2end/ConcatTests.cpp",
     "end2end/Conv2dTests.cpp",
-    "end2end/DeviceSelectionTests.cpp",
     "end2end/GemmTests.cpp",
     "end2end/LeakyReluTests.cpp",
     "end2end/MatMulTests.cpp",

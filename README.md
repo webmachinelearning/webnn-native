@@ -76,9 +76,20 @@ Then use `ninja -C out/Release` or `ninja -C out/Debug` to build WebNN-native.
 
 ### Run tests
 
-Run unit tests, for example `./out/Release/webnn_unittests`.
+Run unit tests:
+```sh
+> ./out/Release/webnn_unittests
+```
 
-Run end2end tests, for example `./out/Release/webnn_end2end_tests`.
+Run end2end tests on a default device:
+```sh
+> ./out/Release/webnn_end2end_tests
+```
+You can also specify a device to run end2end tests using "-d" option, for example:
+```sh
+> ./out/Release/webnn_end2end_tests -d gpu
+```
+Currently "cpu", "gpu" and "default" are supported, more devices are to be supported in the future.
 
 **Notes**:
  * For OpenVINO backend, please [install 2021.4 version](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
