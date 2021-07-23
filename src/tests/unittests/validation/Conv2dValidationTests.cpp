@@ -30,7 +30,8 @@ class Conv2dValidationTest : public ValidationTest {
         shape = {1, 1, 3, 3};
         std::vector<float> data(9, 1);
         inputDesc = {ml::OperandType::Float32, shape.data(), (uint32_t)shape.size()};
-        mFilter = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(float));
+        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+        mFilter = mBuilder.Constant(&inputDesc, &arrayBuffer);
     }
     ml::Operand mInput;
     ml::Operand mFilter;
@@ -52,7 +53,8 @@ TEST_F(Conv2dValidationTest, DifferentTypeError) {
     std::vector<int32_t> data(9, 1);
     ml::OperandDescriptor inputDesc = {ml::OperandType::Int32, shape.data(),
                                        (uint32_t)shape.size()};
-    ml::Operand filter = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(int32_t));
+    ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(int32_t)};
+    ml::Operand filter = mBuilder.Constant(&inputDesc, &arrayBuffer);
     ml::Conv2dOptions conv2dOptions = {};
     ASSERT_CONTEXT_ERROR(mBuilder.Conv2d(mInput, filter, &conv2dOptions));
 }
@@ -73,7 +75,8 @@ TEST_F(Conv2dValidationTest, InvalidFilterDimsError) {
     std::vector<float> data(3, 1);
     ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
                                        (uint32_t)shape.size()};
-    ml::Operand filter = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(float));
+    ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+    ml::Operand filter = mBuilder.Constant(&inputDesc, &arrayBuffer);
     ml::Conv2dOptions conv2dOptions = {};
     ASSERT_CONTEXT_ERROR(mBuilder.Conv2d(mInput, filter, &conv2dOptions));
 }

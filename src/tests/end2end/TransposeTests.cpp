@@ -29,7 +29,7 @@ class TransposeTests : public WebnnTest {
         const ml::Operand b = builder.Transpose(a, &options);
         const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

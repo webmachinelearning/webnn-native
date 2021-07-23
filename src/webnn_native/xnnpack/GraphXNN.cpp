@@ -174,11 +174,11 @@ namespace webnn_native { namespace xnnpack {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
         DAWN_TRY(GetXnnDataType(desc->type, info->dataType));
         info->dims.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
-        info->buffer.reset(new char[constant->GetSize()]);
+        info->buffer.reset(new char[constant->GetByteLength()]);
         if (info->buffer.get() == nullptr) {
             return DAWN_OUT_OF_MEMORY_ERROR("");
         }
-        memcpy(info->buffer.get(), constant->GetValue(), constant->GetSize());
+        memcpy(info->buffer.get(), constant->GetBuffer(), constant->GetByteLength());
         mConstants.push_back(info);
         mOperandInfoMap.insert(std::make_pair(constant, info));
         return {};
@@ -704,7 +704,8 @@ namespace webnn_native { namespace xnnpack {
                 COMPUTE_ERROR("Invalid parameters.");
             }
             size_t index = mExternalInputs.at(input.first);
-            inputBuffers[index] = input.second->resource.buffer;
+            inputBuffers[index] = static_cast<int8_t*>(input.second->resource.buffer) +
+                                  input.second->resource.byteOffset;
         }
 
         std::vector<std::string> outputNames;
@@ -722,7 +723,8 @@ namespace webnn_native { namespace xnnpack {
             if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
                 const ArrayBufferView* output = outputs->GetRecords().at(outputName);
                 DAWN_ASSERT(output->byteLength >= bufferLength);
-                outputBuffers[outputIndex] = output->buffer;
+                outputBuffers[outputIndex] =
+                    static_cast<int8_t*>(output->buffer) + output->byteOffset;
             }
         }
 

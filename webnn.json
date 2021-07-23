@@ -304,8 +304,7 @@
         "returns": "operand",
         "args": [
           {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
-          {"name": "value", "type": "void", "annotation": "const*"},
-          {"name": "size", "type": "size_t"}
+          {"name": "value", "type": "array buffer view", "annotation": "const*"}
         ]
       },
       {

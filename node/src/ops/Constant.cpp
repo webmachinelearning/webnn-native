@@ -38,9 +38,8 @@ namespace node { namespace op {
 
         Napi::Object object = Operand::constructor.New({});
         OperandDescriptor desc;
-        void* value;
-        size_t size;
         Scalar scalar;
+        ml::ArrayBufferView arrayBuffer;
         if (info[0].IsNumber()) {
             // Operand constant(double value, optional OperandType type = "float32");
             if (info.Length() == 1) {
@@ -49,6 +48,8 @@ namespace node { namespace op {
                 WEBNN_NODE_ASSERT(GetOperandType(info[1], desc.type),
                                   "The type parameter is invalid.");
             }
+            void* value;
+            size_t size;
             Napi::Number jsValue = info[0].As<Napi::Number>();
             if (desc.type == ml::OperandType::Float32) {
                 scalar.floatValue = jsValue.FloatValue();
@@ -83,22 +84,26 @@ namespace node { namespace op {
             }
             desc.dimensions = {1};
 
-            Napi::ArrayBuffer arrayBuffer = Napi::ArrayBuffer::New(info.Env(), size);
-            memcpy(arrayBuffer.Data(), value, size);
-            value = arrayBuffer.Data();
+            Napi::ArrayBuffer jsArrayBuffer = Napi::ArrayBuffer::New(info.Env(), size);
+            memcpy(jsArrayBuffer.Data(), value, size);
+            value = jsArrayBuffer.Data();
             // Keep a reference of value.
-            object.Set("value", arrayBuffer);
+            object.Set("value", jsArrayBuffer);
+
+            arrayBuffer.buffer = value;
+            arrayBuffer.byteLength = size;
+            arrayBuffer.byteOffset = 0;
         } else {
             WEBNN_NODE_ASSERT(GetOperandDescriptor(info[0], desc),
                               "The desc parameter is invalid.");
-            WEBNN_NODE_ASSERT(GetBufferView(info[1], desc.type, desc.dimensions, value, size),
+            WEBNN_NODE_ASSERT(GetBufferView(info[1], desc.type, desc.dimensions, arrayBuffer),
                               "The value parameter is invalid.");
             // Keep a reference of value.
             object.Set("value", info[1]);
         }
 
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.Constant(desc.AsPtr(), value, size));
+        operand->SetImpl(builder.Constant(desc.AsPtr(), &arrayBuffer));
         return object;
     }
 

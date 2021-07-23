@@ -33,7 +33,7 @@ class PadTests : public WebnnTest {
         ml::Operand y = builder.Pad(x, padding, &options);
         const ml::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"x", inputData}}, {{"y", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

@@ -24,15 +24,20 @@ namespace webnn_native { namespace op {
       public:
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
-                 void const* value,
-                 size_t size)
-            : OperandBase(builder), mValue(value), mSize(size) {
-            mDescriptor.type = desc->type;
+                 const ArrayBufferView* arrayBuffer)
+            : OperandBase(builder){
+            if (desc == nullptr || arrayBuffer == nullptr) {
+              return;
+            }
             mType = desc->type;
             mRank = desc->dimensionsCount;
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
+            mDescriptor.type = desc->type;
+
+            mBuffer = static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset;
+            mByteLength = arrayBuffer->byteLength;
         }
         ~Constant() override = default;
 
@@ -44,18 +49,18 @@ namespace webnn_native { namespace op {
         const OperandDescriptor* GetOperandDescriptor() const {
             return &mDescriptor;
         }
-        void const* GetValue() const {
-            return mValue;
+        void const* GetBuffer() const {
+            return mBuffer;
         }
-        size_t GetSize() const {
-            return mSize;
+        size_t GetByteLength() const {
+            return mByteLength;
         }
 
       private:
         OperandDescriptor mDescriptor;
         std::vector<int32_t> mDimensions;
-        void const* mValue;
-        size_t mSize;
+        void const* mBuffer;
+        size_t mByteLength;
     };
 
 }}  // namespace webnn_native::op

@@ -96,10 +96,10 @@ int main(int argc, const char* argv[]) {
     dawn::InfoLog() << "Compilation Time: " << compilationElapsedTime.count() << " ms";
 
     std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
-    std::vector<float> input(processedPixels, processedPixels + preOptions.modelSize);
+    const std::vector<float> input(processedPixels, processedPixels + preOptions.modelSize);
     std::vector<int32_t> outputShape =
         preOptions.nchw ? std::vector<int32_t>({1, 1000}) : std::vector<int32_t>({1, 1001});
-    const std::vector<float> result(utils::SizeOfShape(outputShape));
+    std::vector<float> result(utils::SizeOfShape(outputShape));
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();

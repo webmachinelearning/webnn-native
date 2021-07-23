@@ -56,7 +56,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnGPU) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
     utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,
@@ -109,7 +109,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnCPU) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
     utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,
@@ -152,7 +152,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnDefaultDevice) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
     utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,

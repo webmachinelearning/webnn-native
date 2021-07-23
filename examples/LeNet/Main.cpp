@@ -82,8 +82,8 @@ int main(int argc, const char* argv[]) {
     dawn::InfoLog() << "Compilation Time: " << compilationElapsedTime.count() << " ms";
 
     std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
-    std::vector<float> input(reader.GetData().get(), reader.GetData().get() + reader.Size());
-    const std::vector<float> result(utils::SizeOfShape({1, 10}));
+    const std::vector<float> input(reader.GetData().get(), reader.GetData().get() + reader.Size());
+    std::vector<float> result(utils::SizeOfShape({1, 10}));
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();

@@ -36,7 +36,7 @@ class BatchNormTests : public WebnnTest {
         const ml::Operand b = builder.BatchNorm(a, mean, variance, options);
         const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(inputShape));
+        std::vector<float> result(utils::SizeOfShape(inputShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

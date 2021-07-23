@@ -42,7 +42,7 @@ namespace webnn_native {
         void PushErrorScope(ml::ErrorFilter filter);
         bool PopErrorScope(ml::ErrorCallback callback, void* userdata);
         void SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata);
-        ContextOptions GetContextOptions(){
+        ContextOptions GetContextOptions() {
             return mContextOptions;
         }
 

@@ -57,9 +57,8 @@ namespace webnn_native {
     }
 
     OperandBase* GraphBuilderBase::Constant(OperandDescriptor const* desc,
-                                            void const* value,
-                                            size_t size) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Constant(this, desc, value, size));
+                                            ArrayBufferView const* arrayBuffer) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Constant(this, desc, arrayBuffer));
     }
 
     OperandBase* GraphBuilderBase::Input(char const* name, OperandDescriptor const* desc) {

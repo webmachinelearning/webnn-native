@@ -28,7 +28,8 @@ TEST_F(BinaryValidationTest, InputsType) {
     // success
     {
         std::vector<float> data(4, 1);
-        ml::Operand b = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(float));
+        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
         ml::Operand add = mBuilder.Add(a, b);
         ml::Operand mul = mBuilder.Mul(a, b);
         ml::Operand matmul = mBuilder.Matmul(a, b);
@@ -37,7 +38,8 @@ TEST_F(BinaryValidationTest, InputsType) {
     {
         std::vector<int32_t> data(4, 1);
         inputDesc = {ml::OperandType::Int32, shape.data(), (uint32_t)shape.size()};
-        ml::Operand b = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(int32_t));
+        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(int32_t)};
+        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
         ASSERT_CONTEXT_ERROR(mBuilder.Add(a, b));
         ASSERT_CONTEXT_ERROR(mBuilder.Mul(a, b));
         ASSERT_CONTEXT_ERROR(mBuilder.Matmul(a, b));

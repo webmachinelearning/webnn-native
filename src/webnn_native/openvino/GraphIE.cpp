@@ -142,8 +142,8 @@ namespace webnn_native { namespace ie {
     MaybeError Graph::AddConstant(const op::Constant* constant) {
         ie_operand_descriptor ieDesc = ConvertTo(constant->GetOperandDescriptor());
         ie_operand_t* ieOperand;
-        IEStatusCode code = IE(ie_model_add_constant)(mIeModel, &ieDesc, constant->GetValue(),
-                                                      constant->GetSize(), &ieOperand);
+        IEStatusCode code = IE(ie_model_add_constant)(mIeModel, &ieDesc, constant->GetBuffer(),
+                                                      constant->GetByteLength(), &ieOperand);
         DAWN_TRY(CheckStatusCode(code, "IE add constant"));
 
         mOperandIdMap[constant] = std::string(ieOperand->name);
@@ -226,7 +226,7 @@ namespace webnn_native { namespace ie {
         if (options->minValue != nullptr) {
             if (mConstantSet.find(inputs[1].Get()) != mConstantSet.end()) {
                 op::Constant* minConstant = reinterpret_cast<op::Constant*>(inputs[1].Get());
-                ieOptions.minValue = static_cast<const float*>(minConstant->GetValue());
+                ieOptions.minValue = static_cast<const float*>(minConstant->GetBuffer());
                 ieOptions.minDimensions = minConstant->GetOperandDescriptor()->dimensions;
                 ieOptions.minDimensionsCount = minConstant->GetOperandDescriptor()->dimensionsCount;
             } else {
@@ -237,7 +237,7 @@ namespace webnn_native { namespace ie {
             size_t maxIndex = options->minValue != nullptr ? 2 : 1;
             if (mConstantSet.find(inputs[maxIndex].Get()) != mConstantSet.end()) {
                 op::Constant* maxConstant = reinterpret_cast<op::Constant*>(inputs[maxIndex].Get());
-                ieOptions.maxValue = static_cast<const float*>(maxConstant->GetValue());
+                ieOptions.maxValue = static_cast<const float*>(maxConstant->GetBuffer());
                 ieOptions.maxDimensions = maxConstant->GetOperandDescriptor()->dimensions;
                 ieOptions.maxDimensionsCount = maxConstant->GetOperandDescriptor()->dimensionsCount;
             } else {
@@ -282,14 +282,14 @@ namespace webnn_native { namespace ie {
             op::Constant* padding = reinterpret_cast<op::Constant*>(inputs[1].Get());
             int32_t const* paddingDimensions = padding->GetOperandDescriptor()->dimensions;
             uint32_t inputRank = inputs[0]->Rank();
-            uint32_t padCount = padding->GetSize() / sizeof(int32_t);
+            uint32_t padCount = padding->GetByteLength() / sizeof(int32_t);
             if (paddingDimensions[1] != 2 ||
                 paddingDimensions[0] != static_cast<int32_t>(inputRank)) {
                 return DAWN_INTERNAL_ERROR(
                     "The padding should has shape [n, 2], where n is the rank of the input tensor");
             }
             ieOptions.padCount = padCount;
-            ieOptions.padding = static_cast<const int32_t*>(padding->GetValue());
+            ieOptions.padding = static_cast<const int32_t*>(padding->GetBuffer());
         } else {
             return DAWN_INTERNAL_ERROR("The padding is not a constant");
         }
@@ -463,9 +463,10 @@ namespace webnn_native { namespace ie {
             }
             ie_operand_t ieOperand;
             ieOperand.name = const_cast<char*>(input.second.c_str());
+            auto& resource = namedInputs[input.first]->resource;
             IEStatusCode code = IE(ie_compilation_set_input)(
-                mIeCompilation, &ieOperand, namedInputs[input.first]->resource.buffer,
-                namedInputs[input.first]->resource.byteLength);
+                mIeCompilation, &ieOperand,
+                static_cast<int8_t*>(resource.buffer) + resource.byteOffset, resource.byteLength);
             if (code != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to set input";
                 return MLComputeGraphStatus_Error;
@@ -492,8 +493,9 @@ namespace webnn_native { namespace ie {
             // pre-allocated outputs.
             ie_operand_t ieOperand;
             ieOperand.name = const_cast<char*>(outputId.c_str());
-            IEStatusCode code = IE(ie_compilation_get_output)(mIeCompilation, &ieOperand,
-                                                              output->buffer, output->byteLength);
+            IEStatusCode code = IE(ie_compilation_get_output)(
+                mIeCompilation, &ieOperand,
+                static_cast<int8_t*>(output->buffer) + output->byteOffset, output->byteLength);
             if (code != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to get output buffer";
                 return MLComputeGraphStatus_Error;

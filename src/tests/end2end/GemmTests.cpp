@@ -51,7 +51,7 @@ class GemmTests : public WebnnTest {
         const ml::Operand gemm = builder.Gemm(a, b, &gemmOptions);
         const ml::Graph graph = utils::Build(builder, {{"c", gemm}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

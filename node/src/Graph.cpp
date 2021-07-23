@@ -25,11 +25,13 @@ namespace node {
       public:
         void* buffer = nullptr;
         size_t byteLength;
+        size_t byteOffset;
         std::vector<int32_t> dimensions;
 
         const ml::Input* AsPtr() {
             mInput.resource.buffer = buffer;
             mInput.resource.byteLength = byteLength;
+            mInput.resource.byteOffset = byteOffset;
             if (!dimensions.empty()) {
                 mInput.dimensions = dimensions.data();
                 mInput.dimensionsCount = dimensions.size();
@@ -45,11 +47,13 @@ namespace node {
       public:
         void* buffer = nullptr;
         size_t byteLength;
+        size_t byteOffset;
         std::vector<int32_t> dimensions;
 
         const ml::ArrayBufferView* AsPtr() {
             mOutput.buffer = buffer;
             mOutput.byteLength = byteLength;
+            mOutput.byteOffset = byteOffset;
             return &mOutput;
         }
 
@@ -101,9 +105,9 @@ namespace node {
                 }
             }
             resource.buffer = reinterpret_cast<void*>(
-                reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()) +
-                jsTypedArray.ByteOffset());
+                reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
             resource.byteLength = jsTypedArray.ByteLength();
+            resource.byteOffset = jsTypedArray.ByteOffset();
             namedResources[name] = resource;
         }
         return true;

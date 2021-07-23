@@ -26,7 +26,8 @@ class GraphValidationTest : public ValidationTest {
                                            (uint32_t)shape.size()};
         ml::Operand a = mBuilder.Input("input", &inputDesc);
         std::vector<float> data(4, 1);
-        ml::Operand b = mBuilder.Constant(&inputDesc, data.data(), data.size() * sizeof(float));
+        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
         mOutput = mBuilder.Add(a, b);
     }
 

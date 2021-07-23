@@ -66,7 +66,8 @@ namespace utils {
                               size_t size,
                               ml::OperandType type) {
         ml::OperandDescriptor desc = {type, dimensions.data(), (uint32_t)dimensions.size()};
-        return builder.Constant(&desc, value, size);
+        ml::ArrayBufferView arrayBuffer = {const_cast<void*>(value), size};
+        return builder.Constant(&desc, &arrayBuffer);
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
@@ -78,35 +79,9 @@ namespace utils {
     }
 
     ml::ComputeGraphStatus Compute(const ml::Graph& graph,
-                                   const std::vector<NamedResource>& inputs,
-                                   const std::vector<NamedResource>& outputs) {
-        if (graph.GetHandle() == nullptr) {
-            dawn::ErrorLog() << "The graph is invaild.";
-            return ml::ComputeGraphStatus::Error;
-        }
-
-        // The `mlInputs` local variable to hold the input data util computing the graph.
-        std::vector<ml::Input> mlInputs;
-        mlInputs.reserve(inputs.size());
-        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
-        for (auto& input : inputs) {
-            const ml::ArrayBufferView resource = {(void*)input.resource.data(),
-                                           input.resource.size() * sizeof(float)};
-            mlInputs.push_back({resource});
-            namedInputs.Set(input.name.c_str(), &mlInputs.back());
-        }
-        DAWN_ASSERT(outputs.size() > 0);
-        // The `mlOutputs` local variable to hold the output data util computing the graph.
-        std::vector<ml::ArrayBufferView> mlOutputs;
-        mlOutputs.reserve(outputs.size());
-        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
-        for (auto& output : outputs) {
-            const ml::ArrayBufferView resource = {(void*)output.resource.data(),
-                                           output.resource.size() * sizeof(float)};
-            mlOutputs.push_back({resource});
-            namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
-        }
-        return graph.Compute(namedInputs, namedOutputs);
+                                   const std::vector<NamedInput<float>>& inputs,
+                                   const std::vector<NamedOutput<float>>& outputs) {
+        return Compute<float>(graph, inputs, outputs);
     }
 
     std::vector<std::string> ReadTopKLabel(const std::vector<size_t>& topKIndex,

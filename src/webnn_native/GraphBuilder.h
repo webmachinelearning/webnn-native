@@ -32,7 +32,7 @@ namespace webnn_native {
         virtual ~GraphBuilderBase() = default;
 
         // WebNN API
-        OperandBase* Constant(OperandDescriptor const* desc, void const* value, size_t size);
+        OperandBase* Constant(OperandDescriptor const* desc, ArrayBufferView const* arrayBuffer);
         OperandBase* Input(char const* name, OperandDescriptor const* desc);
         OperandBase* Matmul(OperandBase* a, OperandBase* b);
         OperandBase* Add(OperandBase*, OperandBase*);

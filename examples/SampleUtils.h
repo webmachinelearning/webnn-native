@@ -122,14 +122,54 @@ namespace utils {
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
 
-    typedef struct {
+    template <typename T>
+    struct NamedInput {
         const std::string name;
-        const std::vector<float>& resource;
-    } NamedResource;
+        const std::vector<T>& resource;
+    };
+
+    template <typename T>
+    struct NamedOutput {
+        const std::string name;
+        std::vector<T>& resource;
+    };
+
+    template <typename T>
+    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
+                                   const std::vector<NamedInput<T>>& inputs,
+                                   const std::vector<NamedOutput<T>>& outputs) {
+        if (graph.GetHandle() == nullptr) {
+            dawn::ErrorLog() << "The graph is invaild.";
+            return ml::ComputeGraphStatus::Error;
+        }
+
+        // The `mlInputs` local variable to hold the input data util computing the graph.
+        std::vector<ml::Input> mlInputs;
+        mlInputs.reserve(inputs.size());
+        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
+        for (auto& input : inputs) {
+            const ml::ArrayBufferView resource = {(void*)input.resource.data(),
+                                                  input.resource.size() * sizeof(float)};
+            mlInputs.push_back({resource});
+            namedInputs.Set(input.name.c_str(), &mlInputs.back());
+        }
+        DAWN_ASSERT(outputs.size() > 0);
+        // The `mlOutputs` local variable to hold the output data util computing the graph.
+        std::vector<ml::ArrayBufferView> mlOutputs;
+        mlOutputs.reserve(outputs.size());
+        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
+        for (auto& output : outputs) {
+            const ml::ArrayBufferView resource = {output.resource.data(),
+                                                  output.resource.size() * sizeof(float)};
+            mlOutputs.push_back({resource});
+            namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
+        }
+        return graph.Compute(namedInputs, namedOutputs);
+    }
 
     ml::ComputeGraphStatus Compute(const ml::Graph& graph,
-                                   const std::vector<NamedResource>& inputs,
-                                   const std::vector<NamedResource>& outputs);
+                                   const std::vector<NamedInput<float>>& inputs,
+                                   const std::vector<NamedOutput<float>>& outputs);
 
     template <class T>
     bool CheckValue(const std::vector<T>& value, const std::vector<T>& expectedValue) {

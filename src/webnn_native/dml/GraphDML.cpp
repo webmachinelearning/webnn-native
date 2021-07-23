@@ -483,8 +483,8 @@ namespace webnn_native { namespace dml {
             return DAWN_INTERNAL_ERROR("Failed to get DML tensor dimensions.");
         }
 
-        auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetValue(),
-                                           constant->GetSize());
+        auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetBuffer(),
+                                           constant->GetByteLength());
         mExpression.insert(std::make_pair(constant, dmlConstant));
         mConstantSet.insert(constant);
         return {};
@@ -782,7 +782,7 @@ namespace webnn_native { namespace dml {
         // dml::Span just holds the refernces, need a variable to hold the memory.
         std::vector<uint32_t> startPaddingVector;
         std::vector<uint32_t> endPaddingVector;
-        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetValue());
+        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetBuffer());
         for (size_t i = 0; i < inputRank; ++i) {
             startPaddingVector.push_back(paddingData[2 * i]);
             endPaddingVector.push_back(paddingData[2 * i + 1]);
@@ -1309,9 +1309,9 @@ namespace webnn_native { namespace dml {
             }
 
             ::pydml::Binding* inputBinding = input.second;
-            inputBinding->data.buffer =
-                const_cast<void*>(namedInputs[input.first]->resource.buffer);
-            inputBinding->data.size = namedInputs[input.first]->resource.byteLength;
+            auto& resource = namedInputs[input.first]->resource;
+            inputBinding->data.buffer = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
+            inputBinding->data.size = resource.byteLength;
         }
         std::vector<pydml::Binding*> inputBindings;
         for (auto& binding : mBindings) {
@@ -1340,7 +1340,8 @@ namespace webnn_native { namespace dml {
             if (namedOutputs.find(outputName) != namedOutputs.end()) {
                 const ArrayBufferView* output = namedOutputs[outputName];
                 if (output->byteLength >= bufferLength) {
-                    memcpy(output->buffer, outputBuffer, bufferLength);
+                    memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset, outputBuffer,
+                           bufferLength);
                 }
             }
             free(outputBuffer);

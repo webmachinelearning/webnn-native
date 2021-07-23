@@ -44,7 +44,7 @@ TEST_F(SubTests, SubTwoInputs) {
         -1.270485,   0.9693967,   -1.1731234,  1.9436212,   -0.41361898, -0.7474548,  1.922942,
         1.4805148,   1.867559,    0.90604466,  -0.86122566, 1.9100649,   -0.26800337, 0.8024564,
         0.947252,    -0.15501009, 0.61407936,  0.9222067};
-    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
     utils::Compute(graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {2.436513,    0.7597104,  1.7918843,   3.9671757,  1.6901319,   -0.5754969, 2.5802867,
@@ -77,7 +77,7 @@ TEST_F(SubTests, SubBroadcast) {
         0.3169426,   0.9208588,  0.31872764, 0.8568306,   -0.6510256,  -1.0342429,  0.6815945,
         -0.80340964, -0.6895498, -0.4555325, 0.01747916};
     const std::vector<float> dataB = {-0.35399392, -1.3749512, -0.6436184, -2.2234032, 0.62523144};
-    const std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
     utils::Compute(graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
     const std::vector<float> expectedValue({
         0.73041946,  0.27555048, 0.9418566,   3.549789,    -1.3197993,  0.20435938,  0.9397977,

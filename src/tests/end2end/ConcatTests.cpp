@@ -30,7 +30,7 @@ class ConcatTests : public WebnnTest {
         std::vector<ml::Operand> inputsOperand;
         inputsOperand.reserve(inputs.size());
         size_t index = 0;
-        std::vector<utils::NamedResource> namedInputs;
+        std::vector<utils::NamedInput<float>> namedInputs;
         for (auto& input : inputs) {
             std::string inputName = std::to_string(index);
             inputsDefined
@@ -45,7 +45,7 @@ class ConcatTests : public WebnnTest {
         std::string outputName = std::to_string(inputs.size());
         const ml::Graph graph = utils::Build(builder, {{outputName, output}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, namedInputs, {{outputName, result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

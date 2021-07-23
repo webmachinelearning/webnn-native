@@ -24,7 +24,7 @@ class TanhTests : public WebnnTest {
         const ml::Operand b = builder.Tanh(a);
         const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const std::vector<float> result(utils::SizeOfShape(shape));
+        std::vector<float> result(utils::SizeOfShape(shape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedData));
     }
