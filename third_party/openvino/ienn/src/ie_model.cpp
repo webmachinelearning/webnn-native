@@ -67,9 +67,10 @@ ie_operand_t* CreateOperand(std::string& name) {
   return operand;
 }
 
+template <typename T>
 ngraph::Output<ngraph::Node> Reshape(
     const ngraph::Output<ngraph::Node>& input_node,
-    const std::vector<size_t>& new_shape) {
+    const std::vector<T>& new_shape) {
   auto target_shape_node = std::make_shared<op::Constant>(
       element::i64, Shape{new_shape.size()}, new_shape);
   auto reshape_node = std::make_shared<op::v1::Reshape>(
@@ -179,14 +180,14 @@ ie_operand_t* Model::AddMatMul(ie_operand_t* a, ie_operand_t* b) {
   // Unsqueeze to 2D by adding axes with size 1 to the left of the shape if
   // first input is equal to 1.
   if (primary_shape.size() == 1) {
-    primary_node = Reshape(primary_node, {1, primary_shape[0]});
+    primary_node = Reshape<size_t>(primary_node, {1, primary_shape[0]});
   }
   auto secondary_node = name_node_map_[b->name];
   auto secondary_shape = secondary_node.get_shape();
   // Unsqueeze to 2D by adding axes with size 1 to the right of the shape if
   // second input is equal to 1.
   if (secondary_shape.size() == 1) {
-    secondary_node = Reshape(secondary_node, {secondary_shape[0], 1});
+    secondary_node = Reshape<size_t>(secondary_node, {secondary_shape[0], 1});
   }
   auto matmul_node = std::make_shared<op::v0::MatMul>(
       primary_node, secondary_node, false, false);
@@ -202,7 +203,7 @@ ie_operand_t* Model::AddMatMul(ie_operand_t* a, ie_operand_t* b) {
   // [3]
   // https://github.com/openvinotoolkit/openvino/blob/master/ngraph/core/src/op/matmul.cpp#L85
   if (primary_shape.size() == 1 && secondary_shape.size() == 1) {
-    auto scalar_node = Reshape(matmul_node->output(0), {1});
+    auto scalar_node = Reshape<size_t>(matmul_node->output(0), {1});
     node_name = scalar_node.get_node()->get_name();
     name_node_map_[node_name] = scalar_node;
   }
@@ -240,12 +241,7 @@ ie_operand_t* Model::AddInstanceNorm(ie_operand_t* input,
   auto variance_node =
       std::make_shared<op::v1::ReduceMean>(power_node, axes_node, true)
           ->output(0);
-
-  const std::vector<int32_t> shape({1, -1, 1, 1});
-  auto target_shape_node =
-      std::make_shared<op::Constant>(element::i64, Shape{shape.size()}, shape);
-  auto reshape_node = std::make_shared<op::v1::Reshape>(
-      scale_node, target_shape_node->output(0), true);
+  auto reshape_node = Reshape<int32_t>(scale_node, {1, -1, 1, 1});
 
   constant_node =
       op::Constant::create(element::f32, Shape{}, {options->epsilon})
@@ -259,8 +255,7 @@ ie_operand_t* Model::AddInstanceNorm(ie_operand_t* input,
       std::make_shared<op::v1::Divide>(sub_node, power_node)->output(0);
   auto mul_node =
       std::make_shared<op::v1::Multiply>(reshape_node, div_node)->output(0);
-  reshape_node = std::make_shared<op::v1::Reshape>(
-      bias_node, target_shape_node->output(0), true);
+  reshape_node = Reshape<int32_t>(bias_node, {1, -1, 1, 1});
 
   auto instance_norm_node =
       std::make_shared<op::v1::Add>(mul_node, reshape_node);

@@ -1144,13 +1144,13 @@ namespace webnn_native { namespace dml {
         if (options->scale == nullptr) {
             std::vector<float> scale(inputDims[1], 1.0);
             expressions.insert(expressions.begin(),
-                               BindingConstant(type, {1, inputDims[1], 1, 1}, scale,
+                               BindingConstant(type, {1, inputDims[1], 1, 1}, scale.data(),
                                                sizeof(float) * inputDims[1]));
         }
         if (options->bias == nullptr) {
             std::vector<float> bias(inputDims[1], 0.0);
-            expressions.push_back(
-                BindingConstant(type, {1, inputDims[1], 1, 1}, bias, sizeof(float) * inputDims[1]));
+            expressions.push_back(BindingConstant(type, {1, inputDims[1], 1, 1}, bias.data(),
+                                                  sizeof(float) * inputDims[1]));
         }
 
         ::dml::Expression output = ::dml::MeanVarianceNormalization(
