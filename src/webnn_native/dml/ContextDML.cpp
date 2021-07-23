@@ -23,11 +23,7 @@ namespace webnn_native { namespace dml {
         return new Context(reinterpret_cast<ContextOptions const*>(options));
     }
 
-    Context::Context(ContextOptions const* options) {
-        if (options == nullptr) {
-            return;
-        }
-        mOptions = *options;
+    Context::Context(ContextOptions const* options) : ContextBase(options) {
     }
 
     GraphBase* Context::CreateGraphImpl() {

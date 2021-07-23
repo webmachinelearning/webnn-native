@@ -24,20 +24,10 @@
 
 namespace InferenceEngine {
 
-Compilation::Compilation(std::shared_ptr<Model> model)
-    : preference_(PREFER_FAST_SINGLE_ANSWER) {
-  std::string device_name;
-  if (preference_ == prefer_t::PREFER_FAST_SINGLE_ANSWER) {
-    device_name = "CPU";
-  } else if (preference_ == prefer_t::PREFER_SUSTAINED_SPEED) {
-    device_name = "GPU";
-  } else if (preference_ == prefer_t::PREFER_LOW_POWER) {
-    device_name = "MYRIAD";
-  } else if (preference_ == prefer_t::PREFER_ULTRA_LOW_POWER) {
-    device_name = "GNA";
-  }
+Compilation::Compilation(std::shared_ptr<Model> model, std::string deviceName)
+    : device_name_(deviceName) {
   std::map<std::string, std::string> plugin_Config = {};
-  if (preference_ == prefer_t::PREFER_ULTRA_LOW_POWER) {
+  if (device_name_ == "GNA") {
     // TODO(Junwei): The SCALE_FACTOR need to be set.
     plugin_Config[GNAConfigParams::KEY_GNA_DEVICE_MODE] = "GNA_AUTO";
     // Note that it is not always possible to use 8-bit weights due to GNA
@@ -47,7 +37,7 @@ Compilation::Compilation(std::shared_ptr<Model> model)
     // gnaPluginConfig[GNAConfigParams::KEY_GNA_PRECISION] = "I8";
   }
   executable_network_ =
-      ie_core_.LoadNetwork(*(model->network_), device_name, plugin_Config);
+      ie_core_.LoadNetwork(*(model->network_), device_name_, plugin_Config);
   infer_request_ = executable_network_.CreateInferRequest();
   output_node_map_ = std::move(model->output_node_map_);
 }

@@ -497,7 +497,12 @@ namespace webnn_native { namespace ie {
         // TODO(junwei): We may leverage https://dawn-review.googlesource.com/c/dawn/+/36360 to
         // implement async compilation as standle-alone component.
         // Create compilation for IE backend.
-        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation);
+        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
+        const char* deviceName = devicePreference == ml::DevicePreference::Cpu ||
+                                         devicePreference == ml::DevicePreference::Default
+                                     ? "CPU"
+                                     : "GPU";
+        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation, deviceName);
         delegate(code == IEStatusCode::OK ? MLBuildGraphStatus_Success : MLBuildGraphStatus_Error,
                  this);
     }
@@ -510,7 +515,12 @@ namespace webnn_native { namespace ie {
     }
 
     MLBuildGraphStatus Graph::CompileSyncImpl() {
-        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation);
+        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
+        const char* deviceName = devicePreference == ml::DevicePreference::Cpu ||
+                                         devicePreference == ml::DevicePreference::Default
+                                     ? "CPU"
+                                     : "GPU";
+        IEStatusCode code = IE(ie_create_compilation)(mIeModel, &mIeCompilation, deviceName);
         return code == IEStatusCode::OK ? MLBuildGraphStatus_Success : MLBuildGraphStatus_Error;
     }
 

@@ -30,14 +30,14 @@ std::map<IE::StatusCode, IEStatusCode> status_map = {
     {IE::StatusCode::UNEXPECTED, IEStatusCode::UNEXPECTED}};
 
 #define BEGINE_TRY try {
-#define END_CATCH                                          \
-  }                                                        \
-  catch (const IE::Exception& e) {                         \
-    return e.hasStatus() ? status_map[e.getStatus()]       \
-                         : IEStatusCode::UNEXPECTED;       \
-  }                                                        \
-  catch (...) {                                            \
-    return IEStatusCode::UNEXPECTED;                       \
+#define END_CATCH                                    \
+  }                                                  \
+  catch (const IE::Exception& e) {                   \
+    return e.hasStatus() ? status_map[e.getStatus()] \
+                         : IEStatusCode::UNEXPECTED; \
+  }                                                  \
+  catch (...) {                                      \
+    return IEStatusCode::UNEXPECTED;                 \
   }
 
 /**
@@ -449,14 +449,15 @@ IEStatusCode ie_model_free_name(char** name) {
 }
 
 IEStatusCode ie_create_compilation(ie_model* model,
-                                   ie_compilation_t** compilation) {
+                                   ie_compilation_t** compilation,
+                                   const char* deviceName) {
   if (model == nullptr) {
     return IEStatusCode::GENERAL_ERROR;
   }
 
   BEGINE_TRY
   *compilation = new ie_compilation_t;
-  (*compilation)->object.reset(new IE::Compilation(model->object));
+  (*compilation)->object.reset(new IE::Compilation(model->object, deviceName));
   END_CATCH
 
   return IEStatusCode::OK;

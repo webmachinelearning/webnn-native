@@ -29,7 +29,7 @@
 
 uint32_t product(const std::vector<int32_t>& dims);
 
-ml::Context CreateCppContext();
+ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
 
 bool Expected(float output, float expected);
 

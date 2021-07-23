@@ -31,7 +31,7 @@ namespace InferenceEngine {
 
 class Compilation {
  public:
-  explicit Compilation(std::shared_ptr<Model> model);
+  Compilation(std::shared_ptr<Model> model, std::string deviceName);
   ~Compilation() = default;
 
   StatusCode SetInput(ie_operand_t* operand,
@@ -43,7 +43,7 @@ class Compilation {
   StatusCode GetDimensions(const char* name, ie_dimensions_t* dimensions);
 
  private:
-  prefer_t preference_;
+  std::string device_name_;
 
   InferRequest infer_request_;
   ExecutableNetwork executable_network_;

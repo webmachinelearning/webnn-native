@@ -463,10 +463,15 @@ namespace webnn_native { namespace dml {
     }
 
     Graph::Graph(Context* context) : GraphBase(context) {
+        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
+        bool useGpu = devicePreference == ml::DevicePreference::Gpu ||
+                              devicePreference == ml::DevicePreference::Default
+                          ? true
+                          : false;
 #if defined(_DEBUG)
-        mDevice.reset(new ::pydml::Device(true, true));
+        mDevice.reset(new ::pydml::Device(useGpu, true));
 #else
-        mDevice.reset(new ::pydml::Device(true, false));
+        mDevice.reset(new ::pydml::Device(useGpu, false));
 #endif
         mDevice->Init();
         mGraph.reset(new ::dml::Graph(mDevice->GetDevice()));
