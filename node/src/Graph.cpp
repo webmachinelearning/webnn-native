@@ -156,7 +156,7 @@ namespace node {
     };
 
     template <class T>
-    bool GetNamedResources(const Napi::Value& jsValue, std::map<std::string, T>& namedResources) {
+    bool GetNamedResources(const Napi::Value& jsValue, std::map<std::string, T>& namedResources, std::string type) {
         if (!jsValue.IsObject()) {
             return false;
         }
@@ -177,7 +177,7 @@ namespace node {
             //   sequence<long> dimensions;
             // };
             T resource = {};
-            if (!jsResource.Has("data")) {
+            if (!jsResource.Has("data") && type == "input") {
                 // Input buffer is required.
                 return false;
             }
@@ -227,12 +227,12 @@ namespace node {
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
         std::map<std::string, Input> inputs;
-        WEBNN_NODE_ASSERT(GetNamedResources<Input>(info[0], inputs),
+        WEBNN_NODE_ASSERT(GetNamedResources<Input>(info[0], inputs, "input"),
                           "The inputs parameter is invalid.");
 
         std::map<std::string, Output> outputs;
         if (info.Length() > 1) {
-            WEBNN_NODE_ASSERT(GetNamedResources<Output>(info[1], outputs),
+            WEBNN_NODE_ASSERT(GetNamedResources<Output>(info[1], outputs, "output"),
                               "The outputs parameter is invalid.");
         }
         Napi::Env env = info.Env();
@@ -247,11 +247,11 @@ namespace node {
         // status compute(NamedInputs inputs, NamedOutputs outputs);
         WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");
         std::map<std::string, Input> inputs;
-        WEBNN_NODE_ASSERT(GetNamedResources<Input>(info[0], inputs),
+        WEBNN_NODE_ASSERT(GetNamedResources<Input>(info[0], inputs, "input"),
                           "The inputs parameter is invalid.");
 
         std::map<std::string, Output> outputs;
-        WEBNN_NODE_ASSERT(GetNamedResources<Output>(info[1], outputs),
+        WEBNN_NODE_ASSERT(GetNamedResources<Output>(info[1], outputs, "output"),
                           "The outputs parameter is invalid.");
 
         ml::NamedInputs namedInputs = ml::CreateNamedInputs();
