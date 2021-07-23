@@ -25,9 +25,9 @@ namespace webnn_native { namespace op {
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  const ArrayBufferView* arrayBuffer)
-            : OperandBase(builder){
+            : OperandBase(builder) {
             if (desc == nullptr || arrayBuffer == nullptr) {
-              return;
+                return;
             }
             mType = desc->type;
             mRank = desc->dimensionsCount;
