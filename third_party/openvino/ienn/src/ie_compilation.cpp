@@ -54,26 +54,16 @@ StatusCode Compilation::SetInput(ie_operand_t* operand,
 StatusCode Compilation::GetOutput(ie_operand_t* operand,
                                   void* buffer,
                                   uint32_t length) {
-  Blob::Ptr output_blob = infer_request_.GetBlob(operand->name);
+  char* name = operand->name;
+  if (output_node_map_.find(name) != output_node_map_.end()) {
+    name = const_cast<char*>(output_node_map_[name].c_str());
+  }
+
+  Blob::Ptr output_blob = infer_request_.GetBlob(name);
   if (output_blob->byteSize() != length) {
     THROW_IE_EXCEPTION << "The output buffer length is invalid.";
   }
   memcpy(buffer, output_blob->buffer(), length);
-
-  return StatusCode::OK;
-}
-
-StatusCode Compilation::GetBuffer(const char* name,
-                                  void** buffer,
-                                  size_t* byte_length) {
-  if (output_node_map_.find(name) != output_node_map_.end()) {
-    name = output_node_map_.find(name)->second.data();
-  }
-
-  Blob::Ptr output_blob = infer_request_.GetBlob(name);
-  *byte_length = output_blob->byteSize();
-  *buffer = malloc(*byte_length);
-  memcpy(*buffer, output_blob->buffer(), *byte_length);
 
   return StatusCode::OK;
 }

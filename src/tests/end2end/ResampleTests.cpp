@@ -24,11 +24,10 @@ class ResampleTests : public WebnnTest {
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
         const ml::Operand inputOperand = utils::BuildInput(builder, "input", inputShape);
         const ml::Operand output = builder.Resample(inputOperand, options);
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"output", output}});
+        const ml::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
-        const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-        const ml::Result result = utils::AwaitCompute(graph, {{"input", input}}).Get("output");
-        EXPECT_TRUE(utils::CheckShape(result, expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
+        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

@@ -49,13 +49,10 @@ class Conv2dTests : public WebnnTest {
             }
             output = builder.Clamp(output, &clampOptions);
         }
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"output", output}});
+        const ml::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
-        const ml::Result result =
-            utils::AwaitCompute(
-                graph, {{"input", {input.value.data(), input.value.size() * sizeof(float)}}})
-                .Get("output");
-        EXPECT_TRUE(utils::CheckShape(result, expected.shape));
+        std::vector<float> result(utils::SizeOfShape(expected.shape));
+        utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expected.value));
     }
 };

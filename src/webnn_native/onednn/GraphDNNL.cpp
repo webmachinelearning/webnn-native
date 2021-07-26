@@ -21,9 +21,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NamedResults.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/Result.h"
 
 #define FAILED(status) (((dnnl_status_t)(status)) != dnnl_success)
 
@@ -76,37 +74,22 @@ const char* dnnl_status2str(dnnl_status_t v) {
             COMPLAIN_DNNL_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-#define COMPLAIN_DNNL_ERROR_AND_CALLBACK(what, status)                                     \
+#define COMPUTE_DNNL_ERROR(what, status)                                                   \
     do {                                                                                   \
         std::string message = std::string(what) + std::string(" returns oneDNN error: ") + \
                               std::string(dnnl_status2str(s_));                            \
-        if (callback) {                                                                    \
-            callback(MLComputeGraphStatus_Error, nullptr, message.c_str(), userdata);      \
-            return MLComputeGraphStatus_Error;                                             \
-        } else {                                                                           \
-            dawn::ErrorLog() << message;                                                   \
-            return MLComputeGraphStatus_Error;                                             \
-        }                                                                                  \
+        dawn::ErrorLog() << message;                                                       \
+        return MLComputeGraphStatus_Error;                                                 \
     } while (0)
 
-#define CALLBACK_TRY(f)                               \
-    do {                                              \
-        dnnl_status_t s_ = f;                         \
-        if (s_ != dnnl_success)                       \
-            COMPLAIN_DNNL_ERROR_AND_CALLBACK(#f, s_); \
+#define COMPUTE_TRY(f)                  \
+    do {                                \
+        dnnl_status_t s_ = f;           \
+        if (s_ != dnnl_success)         \
+            COMPUTE_DNNL_ERROR(#f, s_); \
     } while (0)
 
 namespace webnn_native { namespace onednn {
-
-    class Result : public ResultBase {
-      public:
-        explicit Result(void* buffer, uint32_t buffer_size, std::vector<int32_t>& dimensions)
-            : ResultBase(buffer, buffer_size, dimensions) {
-        }
-        ~Result() {
-            free(mBuffer);
-        }
-    };
 
     namespace {
         dnnl_status_t GetDnnlDataType(ml::OperandType operandType, dnnl_data_type_t& dnnlDataType) {
@@ -341,8 +324,8 @@ namespace webnn_native { namespace onednn {
     MaybeError Graph::AddConstant(const op::Constant* constant) {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
         dnnl_memory_t memory;
-        DAWN_TRY(CreateDnnlMemory(GetEngine(), desc, &memory, constant->GetValue(),
-                                  constant->GetSize()));
+        DAWN_TRY(CreateDnnlMemory(GetEngine(), desc, &memory, constant->GetBuffer(),
+                                  constant->GetByteLength()));
         mMemories.push_back(memory);
         mConstantMemories.insert(memory);
         mOperandMemoryMap.insert(std::make_pair(constant, memory));
@@ -1141,88 +1124,46 @@ namespace webnn_native { namespace onednn {
         return {};
     }
 
-    void Graph::CompileImpl(BuildGraphCallbackDelegate delegate) {
-        MLBuildGraphStatus status =
-            FAILED(dnnl_stream_create(&mStream, GetEngine(), dnnl_stream_default_flags))
-                ? MLBuildGraphStatus_Error
-                : MLBuildGraphStatus_Success;
-        delegate(status, this);
+    MaybeError Graph::CompileImpl() {
+        DAWN_TRY(dnnl_stream_create(&mStream, GetEngine(), dnnl_stream_default_flags));
+        return {};
     }
 
-    MLBuildGraphStatus Graph::CompileSyncImpl() {
-        MLBuildGraphStatus status =
-            FAILED(dnnl_stream_create(&mStream, GetEngine(), dnnl_stream_default_flags))
-                ? MLBuildGraphStatus_Error
-                : MLBuildGraphStatus_Success;
-        return status;
-    }
-
-    MLComputeGraphStatus Graph::ComputeSyncImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs) {
-        return this->GenericComputeImpl(inputs, outputs);
-    }
-
-    void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
-        this->GenericComputeImpl(inputs, outputs, callback, userdata);
-    }
-
-    MLComputeGraphStatus Graph::GenericComputeImpl(NamedInputsBase* inputs,
-                                                   NamedOutputsBase* outputs,
-                                                   MLComputeGraphCallback callback,
-                                                   void* userdata) {
+    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& input : inputs->GetRecords()) {
             dnnl_memory_t inputMemory = mInputMemoryMap.at(input.first);
-            CALLBACK_TRY(dnnl_memory_set_data_handle_v2(
-                inputMemory, const_cast<void*>(input.second->buffer), mStream));
+            COMPUTE_TRY(
+                dnnl_memory_set_data_handle_v2(inputMemory,
+                                               static_cast<int8_t*>(input.second->resource.buffer) +
+                                                   input.second->resource.byteOffset,
+                                               mStream));
         }
 
         for (auto op : mOperations) {
-            CALLBACK_TRY(
+            COMPUTE_TRY(
                 dnnl_primitive_execute(op.primitive, mStream, op.args.size(), op.args.data()));
         }
 
-        CALLBACK_TRY(dnnl_stream_wait(mStream));
+        COMPUTE_TRY(dnnl_stream_wait(mStream));
 
         std::vector<std::string> outputNames;
-        if (outputs != nullptr) {
-            for (auto& output : outputs->GetRecords()) {
-                outputNames.push_back(output.first);
-            }
-        } else {
-            for (auto& output : mOutputMemoryMap) {
-                outputNames.push_back(output.first);
-            }
+        for (auto& output : outputs->GetRecords()) {
+            outputNames.push_back(output.first);
         }
 
-        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
         for (size_t i = 0; i < outputNames.size(); ++i) {
             std::string outputName = outputNames[i];
             dnnl_memory_t outputMemory = mOutputMemoryMap.at(outputName);
             const dnnl_memory_desc_t* outputMemoryDesc;
-            CALLBACK_TRY(GetMemoryDesc(outputMemory, &outputMemoryDesc));
-            std::vector<int32_t> dimensions;
-            for (int i = 0; i < outputMemoryDesc->ndims; ++i) {
-                // FIXME(nhu): convert from int64_t to int32_t.
-                dimensions.push_back(outputMemoryDesc->dims[i]);
-            }
+            COMPUTE_TRY(GetMemoryDesc(outputMemory, &outputMemoryDesc));
             size_t bufferLength = dnnl_memory_desc_get_size(outputMemoryDesc);
             void* outputBuffer = malloc(bufferLength);
-            CALLBACK_TRY(ReadFromMemory(outputBuffer, bufferLength, outputMemory));
-            Ref<ResultBase> result = AcquireRef(new Result(outputBuffer, bufferLength, dimensions));
-            results->Set(outputName.c_str(), result.Detach());
-            if (outputs != nullptr) {
-                const Output* output = outputs->GetRecords().at(outputName);
-                if (output->size >= bufferLength) {
-                    memcpy(output->buffer, outputBuffer, bufferLength);
-                }
+            COMPUTE_TRY(ReadFromMemory(outputBuffer, bufferLength, outputMemory));
+            const ArrayBufferView* output = outputs->GetRecords().at(outputName);
+            if (output->byteLength >= bufferLength) {
+                memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset, outputBuffer,
+                       bufferLength);
             }
-        }
-        if (callback) {
-            callback(MLComputeGraphStatus_Success,
-                     reinterpret_cast<MLNamedResults>(results.Detach()), nullptr, userdata);
         }
         return MLComputeGraphStatus_Success;
     }

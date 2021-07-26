@@ -25,18 +25,6 @@ namespace webnn_native {
     GraphBase::GraphBase(ContextBase* context) : ObjectBase(context) {
     }
 
-    void GraphBase::Compute(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
-        ComputeImpl(inputs, callback, userdata, outputs);
-    }
-
-    MLComputeGraphStatus GraphBase::ComputeSync(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs) {
-        return ComputeSyncImpl(inputs, outputs);
-    }
-
     MaybeError GraphBase::AddConstant(const op::Constant* constant) {
         return DAWN_UNIMPLEMENTED_ERROR("AddConstant");
     }
@@ -109,23 +97,16 @@ namespace webnn_native {
         UNREACHABLE();
     }
 
-    void GraphBase::Compile(BuildGraphCallbackDelegate delegate) {
-        CompileImpl(delegate);
+    MaybeError GraphBase::Compile() {
+        return CompileImpl();
     }
 
-    MLBuildGraphStatus GraphBase::CompileSync() {
-        return CompileSyncImpl();
-    }
+    MLComputeGraphStatus GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        if (inputs == nullptr || outputs == nullptr) {
+            return MLComputeGraphStatus_Error;
+        }
 
-    MLBuildGraphStatus GraphBase::CompileSyncImpl() {
-        dawn::ErrorLog() << "Unimplemented";
-        return MLBuildGraphStatus_Error;
-    }
-
-    MLComputeGraphStatus GraphBase::ComputeSyncImpl(NamedInputsBase* inputs,
-                                                    NamedOutputsBase* outputs) {
-        dawn::ErrorLog() << "Unimplemented";
-        return MLComputeGraphStatus_Error;
+        return ComputeImpl(inputs, outputs);
     }
 
 }  // namespace webnn_native

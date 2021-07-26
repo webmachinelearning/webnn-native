@@ -12,14 +12,17 @@ vars = {
 
 deps = {
   # Dependencies required for tests.
-  'node/third_party/webnn-polyfill/test-data': {
-    'url': '{github_git}/webmachinelearning/test-data.git@4738df365a106c0192e65c3183b956a607039407'
-  },
   'node/third_party/webnn-polyfill': {
-    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@5c5e9f6f5dbbe9dc67c448c8f7a55b6ddf4dee25'
+    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@84ae5a05f348922078fb7478961106b39d327613'
+  },
+  'node/third_party/webnn-polyfill/test-data': {
+    'url': '{github_git}/webmachinelearning/test-data.git@1b11055b7f3196ffe9a97051e7f4d10c74a44914'
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@65cab3bb9ea626fb5b68c32169e7602bf3796b8f'
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@06a29755bf1e4e9f51c06582d18853bc2abefd97'
+  },
+  'node/third_party/webnn-samples/test-data': {
+    'url': '{github_git}/webmachinelearning/test-data.git@1b11055b7f3196ffe9a97051e7f4d10c74a44914'
   },
   'third_party/stb': {
     'url': '{github_git}/nothings/stb@b42009b3b9d4ca35bc703f5310eedc74f584be58'

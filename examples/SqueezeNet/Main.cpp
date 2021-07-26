@@ -88,33 +88,24 @@ int main(int argc, const char* argv[]) {
         std::chrono::high_resolution_clock::now();
     // Create a model with weights and biases from .npy files.
     SqueezeNet squeezenet(preOptions.nchw);
-    if (preOptions.nchw) {
-        if (!squeezenet.LoadNCHW(weightsPath)) {
-            dawn::ErrorLog() << "Failed to load SqueezeNet for NCHW.";
-            return -1;
-        }
-    } else {
-        if (!squeezenet.LoadNHWC(weightsPath)) {
-            dawn::ErrorLog() << "Failed to load SqueezeNet for NHWC.";
-            return -1;
-        }
-    }
-
+    ml::Graph graph =
+        preOptions.nchw ? squeezenet.LoadNCHW(weightsPath) : squeezenet.LoadNHWC(weightsPath);
+    DAWN_ASSERT(graph);
     const std::chrono::duration<double, std::milli> compilationElapsedTime =
         std::chrono::high_resolution_clock::now() - compilationStartTime;
     dawn::InfoLog() << "Compilation Time: " << compilationElapsedTime.count() << " ms";
-    ml::Result result;
-    std::vector<float> input(processedPixels, processedPixels + preOptions.modelSize);
-    std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
 
+    std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
+    const std::vector<float> input(processedPixels, processedPixels + preOptions.modelSize);
+    std::vector<int32_t> outputShape =
+        preOptions.nchw ? std::vector<int32_t>({1, 1000}) : std::vector<int32_t>({1, 1001});
+    std::vector<float> result(utils::SizeOfShape(outputShape));
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        result = squeezenet.Compute(input.data(), input.size() * sizeof(float));
-        if (!result) {
-            dawn::ErrorLog() << "Failed to compute LeNet.";
-            return -1;
-        }
+        ml::ComputeGraphStatus status =
+            utils::Compute(graph, {{"input", input}}, {{"output", result}});
+        DAWN_ASSERT(status == ml::ComputeGraphStatus::Success);
         executionTimeVector.push_back(std::chrono::high_resolution_clock::now() -
                                       executionStartTime);
     }

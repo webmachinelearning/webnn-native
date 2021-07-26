@@ -39,7 +39,6 @@ class Compilation {
                       uint32_t length);
   StatusCode GetOutput(ie_operand_t* operand, void* buffer, uint32_t length);
   StatusCode Compute();
-  StatusCode GetBuffer(const char* name, void** buffer, size_t* byte_length);
   StatusCode GetDimensions(const char* name, ie_dimensions_t* dimensions);
 
  private:

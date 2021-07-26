@@ -61,63 +61,6 @@ Napi::FunctionReference node::GraphBuilder::constructor;
 
 namespace node {
 
-    class BuildGraphWorker : public Napi::AsyncWorker {
-      public:
-        BuildGraphWorker(Napi::Env& env,
-                         Napi::Promise::Deferred& deferred,
-                         ml::GraphBuilder builder,
-                         ml::NamedOperands namedOperands,
-                         std::vector<std::string> outputNames)
-            : Napi::AsyncWorker(env),
-              mEnv(env),
-              mDeferred(deferred),
-              mBuilder(builder),
-              mNamedOperands(std::move(namedOperands)),
-              mOutputNames(std::move(outputNames)) {
-        }
-
-        ~BuildGraphWorker() = default;
-
-        void Execute() {
-            mBuilder.Build(
-                mNamedOperands,
-                [](MLBuildGraphStatus status, MLGraph impl, char const* message, void* userData) {
-                    BuildGraphWorker* asyncWorker = reinterpret_cast<BuildGraphWorker*>(userData);
-                    asyncWorker->SetGraph(status, impl, message);
-                },
-                reinterpret_cast<void*>(this));
-        }
-
-        void OnOK() {
-            if (mStatus != ml::BuildGraphStatus::Success) {
-                return mDeferred.Reject(Napi::Value::From(mEnv, mMessage));
-            }
-            Napi::Object object = node::Graph::constructor.New({});
-            node::Graph* jsGraph = Napi::ObjectWrap<node::Graph>::Unwrap(object);
-            jsGraph->mImpl = mGraph;
-            jsGraph->mOutputNames = std::move(mOutputNames);
-            mDeferred.Resolve(object);
-        }
-
-        void SetGraph(MLBuildGraphStatus status, MLGraph impl, char const* message) {
-            mStatus = static_cast<ml::BuildGraphStatus>(status);
-            mGraph = mGraph.Acquire(impl);
-            if (message) {
-                mMessage = std::string(message);
-            }
-        }
-
-      private:
-        Napi::Env mEnv;
-        Napi::Promise::Deferred mDeferred;
-        ml::GraphBuilder mBuilder;
-        ml::NamedOperands mNamedOperands;
-        std::vector<std::string> mOutputNames;
-        ml::BuildGraphStatus mStatus;
-        std::string mMessage;
-        ml::Graph mGraph;
-    };
-
     GraphBuilder::GraphBuilder(const Napi::CallbackInfo& info)
         : Napi::ObjectWrap<GraphBuilder>(info) {
         Napi::Object object = info[0].As<Napi::Object>();
@@ -202,28 +145,13 @@ namespace node {
     }
 
     Napi::Value GraphBuilder::Build(const Napi::CallbackInfo& info) {
-        // Promise<MLGraph> Build(NamedOperands outputs);
-        WEBNN_NODE_ASSERT(info.Length() == 1, "The number of arguments is invalid.");
-        Napi::Env env = info.Env();
-        auto deferred = Napi::Promise::Deferred::New(env);
-        ml::NamedOperands namedOperands;
-        std::vector<std::string> names;
-        WEBNN_NODE_ASSERT(GetNamedOperands(info[0], namedOperands, names),
-                          "The outputs parameter is invalid.");
-        BuildGraphWorker* worker =
-            new BuildGraphWorker(env, deferred, mImpl, std::move(namedOperands), std::move(names));
-        worker->Queue();
-        return deferred.Promise();
-    }
-
-    Napi::Value GraphBuilder::BuildSync(const Napi::CallbackInfo& info) {
         // MLGraph BuildSync(NamedOperands outputs);
         WEBNN_NODE_ASSERT(info.Length() == 1, "The number of arguments is invalid.");
         ml::NamedOperands namedOperands;
         std::vector<std::string> names;
         WEBNN_NODE_ASSERT(GetNamedOperands(info[0], namedOperands, names),
                           "The outputs parameter is invalid.");
-        ml::Graph graph = mImpl.BuildSync(namedOperands);
+        ml::Graph graph = mImpl.Build(namedOperands);
         WEBNN_NODE_ASSERT(graph != nullptr, "Failed to build graph.");
         Napi::Object object = node::Graph::constructor.New({});
         node::Graph* jsGraph = Napi::ObjectWrap<node::Graph>::Unwrap(object);
@@ -255,8 +183,7 @@ namespace node {
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
              InstanceMethod("softmax", &GraphBuilder::Softmax, napi_enumerable),
              InstanceMethod("transpose", &GraphBuilder::Transpose, napi_enumerable),
-             InstanceMethod("build", &GraphBuilder::Build, napi_enumerable),
-             InstanceMethod("buildSync", &GraphBuilder::BuildSync, napi_enumerable)});
+             InstanceMethod("build", &GraphBuilder::Build, napi_enumerable)});
         constructor = Napi::Persistent(func);
         constructor.SuppressDestruct();
         exports.Set("MLGraphBuilder", func);

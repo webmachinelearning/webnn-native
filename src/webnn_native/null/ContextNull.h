@@ -60,11 +60,9 @@ namespace webnn_native { namespace null {
         virtual MaybeError Finish() override;
 
       private:
-        void CompileImpl(BuildGraphCallbackDelegate delegate) override;
-        void ComputeImpl(NamedInputsBase* inputs,
-                         MLComputeGraphCallback callback,
-                         void* userdata,
-                         NamedOutputsBase* outputs = nullptr) override;
+        MaybeError CompileImpl() override;
+        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                         NamedOutputsBase* outputs) override;
     };
 
 }}  // namespace webnn_native::null

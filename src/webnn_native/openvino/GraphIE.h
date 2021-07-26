@@ -67,20 +67,10 @@ namespace webnn_native { namespace ie {
         virtual MaybeError Finish() override;
 
       private:
-        void CompileImpl(BuildGraphCallbackDelegate delegate) override;
-        void ComputeImpl(NamedInputsBase* inputs,
-                         MLComputeGraphCallback callback,
-                         void* userdata,
-                         NamedOutputsBase* outputs) override;
+        MaybeError CompileImpl() override;
+        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                         NamedOutputsBase* outputs) override;
 
-        MLBuildGraphStatus CompileSyncImpl() override;
-        MLComputeGraphStatus ComputeSyncImpl(NamedInputsBase* inputs,
-                                             NamedOutputsBase* outputs) override;
-
-        MLComputeGraphStatus GenericComputeImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs,
-                                                MLComputeGraphCallback callback = nullptr,
-                                                void* userdata = nullptr);
         ie_model_t* mIeModel;
         ie_compilation_t* mIeCompilation;
 

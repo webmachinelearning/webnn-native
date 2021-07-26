@@ -50,13 +50,6 @@ namespace webnn_native {
         explicit GraphBase(ContextBase* context);
         virtual ~GraphBase() = default;
 
-        // Webnn API
-        void Compute(NamedInputsBase* inputs,
-                     MLComputeGraphCallback callback,
-                     void* userdata,
-                     NamedOutputsBase* outputs = nullptr);
-        MLComputeGraphStatus ComputeSync(NamedInputsBase* inputs, NamedOutputsBase* outputs);
-
         virtual MaybeError AddConstant(const op::Constant* constant);
         virtual MaybeError AddInput(const op::Input* input);
         virtual MaybeError AddOutput(const std::string& name, const OperandBase* output);
@@ -75,18 +68,15 @@ namespace webnn_native {
         virtual MaybeError AddGemm(const op::Gemm* gemm);
         virtual MaybeError AddClamp(const op::Clamp* clamp);
         virtual MaybeError Finish();
-        virtual void Compile(BuildGraphCallbackDelegate delegate);
-        virtual MLBuildGraphStatus CompileSync();
+        virtual MaybeError Compile();
+
+        // Webnn API
+        MLComputeGraphStatus Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
 
       private:
-        virtual void CompileImpl(BuildGraphCallbackDelegate delegate) = 0;
-        virtual void ComputeImpl(NamedInputsBase* inputs,
-                                 MLComputeGraphCallback callback,
-                                 void* userdata,
-                                 NamedOutputsBase* outputs) = 0;
-        virtual MLBuildGraphStatus CompileSyncImpl();
-        virtual MLComputeGraphStatus ComputeSyncImpl(NamedInputsBase* inputs,
-                                                     NamedOutputsBase* outputs);
+        virtual MaybeError CompileImpl() = 0;
+        virtual MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                                 NamedOutputsBase* outputs) = 0;
     };
 }  // namespace webnn_native
 

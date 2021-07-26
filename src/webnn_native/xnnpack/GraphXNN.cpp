@@ -22,9 +22,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NamedResults.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/Result.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
 
 #define FAILED(status) (((xnn_status)(status)) != xnn_status_success)
@@ -80,49 +78,23 @@ const char* xnn_status2str(xnn_status v) {
             COMPLAIN_XNN_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-#define COMPLAIN_XNN_ERROR_AND_CALLBACK(what, status)                                       \
-    do {                                                                                    \
-        std::string message = std::string(what) + std::string(" returns XNNPACK error: ") + \
-                              std::string(xnn_status2str(s_));                              \
-        if (callback) {                                                                     \
-            callback(MLComputeGraphStatus_Error, nullptr, message.c_str(), userdata);       \
-            return MLComputeGraphStatus_Error;                                              \
-        } else {                                                                            \
-            dawn::ErrorLog() << message;                                                    \
-            return MLComputeGraphStatus_Error;                                              \
-        }                                                                                   \
+#define COMPUTE_ERROR(what)                \
+    do {                                   \
+        dawn::ErrorLog() << what;          \
+        return MLComputeGraphStatus_Error; \
     } while (0)
 
-#define COMPLAIN_AND_CALLBACK(what)                                                   \
-    do {                                                                              \
-        std::string message = std::string(what);                                      \
-        if (callback) {                                                               \
-            callback(MLComputeGraphStatus_Error, nullptr, message.c_str(), userdata); \
-            return MLComputeGraphStatus_Error;                                        \
-        } else {                                                                      \
-            dawn::ErrorLog() << message;                                              \
-            return MLComputeGraphStatus_Error;                                        \
-        }                                                                             \
-    } while (0)
-
-#define CALLBACK_TRY(f)                              \
-    do {                                             \
-        xnn_status s_ = f;                           \
-        if (s_ != xnn_status_success)                \
-            COMPLAIN_XNN_ERROR_AND_CALLBACK(#f, s_); \
+#define COMPUTE_TRY(f)                                                                     \
+    do {                                                                                   \
+        xnn_status s_ = f;                                                                 \
+        if (s_ != xnn_status_success) {                                                    \
+            std::string message =                                                          \
+                std::string(" returns XNNPACK error: ") + std::string(xnn_status2str(s_)); \
+            COMPUTE_ERROR(message);                                                        \
+        }                                                                                  \
     } while (0)
 
 namespace webnn_native { namespace xnnpack {
-
-    class Result : public ResultBase {
-      public:
-        explicit Result(void* buffer, uint32_t buffer_size, std::vector<int32_t>& dimensions)
-            : ResultBase(buffer, buffer_size, dimensions) {
-        }
-        ~Result() {
-            free(mBuffer);
-        }
-    };
 
     namespace {
         xnn_status GetXnnDataType(ml::OperandType operandType, xnn_datatype& xnnDataType) {
@@ -202,11 +174,11 @@ namespace webnn_native { namespace xnnpack {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
         DAWN_TRY(GetXnnDataType(desc->type, info->dataType));
         info->dims.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
-        info->buffer.reset(new char[constant->GetSize()]);
+        info->buffer.reset(new char[constant->GetByteLength()]);
         if (info->buffer.get() == nullptr) {
             return DAWN_OUT_OF_MEMORY_ERROR("");
         }
-        memcpy(info->buffer.get(), constant->GetValue(), constant->GetSize());
+        memcpy(info->buffer.get(), constant->GetBuffer(), constant->GetByteLength());
         mConstants.push_back(info);
         mOperandInfoMap.insert(std::make_pair(constant, info));
         return {};
@@ -716,31 +688,11 @@ namespace webnn_native { namespace xnnpack {
         return reinterpret_cast<Context*>(GetContext())->GetThreadpool();
     }
 
-    void Graph::CompileImpl(BuildGraphCallbackDelegate delegate) {
-        delegate(MLBuildGraphStatus_Success, this);
-        return;
+    MaybeError Graph::CompileImpl() {
+        return {};
     }
 
-    MLBuildGraphStatus Graph::CompileSyncImpl() {
-        return MLBuildGraphStatus_Success;
-    }
-
-    MLComputeGraphStatus Graph::ComputeSyncImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs) {
-        return this->GenericComputeImpl(inputs, outputs);
-    }
-
-    void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
-        this->GenericComputeImpl(inputs, outputs, callback, userdata);
-    }
-
-    MLComputeGraphStatus Graph::GenericComputeImpl(NamedInputsBase* inputs,
-                                                   NamedOutputsBase* outputs,
-                                                   MLComputeGraphCallback callback,
-                                                   void* userdata) {
+    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         std::vector<const void*> inputBuffers(mInputs.size(), nullptr);
         for (size_t i = 0; i < mInputs.size(); ++i) {
             if (mInputs[i]->opType == OperandType::CONSTANT) {
@@ -749,49 +701,31 @@ namespace webnn_native { namespace xnnpack {
         }
         for (auto& input : inputs->GetRecords()) {
             if (mExternalInputs.find(input.first) == mExternalInputs.end()) {
-                COMPLAIN_AND_CALLBACK("Invalid parameters.");
+                COMPUTE_ERROR("Invalid parameters.");
             }
             size_t index = mExternalInputs.at(input.first);
-            inputBuffers[index] = input.second->buffer;
+            inputBuffers[index] = static_cast<int8_t*>(input.second->resource.buffer) +
+                                  input.second->resource.byteOffset;
         }
 
         std::vector<std::string> outputNames;
-        if (outputs != nullptr) {
-            for (auto& output : outputs->GetRecords()) {
-                outputNames.push_back(output.first);
-            }
-        } else {
-            for (auto& output : mExternalOutputs) {
-                outputNames.push_back(output.first);
-            }
+        for (auto& output : outputs->GetRecords()) {
+            outputNames.push_back(output.first);
         }
 
         std::vector<void*> outputBuffers(mOutputs.size(), nullptr);
-        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
         for (size_t i = 0; i < outputNames.size(); ++i) {
             std::string outputName = outputNames[i];
             size_t outputIndex = mExternalOutputs.at(outputName);
             const std::shared_ptr<OperandInfo>& outputInfo = mOutputs[outputIndex];
             std::vector<int32_t> dimensions(outputInfo->dims.begin(), outputInfo->dims.end());
             size_t bufferLength = SizeOfOperandInfo(outputInfo);
-            Ref<ResultBase> result;
-            if (outputs != nullptr) {
-                if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
-                    const Output* output = outputs->GetRecords().at(outputName);
-                    if (output->buffer != nullptr) {
-                        DAWN_ASSERT(output->size >= bufferLength);
-                        outputBuffers[outputIndex] = output->buffer;
-                        result =
-                            AcquireRef(new ResultBase(output->buffer, bufferLength, dimensions));
-                    }
-                }
+            if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
+                const ArrayBufferView* output = outputs->GetRecords().at(outputName);
+                DAWN_ASSERT(output->byteLength >= bufferLength);
+                outputBuffers[outputIndex] =
+                    static_cast<int8_t*>(output->buffer) + output->byteOffset;
             }
-            if (outputBuffers[outputIndex] == nullptr) {
-                void* outputBuffer = malloc(bufferLength);
-                outputBuffers[outputIndex] = outputBuffer;
-                result = AcquireRef(new Result(outputBuffer, bufferLength, dimensions));
-            }
-            results->Set(outputName.c_str(), result.Detach());
         }
 
         if (mXnnOperatorType == XnnOpType::convolution2d_nhwc_f32 ||
@@ -799,7 +733,7 @@ namespace webnn_native { namespace xnnpack {
             mXnnOperatorType == XnnOpType::max_pooling2d_nhwc_f32) {
             std::vector<size_t> inputDims = mInputs[0]->dims;
             if (!inputBuffers[0] || !outputBuffers[0]) {
-                COMPLAIN_AND_CALLBACK("Invalid parameters.");
+                COMPUTE_ERROR("Invalid parameters.");
             }
             const float* input = reinterpret_cast<const float*>(inputBuffers[0]);
             float* output = reinterpret_cast<float*>(outputBuffers[0]);
@@ -807,28 +741,28 @@ namespace webnn_native { namespace xnnpack {
             size_t inputHeight = inputDims[1];
             size_t inputWidth = inputDims[2];
             if (mXnnOperatorType == XnnOpType::convolution2d_nhwc_f32) {
-                CALLBACK_TRY(xnn_setup_convolution2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
-                                                              inputWidth, input, output,
-                                                              GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_convolution2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
+                                                             inputWidth, input, output,
+                                                             GetThreadpool()));
             } else if (mXnnOperatorType == XnnOpType::average_pooling2d_nhwc_f32) {
-                CALLBACK_TRY(xnn_setup_average_pooling2d_nhwc_f32(mXnnOperator, batchSize,
-                                                                  inputHeight, inputWidth, input,
-                                                                  output, GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_average_pooling2d_nhwc_f32(mXnnOperator, batchSize,
+                                                                 inputHeight, inputWidth, input,
+                                                                 output, GetThreadpool()));
             } else if (mXnnOperatorType == XnnOpType::max_pooling2d_nhwc_f32) {
-                CALLBACK_TRY(xnn_setup_max_pooling2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
-                                                              inputWidth, input, output,
-                                                              GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_max_pooling2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
+                                                             inputWidth, input, output,
+                                                             GetThreadpool()));
             }
         } else if (mXnnOperatorType == XnnOpType::clamp_nc_f32) {
             const std::shared_ptr<OperandInfo>& outputInfo = mOutputs[0];
             size_t batchSize = std::accumulate(outputInfo->dims.begin(), outputInfo->dims.end(), 1,
                                                std::multiplies<size_t>());
             if (!inputBuffers[0] || !outputBuffers[0]) {
-                COMPLAIN_AND_CALLBACK("Invalid parameters.");
+                COMPUTE_ERROR("Invalid parameters.");
             }
             const float* input = reinterpret_cast<const float*>(inputBuffers[0]);
             float* output = reinterpret_cast<float*>(outputBuffers[0]);
-            CALLBACK_TRY(
+            COMPUTE_TRY(
                 xnn_setup_clamp_nc_f32(mXnnOperator, batchSize, input, output, GetThreadpool()));
         } else if (mXnnOperatorType == XnnOpType::add_nd_f32 ||
                    mXnnOperatorType == XnnOpType::multiply_nd_f32 ||
@@ -836,34 +770,29 @@ namespace webnn_native { namespace xnnpack {
             std::vector<size_t> dims0 = mInputs[0]->dims;
             std::vector<size_t> dims1 = mInputs[1]->dims;
             if (!inputBuffers[0] || !inputBuffers[1] || !outputBuffers[0]) {
-                COMPLAIN_AND_CALLBACK("Invalid parameters.");
+                COMPUTE_ERROR("Invalid parameters.");
             }
             const float* input0 = reinterpret_cast<const float*>(inputBuffers[0]);
             const float* input1 = reinterpret_cast<const float*>(inputBuffers[1]);
             float* output = reinterpret_cast<float*>(outputBuffers[0]);
             if (mXnnOperatorType == XnnOpType::add_nd_f32) {
-                CALLBACK_TRY(xnn_setup_add_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                                  dims1.size(), dims1.data(), input0, input1,
-                                                  output, GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_add_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
+                                                 dims1.size(), dims1.data(), input0, input1, output,
+                                                 GetThreadpool()));
             } else if (mXnnOperatorType == XnnOpType::multiply_nd_f32) {
-                CALLBACK_TRY(xnn_setup_multiply_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                                       dims1.size(), dims1.data(), input0, input1,
-                                                       output, GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_multiply_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
+                                                      dims1.size(), dims1.data(), input0, input1,
+                                                      output, GetThreadpool()));
             } else if (mXnnOperatorType == XnnOpType::subtract_nd_f32) {
-                CALLBACK_TRY(xnn_setup_subtract_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                                       dims1.size(), dims1.data(), input0, input1,
-                                                       output, GetThreadpool()));
+                COMPUTE_TRY(xnn_setup_subtract_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
+                                                      dims1.size(), dims1.data(), input0, input1,
+                                                      output, GetThreadpool()));
             }
         } else {
-            COMPLAIN_AND_CALLBACK("The operator is not supported.");
+            COMPUTE_ERROR("The operator is not supported.");
         }
 
-        CALLBACK_TRY(xnn_run_operator(mXnnOperator, GetThreadpool()));
-
-        if (callback) {
-            callback(MLComputeGraphStatus_Success,
-                     reinterpret_cast<MLNamedResults>(results.Detach()), nullptr, userdata);
-        }
+        COMPUTE_TRY(xnn_run_operator(mXnnOperator, GetThreadpool()));
 
         return MLComputeGraphStatus_Success;
     }

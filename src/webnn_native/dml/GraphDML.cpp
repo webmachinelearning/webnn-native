@@ -19,35 +19,12 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NamedResults.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/Result.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 #include "webnn_native/ops/LeakyRelu.h"
 
-#define COMPUTE_DML_ERROR_CALLBACK(messages)                                   \
-    {                                                                          \
-        if (callback) {                                                        \
-            callback(MLComputeGraphStatus_Error, nullptr, messages, userdata); \
-        } else {                                                               \
-            dawn::ErrorLog() << messages;                                      \
-        }                                                                      \
-        return MLComputeGraphStatus_Error;                                     \
-    }                                                                          \
-    for (;;)                                                                   \
-    break
-
 namespace webnn_native { namespace dml {
-    class Result : public ResultBase {
-      public:
-        explicit Result(void* buffer, uint32_t buffer_size, std::vector<int32_t>& dimensions)
-            : ResultBase(buffer, buffer_size, dimensions) {
-        }
-        ~Result() {
-            free(mBuffer);
-        }
-    };
 
     namespace {
         enum TransposeType { NhwcToNchw, NchwToNhwc };
@@ -506,8 +483,8 @@ namespace webnn_native { namespace dml {
             return DAWN_INTERNAL_ERROR("Failed to get DML tensor dimensions.");
         }
 
-        auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetValue(),
-                                           constant->GetSize());
+        auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetBuffer(),
+                                           constant->GetByteLength());
         mExpression.insert(std::make_pair(constant, dmlConstant));
         mConstantSet.insert(constant);
         return {};
@@ -805,7 +782,7 @@ namespace webnn_native { namespace dml {
         // dml::Span just holds the refernces, need a variable to hold the memory.
         std::vector<uint32_t> startPaddingVector;
         std::vector<uint32_t> endPaddingVector;
-        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetValue());
+        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetBuffer());
         for (size_t i = 0; i < inputRank; ++i) {
             startPaddingVector.push_back(paddingData[2 * i]);
             endPaddingVector.push_back(paddingData[2 * i + 1]);
@@ -1149,7 +1126,7 @@ namespace webnn_native { namespace dml {
             output = ::dml::ActivationSoftmax(input);
         } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
             output = ::dml::ActivationSigmoid(input);
-        }  else if (unary->GetType() == op::UnaryOpType::kTanh) {
+        } else if (unary->GetType() == op::UnaryOpType::kTanh) {
             output = ::dml::ActivationTanh(input);
         } else {
             std::string errorMessage = std::string(" Unary op ") +
@@ -1301,15 +1278,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    void Graph::CompileImpl(BuildGraphCallbackDelegate delegate) {
-        delegate(GenericCompileImpl(), this);
-    }
-
-    MLBuildGraphStatus Graph::CompileSyncImpl() {
-        return GenericCompileImpl();
-    }
-
-    MLBuildGraphStatus Graph::GenericCompileImpl() {
+    MaybeError Graph::CompileImpl() {
         // FIXME(nhu): implement async
         std::vector<::dml::Expression> outputs;
         for (auto& output : mOutputs) {
@@ -1324,37 +1293,25 @@ namespace webnn_native { namespace dml {
             inputBindings.push_back(binding.get());
         }
         std::lock_guard<std::mutex> lock(mMutex);
-        return FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))
-                   ? MLBuildGraphStatus_Error
-                   : MLBuildGraphStatus_Success;
+        if (FAILED(mDevice->InitializeOperator(mCompiledModel->op.Get(), inputBindings))) {
+            return DAWN_INTERNAL_ERROR("Failed to compile graph.");
+        }
+        return {};
     }
 
-    void Graph::ComputeImpl(NamedInputsBase* inputs,
-                            MLComputeGraphCallback callback,
-                            void* userdata,
-                            NamedOutputsBase* outputs) {
-        GenericComputeImpl(inputs, outputs, callback, userdata);
-    }
-
-    MLComputeGraphStatus Graph::ComputeSyncImpl(NamedInputsBase* inputs,
-                                                NamedOutputsBase* outputs) {
-        return GenericComputeImpl(inputs, outputs);
-    }
-
-    MLComputeGraphStatus Graph::GenericComputeImpl(NamedInputsBase* inputs,
-                                                   NamedOutputsBase* outputs,
-                                                   MLComputeGraphCallback callback,
-                                                   void* userdata) {
+    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& input : mInputs) {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
-                COMPUTE_DML_ERROR_CALLBACK("The input must be set.");
+                dawn::ErrorLog() << "The input must be set.";
+                return MLComputeGraphStatus_Error;
             }
 
             ::pydml::Binding* inputBinding = input.second;
-            inputBinding->data.buffer = const_cast<void*>(namedInputs[input.first]->buffer);
-            inputBinding->data.size = namedInputs[input.first]->size;
+            auto& resource = namedInputs[input.first]->resource;
+            inputBinding->data.buffer = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
+            inputBinding->data.size = resource.byteLength;
         }
         std::vector<pydml::Binding*> inputBindings;
         for (auto& binding : mBindings) {
@@ -1362,55 +1319,33 @@ namespace webnn_native { namespace dml {
         }
         std::vector<::dml::Expression*> outputExpressions;
         std::vector<std::string> outputNames;
-        if (outputs != nullptr) {
-            for (auto& output : outputs->GetRecords()) {
-                if (mOutputs.find(output.first) == mOutputs.end()) {
-                    COMPUTE_DML_ERROR_CALLBACK("The output name is invalid.");
-                }
-                outputNames.push_back(output.first);
-                outputExpressions.push_back(&(mOutputs.at(output.first)));
-            }
-        } else {
-            for (auto& output : mOutputs) {
-                outputNames.push_back(output.first);
-                outputExpressions.push_back(&(output.second));
-            }
+        for (auto& output : mOutputs) {
+            outputNames.push_back(output.first);
+            outputExpressions.push_back(&(output.second));
         }
         std::vector<pydml::TensorData*> outputTensors;
         std::lock_guard<std::mutex> lock(mMutex);
         if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
                                              outputExpressions, outputTensors))) {
-            if (callback) {
-                callback(MLComputeGraphStatus_Error, nullptr, "Failed to dispatch operator",
-                         userdata);
-            }
+            dawn::ErrorLog() << "Failed to dispatch operator.";
             return MLComputeGraphStatus_Error;
         }
 
-        Ref<NamedResultsBase> results = AcquireRef(new NamedResultsBase());
         for (size_t i = 0; i < outputNames.size(); ++i) {
             std::string outputName = outputNames[i];
             pydml::TensorData* tensor = outputTensors[i];
             void* outputBuffer = tensor->Get();
             size_t bufferLength = tensor->Size();
-            std::vector<int32_t> dimensions;
-            for (auto size : tensor->Desc()->sizes) {
-                // convert from uint32_t to int32_t.
-                dimensions.push_back(static_cast<int32_t>(size));
-            }
-            Ref<ResultBase> result = AcquireRef(new Result(outputBuffer, bufferLength, dimensions));
-            results->Set(outputName.c_str(), result.Detach());
-            if (outputs != nullptr) {
-                const Output* output = outputs->GetRecords().at(outputName);
-                if (output->size >= bufferLength) {
-                    memcpy(output->buffer, outputBuffer, bufferLength);
+            auto namedOutputs = outputs->GetRecords();
+            if (namedOutputs.find(outputName) != namedOutputs.end()) {
+                const ArrayBufferView* output = namedOutputs[outputName];
+                if (output->byteLength >= bufferLength) {
+                    memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset, outputBuffer,
+                           bufferLength);
                 }
             }
+            free(outputBuffer);
             delete tensor;
-        }
-        if (callback) {
-            callback(MLComputeGraphStatus_Success,
-                     reinterpret_cast<MLNamedResults>(results.Detach()), nullptr, userdata);
         }
         return MLComputeGraphStatus_Success;
     }

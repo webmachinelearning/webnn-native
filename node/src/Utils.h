@@ -233,6 +233,14 @@ namespace node {
         return true;
     }
 
+    inline uint32_t SizeOfShape(const std::vector<int32_t>& dimensions) {
+        uint32_t size = 1;
+        for (auto dim : dimensions) {
+            size *= dim;
+        }
+        return size;
+    }
+
     inline bool GetOperand(const Napi::Value& jsValue,
                            ml::Operand& operand,
                            std::vector<napi_value>& args) {
@@ -310,8 +318,7 @@ namespace node {
     inline bool GetBufferView(const Napi::Value& jsValue,
                               const ml::OperandType type,
                               const std::vector<int32_t>& dimensions,
-                              void*& value,
-                              size_t& size) {
+                              ml::ArrayBufferView& arrayBuffer) {
         const std::unordered_map<ml::OperandType, napi_typedarray_type> arrayTypeMap = {
             {ml::OperandType::Float32, napi_float32_array},
             {ml::OperandType::Float16, napi_uint16_array},
@@ -330,10 +337,10 @@ namespace node {
         if (arrayTypeMap.at(type) != jsTypedArray.TypedArrayType()) {
             return false;
         }
-        value =
-            reinterpret_cast<void*>(reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()) +
-                                    jsTypedArray.ByteOffset());
-        size = jsTypedArray.ByteLength();
+        arrayBuffer.buffer =
+            reinterpret_cast<void*>(reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
+        arrayBuffer.byteLength = jsTypedArray.ByteLength();
+        arrayBuffer.byteOffset = jsTypedArray.ByteOffset();
         size_t expectedSize;
         switch (type) {
             case ml::OperandType::Float32:
@@ -357,10 +364,8 @@ namespace node {
             default:
                 return false;
         }
-        for (auto dim : dimensions) {
-            expectedSize *= dim;
-        }
-        if (expectedSize != size) {
+        expectedSize *= SizeOfShape(dimensions);
+        if (expectedSize != arrayBuffer.byteLength) {
             return false;
         }
         return true;

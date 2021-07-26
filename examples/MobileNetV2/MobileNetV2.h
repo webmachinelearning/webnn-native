@@ -22,10 +22,9 @@ class MobileNetV2 {
     MobileNetV2(bool nchw);
     ~MobileNetV2() = default;
 
-    bool LoadNCHW(const std::string& weightsPath, bool softmax = true);
-    bool LoadBatchNormNCHW(const std::string& weightsPath, bool softmax = true);
-    bool LoadNHWC(const std::string& weightsPath, bool softmax = true);
-    ml::Result Compute(const void* inputData, size_t inputLength);
+    ml::Graph LoadNCHW(const std::string& weightsPath, bool softmax = true);
+    ml::Graph LoadBatchNormNchw(const std::string& weightsPath, bool softmax = true);
+    ml::Graph LoadNHWC(const std::string& weightsPath, bool softmax = true);
     const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
                                            const std::string& path);
     const ml::Operand BuildConv(const ml::GraphBuilder& builder,
@@ -66,9 +65,7 @@ class MobileNetV2 {
 
   private:
     ml::Context mContext;
-    ml::Graph mGraph;
-    ml::NamedResults mResults;
-    bool mNCHW = true;
+    bool mNchw = true;
     std::vector<SHARED_DATA_TYPE> mConstants;
     std::string mDataPath;
 };

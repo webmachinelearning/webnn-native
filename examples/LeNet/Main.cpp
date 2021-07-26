@@ -52,7 +52,6 @@ int main(int argc, const char* argv[]) {
             nIter = atoi(argv[i + 1]);
         }
     }
-
     if (imagePath.empty() || modelPath.empty() || nIter < 1) {
         dawn::ErrorLog() << "Invalid options.";
         ShowUsage();
@@ -73,30 +72,27 @@ int main(int argc, const char* argv[]) {
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
         std::chrono::high_resolution_clock::now();
     LeNet lenet;
-    if (!lenet.Load(modelPath)) {
-        dawn::ErrorLog() << "Failed to load LeNet.";
+    ml::Graph graph = lenet.Build(modelPath);
+    if (graph == nullptr) {
+        dawn::ErrorLog() << "Failed to build LeNet graph.";
         return -1;
     }
-
     const std::chrono::duration<double, std::milli> compilationElapsedTime =
         std::chrono::high_resolution_clock::now() - compilationStartTime;
     dawn::InfoLog() << "Compilation Time: " << compilationElapsedTime.count() << " ms";
-    ml::Result result;
-    std::vector<float> input(reader.GetData().get(), reader.GetData().get() + reader.Size());
-    std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
 
+    std::vector<std::chrono::duration<double, std::milli>> executionTimeVector;
+    const std::vector<float> input(reader.GetData().get(), reader.GetData().get() + reader.Size());
+    std::vector<float> result(utils::SizeOfShape({1, 10}));
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        result = lenet.Compute(input.data(), input.size() * sizeof(float));
-        if (!result) {
-            dawn::ErrorLog() << "Failed to compute LeNet.";
-            return -1;
-        }
+        ml::ComputeGraphStatus status =
+            utils::Compute(graph, {{"input", input}}, {{"output", result}});
+        DAWN_ASSERT(status == ml::ComputeGraphStatus::Success);
         executionTimeVector.push_back(std::chrono::high_resolution_clock::now() -
                                       executionStartTime);
     }
-
     if (nIter > 1) {
         std::sort(executionTimeVector.begin(), executionTimeVector.end());
         std::chrono::duration<double, std::milli> medianExecutionTime =

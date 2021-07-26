@@ -49,13 +49,10 @@ class GemmTests : public WebnnTest {
         }
 
         const ml::Operand gemm = builder.Gemm(a, b, &gemmOptions);
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"c", gemm}});
+        const ml::Graph graph = utils::Build(builder, {{"c", gemm}});
         ASSERT_TRUE(graph);
-        const ml::Input inputA = {aData.data(), aData.size() * sizeof(float)};
-        const ml::Input inputB = {bData.data(), bData.size() * sizeof(float)};
-        const ml::Result result =
-            utils::AwaitCompute(graph, {{"a", inputA}, {"b", inputB}}).Get("c");
-        EXPECT_TRUE(utils::CheckShape(result, expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
+        utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

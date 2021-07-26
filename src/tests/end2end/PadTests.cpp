@@ -31,11 +31,10 @@ class PadTests : public WebnnTest {
         ml::PadOptions options;
         options.mode = mode;
         ml::Operand y = builder.Pad(x, padding, &options);
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"y", y}});
+        const ml::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
-        const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-        const ml::Result result = utils::AwaitCompute(graph, {{"x", input}}).Get("y");
-        EXPECT_TRUE(utils::CheckShape(result, expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
+        utils::Compute(graph, {{"x", inputData}}, {{"y", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

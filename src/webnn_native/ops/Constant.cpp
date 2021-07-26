@@ -20,6 +20,9 @@
 namespace webnn_native { namespace op {
 
     MaybeError Constant::ValidateAndInferTypes() {
+        if (mBuffer == nullptr || mByteLength == 0) {
+            return DAWN_VALIDATION_ERROR("Constant array buffer is invalid.");
+        }
         return {};
     }
 

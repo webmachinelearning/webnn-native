@@ -27,13 +27,13 @@
 #include "third_party/stb/stb_image.h"
 #include "third_party/stb/stb_image_resize.h"
 
-uint32_t product(const std::vector<int32_t>& dims);
-
 ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
 
 bool Expected(float output, float expected);
 
 namespace utils {
+
+    uint32_t SizeOfShape(const std::vector<int32_t>& dims);
 
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
                            std::string name,
@@ -120,45 +120,56 @@ namespace utils {
         const ml::Operand& operand;
     } NamedOperand;
 
-    ml::Graph AwaitBuild(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
+    ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
 
-    typedef struct {
+    template <typename T>
+    struct NamedInput {
         const std::string name;
-        const ml::Input input;
-    } NamedInput;
+        const std::vector<T>& resource;
+    };
 
-    typedef struct {
+    template <typename T>
+    struct NamedOutput {
         const std::string name;
-        const ml::Output output;
-    } NamedOutput;
+        std::vector<T>& resource;
+    };
 
-    ml::NamedResults AwaitCompute(const ml::Graph& compilation,
-                                  const std::vector<NamedInput>& inputs,
-                                  const std::vector<NamedOutput>& outputs = {});
+    template <typename T>
+    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
+                                   const std::vector<NamedInput<T>>& inputs,
+                                   const std::vector<NamedOutput<T>>& outputs) {
+        if (graph.GetHandle() == nullptr) {
+            dawn::ErrorLog() << "The graph is invaild.";
+            return ml::ComputeGraphStatus::Error;
+        }
 
-    bool CheckShape(const ml::Result& result, const std::vector<int32_t>& expectedShape);
-
-    template <class T>
-    bool CheckValue(const ml::Result& result, const std::vector<T>& expectedValue) {
-        if (result.GetHandle() == nullptr) {
-            return false;
+        // The `mlInputs` local variable to hold the input data util computing the graph.
+        std::vector<ml::Input> mlInputs;
+        mlInputs.reserve(inputs.size());
+        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
+        for (auto& input : inputs) {
+            const ml::ArrayBufferView resource = {(void*)input.resource.data(),
+                                                  input.resource.size() * sizeof(float)};
+            mlInputs.push_back({resource});
+            namedInputs.Set(input.name.c_str(), &mlInputs.back());
         }
-        size_t size = result.BufferSize() / sizeof(T);
-        if (size != expectedValue.size()) {
-            dawn::ErrorLog() << "The size of output data is expected as " << expectedValue.size()
-                             << ", but got " << size;
-            return false;
+        DAWN_ASSERT(outputs.size() > 0);
+        // The `mlOutputs` local variable to hold the output data util computing the graph.
+        std::vector<ml::ArrayBufferView> mlOutputs;
+        mlOutputs.reserve(outputs.size());
+        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
+        for (auto& output : outputs) {
+            const ml::ArrayBufferView resource = {output.resource.data(),
+                                                  output.resource.size() * sizeof(float)};
+            mlOutputs.push_back({resource});
+            namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        for (size_t i = 0; i < result.BufferSize() / sizeof(T); ++i) {
-            T value = static_cast<const T*>(result.Buffer())[i];
-            if (!Expected(value, expectedValue[i])) {
-                dawn::ErrorLog() << "The output value at index " << i << " is expected as "
-                                 << expectedValue[i] << ", but got " << value;
-                return false;
-            }
-        }
-        return true;
+        return graph.Compute(namedInputs, namedOutputs);
     }
+
+    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
+                                   const std::vector<NamedInput<float>>& inputs,
+                                   const std::vector<NamedOutput<float>>& outputs);
 
     template <class T>
     bool CheckValue(const std::vector<T>& value, const std::vector<T>& expectedValue) {
@@ -176,20 +187,6 @@ namespace utils {
         }
         return true;
     }
-
-    class Async {
-      public:
-        Async() : mDone(false) {
-        }
-        ~Async() = default;
-        void Wait();
-        void Finish();
-
-      private:
-        std::condition_variable mCondVar;
-        std::mutex mMutex;
-        bool mDone;
-    };
 
     struct ImagePreprocessOptions {
         bool nchw = true;
@@ -210,7 +207,7 @@ namespace utils {
                         std::vector<size_t>& topKIndex,
                         std::vector<float>& topKData);
 
-    void PrintResult(ml::Result output, const std::string& labelPath = "");
+    void PrintResult(const std::vector<float>& output, const std::string& labelPath = "");
 
     float* LoadAndPreprocessImage(const std::string& imagePath,
                                   const ImagePreprocessOptions& options);

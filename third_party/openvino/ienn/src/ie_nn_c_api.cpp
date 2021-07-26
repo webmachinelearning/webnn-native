@@ -512,31 +512,6 @@ IEStatusCode ie_compilation_get_output(ie_compilation_t* compilation,
   return IEStatusCode::OK;
 }
 
-IEStatusCode ie_compilation_get_buffer(const ie_compilation_t* compilation,
-                                       const char* name,
-                                       void** buffer,
-                                       size_t* byte_length) {
-  if (compilation == nullptr || name == nullptr) {
-    return IEStatusCode::GENERAL_ERROR;
-  }
-
-  BEGINE_TRY
-  InferenceEngine::StatusCode status;
-  status = compilation->object->GetBuffer(name, buffer, byte_length);
-  if (status != InferenceEngine::StatusCode::OK)
-    return status_map[status];
-  END_CATCH
-  return IEStatusCode::OK;
-}
-
-IEStatusCode ie_compilation_free_buffer(void** buffer) {
-  if (*buffer) {
-    free(*buffer);
-    *buffer = NULL;
-  }
-  return IEStatusCode::OK;
-}
-
 IEStatusCode ie_compilation_get_dimensions(const ie_compilation_t* compilation,
                                            const char* name,
                                            ie_dimensions_t* dimensions) {

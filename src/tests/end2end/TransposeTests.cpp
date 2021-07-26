@@ -27,11 +27,10 @@ class TransposeTests : public WebnnTest {
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
         const ml::Operand b = builder.Transpose(a, &options);
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
+        const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-        const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("b");
-        EXPECT_TRUE(utils::CheckShape(result, expectedShape));
+        std::vector<float> result(utils::SizeOfShape(expectedShape));
+        utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

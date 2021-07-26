@@ -22,12 +22,11 @@ class MobileNetV2NchwTests : public WebnnTest {
         MobileNetV2 mobilemetv2(true);
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nchw/";
-        mobilemetv2.LoadNCHW(nchwPath + "weights/", false);
+        ml::Graph graph = mobilemetv2.LoadNCHW(nchwPath + "weights/", false);
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
-        const ml::Result result =
-            mobilemetv2.Compute(inputData.data(), inputData.size() * sizeof(float));
-        EXPECT_TRUE(utils::CheckShape(result, {1, 1000}));
+        std::vector<float> result(utils::SizeOfShape({1, 1000}));
+        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
         const cnpy::NpyArray outputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + expectedFile);
         EXPECT_TRUE(utils::CheckValue(result, outputNpy.as_vec<float>()));
     }

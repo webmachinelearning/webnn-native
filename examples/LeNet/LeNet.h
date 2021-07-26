@@ -25,11 +25,8 @@ class LeNet {
     LeNet();
     ~LeNet() = default;
 
-    bool Load(const std::string& weigthsPath);
-    ml::Result Compute(const void* inputData, size_t inputLength);
+    ml::Graph Build(const std::string& weigthsPath);
 
   private:
     ml::Context mContext;
-    ml::Graph mGraph;
-    ml::NamedResults mResults;
 };

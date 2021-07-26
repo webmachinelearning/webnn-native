@@ -104,13 +104,10 @@ source_set("webnn_native_sources") {
     "NamedInputs.h",
     "NamedOutputs.h",
     "NamedRecords.h",
-    "NamedResults.h",
     "ObjectBase.cpp",
     "ObjectBase.h",
     "Operand.cpp",
     "Operand.h",
-    "Result.cpp",
-    "Result.h",
   ]
 
   sources += [

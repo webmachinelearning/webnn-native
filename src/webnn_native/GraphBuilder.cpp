@@ -51,26 +51,14 @@
     for (;;)                                                        \
     break
 
-#define BUILD_ERROR_AND_CALLBACK(message)                                   \
-    do {                                                                    \
-        if (callback) {                                                     \
-            callback(MLBuildGraphStatus_Error, nullptr, message, userdata); \
-            return nullptr;                                                 \
-        } else {                                                            \
-            dawn::ErrorLog() << message;                                    \
-            return nullptr;                                                 \
-        }                                                                   \
-    } while (0)
-
 namespace webnn_native {
 
     GraphBuilderBase::GraphBuilderBase(ContextBase* context) : ObjectBase(context) {
     }
 
     OperandBase* GraphBuilderBase::Constant(OperandDescriptor const* desc,
-                                            void const* value,
-                                            size_t size) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Constant(this, desc, value, size));
+                                            ArrayBufferView const* arrayBuffer) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Constant(this, desc, arrayBuffer));
     }
 
     OperandBase* GraphBuilderBase::Input(char const* name, OperandDescriptor const* desc) {
@@ -182,16 +170,16 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Pad(this, input, padding, options));
     }
 
-    GraphBase* GraphBuilderBase::GenericBuildImpl(NamedOperandsBase const* namedOperands,
-                                                  MLBuildGraphCallback callback,
-                                                  void* userdata) {
+    GraphBase* GraphBuilderBase::Build(NamedOperandsBase const* namedOperands) {
         if (DAWN_UNLIKELY(this->IsError())) {
-            BUILD_ERROR_AND_CALLBACK("This Graph object is an error");
+            dawn::ErrorLog() << "This Graph object is an error";
+            return nullptr;
         }
 
         std::vector<const OperandBase*> outputs;
         if (namedOperands->GetRecords().empty()) {
-            BUILD_ERROR_AND_CALLBACK("The output named operands are empty.");
+            dawn::ErrorLog() << "The output named operands are empty.";
+            return nullptr;
         }
         for (auto& namedOutput : namedOperands->GetRecords()) {
             outputs.push_back(namedOutput.second);
@@ -200,48 +188,28 @@ namespace webnn_native {
         Ref<GraphBase> graph = AcquireRef(GetContext()->CreateGraph());
         for (auto& op : sorted_operands) {
             if (op->IsError() || GetContext()->ConsumedError(op->AddToGraph(graph.Get()))) {
-                BUILD_ERROR_AND_CALLBACK("Failed to add the operand when building graph.");
+                dawn::ErrorLog() << "Failed to add the operand when building graph.";
+                return nullptr;
             }
         }
         for (auto& namedOutput : namedOperands->GetRecords()) {
             if (GetContext()->ConsumedError(
                     graph->AddOutput(namedOutput.first, namedOutput.second))) {
-                BUILD_ERROR_AND_CALLBACK("Failed to add output when building graph.");
+                dawn::ErrorLog() << "Failed to add output when building graph.";
+                return nullptr;
             }
         }
         if (GetContext()->ConsumedError(graph->Finish())) {
-            BUILD_ERROR_AND_CALLBACK("Failed to finish building graph.");
+            dawn::ErrorLog() << "Failed to finish building graph.";
+            return nullptr;
         }
+
+        if (GetContext()->ConsumedError(graph->Compile())) {
+            dawn::ErrorLog() << "Failed to compile the graph.";
+            return nullptr;
+        }
+
         return graph.Detach();
-    }
-
-    GraphBase* GraphBuilderBase::BuildSync(NamedOperandsBase const* namedOperands) {
-        GraphBase* graph = this->GenericBuildImpl(namedOperands);
-        if (graph == nullptr) {
-            return nullptr;
-        }
-
-        if (graph->CompileSync() != MLBuildGraphStatus_Success) {
-            return nullptr;
-        }
-
-        return graph;
-    }
-
-    void GraphBuilderBase::Build(NamedOperandsBase const* namedOperands,
-                                 MLBuildGraphCallback callback,
-                                 void* userdata) {
-        GraphBase* graph = this->GenericBuildImpl(namedOperands, callback, userdata);
-        if (graph != nullptr) {
-            graph->Compile([callback, userdata](MLBuildGraphStatus status, GraphBase* graph) {
-                if (status == MLBuildGraphStatus_Success) {
-                    callback(status, reinterpret_cast<MLGraph>(graph), nullptr, userdata);
-                } else {
-                    delete graph;
-                    callback(status, nullptr, "Failed to compile graph", userdata);
-                }
-            });
-        }
     }
 
     // The implementation derives from nGraph topological_sort in

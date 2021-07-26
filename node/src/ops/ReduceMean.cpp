@@ -44,8 +44,9 @@ namespace node { namespace op {
                 options.axesCount = axes.size();
             }
             if (HasOptionMember(jsOptions, "keepDimensions")) {
-                WEBNN_NODE_ASSERT(GetBoolean(jsOptions.Get("keepDimensions"), options.keepDimensions),
-                                  "The keepDimensions parameter is invalid.");
+                WEBNN_NODE_ASSERT(
+                    GetBoolean(jsOptions.Get("keepDimensions"), options.keepDimensions),
+                    "The keepDimensions parameter is invalid.");
             }
         }
 

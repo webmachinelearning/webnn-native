@@ -33,11 +33,10 @@ class ClampTests : public WebnnTest {
                 utils::BuildConstant(builder, {}, maxValue.data(), maxValue.size() * sizeof(float));
         }
         const ml::Operand b = builder.Clamp(a, &options);
-        const ml::Graph graph = utils::AwaitBuild(builder, {{"b", b}});
+        const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const ml::Input input = {inputData.data(), inputData.size() * sizeof(float)};
-        const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("b");
-        EXPECT_TRUE(utils::CheckShape(result, inputShape));
+        std::vector<float> result(utils::SizeOfShape(inputShape));
+        utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

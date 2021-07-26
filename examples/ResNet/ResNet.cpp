@@ -238,7 +238,7 @@ const ml::Operand ResNet::loop(const ml::GraphBuilder& builder,
     }
 }
 
-bool ResNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
+ml::Graph ResNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     mDataPath = weightsPath + "resnetv24_";
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
@@ -301,17 +301,11 @@ bool ResNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     const ml::Operand reshape = builder.Reshape(pool2, newShape.data(), newShape.size());
     const ml::Operand gemm = BuildGemm(builder, reshape, "0");
     const ml::Operand output = softmax ? builder.Softmax(gemm) : gemm;
-    mGraph = utils::AwaitBuild(builder, {{"output", output}});
-    if (!mGraph) {
-        dawn::ErrorLog() << "Failed to create graph.";
-        return false;
-    }
-    mConstants.clear();
 
-    return true;
+    return utils::Build(builder, {{"output", output}});
 }
 
-bool ResNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
+ml::Graph ResNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     mDataPath = weightsPath + "resnet_v2_101_";
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 299, 299, 3});
@@ -374,24 +368,6 @@ bool ResNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape = builder.Reshape(conv2, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape) : reshape;
-    mGraph = utils::AwaitBuild(builder, {{"output", output}});
-    if (!mGraph) {
-        dawn::ErrorLog() << "Failed to create graph.";
-        return false;
-    }
-    mConstants.clear();
 
-    return true;
-}
-
-ml::Result ResNet::Compute(const void* inputData, size_t inputLength) {
-    if (!mGraph) {
-        dawn::ErrorLog() << "Graph is not ready.";
-        return ml::Result();
-    }
-    mResults = utils::AwaitCompute(mGraph, {{"input", {inputData, inputLength}}});
-    if (mResults.GetHandle() == nullptr) {
-        return ml::Result();
-    }
-    return mResults.Get("output");
+    return utils::Build(builder, {{"output", output}});
 }

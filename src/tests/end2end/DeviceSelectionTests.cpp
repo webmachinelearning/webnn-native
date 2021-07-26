@@ -44,7 +44,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnGPU) {
     const ml::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Add(a, b);
-    const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    const ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.08939514,  -1.5887482,  0.8545348,   0.20523034, -0.41728342, 1.01752,     0.19677015,
@@ -56,9 +56,8 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnGPU) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,
          1.2585825,   -1.7465117,  2.0591164,   2.3115096,   1.2746171,   -0.16182771, 0.29538065,
@@ -98,7 +97,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnCPU) {
     const ml::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Add(a, b);
-    const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    const ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.08939514,  -1.5887482,  0.8545348,   0.20523034, -0.41728342, 1.01752,     0.19677015,
@@ -110,9 +109,8 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnCPU) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,
          1.2585825,   -1.7465117,  2.0591164,   2.3115096,   1.2746171,   -0.16182771, 0.29538065,
@@ -142,7 +140,7 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnDefaultDevice) {
     const ml::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, bData.data(), bData.size() * sizeof(float));
     const ml::Operand c = builder.Add(a, b);
-    const ml::Graph graph = utils::AwaitBuild(builder, {{"c", c}});
+    const ml::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.08939514,  -1.5887482,  0.8545348,   0.20523034, -0.41728342, 1.01752,     0.19677015,
@@ -154,9 +152,8 @@ TEST_F(DeviceSelectionTests, AddConstantAndInputOnDefaultDevice) {
         -0.03482966, -0.7343786,  -0.76851964, 0.9446942,  -0.35489243, 0.44452578,  0.00648887,
         -0.55656946, -0.735903,   0.22050636,  -0.5008282, -1.3132697,  1.6642882,   -0.48397836,
         0.20099205,  -0.28786168, 1.3315053,   -0.41619393};
-    const ml::Input input = {dataA.data(), dataA.size() * sizeof(float)};
-    const ml::Result result = utils::AwaitCompute(graph, {{"a", input}}).Get("c");
-    EXPECT_TRUE(utils::CheckShape(result, {3, 4, 5}));
+    std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
+    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {-0.48879138, -2.0812354,  0.6382897,   0.07346585,  -0.93846387, 2.9300475,   0.84765005,
          1.2585825,   -1.7465117,  2.0591164,   2.3115096,   1.2746171,   -0.16182771, 0.29538065,

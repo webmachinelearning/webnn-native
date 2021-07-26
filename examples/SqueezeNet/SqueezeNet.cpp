@@ -18,7 +18,7 @@
 
 #include "common/Log.h"
 
-SqueezeNet::SqueezeNet(bool nchw) : mNCHW(nchw) {
+SqueezeNet::SqueezeNet(bool nchw) : mNchw(nchw) {
     mContext = CreateCppContext();
     mContext.SetUncapturedErrorCallback(
         [](MLErrorType type, char const* message, void* userData) {
@@ -40,14 +40,14 @@ const ml::Operand SqueezeNet::BuildConv(const ml::GraphBuilder& builder,
                                         const ml::Operand& input,
                                         const std::string& name,
                                         utils::Conv2dOptions* options) {
-    std::string suffix = mNCHW ? "_weight.npy" : "_kernel.npy";
+    std::string suffix = mNchw ? "_weight.npy" : "_kernel.npy";
     const std::string weightsPath = mDataPath + name + suffix;
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
-    std::string biasSuffix = mNCHW ? "_bias.npy" : "_Conv2D_bias.npy";
+    std::string biasSuffix = mNchw ? "_bias.npy" : "_Conv2D_bias.npy";
     const std::string biasPath = mDataPath + name + biasSuffix;
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
     std::vector<int32_t> newShape;
-    mNCHW ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
+    mNchw ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
     const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
     const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
     const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
@@ -61,7 +61,7 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
                                         const std::string& conv1x1Name,
                                         const std::string& conv3x3Name) {
     utils::Conv2dOptions convOptions;
-    if (!mNCHW) {
+    if (!mNchw) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
         convOptions.filterLayout = ml::FilterOperandLayout::Ohwi;
     }
@@ -70,11 +70,11 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
     convOptions.padding = {1, 1, 1, 1};
     const ml::Operand conv3x3 = BuildConv(builder, conv, conv3x3Name, &convOptions);
     std::vector<ml::Operand> inputsOperand = {conv1x1, conv3x3};
-    uint32_t axis = mNCHW ? 1 : 3;
+    uint32_t axis = mNchw ? 1 : 3;
     return builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
 }
 
-bool SqueezeNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
+ml::Graph SqueezeNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     mDataPath = weightsPath + "squeezenet0_";
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
@@ -109,17 +109,11 @@ bool SqueezeNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape0 = builder.Reshape(pool3, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape0) : reshape0;
-    mGraph = utils::AwaitBuild(builder, {{"output", output}});
-    if (!mGraph) {
-        dawn::ErrorLog() << "Failed to create graph.";
-        return false;
-    }
-    mConstants.clear();
 
-    return true;
+    return utils::Build(builder, {{"output", output}});
 }
 
-bool SqueezeNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
+ml::Graph SqueezeNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     mDataPath = weightsPath;
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
@@ -165,24 +159,6 @@ bool SqueezeNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape = builder.Reshape(averagePool2d, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape) : reshape;
-    mGraph = utils::AwaitBuild(builder, {{"output", output}});
-    if (!mGraph) {
-        dawn::ErrorLog() << "Failed to create graph.";
-        return false;
-    }
-    mConstants.clear();
 
-    return true;
-}
-
-ml::Result SqueezeNet::Compute(const void* inputData, size_t inputLength) {
-    if (!mGraph) {
-        dawn::ErrorLog() << "Graph is not ready.";
-        return ml::Result();
-    }
-    mResults = utils::AwaitCompute(mGraph, {{"input", {inputData, inputLength}}});
-    if (mResults.GetHandle() == nullptr) {
-        return ml::Result();
-    }
-    return mResults.Get("output");
+    return utils::Build(builder, {{"output", output}});
 }
