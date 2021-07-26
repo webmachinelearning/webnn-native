@@ -1,0 +1,34 @@
+name: clang format
+
+on: [push, pull_request]
+
+jobs:
+
+  job:
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: Git config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: Install depot_tools
+      run: git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git ../depot_tools
+
+    - name: Sync code
+      run: |
+        export PATH=${PWD}/../depot_tools:${PATH}
+        cp scripts/standalone.gclient .gclient
+        gclient sync
+
+    - name: Clang format check
+      run: |
+        export PATH=${PWD}/../depot_tools:${PATH}
+        bash workflow_scripts/clang_format_check.sh
