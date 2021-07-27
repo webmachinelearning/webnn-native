@@ -50,12 +50,12 @@ class Model {
   ie_operand_t* AddConv2d(ie_operand_t* input,
                           ie_operand_t* filter,
                           ie_conv2d_options_t* options);
-  ie_operand_t* AddPad(ie_operand_t* input,
-                       ie_pad_options_t* options);
+  ie_operand_t* AddPad(ie_operand_t* input, ie_pad_options_t* options);
   ie_operand_t* AddPool2d(ie_pool_type type,
                           ie_operand_t* input,
                           ie_pool2d_options_t* options);
-  ie_operand_t* AddReduceMean(ie_operand_t* input, ie_reduce_mean_options_t* options);
+  ie_operand_t* AddReduceMean(ie_operand_t* input,
+                              ie_reduce_mean_options_t* options);
   ie_operand_t* AddResample(ie_operand_t* input,
                             ie_resample_options_t* options);
 

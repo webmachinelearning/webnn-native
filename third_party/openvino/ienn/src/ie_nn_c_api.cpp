@@ -315,8 +315,8 @@ IEStatusCode ie_model_add_sigmoid(ie_model_t* model,
 }
 
 IEStatusCode ie_model_add_tanh(ie_model_t* model,
-                                  ie_operand_t* input,
-                                  ie_operand_t** operand) {
+                               ie_operand_t* input,
+                               ie_operand_t** operand) {
   if (model == nullptr || input == nullptr) {
     return IEStatusCode::GENERAL_ERROR;
   }
