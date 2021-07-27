@@ -7,9 +7,9 @@ This example leverages the network topology of [ResNet101 V2](https://storage.go
 ## Usage
 
 ```sh
-> out/Release/ResNet [OPTION]
+> out/Release/ResNet -h
 
-Options:
+Example Options:
     -h                      Print this message.
     -i "<path>"             Required. Path to an image.
     -m "<path>"             Required. Path to the .npy files with trained weights/biases.
@@ -22,8 +22,8 @@ Options:
 
 ```sh
 > out/Release/ResNet -i examples/images/test.jpg -l nchw -m node/third_party/webnn-polyfill/test-data/models/resnet50v2_nchw/weights/
-Info: Compilation Time: 2024.25 ms
-Info: Execution Time: 17.8869 ms
+Info: Compilation Time: 212.473 ms
+Info: Execution Time: 25.396 ms
 
 Prediction Result:
 #   Probability   Label
@@ -36,8 +36,8 @@ Info: Done.
 
 ```sh
 > out/Release/ResNet -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/resnet101v2_nhwc/weights/
-Info: Compilation Time: 4159.97 ms
-Info: Execution Time: 49.9485 ms
+Info: Compilation Time: 530.819 ms
+Info: Execution Time: 65.3282 ms
 
 Prediction Result:
 #   Probability   Label

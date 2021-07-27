@@ -14,6 +14,7 @@
 
 #ifndef WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_
 #define WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_
+#define TIME_TYPE std::chrono::duration<double, std::milli>
 
 #include <webnn/webnn.h>
 #include <webnn/webnn_cpp.h>
@@ -26,6 +27,28 @@
 #include "third_party/cnpy/cnpy.h"
 #include "third_party/stb/stb_image.h"
 #include "third_party/stb/stb_image_resize.h"
+
+class ExampleBase {
+  public:
+    ExampleBase() = default;
+    virtual ~ExampleBase() = default;
+
+    virtual bool ParseAndCheckExampleOptions(int argc, const char* argv[]);
+
+    std::string mImagePath;
+    std::string mWeightsPath;
+    std::string mLabelPath;
+    int mNIter = 1;
+    std::string mLayout = "nchw";
+    bool mNormalization = false;
+    size_t mModelHeight;
+    size_t mModelWidth;
+    size_t mModelChannels;
+    std::vector<float> mMean = {0, 0, 0};  // Average values of pixels on channels.
+    std::vector<float> mStd = {1, 1, 1};   // Variance values of pixels on channels.
+    std::string mChannelScheme = "RGB";
+    std::vector<int32_t> mOutputShape;
+};
 
 ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
 
@@ -188,16 +211,18 @@ namespace utils {
         return true;
     }
 
-    struct ImagePreprocessOptions {
-        bool nchw = true;
-        bool normalization = false;
-        size_t modelHeight;
-        size_t modelWidth;
-        size_t modelChannels;
-        size_t modelSize;
-        std::vector<float> mean = {0, 0, 0};  // Average values of pixels on channels.
-        std::vector<float> std = {1, 1, 1};   // Variance values of pixels on channels.
-        std::string channelScheme = "RGB";
+    class Async {
+      public:
+        Async() : mDone(false) {
+        }
+        ~Async() = default;
+        void Wait();
+        void Finish();
+
+      private:
+        std::condition_variable mCondVar;
+        std::mutex mMutex;
+        bool mDone;
     };
 
     std::vector<std::string> ReadTopKLabel(const std::vector<size_t>& topKIndex,
@@ -209,8 +234,12 @@ namespace utils {
 
     void PrintResult(const std::vector<float>& output, const std::string& labelPath = "");
 
-    float* LoadAndPreprocessImage(const std::string& imagePath,
-                                  const ImagePreprocessOptions& options);
+    bool LoadAndPreprocessImage(const ExampleBase* example, std::vector<float>& processedPixels);
+
+    void ShowUsage();
+
+    void PrintExexutionTime(
+        std::vector<std::chrono::duration<double, std::milli>> executionTimeVector);
 }  // namespace utils
 
 #endif  // WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_

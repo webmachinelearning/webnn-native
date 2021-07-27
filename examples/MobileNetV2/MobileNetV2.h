@@ -17,14 +17,15 @@
 
 #include "examples/SampleUtils.h"
 
-class MobileNetV2 {
+class MobileNetV2 : public ExampleBase {
   public:
-    MobileNetV2(bool nchw);
-    ~MobileNetV2() = default;
+    MobileNetV2();
+    ~MobileNetV2() override = default;
 
-    ml::Graph LoadNCHW(const std::string& weightsPath, bool softmax = true);
-    ml::Graph LoadBatchNormNchw(const std::string& weightsPath, bool softmax = true);
-    ml::Graph LoadNHWC(const std::string& weightsPath, bool softmax = true);
+    bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
+    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
+    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
+    const ml::Operand LoadBatchNormNCHW(const ml::GraphBuilder& builder, bool softmax = true);
     const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
                                            const std::string& path);
     const ml::Operand BuildConv(const ml::GraphBuilder& builder,
@@ -64,8 +65,5 @@ class MobileNetV2 {
                                 int32_t gemmIndex);
 
   private:
-    ml::Context mContext;
-    bool mNchw = true;
     std::vector<SHARED_DATA_TYPE> mConstants;
-    std::string mDataPath;
 };

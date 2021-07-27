@@ -14,19 +14,26 @@
 
 #include "examples/SqueezeNet/SqueezeNet.h"
 
-#include <algorithm>
-
 #include "common/Log.h"
 
-SqueezeNet::SqueezeNet(bool nchw) : mNchw(nchw) {
-    mContext = CreateCppContext();
-    mContext.SetUncapturedErrorCallback(
-        [](MLErrorType type, char const* message, void* userData) {
-            if (type != MLErrorType_NoError) {
-                dawn::ErrorLog() << "Error type is " << type << ", message is " << message;
-            }
-        },
-        this);
+SqueezeNet::SqueezeNet() : ExampleBase() {
+}
+
+bool SqueezeNet::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
+    if (!ExampleBase::ParseAndCheckExampleOptions(argc, argv)) {
+        return false;
+    }
+
+    bool nchw = mLayout == "nchw" ? true : false;
+    mLabelPath = nchw ? "examples/labels/labels1000.txt" : "examples/labels/labels1001.txt";
+    mModelHeight = 224;
+    mModelWidth = 224;
+    mModelChannels = 3;
+    mNormalization = nchw ? true : false;
+    nchw ? mMean = {0.485, 0.456, 0.406} : mMean = {127.5, 127.5, 127.5};
+    nchw ? mStd = {0.229, 0.224, 0.225} : mStd = {127.5, 127.5, 127.5};
+    mOutputShape = nchw ? std::vector<int32_t>({1, 1000}) : std::vector<int32_t>({1, 1001});
+    return true;
 }
 
 const ml::Operand SqueezeNet::BuildConstantFromNpy(const ml::GraphBuilder& builder,
@@ -40,14 +47,14 @@ const ml::Operand SqueezeNet::BuildConv(const ml::GraphBuilder& builder,
                                         const ml::Operand& input,
                                         const std::string& name,
                                         utils::Conv2dOptions* options) {
-    std::string suffix = mNchw ? "_weight.npy" : "_kernel.npy";
-    const std::string weightsPath = mDataPath + name + suffix;
+    std::string suffix = mLayout == "nchw" ? "_weight.npy" : "_kernel.npy";
+    const std::string weightsPath = mWeightsPath + name + suffix;
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
-    std::string biasSuffix = mNchw ? "_bias.npy" : "_Conv2D_bias.npy";
-    const std::string biasPath = mDataPath + name + biasSuffix;
+    std::string biasSuffix = mLayout == "nchw" ? "_bias.npy" : "_Conv2D_bias.npy";
+    const std::string biasPath = mWeightsPath + name + biasSuffix;
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
     std::vector<int32_t> newShape;
-    mNchw ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
+    mLayout == "nchw" ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
     const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
     const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
     const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
@@ -61,7 +68,7 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
                                         const std::string& conv1x1Name,
                                         const std::string& conv3x3Name) {
     utils::Conv2dOptions convOptions;
-    if (!mNchw) {
+    if (!(mLayout == "nchw")) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
         convOptions.filterLayout = ml::FilterOperandLayout::Ohwi;
     }
@@ -70,13 +77,12 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
     convOptions.padding = {1, 1, 1, 1};
     const ml::Operand conv3x3 = BuildConv(builder, conv, conv3x3Name, &convOptions);
     std::vector<ml::Operand> inputsOperand = {conv1x1, conv3x3};
-    uint32_t axis = mNchw ? 1 : 3;
+    uint32_t axis = mLayout == "nchw" ? 1 : 3;
     return builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
 }
 
-ml::Graph SqueezeNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath + "squeezenet0_";
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand SqueezeNet::LoadNCHW(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath + "squeezenet0_";
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
 
     utils::Conv2dOptions conv0Options;
@@ -109,13 +115,11 @@ ml::Graph SqueezeNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape0 = builder.Reshape(pool3, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape0) : reshape0;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }
 
-ml::Graph SqueezeNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath;
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand SqueezeNet::LoadNHWC(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath;
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
     utils::Conv2dOptions conv1Options;
     conv1Options.strides = {2, 2};
@@ -159,6 +163,5 @@ ml::Graph SqueezeNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape = builder.Reshape(averagePool2d, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape) : reshape;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }

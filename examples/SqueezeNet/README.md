@@ -7,9 +7,9 @@ This example leverages the network topology of [SqueezeNet 1.0](https://storage.
 ## Usage
 
 ```sh
-> out/Release/SqueezeNet [OPTION]
+> out/Release/SqueezeNet -h
 
-Options:
+Example Options:
     -h                      Print this message.
     -i "<path>"             Required. Path to an image.
     -m "<path>"             Required. Path to the .npy files with trained weights/biases.
@@ -22,8 +22,8 @@ Options:
 
 ```sh
 > out/Release/SqueezeNet -i examples/images/test.jpg -l nchw -m node/third_party/webnn-polyfill/test-data/models/squeezenet1.1_nchw/weights/
-Info: Compilation Time: 63.7251 ms
-Info: Execution Time: 1.74562 ms
+Info: Compilation Time: 42.1368 ms
+Info: Execution Time: 2.45855 ms
 
 Prediction Result:
 #   Probability   Label
@@ -36,8 +36,8 @@ Info: Done.
 
 ```sh
 > out/Release/SqueezeNet -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/squeezenet1.0_nhwc/weights/
-Info: Compilation Time: 78.7005 ms
-Info: Execution Time: 6.65379 ms
+Info: Compilation Time: 58.464 ms
+Info: Execution Time: 4.79983 ms
 
 Prediction Result:
 #   Probability   Label

@@ -18,11 +18,13 @@
 class ResNetNhwcTests : public WebnnTest {
   public:
     void TestResNetNhwc(const std::string& inputFile, const std::string& expectedFile) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
         ResNet resnet;
         const std::string nhwcPath =
             "node/third_party/webnn-polyfill/test-data/models/resnet101v2_nhwc/";
-        ml::Graph graph = resnet.LoadNHWC(nhwcPath + "weights/", false);
+        resnet.mWeightsPath = nhwcPath + "weights/";
+        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+        ml::Operand output = resnet.LoadNHWC(builder, false);
+        ml::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
         std::vector<float> result(utils::SizeOfShape({1, 1001}));

@@ -18,15 +18,23 @@
 
 #include "common/Log.h"
 
-ResNet::ResNet() {
-    mContext = CreateCppContext();
-    mContext.SetUncapturedErrorCallback(
-        [](MLErrorType type, char const* message, void* userData) {
-            if (type != MLErrorType_NoError) {
-                dawn::ErrorLog() << "Error type is " << type << ", message is " << message;
-            }
-        },
-        this);
+ResNet::ResNet() : ExampleBase() {
+}
+
+bool ResNet::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
+    if (!ExampleBase::ParseAndCheckExampleOptions(argc, argv)) {
+        return false;
+    }
+    bool nchw = mLayout == "nchw" ? true : false;
+    mLabelPath = nchw ? "examples/labels/labels1000.txt" : "examples/labels/labels1001.txt";
+    mModelHeight = nchw ? 224 : 299;
+    mModelWidth = nchw ? 224 : 299;
+    mModelChannels = 3;
+    mNormalization = nchw ? true : false;
+    nchw ? mMean = {0.485, 0.456, 0.406} : mMean = {127.5, 127.5, 127.5};
+    nchw ? mStd = {0.229, 0.224, 0.225} : mStd = {127.5, 127.5, 127.5};
+    mOutputShape = nchw ? std::vector<int32_t>({1, 1000}) : std::vector<int32_t>({1, 1001});
+    return true;
 }
 
 const ml::Operand ResNet::BuildConstantFromNpy(const ml::GraphBuilder& builder,
@@ -41,7 +49,7 @@ const ml::Operand ResNet::BuildNchwConv(const ml::GraphBuilder& builder,
                                         const std::string& name,
                                         const std::string& stageName,
                                         utils::Conv2dOptions* options) {
-    std::string prefix = mDataPath;
+    std::string prefix = mWeightsPath;
     if (stageName != "") {
         prefix += "stage" + stageName + "_conv" + name;
     } else {
@@ -58,7 +66,7 @@ const ml::Operand ResNet::BuildNhwcConv(const ml::GraphBuilder& builder,
                                         const std::vector<std::string> nameIndices,
                                         utils::Conv2dOptions* options,
                                         bool relu) {
-    std::string prefix = mDataPath;
+    std::string prefix = mWeightsPath;
     if (nameIndices[0] != "" && nameIndices[1] != "") {
         prefix += "block" + nameIndices[0] + "_unit_" + nameIndices[1] + "_bottleneck_v2_";
     }
@@ -89,7 +97,7 @@ const ml::Operand ResNet::BuildBatchNorm(const ml::GraphBuilder& builder,
                                          const std::string& name,
                                          const std::string& stageName,
                                          bool relu) {
-    std::string prefix = mDataPath;
+    std::string prefix = mWeightsPath;
     if (stageName != "") {
         prefix += "stage" + stageName + "_batchnorm" + name;
     } else {
@@ -112,7 +120,7 @@ const ml::Operand ResNet::BuildBatchNorm(const ml::GraphBuilder& builder,
 const ml::Operand ResNet::BuildFusedBatchNorm(const ml::GraphBuilder& builder,
                                               const ml::Operand& input,
                                               const std::vector<std::string> nameIndices) {
-    std::string prefix = mDataPath;
+    std::string prefix = mWeightsPath;
     if (nameIndices[0] == "postnorm") {
         prefix += "postnorm";
     } else {
@@ -128,7 +136,7 @@ const ml::Operand ResNet::BuildFusedBatchNorm(const ml::GraphBuilder& builder,
 const ml::Operand ResNet::BuildGemm(const ml::GraphBuilder& builder,
                                     const ml::Operand& input,
                                     const std::string& name) {
-    std::string prefix = mDataPath + "dense" + name;
+    std::string prefix = mWeightsPath + "dense" + name;
     std::string weightsPath = prefix + "_weight.npy";
     const ml::Operand weights = BuildConstantFromNpy(builder, weightsPath);
     std::string biasPath = prefix + "_bias.npy";
@@ -238,9 +246,8 @@ const ml::Operand ResNet::loop(const ml::GraphBuilder& builder,
     }
 }
 
-ml::Graph ResNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath + "resnetv24_";
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand ResNet::LoadNCHW(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath + "resnetv24_";
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
 
     const ml::Operand bn1 = BuildBatchNorm(builder, input, "0", "", false);
@@ -301,19 +308,19 @@ ml::Graph ResNet::LoadNCHW(const std::string& weightsPath, bool softmax) {
     const ml::Operand reshape = builder.Reshape(pool2, newShape.data(), newShape.size());
     const ml::Operand gemm = BuildGemm(builder, reshape, "0");
     const ml::Operand output = softmax ? builder.Softmax(gemm) : gemm;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }
 
-ml::Graph ResNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath + "resnet_v2_101_";
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand ResNet::LoadNHWC(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath + "resnet_v2_101_";
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 299, 299, 3});
 
-    const std::vector<uint32_t> paddingData = {0, 0, 3, 3, 3, 3, 0, 0};
-    const ml::Operand padding =
-        utils::BuildConstant(builder, {4, 2}, paddingData.data(),
-                             paddingData.size() * sizeof(uint32_t), ml::OperandType::Uint32);
+    const std::vector<uint32_t> constant = {0, 0, 3, 3, 3, 3, 0, 0};
+    auto paddingData = std::make_shared<std::vector<char>>(constant.size() * sizeof(uint32_t));
+    std::memcpy(paddingData->data(), constant.data(), constant.size() * sizeof(int32_t));
+    mConstants.push_back(paddingData);
+    const ml::Operand padding = utils::BuildConstant(builder, {4, 2}, paddingData->data(),
+                                                     paddingData->size(), ml::OperandType::Uint32);
     const ml::Operand pad = builder.Pad(input, padding);
     utils::Conv2dOptions conv1Options;
     conv1Options.inputLayout = ml::InputOperandLayout::Nhwc;
@@ -368,6 +375,5 @@ ml::Graph ResNet::LoadNHWC(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape = builder.Reshape(conv2, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape) : reshape;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }

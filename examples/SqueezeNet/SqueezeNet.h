@@ -17,14 +17,14 @@
 
 #include "examples/SampleUtils.h"
 
-class SqueezeNet {
+class SqueezeNet : public ExampleBase {
   public:
-    SqueezeNet(bool nchw);
-    ~SqueezeNet() = default;
+    SqueezeNet();
+    ~SqueezeNet() override = default;
 
-    ml::Graph LoadNCHW(const std::string& weightsPath, bool softmax = true);
-    ml::Graph LoadNHWC(const std::string& weightsPath, bool softmax = true);
-    std::vector<float> Compute(const void* inputData, size_t inputLength);
+    bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
+    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
+    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
     const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
                                            const std::string& path);
     const ml::Operand BuildConv(const ml::GraphBuilder& builder,
@@ -38,8 +38,5 @@ class SqueezeNet {
                                 const std::string& conv3x3Name);
 
   private:
-    ml::Context mContext;
-    bool mNchw = true;
     std::vector<SHARED_DATA_TYPE> mConstants;
-    std::string mDataPath;
 };

@@ -18,15 +18,24 @@
 
 #include "common/Log.h"
 
-MobileNetV2::MobileNetV2(bool nchw) : mNchw(nchw) {
-    mContext = CreateCppContext();
-    mContext.SetUncapturedErrorCallback(
-        [](MLErrorType type, char const* message, void* userData) {
-            if (type != MLErrorType_NoError) {
-                dawn::ErrorLog() << "Error type is " << type << ", message is " << message;
-            }
-        },
-        this);
+MobileNetV2::MobileNetV2() : ExampleBase() {
+}
+
+bool MobileNetV2::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
+    if (!ExampleBase::ParseAndCheckExampleOptions(argc, argv)) {
+        return false;
+    }
+
+    bool nchw = mLayout == "nchw" ? true : false;
+    mLabelPath = nchw ? "examples/labels/labels1000.txt" : "examples/labels/labels1001.txt";
+    mModelHeight = 224;
+    mModelWidth = 224;
+    mModelChannels = 3;
+    mNormalization = nchw ? true : false;
+    nchw ? mMean = {0.485, 0.456, 0.406} : mMean = {127.5, 127.5, 127.5};
+    nchw ? mStd = {0.229, 0.224, 0.225} : mStd = {127.5, 127.5, 127.5};
+    mOutputShape = nchw ? std::vector<int32_t>({1, 1000}) : std::vector<int32_t>({1, 1001});
+    return true;
 }
 
 const ml::Operand MobileNetV2::BuildConstantFromNpy(const ml::GraphBuilder& builder,
@@ -42,20 +51,20 @@ const ml::Operand MobileNetV2::BuildConv(const ml::GraphBuilder& builder,
                                          bool fused,
                                          utils::Conv2dOptions* options,
                                          const std::string& biasName) {
-    std::string prefix = mNchw ? mDataPath + "conv_" : mDataPath + "Const_";
-    std::string suffix = mNchw ? "_weight.npy" : ".npy";
+    std::string prefix = mLayout == "nchw" ? mWeightsPath + "conv_" : mWeightsPath + "Const_";
+    std::string suffix = mLayout == "nchw" ? "_weight.npy" : ".npy";
     const std::string weightsPath = prefix + std::to_string(convIndex) + suffix;
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
 
-    prefix = mNchw ? mDataPath + "conv_" : mDataPath + "MobilenetV2_";
-    if (mNchw) {
+    prefix = mLayout == "nchw" ? mWeightsPath + "conv_" : mWeightsPath + "MobilenetV2_";
+    if (mLayout == "nchw") {
         prefix.append(std::to_string(convIndex));
     }
     const std::string biasPath = prefix + biasName + "_bias.npy";
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
 
-    std::vector<int32_t> newShape =
-        mNchw ? std::vector<int32_t>({1, -1, 1, 1}) : std::vector<int32_t>({1, 1, 1, -1});
+    std::vector<int32_t> newShape = mLayout == "nchw" ? std::vector<int32_t>({1, -1, 1, 1})
+                                                      : std::vector<int32_t>({1, 1, 1, -1});
     const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
 
     const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
@@ -89,7 +98,7 @@ const ml::Operand MobileNetV2::BuildConvBatchNorm(const ml::GraphBuilder& builde
                                                   int32_t subNameIndex) {
     const std::string subName =
         subNameIndex != -1 ? "_linearbottleneck" + std::to_string(subNameIndex) : "";
-    std::string prefix = mDataPath + "mobilenetv20_features" + subName;
+    std::string prefix = mWeightsPath + "mobilenetv20_features" + subName;
     const std::string weightsPath = prefix + "_conv" + std::to_string(nameIndex) + "_weight.npy";
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
     prefix.append("_batchnorm" + std::to_string(nameIndex));
@@ -112,10 +121,10 @@ const ml::Operand MobileNetV2::BuildConvBatchNorm(const ml::GraphBuilder& builde
 const ml::Operand MobileNetV2::BuildGemm(const ml::GraphBuilder& builder,
                                          const ml::Operand& input,
                                          int32_t gemmIndex) {
-    std::string suffix = mNchw ? "_weight.npy" : "_kernel.npy";
-    const std::string weightsPath = mDataPath + "gemm_" + std::to_string(gemmIndex) + suffix;
+    std::string suffix = mLayout == "nchw" ? "_weight.npy" : "_kernel.npy";
+    const std::string weightsPath = mWeightsPath + "gemm_" + std::to_string(gemmIndex) + suffix;
     const ml::Operand gemmWeights = BuildConstantFromNpy(builder, weightsPath);
-    const std::string biasPath = mDataPath + "gemm_" + std::to_string(gemmIndex) + "_bias.npy";
+    const std::string biasPath = mWeightsPath + "gemm_" + std::to_string(gemmIndex) + "_bias.npy";
     const ml::Operand gemmBias = BuildConstantFromNpy(builder, biasPath);
     ml::GemmOptions gemmOptions;
     gemmOptions.c = gemmBias;
@@ -130,7 +139,7 @@ const ml::Operand MobileNetV2::BuildFire(const ml::GraphBuilder& builder,
                                          bool strides,
                                          bool shouldAdd) {
     utils::Conv2dOptions convOptions;
-    if (!mNchw) {
+    if (!(mLayout == "nchw")) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
         convOptions.filterLayout = ml::FilterOperandLayout::Hwio;
     }
@@ -204,9 +213,9 @@ const ml::Operand MobileNetV2::BuildFireMore(const ml::GraphBuilder& builder,
     }
 }
 
-ml::Graph MobileNetV2::LoadNCHW(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath;
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand MobileNetV2::LoadNCHW(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath;
+
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
 
     utils::Conv2dOptions conv0Options;
@@ -235,13 +244,11 @@ ml::Graph MobileNetV2::LoadNCHW(const std::string& weightsPath, bool softmax) {
     const ml::Operand reshape103 = builder.Reshape(pool97, newShape.data(), newShape.size());
     const ml::Operand gemm104 = BuildGemm(builder, reshape103, 104);
     const ml::Operand output = softmax ? builder.Softmax(gemm104) : gemm104;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }
 
-ml::Graph MobileNetV2::LoadNHWC(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath;
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
+const ml::Operand MobileNetV2::LoadNHWC(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath;
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
 
     utils::Conv2dOptions conv0Options;
@@ -363,15 +370,13 @@ ml::Graph MobileNetV2::LoadNHWC(const std::string& weightsPath, bool softmax) {
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape = builder.Reshape(conv4, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape) : reshape;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }
 
-ml::Graph MobileNetV2::LoadBatchNormNchw(const std::string& weightsPath, bool softmax) {
-    mDataPath = weightsPath;
+const ml::Operand MobileNetV2::LoadBatchNormNCHW(const ml::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath;
     const std::vector<int32_t> padding = {1, 1, 1, 1};
     const std::vector<int32_t> strides = {2, 2};
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(mContext);
     const ml::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
     utils::Conv2dOptions conv0Options;
     conv0Options.padding = padding;
@@ -442,11 +447,10 @@ ml::Graph MobileNetV2::LoadBatchNormNchw(const std::string& weightsPath, bool so
     const ml::Operand batchNorm1 = BuildConvBatchNorm(builder, fire16, 1);
     const ml::Operand pool0 = builder.AveragePool2d(builder.Relu(batchNorm1));
     const ml::Operand convWeights1 =
-        BuildConstantFromNpy(builder, mDataPath + "mobilenetv20_output_pred_weight.npy");
+        BuildConstantFromNpy(builder, mWeightsPath + "mobilenetv20_output_pred_weight.npy");
     const ml::Operand conv1 = builder.Conv2d(pool0, convWeights1);
     const std::vector<int32_t> newShape = {1, -1};
     const ml::Operand reshape0 = builder.Reshape(conv1, newShape.data(), newShape.size());
     const ml::Operand output = softmax ? builder.Softmax(reshape0) : reshape0;
-
-    return utils::Build(builder, {{"output", output}});
+    return output;
 }

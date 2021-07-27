@@ -17,13 +17,14 @@
 
 #include "examples/SampleUtils.h"
 
-class ResNet {
+class ResNet : public ExampleBase {
   public:
     ResNet();
-    ~ResNet() = default;
+    ~ResNet() override = default;
 
-    ml::Graph LoadNCHW(const std::string& weightsPath, bool softmax = true);
-    ml::Graph LoadNHWC(const std::string& weightsPath, bool softmax = true);
+    bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
+    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
+    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
     const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
                                            const std::string& path);
     const ml::Operand BuildNchwConv(const ml::GraphBuilder& builder,
@@ -61,7 +62,5 @@ class ResNet {
     const ml::Operand loop(const ml::GraphBuilder& builder, const ml::Operand node, uint32_t num);
 
   private:
-    ml::Context mContext;
     std::vector<SHARED_DATA_TYPE> mConstants;
-    std::string mDataPath;
 };

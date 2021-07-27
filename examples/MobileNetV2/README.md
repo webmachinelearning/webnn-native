@@ -7,9 +7,9 @@ This example leverages the network topology of [MobileNet V2](https://storage.go
 ## Usage
 
 ```sh
-> out/Release/MobileNetV2 [OPTION]
+> out/Release/MobileNetV2 -h
 
-Options:
+Example Options:
     -h                      Print this message.
     -i "<path>"             Required. Path to an image.
     -m "<path>"             Required. Path to the .npy files with trained weights/biases.
@@ -21,29 +21,29 @@ Options:
 ## Example Output
 
 ```sh
-> out/Release/MobileNetV2 -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nhwc/weights/
-Info: Compilation Time: 180.225 ms
-Info: Execution Time: 7.667 ms
-
-Prediction Result:
-#   Probability   Label
-0   93.83%        lesser panda
-1   0.55%         polecat
-2   0.18%         giant panda
-
-Info: Done.
-```
-
-```sh
 > out/Release/MobileNetV2 -i examples/images/test.jpg -l nchw -m node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nchw/weights/
-Info: Compilation Time: 140.49 ms
-Info: Execution Time: 6.23081 ms
+Info: Compilation Time: 81.3207 ms
+Info: Execution Time: 3.57684 ms
 
 Prediction Result:
 #   Probability   Label
 0   99.54%        lesser panda, red panda, panda, bear cat, cat bear, Ailurus fulgens
 1   0.23%         polecat, fitch, foulmart, foumart, Mustela putorius
 2   0.10%         weasel
+
+Info: Done.
+```
+
+```sh
+> out/Release/MobileNetV2 -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nhwc/weights/
+Info: Compilation Time: 106.3 ms
+Info: Execution Time: 3.00854 ms
+
+Prediction Result:
+#   Probability   Label
+0   93.83%        lesser panda
+1   0.55%         polecat
+2   0.18%         giant panda
 
 Info: Done.
 ```

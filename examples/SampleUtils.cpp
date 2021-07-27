@@ -39,6 +39,32 @@ ml::Context CreateCppContext(ml::ContextOptions const* options) {
     return ml::Context();
 }
 
+bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp("-h", argv[i]) == 0) {
+            utils::ShowUsage();
+            return false;
+        }
+        if (strcmp("-i", argv[i]) == 0 && i + 1 < argc) {
+            mImagePath = argv[i + 1];
+        } else if (strcmp("-m", argv[i]) == 0 && i + 1 < argc) {
+            mWeightsPath = argv[i + 1];
+        } else if (strcmp("-l", argv[i]) == 0 && i + 1 < argc) {
+            mLayout = argv[i + 1];
+        } else if (strcmp("-n", argv[i]) == 0 && i + 1 < argc) {
+            mNIter = atoi(argv[i + 1]);
+        }
+    }
+
+    if (mImagePath.empty() || mWeightsPath.empty() || (mLayout != "nchw" && mLayout != "nhwc") ||
+        mNIter < 1) {
+        dawn::ErrorLog() << "Invalid options.";
+        utils::ShowUsage();
+        return false;
+    }
+    return true;
+}
+
 bool Expected(float output, float expected) {
     return (fabs(output - expected) < 0.005f);
 }
@@ -152,14 +178,15 @@ namespace utils {
         std::cout << std::endl;
     }
 
-    float* LoadAndPreprocessImage(const std::string& imagePath,
-                                  const ImagePreprocessOptions& options) {
+    bool LoadAndPreprocessImage(const ExampleBase* example, std::vector<float>& processedPixels) {
         // Read an image.
         int imageWidth, imageHeight, imageChannels = 0;
         uint8_t* inputPixels =
-            stbi_load(imagePath.c_str(), &imageWidth, &imageHeight, &imageChannels, 0);
+            stbi_load(example->mImagePath.c_str(), &imageWidth, &imageHeight, &imageChannels, 0);
         if (inputPixels == 0) {
-            return nullptr;
+            dawn::ErrorLog() << "Failed to load and preprocess the image at "
+                             << example->mImagePath;
+            return false;
         }
         // Resize the image with model's input size
         const size_t imageSize = imageHeight * imageWidth * imageChannels;
@@ -167,33 +194,66 @@ namespace utils {
         for (size_t i = 0; i < imageSize; ++i) {
             floatPixels[i] = inputPixels[i];
         }
-        float* resizedPixels = (float*)malloc(options.modelSize * sizeof(float));
+        float* resizedPixels = (float*)malloc(example->mModelHeight * example->mModelWidth *
+                                              example->mModelChannels * sizeof(float));
         stbir_resize_float(floatPixels, imageWidth, imageHeight, 0, resizedPixels,
-                           options.modelWidth, options.modelHeight, 0, options.modelChannels);
+                           example->mModelWidth, example->mModelHeight, 0, example->mModelChannels);
 
         // Reoder the image to NCHW/NHWC layout.
-        float* processedPixels = (float*)malloc(options.modelSize * sizeof(float));
-        for (size_t c = 0; c < options.modelChannels; ++c) {
-            for (size_t h = 0; h < options.modelHeight; ++h) {
-                for (size_t w = 0; w < options.modelWidth; ++w) {
-                    float value = resizedPixels[h * options.modelWidth * options.modelChannels +
-                                                w * options.modelChannels + c];
-                    options.normalization ? value = value / 255 : value;
-                    if (options.nchw) {
-                        processedPixels[c * options.modelHeight * options.modelWidth +
-                                        h * options.modelWidth + w] =
-                            (value - options.mean[c]) / options.std[c];
+        for (size_t c = 0; c < example->mModelChannels; ++c) {
+            for (size_t h = 0; h < example->mModelHeight; ++h) {
+                for (size_t w = 0; w < example->mModelWidth; ++w) {
+                    float value = resizedPixels[h * example->mModelWidth * example->mModelChannels +
+                                                w * example->mModelChannels + c];
+                    example->mNormalization ? value = value / 255 : value;
+                    if (example->mLayout == "nchw") {
+                        processedPixels[c * example->mModelHeight * example->mModelWidth +
+                                        h * example->mModelWidth + w] =
+                            (value - example->mMean[c]) / example->mStd[c];
                     } else {
-                        processedPixels[h * options.modelWidth * options.modelChannels +
-                                        w * options.modelChannels + c] =
-                            (value - options.mean[c]) / options.std[c];
+                        processedPixels[h * example->mModelWidth * example->mModelChannels +
+                                        w * example->mModelChannels + c] =
+                            (value - example->mMean[c]) / example->mStd[c];
                     }
                 }
             }
         }
         free(resizedPixels);
         free(floatPixels);
-        return processedPixels;
+        return true;
+    }
+
+    void ShowUsage() {
+        std::cout << std::endl;
+        std::cout << "Example Options:" << std::endl;
+        std::cout << "    -h                      "
+                  << "Print this message." << std::endl;
+        std::cout << "    -i \"<path>\"             "
+                  << "Required. Path to an image." << std::endl;
+        std::cout << "    -m \"<path>\"             "
+                  << "Required. Path to the .npy files with trained weights/biases." << std::endl;
+        std::cout
+            << "    -l \"<layout>\"           "
+            << "Optional. Specify the layout: \"nchw\" or \"nhwc\". The default value is \"nchw\"."
+            << std::endl;
+        std::cout << "    -n \"<integer>\"          "
+                  << "Optional. Number of iterations. The default value is 1, and should not be "
+                     "less than 1."
+                  << std::endl;
+    }
+
+    void PrintExexutionTime(std::vector<TIME_TYPE> executionTime) {
+        size_t nIter = executionTime.size();
+        if (executionTime.size() > 1) {
+            std::sort(executionTime.begin(), executionTime.end());
+            TIME_TYPE medianExecutionTime =
+                nIter % 2 != 0 ? executionTime[floor(nIter / 2)]
+                               : (executionTime[nIter / 2 - 1] + executionTime[nIter / 2]) / 2;
+            dawn::InfoLog() << "Median Execution Time of " << nIter
+                            << " Iterations: " << medianExecutionTime.count() << " ms";
+        } else {
+            dawn::InfoLog() << "Execution Time: " << executionTime[0].count() << " ms";
+        }
     }
 
 }  // namespace utils
