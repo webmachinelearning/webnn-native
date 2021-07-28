@@ -16,8 +16,8 @@
 
 static WebnnTestEnvironment* gTestEnv = nullptr;
 
-void InitWebnnEnd2EndTestEnvironment() {
-    gTestEnv = new WebnnTestEnvironment();
+void InitWebnnEnd2EndTestEnvironment(ml::ContextOptions const* options) {
+    gTestEnv = new WebnnTestEnvironment(options);
     testing::AddGlobalTestEnvironment(gTestEnv);
 }
 
@@ -67,7 +67,7 @@ void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userd
 }
 
 void WebnnTestEnvironment::SetUp() {
-    mContext = CreateCppContext();
+    mContext = CreateCppContext(mOptions);
     DAWN_ASSERT(mContext);
 }
 

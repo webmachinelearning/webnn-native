@@ -37,15 +37,18 @@ class WebnnTest : public testing::Test {
     bool mError = false;
 };
 
-void InitWebnnEnd2EndTestEnvironment();
+void InitWebnnEnd2EndTestEnvironment(ml::ContextOptions const* options = nullptr);
 
 class WebnnTestEnvironment : public testing::Environment {
   public:
+    explicit WebnnTestEnvironment(ml::ContextOptions const* options) : mOptions(options) {
+    }
     void SetUp() override;
 
     const ml::Context& GetContext();
 
   protected:
+    ml::ContextOptions const* mOptions;
     ml::Context mContext;
 };
 
