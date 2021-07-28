@@ -73,6 +73,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kAdd, a, b));
     }
 
+    OperandBase* GraphBuilderBase::Div(OperandBase* a, OperandBase* b) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kDiv, a, b));
+    }
+
     OperandBase* GraphBuilderBase::Mul(OperandBase* a, OperandBase* b) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMul, a, b));
     }

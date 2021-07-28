@@ -36,6 +36,7 @@ namespace webnn_native {
         OperandBase* Input(char const* name, OperandDescriptor const* desc);
         OperandBase* Matmul(OperandBase* a, OperandBase* b);
         OperandBase* Add(OperandBase*, OperandBase*);
+        OperandBase* Div(OperandBase*, OperandBase*);
         OperandBase* Mul(OperandBase*, OperandBase*);
         OperandBase* Sub(OperandBase*, OperandBase*);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);

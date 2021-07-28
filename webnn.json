@@ -324,6 +324,14 @@
         ]
       },
       {
+        "name": "div",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
         "name": "mul",
         "returns": "operand",
         "args": [

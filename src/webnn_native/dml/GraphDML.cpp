@@ -662,6 +662,8 @@ namespace webnn_native { namespace dml {
             c = ::dml::Gemm(a, b);
         } else if (binary->GetType() == op::BinaryOpType::kAdd) {
             c = ::dml::Add(a, b);
+        } else if (binary->GetType() == op::BinaryOpType::kDiv) {
+            c = ::dml::Divide(a, b);
         } else if (binary->GetType() == op::BinaryOpType::kMul) {
             c = ::dml::Multiply(a, b);
         } else if (binary->GetType() == op::BinaryOpType::kSub) {
