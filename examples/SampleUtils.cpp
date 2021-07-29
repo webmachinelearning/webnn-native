@@ -53,11 +53,14 @@ bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
             mLayout = argv[i + 1];
         } else if (strcmp("-n", argv[i]) == 0 && i + 1 < argc) {
             mNIter = atoi(argv[i + 1]);
+        } else if (strcmp("-d", argv[i]) == 0 && i + 1 < argc) {
+            mDevice = argv[i + 1];
+            transform(mDevice.begin(), mDevice.end(), mDevice.begin(), ::tolower);
         }
     }
 
     if (mImagePath.empty() || mWeightsPath.empty() || (mLayout != "nchw" && mLayout != "nhwc") ||
-        mNIter < 1) {
+        mNIter < 1 || (mDevice != "gpu" && mDevice != "cpu" && mDevice != "default")) {
         dawn::ErrorLog() << "Invalid options.";
         utils::ShowUsage();
         return false;
@@ -240,6 +243,10 @@ namespace utils {
                   << "Optional. Number of iterations. The default value is 1, and should not be "
                      "less than 1."
                   << std::endl;
+        std::cout << "    -d \"<device>\"           "
+                  << "Optional. Specify a target device: \"cpu\" or \"gpu\" or "
+                     "\"default\" to infer on. The default value is \"default\"."
+                  << std::endl;
     }
 
     void PrintExexutionTime(std::vector<TIME_TYPE> executionTime) {
@@ -256,4 +263,18 @@ namespace utils {
         }
     }
 
+    const ml::ContextOptions CreateContextOptions(const std::string& device) {
+        ml::ContextOptions options;
+        if (device == "cpu") {
+            options.devicePreference = ml::DevicePreference::Cpu;
+        } else if (device == "gpu") {
+            options.devicePreference = ml::DevicePreference::Gpu;
+        } else if (device == "default") {
+            options.devicePreference = ml::DevicePreference::Default;
+        } else {
+            dawn::ErrorLog()
+                << "Invalid options, only support devices: \"cpu\", \"gpu\" and \"default\".";
+        }
+        return options;
+    }
 }  // namespace utils

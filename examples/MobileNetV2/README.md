@@ -15,7 +15,7 @@ Example Options:
     -m "<path>"             Required. Path to the .npy files with trained weights/biases.
     -l "<layout>"           Optional. Specify the layout: "nchw" or "nhwc". The default value is "nchw".
     -n "<integer>"          Optional. Number of iterations. The default value is 1, and should not be less than 1.
-
+    -d "<device>"           Optional. Specify a target device: "cpu" or "gpu" or "default" to infer on. The default value is "default".
 ```
 
 ## Example Output

@@ -48,6 +48,7 @@ class ExampleBase {
     std::vector<float> mStd = {1, 1, 1};   // Variance values of pixels on channels.
     std::string mChannelScheme = "RGB";
     std::vector<int32_t> mOutputShape;
+    std::string mDevice = "default";
 };
 
 ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
@@ -240,6 +241,8 @@ namespace utils {
 
     void PrintExexutionTime(
         std::vector<std::chrono::duration<double, std::milli>> executionTimeVector);
+
+    const ml::ContextOptions CreateContextOptions(const std::string& device = "default");
 }  // namespace utils
 
 #endif  // WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_
