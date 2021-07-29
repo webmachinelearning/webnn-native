@@ -23,20 +23,7 @@ int main(int argc, char** argv) {
             transform(device.begin(), device.end(), device.begin(), ::tolower);
         }
     }
-
-    ml::ContextOptions options;
-    if (device == "cpu") {
-        options.devicePreference = ml::DevicePreference::Cpu;
-    } else if (device == "gpu") {
-        options.devicePreference = ml::DevicePreference::Gpu;
-    } else if (device == "default") {
-        options.devicePreference = ml::DevicePreference::Default;
-    } else {
-        dawn::ErrorLog()
-            << "Invalid device options, only support \"cpu\", \"gpu\" and \"default\".";
-        return -1;
-    }
-
+    const ml::ContextOptions options = utils::CreateContextOptions(device);
     InitWebnnEnd2EndTestEnvironment(&options);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
