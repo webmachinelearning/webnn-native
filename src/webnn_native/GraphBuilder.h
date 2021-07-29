@@ -58,6 +58,7 @@ namespace webnn_native {
                                OperandBase*,
                                OperandBase*,
                                BatchNormOptions const* options);
+        OperandBase* InstanceNorm(OperandBase*, InstanceNormOptions const* options);
         GraphBase* Build(NamedOperandsBase const* namedOperands);
 
       private:

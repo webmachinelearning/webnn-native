@@ -32,6 +32,7 @@
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
+#include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
@@ -66,6 +67,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddGemm(const op::Gemm* Gemm) override;
         virtual MaybeError AddConcat(const op::Concat* concat) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
+        virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
       private:

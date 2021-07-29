@@ -288,6 +288,15 @@
       {"name": "epsilon", "type": "float", "default": 1e-5}
     ]
   },
+  "instanceNorm options": {
+  "category": "structure",
+    "members": [
+      {"name": "scale", "type": "operand"},
+      {"name": "bias", "type": "operand"},
+      {"name": "epsilon", "type": "float", "default": 1e-5},
+      {"name": "layout", "type": "input operand layout", "default": "nchw"}
+    ]
+  },
   "graph builder": {
     "category": "object",
     "methods": [
@@ -478,6 +487,14 @@
           {"name": "mean", "type": "operand"},
           {"name": "variance", "type": "operand"},
           {"name": "options", "type": "batchNorm options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "instance norm",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "instanceNorm options", "annotation": "const*", "optional": true}
         ]
       },
       {

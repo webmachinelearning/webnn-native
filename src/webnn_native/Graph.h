@@ -43,6 +43,7 @@ namespace webnn_native {
         class Concat;
         class Gemm;
         class Clamp;
+        class InstanceNorm;
     }  // namespace op
 
     class GraphBase : public ObjectBase {
@@ -67,6 +68,7 @@ namespace webnn_native {
         virtual MaybeError AddConcat(const op::Concat* concat);
         virtual MaybeError AddGemm(const op::Gemm* gemm);
         virtual MaybeError AddClamp(const op::Clamp* clamp);
+        virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm);
         virtual MaybeError Finish();
         virtual MaybeError Compile();
 

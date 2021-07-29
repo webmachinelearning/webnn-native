@@ -117,6 +117,13 @@ typedef struct ie_batch_norm_options {
   double epsilon = 1e-5;
 } ie_batch_norm_options_t;
 
+typedef struct ie_instance_norm_options {
+  ie_operand_t scale;
+  ie_operand_t bias;
+  double epsilon = 1e-5;
+  ie_input_operand_layout layout = ie_input_operand_layout::Nchw;
+} ie_instance_norm_options_t;
+
 typedef struct ie_conv2d_options {
   uint32_t paddingCount = 4;
   int32_t const* padding;
@@ -300,6 +307,21 @@ ie_model_add_batch_norm(ie_model_t* model,
                         ie_operand_t* variance,
                         ie_batch_norm_options* options,
                         ie_operand_t** operand);
+
+/**
+ * @brief Add instance_norm node to nGraph. Use the ie_operand_free() method to
+ *  free the operand memory.
+ * @ingroup model
+ * @param ie_operand_t The input operand.
+ * @param ie_operand_t The scale operand.
+ * @param ie_operand_t The bias operand.
+ * @return Status code of the operation: OK(0) for success.
+ */
+NEURAL_NETWORK_C_API(IEStatusCode)
+ie_model_add_instance_norm(ie_model_t* model,
+                           ie_operand_t* input,
+                           ie_instance_norm_options* options,
+                           ie_operand_t** operand);
 
 /**
  * @brief Add binary node to nGraph. Use the ie_operand_free() method to
