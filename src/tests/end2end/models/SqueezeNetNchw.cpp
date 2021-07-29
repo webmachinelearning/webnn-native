@@ -18,11 +18,13 @@
 class SqueezeNetNchwTests : public WebnnTest {
   public:
     void TestSqueezeNetNchw(const std::string& inputFile, const std::string& expectedFile) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        SqueezeNet squeezenet(true);
+        SqueezeNet squeezenet;
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/squeezenet1.1_nchw/";
-        ml::Graph graph = squeezenet.LoadNCHW(nchwPath + "weights/", false);
+        squeezenet.mWeightsPath = nchwPath + "weights/";
+        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+        ml::Operand output = squeezenet.LoadNCHW(builder, false);
+        ml::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
         std::vector<float> result(utils::SizeOfShape({1, 1000}));

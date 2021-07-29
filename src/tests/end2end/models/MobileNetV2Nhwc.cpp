@@ -18,11 +18,14 @@
 class MobileNetV2NhwcTests : public WebnnTest {
   public:
     void TestMobileNetV2Nhwc(const std::string& inputFile, const std::string& expectedFile) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        MobileNetV2 mobilemetv2(false);
+        MobileNetV2 mobilenetv2;
         const std::string nhwcPath =
             "node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nhwc/";
-        ml::Graph graph = mobilemetv2.LoadNHWC(nhwcPath + "weights/");
+        mobilenetv2.mWeightsPath = nhwcPath + "weights/";
+        mobilenetv2.mLayout = "nhwc";
+        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+        ml::Operand output = mobilenetv2.LoadNHWC(builder);
+        ml::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
         std::vector<float> result(utils::SizeOfShape({1, 1001}));

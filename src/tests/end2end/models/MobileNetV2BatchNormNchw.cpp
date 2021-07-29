@@ -18,11 +18,13 @@
 class MobileNetV2BatchNormNchwTests : public WebnnTest {
   public:
     void TestMobileNetV2Nchw(const std::string& inputFile, const std::string& expectedFile) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        MobileNetV2 mobilemetv2(true);
+        MobileNetV2 mobilenetv2;
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/mobilenetv2_batchnorm_nchw/";
-        ml::Graph graph = mobilemetv2.LoadBatchNormNchw(nchwPath + "weights/", false);
+        mobilenetv2.mWeightsPath = nchwPath + "weights/";
+        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+        ml::Operand output = mobilenetv2.LoadBatchNormNCHW(builder, false);
+        ml::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
         std::vector<float> result(utils::SizeOfShape({1, 1000}));
