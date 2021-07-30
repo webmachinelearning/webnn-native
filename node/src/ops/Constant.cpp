@@ -60,22 +60,22 @@ namespace node { namespace op {
                 value = &scalar.uint16Value;
                 size = sizeof(uint16_t);
             } else if (desc.type == ml::OperandType::Int32) {
-                WEBNN_NODE_ASSERT(GetInt32(info[0], scalar.int32Value),
+                WEBNN_NODE_ASSERT(GetValue(info[0], scalar.int32Value),
                                   "Invalid value according to int32 type.");
                 value = &scalar.int32Value;
                 size = sizeof(int32_t);
             } else if (desc.type == ml::OperandType::Uint32) {
-                WEBNN_NODE_ASSERT(GetUint32(info[0], scalar.uint32Value),
+                WEBNN_NODE_ASSERT(GetValue(info[0], scalar.uint32Value),
                                   "Invalid value according to uint32 type.")
                 value = &scalar.uint32Value;
                 size = sizeof(uint32_t);
             } else if (desc.type == ml::OperandType::Int8) {
-                WEBNN_NODE_ASSERT(GetInt8(info[0], scalar.int8Value),
+                WEBNN_NODE_ASSERT(GetValue(info[0], scalar.int8Value),
                                   "Invalid value according to int8 type.")
                 value = &scalar.int8Value;
                 size = sizeof(int8_t);
             } else if (desc.type == ml::OperandType::Uint8) {
-                WEBNN_NODE_ASSERT(GetUint8(info[0], scalar.uint8Value),
+                WEBNN_NODE_ASSERT(GetValue(info[0], scalar.uint8Value),
                                   "Invalid value according to uint8 type.")
                 value = &scalar.uint8Value;
                 size = sizeof(uint8_t);

@@ -42,7 +42,7 @@ namespace node { namespace op {
                                   "The mode parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "value")) {
-                WEBNN_NODE_ASSERT(GetFloat(jsOptions.Get("value"), options.value),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("value"), options.value),
                                   "The value parameter is invalid.");
             }
         }

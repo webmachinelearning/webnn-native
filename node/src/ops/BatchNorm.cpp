@@ -53,11 +53,11 @@ namespace node { namespace op {
                                   "The bias parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "axis")) {
-                WEBNN_NODE_ASSERT(GetUint32(jsOptions.Get("axis"), options.axis),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("axis"), options.axis),
                                   "The axis parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "epsilon")) {
-                WEBNN_NODE_ASSERT(GetFloat(jsOptions.Get("epsilon"), options.epsilon),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("epsilon"), options.epsilon),
                                   "The epsilon parameter is invalid.");
             }
         }

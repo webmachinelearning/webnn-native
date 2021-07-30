@@ -28,7 +28,7 @@ namespace node { namespace op {
         WEBNN_NODE_ASSERT(GetOperandArray(info[0], inputs, args),
                           "The input operands are invalid.");
         int32_t axis;
-        WEBNN_NODE_ASSERT(GetInt32(info[1], axis), "The axis parameter is invalid.");
+        WEBNN_NODE_ASSERT(GetValue(info[1], axis), "The axis parameter is invalid.");
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
         operand->SetImpl(builder.Concat(inputs.size(), inputs.data(), axis));

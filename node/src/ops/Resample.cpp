@@ -43,14 +43,14 @@ namespace node { namespace op {
                                   "The mode parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "scales")) {
-                WEBNN_NODE_ASSERT(GetFloatArray(jsOptions.Get("scales"), scales),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("scales"), scales),
                                   "The scales parameter is invalid.");
                 WEBNN_NODE_ASSERT(scales.empty() == false, "The scales is empty.");
                 options.scales = scales.data();
                 options.scalesCount = scales.size();
             }
             if (HasOptionMember(jsOptions, "sizes")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("sizes"), sizes),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("sizes"), sizes),
                                   "The sizes parameter is invalid.");
                 WEBNN_NODE_ASSERT(sizes.empty() == false, "The sizes is empty.");
                 options.sizes = sizes.data();

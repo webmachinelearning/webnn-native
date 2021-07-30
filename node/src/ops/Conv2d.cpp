@@ -78,19 +78,19 @@ namespace node { namespace op {
             WEBNN_NODE_ASSERT(info[2].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[2].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "padding")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("padding"), options.padding, 4),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("padding"), options.padding, 4),
                                   "The padding parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "strides")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("strides"), options.strides, 2),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("strides"), options.strides, 2),
                                   "The strides parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "dilations")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("dilations"), options.dilations, 2),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("dilations"), options.dilations, 2),
                                   "The dilations parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "groups")) {
-                WEBNN_NODE_ASSERT(GetInt32(jsOptions.Get("groups"), options.groups),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("groups"), options.groups),
                                   "The groups parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "inputLayout")) {

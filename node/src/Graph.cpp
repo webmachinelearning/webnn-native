@@ -97,7 +97,7 @@ namespace node {
                 }
                 jsTypedArray = jsResource.Get("resource").As<Napi::TypedArray>();
 
-                if (!GetInt32Array(jsResource.Get("dimensions"), resource.dimensions)) {
+                if (!GetArray(jsResource.Get("dimensions"), resource.dimensions)) {
                     return false;
                 }
                 if (SizeOfShape(resource.dimensions) != jsTypedArray.ElementSize()) {

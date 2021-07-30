@@ -37,7 +37,7 @@ namespace node { namespace op {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "alpha")) {
-                WEBNN_NODE_ASSERT(GetFloat(jsOptions.Get("alpha"), options.alpha),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("alpha"), options.alpha),
                                   "The alpha parameter is invalid.");
             }
         }

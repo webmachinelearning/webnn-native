@@ -22,7 +22,7 @@ namespace node { namespace op {
         // Operand input(DOMString name, OperandDescriptor desc);
         WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");
         std::string name;
-        WEBNN_NODE_ASSERT(GetString(info[0], name), "The name must be a string.");
+        WEBNN_NODE_ASSERT(GetValue(info[0], name), "The name must be a string.");
 
         OperandDescriptor desc;
         WEBNN_NODE_ASSERT(GetOperandDescriptor(info[1], desc), "The desc parameter is invalid.");
