@@ -311,6 +311,10 @@ ie_operand_t* Model::AddBinary(ie_binary_type type,
     case ie_binary_type::ADD:
       binary_node = std::make_shared<op::v1::Add>(primary_node, secondary_node);
       break;
+    case ie_binary_type::DIV:
+      binary_node =
+          std::make_shared<op::v1::Divide>(primary_node, secondary_node);
+      break;
     case ie_binary_type::MUL:
       binary_node =
           std::make_shared<op::v1::Multiply>(primary_node, secondary_node);
