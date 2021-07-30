@@ -43,6 +43,7 @@ namespace node {
         Napi::Value AveragePool2d(const Napi::CallbackInfo& info);
         Napi::Value ReduceMean(const Napi::CallbackInfo& info);
         Napi::Value Relu(const Napi::CallbackInfo& info);
+        Napi::Value Resample(const Napi::CallbackInfo& info);
         Napi::Value LeakyRelu(const Napi::CallbackInfo& info);
         Napi::Value Pad(const Napi::CallbackInfo& info);
         Napi::Value Reshape(const Napi::CallbackInfo& info);

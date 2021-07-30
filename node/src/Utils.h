@@ -122,6 +122,17 @@ namespace node {
         return GetMappedValue(paddingModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
+    inline bool GetInterpolationMode(const Napi::Value& jsValue, ml::InterpolationMode& value) {
+        const std::unordered_map<std::string, ml::InterpolationMode> interpolationModeMap = {
+            {"nearest-neighbor", ml::InterpolationMode::NearestNeighbor},
+            {"linear", ml::InterpolationMode::Linear},
+        };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(interpolationModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
+    };
+
     inline bool GetInt32(const Napi::Value& jsValue, int32_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
@@ -230,6 +241,29 @@ namespace node {
             int32Array.push_back(value);
         }
         array = int32Array;
+        return true;
+    }
+
+    inline bool GetFloatArray(const Napi::Value& jsValue,
+                              std::vector<float>& array,
+                              const size_t size = std::numeric_limits<size_t>::max()) {
+        if (!jsValue.IsArray()) {
+            return false;
+        }
+        Napi::Array jsArray = jsValue.As<Napi::Array>();
+        if (size != std::numeric_limits<size_t>::max() && size != jsArray.Length()) {
+            return false;
+        }
+        std::vector<float> floatArray;
+        for (uint32_t i = 0; i < jsArray.Length(); ++i) {
+            Napi::Value jsItem = static_cast<Napi::Value>(jsArray[i]);
+            float value;
+            if (!GetFloat(jsItem, value)) {
+                return false;
+            }
+            floatArray.push_back(value);
+        }
+        array = floatArray;
         return true;
     }
 
