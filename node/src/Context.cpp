@@ -14,6 +14,7 @@
 
 #include "Context.h"
 
+#include <napi.h>
 #include <webnn/webnn_proc.h>
 #include <webnn_native/WebnnNative.h>
 #include <iostream>
@@ -23,9 +24,29 @@ Napi::FunctionReference node::Context::constructor;
 namespace node {
 
     Context::Context(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Context>(info) {
+        MLContextOptions options;
+        if (info.Length() > 0) {
+            Napi::Object optionsObject = info[0].As<Napi::Object>();
+            if (optionsObject.Has("powerPreference")) {
+                std::string powerPreferenceOption = optionsObject.Get("powerPreference").ToString();
+                if (powerPreferenceOption == "default") {
+                    options.powerPreference = MLPowerPreference::MLPowerPreference_Default;
+                } else if (powerPreferenceOption == "low-power") {
+                    options.powerPreference = MLPowerPreference::MLPowerPreference_Low_power;
+                } else if (powerPreferenceOption == "high-performance") {
+                    options.powerPreference = MLPowerPreference::MLPowerPreference_High_performance;
+                } else {
+                    Napi::Error::New(info.Env(), "Invaild PowerPreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
+            }
+            // The MLDevicePreference is waited to be implemented
+        }
+
         WebnnProcTable backendProcs = webnn_native::GetProcs();
         webnnProcSetProcs(&backendProcs);
-        mImpl = ml::Context::Acquire(webnn_native::CreateContext());
+        mImpl = ml::Context::Acquire(webnn_native::CreateContext(&options));
         if (!mImpl) {
             Napi::Error::New(info.Env(), "Failed to create Context").ThrowAsJavaScriptException();
             return;
