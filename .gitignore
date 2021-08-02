@@ -100,4 +100,5 @@ node/third_party
 node/examples/electron/lenet/node_modules
 node/examples/electron/image_classification/node_modules
 node/examples/electron/object_detection/node_modules
+node/examples/electron/semantic_segmentation/node_modules
 node/examples/console/lenet/node_modules
