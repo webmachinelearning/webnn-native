@@ -122,7 +122,18 @@ namespace node {
         return GetMappedValue(paddingModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
-    inline bool GetInt32(const Napi::Value& jsValue, int32_t& value) {
+    inline bool GetInterpolationMode(const Napi::Value& jsValue, ml::InterpolationMode& value) {
+        const std::unordered_map<std::string, ml::InterpolationMode> interpolationModeMap = {
+            {"nearest-neighbor", ml::InterpolationMode::NearestNeighbor},
+            {"linear", ml::InterpolationMode::Linear},
+        };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(interpolationModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
+    };
+
+    inline bool GetValue(const Napi::Value& jsValue, int32_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
         }
@@ -140,7 +151,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetUint32(const Napi::Value& jsValue, uint32_t& value) {
+    inline bool GetValue(const Napi::Value& jsValue, uint32_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
         }
@@ -156,7 +167,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetInt8(const Napi::Value& jsValue, int8_t& value) {
+    inline bool GetValue(const Napi::Value& jsValue, int8_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
         }
@@ -171,7 +182,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetUint8(const Napi::Value& jsValue, uint8_t& value) {
+    inline bool GetValue(const Napi::Value& jsValue, uint8_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
         }
@@ -186,7 +197,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetFloat(const Napi::Value& jsValue, float& value) {
+    inline bool GetValue(const Napi::Value& jsValue, float& value) {
         if (!jsValue.IsNumber()) {
             return false;
         }
@@ -194,7 +205,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetBoolean(const Napi::Value& jsValue, bool& value) {
+    inline bool GetValue(const Napi::Value& jsValue, bool& value) {
         if (!jsValue.IsBoolean()) {
             return false;
         }
@@ -202,7 +213,7 @@ namespace node {
         return true;
     }
 
-    inline bool GetString(const Napi::Value& jsValue, std::string& value) {
+    inline bool GetValue(const Napi::Value& jsValue, std::string& value) {
         if (!jsValue.IsString()) {
             return false;
         }
@@ -210,9 +221,10 @@ namespace node {
         return true;
     }
 
-    inline bool GetInt32Array(const Napi::Value& jsValue,
-                              std::vector<int32_t>& array,
-                              const size_t size = std::numeric_limits<size_t>::max()) {
+    template <typename T>
+    inline bool GetArray(const Napi::Value& jsValue,
+                         std::vector<T>& array,
+                         const size_t size = std::numeric_limits<size_t>::max()) {
         if (!jsValue.IsArray()) {
             return false;
         }
@@ -220,16 +232,14 @@ namespace node {
         if (size != std::numeric_limits<size_t>::max() && size != jsArray.Length()) {
             return false;
         }
-        std::vector<int32_t> int32Array;
         for (uint32_t i = 0; i < jsArray.Length(); ++i) {
             Napi::Value jsItem = static_cast<Napi::Value>(jsArray[i]);
-            int32_t value;
-            if (!GetInt32(jsItem, value)) {
+            T value;
+            if (!GetValue(jsItem, value)) {
                 return false;
             }
-            int32Array.push_back(value);
+            array.push_back(value);
         }
-        array = int32Array;
         return true;
     }
 
@@ -308,7 +318,7 @@ namespace node {
             return false;
         }
         if (jsDesc.Has("dimensions")) {
-            if (!GetInt32Array(jsDesc.Get("dimensions"), desc.dimensions)) {
+            if (!GetArray(jsDesc.Get("dimensions"), desc.dimensions)) {
                 return false;
             }
         }

@@ -37,16 +37,15 @@ namespace node { namespace op {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "axes")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("axes"), axes),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("axes"), axes),
                                   "The axes parameter is invalid.");
                 WEBNN_NODE_ASSERT(axes.empty() == false, "The axes is empty.");
                 options.axes = axes.data();
                 options.axesCount = axes.size();
             }
             if (HasOptionMember(jsOptions, "keepDimensions")) {
-                WEBNN_NODE_ASSERT(
-                    GetBoolean(jsOptions.Get("keepDimensions"), options.keepDimensions),
-                    "The keepDimensions parameter is invalid.");
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("keepDimensions"), options.keepDimensions),
+                                  "The keepDimensions parameter is invalid.");
             }
         }
 

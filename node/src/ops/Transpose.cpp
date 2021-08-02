@@ -36,7 +36,7 @@ namespace node { namespace op {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "permutation")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("permutation"), permutation),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("permutation"), permutation),
                                   "The permutation parameter is invalid.");
                 WEBNN_NODE_ASSERT(permutation.empty() == false, "The newShape is empty.");
                 options.permutation = permutation.data();

@@ -27,7 +27,7 @@ namespace node { namespace op {
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         std::vector<int32_t> newShape;
-        WEBNN_NODE_ASSERT(GetInt32Array(info[1], newShape), "The newShape parameter is invalid.");
+        WEBNN_NODE_ASSERT(GetArray(info[1], newShape), "The newShape parameter is invalid.");
         WEBNN_NODE_ASSERT(newShape.empty() == false, "The newShape is empty.");
 
         ml::Operand reshape = builder.Reshape(input, newShape.data(), newShape.size());

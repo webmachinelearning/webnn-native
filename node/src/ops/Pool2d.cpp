@@ -81,19 +81,19 @@ namespace node { namespace op {
             Napi::Object jsOptions = info[1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "windowDimensions")) {
                 WEBNN_NODE_ASSERT(
-                    GetInt32Array(jsOptions.Get("windowDimensions"), options.windowDimensions, 2),
+                    GetArray(jsOptions.Get("windowDimensions"), options.windowDimensions, 2),
                     "The windowDimensions parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "padding")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("padding"), options.padding, 4),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("padding"), options.padding, 4),
                                   "The padding parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "strides")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("strides"), options.strides, 2),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("strides"), options.strides, 2),
                                   "The strides parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "dilations")) {
-                WEBNN_NODE_ASSERT(GetInt32Array(jsOptions.Get("dilations"), options.dilations, 2),
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("dilations"), options.dilations, 2),
                                   "The dilations parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "autoPad")) {

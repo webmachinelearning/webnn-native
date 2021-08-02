@@ -46,19 +46,19 @@ namespace node { namespace op {
                                   "The c parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "alpha")) {
-                WEBNN_NODE_ASSERT(GetFloat(jsOptions.Get("alpha"), options.alpha),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("alpha"), options.alpha),
                                   "The alpha parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "beta")) {
-                WEBNN_NODE_ASSERT(GetFloat(jsOptions.Get("beta"), options.beta),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("beta"), options.beta),
                                   "The beta parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "aTranspose")) {
-                WEBNN_NODE_ASSERT(GetBoolean(jsOptions.Get("aTranspose"), options.aTranspose),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("aTranspose"), options.aTranspose),
                                   "The aTranspose parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "bTranspose")) {
-                WEBNN_NODE_ASSERT(GetBoolean(jsOptions.Get("bTranspose"), options.bTranspose),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("bTranspose"), options.bTranspose),
                                   "The bTranspose parameter is invalid.");
             }
         }
