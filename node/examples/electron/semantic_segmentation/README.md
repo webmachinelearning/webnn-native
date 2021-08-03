@@ -1,4 +1,4 @@
-# An Electron.js example of Image Classification using webnn-native
+# An Electron.js example of Semantic Segmentation using webnn-native
 
 ### Install
 
