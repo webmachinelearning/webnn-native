@@ -15,6 +15,7 @@
 #include "ML.h"
 
 #include "Context.h"
+#include "Utils.h"
 
 Napi::FunctionReference node::ML::constructor;
 
@@ -24,8 +25,15 @@ namespace node {
     }
 
     Napi::Value ML::CreateContext(const Napi::CallbackInfo& info) {
-        Napi::Object context = Context::constructor.New({});
-        return context;
+        WEBNN_NODE_ASSERT(info.Length() <= 1, "The number of arguments is invalid.");
+
+        Napi::Object context;
+        std::vector<napi_value> args = {};
+        if (info.Length() > 0) {
+            WEBNN_NODE_ASSERT(info[0].IsObject(), "The option should be an object");
+            args.push_back(info[0].As<Napi::Object>());
+        }
+        return Context::constructor.New(args);
     }
 
     Napi::Object ML::Initialize(Napi::Env env, Napi::Object exports) {
