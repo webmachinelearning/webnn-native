@@ -81,6 +81,10 @@ namespace node {
         BUILD_BINARY(Add);
     }
 
+    Napi::Value GraphBuilder::Sub(const Napi::CallbackInfo& info) {
+        BUILD_BINARY(Sub);
+    }
+
     Napi::Value GraphBuilder::Mul(const Napi::CallbackInfo& info) {
         BUILD_BINARY(Mul);
     }
@@ -91,6 +95,10 @@ namespace node {
 
     Napi::Value GraphBuilder::Div(const Napi::CallbackInfo& info) {
         BUILD_BINARY(Div);
+    }
+
+    Napi::Value GraphBuilder::Tanh(const Napi::CallbackInfo& info) {
+        BUILD_BINARY(Tanh);
     }
 
     Napi::Value GraphBuilder::BatchNorm(const Napi::CallbackInfo& info) {
@@ -176,10 +184,12 @@ namespace node {
             {InstanceMethod("constant", &GraphBuilder::Constant, napi_enumerable),
              InstanceMethod("input", &GraphBuilder::Input, napi_enumerable),
              InstanceMethod("add", &GraphBuilder::Add, napi_enumerable),
+             InstanceMethod("sub", &GraphBuilder::Sub, napi_enumerable),
              InstanceMethod("batchNormalization", &GraphBuilder::BatchNorm, napi_enumerable),
              InstanceMethod("mul", &GraphBuilder::Mul, napi_enumerable),
              InstanceMethod("matmul", &GraphBuilder::Matmul, napi_enumerable),
              InstanceMethod("div", &GraphBuilder::Div, napi_enumerable),
+             InstanceMethod("tanh", &GraphBuilder::Tanh, napi_enumerable),
              InstanceMethod("concat", &GraphBuilder::Concat, napi_enumerable),
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
