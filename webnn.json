@@ -142,6 +142,9 @@
   "operand": {
     "category": "object"
   },
+  "operator": {
+    "category": "object"
+  },
   "named operands": {
     "category": "object",
     "methods": [
