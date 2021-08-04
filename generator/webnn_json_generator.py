@@ -38,8 +38,12 @@ from dawn_json_generator import parse_json, Method, Name
 
 
 def as_varName(*names):
-    return names[0].camelCase() + ''.join(
+    varName = names[0].camelCase() + ''.join(
         [name.CamelCase() for name in names[1:]])
+    # Avoid to use C++ keyword 'operator', probably check for others on demand.
+    if varName == 'operator':
+        varName = 'mlOperator'
+    return varName
 
 
 def as_cType(name):
