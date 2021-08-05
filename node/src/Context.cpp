@@ -28,8 +28,11 @@ namespace node {
         if (info.Length() > 0) {
             Napi::Object optionsObject = info[0].As<Napi::Object>();
             if (optionsObject.Has("powerPreference")) {
-                WEBNN_NODE_ASSERT(options.Get("powerPreference").IsString(),
-                                  "The value of the powerPreference should be a String");
+                if (!optionsObject.Get("powerPreference").IsString()) {
+                    Napi::Error::New(info.Env(), "Invaild powerPreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
                 std::string powerPreferenceOption = optionsObject.Get("powerPreference").ToString();
                 if (powerPreferenceOption == "default") {
                     options.powerPreference = MLPowerPreference_Default;
@@ -38,15 +41,18 @@ namespace node {
                 } else if (powerPreferenceOption == "high-performance") {
                     options.powerPreference = MLPowerPreference_High_performance;
                 } else {
-                    Napi::Error::New(info.Env(), "Invaild PowerPreference")
+                    Napi::Error::New(info.Env(), "Invaild powerPreference")
                         .ThrowAsJavaScriptException();
                     return;
                 }
             }
 
             if (optionsObject.Has("devicePreference")) {
-                WEBNN_NODE_ASSERT(options.Get("devicePreference").IsString(),
-                                  "The value of the devicePreference should be a String");
+                if (!optionsObject.Get("devicePreference").IsString()) {
+                    Napi::Error::New(info.Env(), "Invaild devicePreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
                 std::string devicePreferenceOption =
                     optionsObject.Get("devicePreference").ToString();
                 if (devicePreferenceOption == "default") {
@@ -56,7 +62,7 @@ namespace node {
                 } else if (devicePreferenceOption == "cpu") {
                     options.devicePreference = MLDevicePreference_Cpu;
                 } else {
-                    Napi::Error::New(info.Env(), "Invaild PowerPreference")
+                    Napi::Error::New(info.Env(), "Invaild devicePreference")
                         .ThrowAsJavaScriptException();
                     return;
                 }
