@@ -59,6 +59,19 @@ namespace utils {
 
     uint32_t SizeOfShape(const std::vector<int32_t>& dims);
 
+    enum FusedActivation { NONE, RELU, RELU6, SIGMOID, LEAKYRELU };
+
+    const ml::Operator createActivationOperator(std::vector<SHARED_DATA_TYPE>& constants,
+                                                const ml::GraphBuilder& builder,
+                                                FusedActivation activation = FusedActivation::NONE,
+                                                const std::vector<float>& options = {});
+
+    const ml::Operand createActivationOperand(std::vector<SHARED_DATA_TYPE>& constants,
+                                              const ml::GraphBuilder& builder,
+                                              const ml::Operand& input,
+                                              FusedActivation activation,
+                                              const std::vector<float>& options);
+
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
                            std::string name,
                            const std::vector<int32_t>& dimensions,
@@ -79,6 +92,8 @@ namespace utils {
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
         ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
+        ml::Operand bias;
+        ml::Operator activation;
 
         const ml::Conv2dOptions* AsPtr() {
             if (!padding.empty()) {
@@ -97,6 +112,8 @@ namespace utils {
             mOptions.autoPad = autoPad;
             mOptions.inputLayout = inputLayout;
             mOptions.filterLayout = filterLayout;
+            mOptions.bias = bias;
+            mOptions.activation = activation;
             return &mOptions;
         }
 

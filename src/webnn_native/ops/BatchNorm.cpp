@@ -37,6 +37,7 @@ namespace webnn_native { namespace op {
         } else {
             mOptions.scale = nullptr;
             mOptions.bias = nullptr;
+            mOptions.activation = nullptr;
         }
     }
 

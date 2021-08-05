@@ -24,6 +24,11 @@ namespace webnn_native { namespace op {
                    OperandBase* filter,
                    Conv2dOptions const* options)
         : OperandBase(builder, {input, filter}) {
+        if (options != nullptr) {
+            if (options->bias != nullptr) {
+                mInputs.push_back(options->bias);
+            }
+        }
         if (options == nullptr || options->padding == nullptr) {
             mPadding = std::vector<int32_t>(4, 0);
         } else {
@@ -54,6 +59,8 @@ namespace webnn_native { namespace op {
         mOptions.filterLayout =
             options == nullptr ? ml::FilterOperandLayout::Oihw : options->filterLayout;
         mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
+        mOptions.bias = options == nullptr ? nullptr : options->bias;
+        mOptions.activation = options == nullptr ? nullptr : options->activation;
     }
 
     MaybeError Conv2d::AddToGraph(GraphBase* graph) const {

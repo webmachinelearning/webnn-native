@@ -216,7 +216,9 @@
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
-      {"name": "filter layout", "type": "filter operand layout", "default": "oihw"}
+      {"name": "filter layout", "type": "filter operand layout", "default": "oihw"},
+      {"name": "bias", "type": "operand"},
+      {"name": "activation", "type": "operator"}
     ]
   },
   "pad options": {
@@ -288,7 +290,8 @@
       {"name": "scale", "type": "operand"},
       {"name": "bias", "type": "operand"},
       {"name": "axis", "type": "uint32_t", "default": 1},
-      {"name": "epsilon", "type": "float", "default": 1e-5}
+      {"name": "epsilon", "type": "float", "default": 1e-5},
+      {"name": "activation", "type": "operator"}
     ]
   },
   "instanceNorm options": {
@@ -385,7 +388,6 @@
           {"name": "options", "type": "gemm options", "annotation": "const*", "optional": true}
         ]
       },
-
       {
         "name": "leaky relu",
         "returns": "operand",
@@ -394,7 +396,13 @@
           {"name": "options", "type": "leakyRelu options", "annotation": "const*", "optional": true}
         ]
       },
-
+      {
+        "name": "leaky relu operator",
+        "returns": "operator",
+        "args": [
+          {"name": "options", "type": "leakyRelu options", "annotation": "const*", "optional": true}
+        ]
+      },
       {
         "name": "max pool2d",
         "returns": "operand",
@@ -436,6 +444,10 @@
         ]
       },
       {
+        "name": "relu operator",
+        "returns": "operator"
+      },
+      {
         "name": "reshape",
         "returns": "operand",
         "args": [
@@ -450,6 +462,10 @@
         "args": [
           {"name": "input", "type": "operand"}
         ]
+      },
+      {
+        "name": "sigmoid operator",
+        "returns": "operator"
       },
       {
         "name": "tanh",
@@ -487,6 +503,13 @@
         "returns": "operand",
         "args": [
           {"name": "input", "type": "operand"},
+          {"name": "options", "type": "clamp options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "clamp operator",
+        "returns": "operator",
+        "args": [
           {"name": "options", "type": "clamp options", "annotation": "const*", "optional": true}
         ]
       },

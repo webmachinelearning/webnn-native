@@ -20,146 +20,140 @@ class BatchNormTests : public WebnnTest {
     }
 
   protected:
-    void CheckBatchNorm(const std::vector<int32_t>& inputShape,
-                        const std::vector<float>& inputData,
-                        const std::vector<float>& meanData,
-                        const std::vector<int32_t>& meanShape,
-                        const std::vector<float>& varianceData,
-                        const std::vector<int32_t>& varianceShape,
+    struct Tensor {
+        std::vector<int32_t> shape;
+        std::vector<float> value;
+    };
+    std::vector<SHARED_DATA_TYPE> mConstants;
+    void CheckBatchNorm(const Tensor& input,
+                        const Tensor& mean,
+                        const Tensor& variance,
                         const std::vector<float>& expectedValue,
-                        const ml::BatchNormOptions* options = nullptr) {
-        const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        const ml::Operand mean = utils::BuildConstant(builder, meanShape, meanData.data(),
-                                                      meanData.size() * sizeof(float));
-        const ml::Operand variance = utils::BuildConstant(
-            builder, varianceShape, varianceData.data(), varianceData.size() * sizeof(float));
-        const ml::Operand b = builder.BatchNorm(a, mean, variance, options);
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+                        const Tensor& scale = {},
+                        const Tensor& bias = {},
+                        ml::BatchNormOptions options = {},
+                        utils::FusedActivation activation = utils::FusedActivation::NONE) {
+        const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
+        const ml::Operand m = utils::BuildConstant(builder, mean.shape, mean.value.data(),
+                                                   mean.value.size() * sizeof(float));
+        const ml::Operand v = utils::BuildConstant(builder, variance.shape, variance.value.data(),
+                                                   variance.value.size() * sizeof(float));
+        if (!scale.value.empty()) {
+            options.scale = utils::BuildConstant(builder, scale.shape, scale.value.data(),
+                                                 scale.value.size() * sizeof(float));
+        }
+        if (!bias.value.empty()) {
+            options.bias = utils::BuildConstant(builder, bias.shape, bias.value.data(),
+                                                bias.value.size() * sizeof(float));
+        }
+        if (activation != utils::FusedActivation::NONE) {
+            options.activation = utils::createActivationOperator(mConstants, builder, activation);
+        }
+        const ml::Operand output = builder.BatchNorm(x, m, v, &options);
+        const ml::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
-        std::vector<float> result(utils::SizeOfShape(inputShape));
-        utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+        std::vector<float> result(utils::SizeOfShape(input.shape));
+        utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
     ml::GraphBuilder builder;
 };
 
 TEST_F(BatchNormTests, BatchNormNchw) {
-    const std::vector<int32_t> inputShape = {1, 2, 1, 3};
-    const std::vector<float> inputData = {-1, 0, 1, 2, 3, 4};
-    const std::vector<float> meanData = {0, 3};
-    const std::vector<int32_t> meanShape = {2};
-    const std::vector<float> varianceData = {1.0, 1.5};
-    const std::vector<int32_t> varianceShape = {2};
-    const std::vector<float> scaleData = {1.0, 1.5};
-    const ml::Operand scale =
-        utils::BuildConstant(builder, {2}, scaleData.data(), scaleData.size() * sizeof(float));
-    const std::vector<float> biasData = {0, 1};
-    const ml::Operand bias =
-        utils::BuildConstant(builder, {2}, biasData.data(), biasData.size() * sizeof(float));
+    Tensor input = {{1, 2, 1, 3}, {-1, 0, 1, 2, 3, 4}};
+    Tensor mean = {{2}, {0, 3}};
+    Tensor variance = {{2}, {1.0, 1.5}};
+    Tensor scale = {{2}, {1.0, 1.5}};
+    Tensor bias = {{2}, {0, 1}};
 
-    ml::BatchNormOptions options;
-    options.scale = scale;
-    options.bias = bias;
     std::vector<float> expectedValue = {-0.999995, 0., 0.999995, -0.22474074, 1., 2.2247407};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, bias);
 
-    options = {};
-    options.scale = scale;
+    expectedValue = {0., 0., 0.999995, 0., 1., 2.2247407};
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, bias, {},
+                   utils::FusedActivation::RELU);
+
     expectedValue = {-0.999995, 0., 0.999995, -1.22474, 0., 1.22474};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, scale);
 
-    options = {};
-    options.bias = bias;
+    expectedValue = {0., 0., 0.999995, 0., 0., 1.22474};
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, {}, {},
+                   utils::FusedActivation::RELU);
+
     expectedValue = {-0.999995, 0., 0.999995, 0.183506, 1., 1.816494};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, {}, bias);
+
+    expectedValue = {0., 0., 0.999995, 0.183506, 1., 1.816494};
+    CheckBatchNorm(input, mean, variance, expectedValue, {}, bias, {},
+                   utils::FusedActivation::RELU);
 }
 
 TEST_F(BatchNormTests, BatchNormNhwc) {
-    const std::vector<int32_t> inputShape = {1, 1, 3, 2};
-    const std::vector<float> inputData = {-1, 2, 0, 3, 1, 4};
-    const std::vector<float> meanData = {0, 3};
-    const std::vector<int32_t> meanShape = {2};
-    const std::vector<float> varianceData = {1.0, 1.5};
-    const std::vector<int32_t> varianceShape = {2};
-    const std::vector<float> scaleData = {1.0, 1.5};
-    const ml::Operand scale =
-        utils::BuildConstant(builder, {2}, scaleData.data(), scaleData.size() * sizeof(float));
-    const std::vector<float> biasData = {0, 1};
-    const ml::Operand bias =
-        utils::BuildConstant(builder, {2}, biasData.data(), biasData.size() * sizeof(float));
+    Tensor input = {{1, 1, 3, 2}, {-1, 2, 0, 3, 1, 4}};
+    Tensor mean = {{2}, {0, 3}};
+    Tensor variance = {{2}, {1.0, 1.5}};
+    Tensor scale = {{2}, {1.0, 1.5}};
+    Tensor bias = {{2}, {0, 1}};
     ml::BatchNormOptions options;
-    options.scale = scale;
-    options.bias = bias;
+
     options.axis = 3;
     std::vector<float> expectedValue = {-0.999995, -0.22474074, 0., 1., 0.999995, 2.2247407};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, bias, options);
 
-    options = {};
-    options.scale = scale;
-    options.axis = 3;
+    expectedValue = {0., 0., 0., 1., 0.999995, 2.2247407};
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, bias, options,
+                   utils::FusedActivation::RELU);
+
     expectedValue = {-0.999995, -1.22474, 0., 0., 0.999995, 1.22474};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, {}, options);
 
-    options = {};
-    options.bias = bias;
-    options.axis = 3;
+    expectedValue = {0., 0., 0., 0., 0.999995, 1.22474};
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, {}, options,
+                   utils::FusedActivation::RELU);
+
     expectedValue = {-0.999995, 0.183506, 0., 1., 0.999995, 1.816494};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, {}, bias, options);
+
+    expectedValue = {0., 0.183506, 0., 1., 0.999995, 1.816494};
+    CheckBatchNorm(input, mean, variance, expectedValue, {}, bias, options,
+                   utils::FusedActivation::RELU);
 }
 
 TEST_F(BatchNormTests, BatchNormWithoutOptions) {
-    const std::vector<int32_t> inputShape = {1, 2, 1, 3};
-    const std::vector<float> inputData = {-1, 0, 1, 2, 3, 4};
-    const std::vector<float> meanData = {0, 3};
-    const std::vector<int32_t> meanShape = {2};
-    const std::vector<float> varianceData = {1.0, 1.5};
-    const std::vector<int32_t> varianceShape = {2};
+    Tensor input = {{1, 2, 1, 3}, {-1, 0, 1, 2, 3, 4}};
+    Tensor mean = {{2}, {0, 3}};
+    Tensor variance = {{2}, {1.0, 1.5}};
+
     const std::vector<float> expectedValue = {-0.999995, 0, 0.999995, -0.816494, 0, 0.816494};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue);
+    CheckBatchNorm(input, mean, variance, expectedValue);
 }
 
 TEST_F(BatchNormTests, BatchNormWithEpsilon) {
-    const std::vector<int32_t> inputShape = {2, 3, 4, 5};
-    const std::vector<float> inputData = {
-        2.6973534,   -1.1874187,  -0.18637535, -1.7081367,  0.03293341,  1.4802791,   -0.68332213,
-        1.618039,    -1.6412221,  -0.52998835, 1.5229957,   -0.92798537, -0.35554567, 0.717948,
-        0.50108916,  1.0521007,   -0.68065745, 1.3121722,   0.50907123,  1.5093223,   -0.540522,
-        -0.80794656, -0.17974755, -1.8922086,  2.0955374,   0.46592507,  -0.2936382,  -0.43420887,
-        -0.11036888, -1.2171484,  -1.9003569,  0.32063156,  0.38756344,  0.4720109,   -0.4177193,
-        -0.7655141,  -1.2207903,  0.52860916,  0.22583283,  1.2220219,   -0.0248001,  0.6148501,
-        1.0967597,   0.8798244,   -0.6854243,  -0.8442876,  1.6188551,   -0.6460473,  0.76349306,
-        2.630077,    -0.85050315, 0.37401453,  0.08842833,  -0.5043717,  -0.7495827,  -0.98900026,
-        0.79681706,  -0.3573076,  0.8644746,   1.196009,    0.35148722,  0.39926755,  -0.21630785,
-        1.731195,    1.8644739,   -0.60227305, -1.0833911,  -0.6197943,  -0.05721893, -0.23889631,
-        -0.24901256, 1.3885167,   -0.67789817, -0.3381054,  0.33224156,  0.79065573,  1.1667213,
-        -0.47722074, 0.4234017,   0.2317288,   -0.18525974, -0.17303231, 0.41841915,  0.13230574,
-        0.1261528,   1.253214,    1.9984859,   -1.7275336,  0.6593169,   -1.3704892,  0.63530993,
-        -0.33128706, -1.2268444,  0.87340677,  1.4801403,   0.09598545,  0.30467814,  -0.15848571,
-        -0.16779709, 1.1372787,   0.3292992,   -0.2240395,  0.88280654,  1.3370756,   0.2533313,
-        0.84305125,  -1.6560661,  -0.09365056, -1.301057,   -0.1476929,  -1.2850751,  -1.286735,
-        -1.9894414,  -0.5574838,  -0.392564,   -0.92764777, -0.79910755, 0.9099533,   0.9825949,
-        -0.8327678};
-    const std::vector<float> meanData = {0.3432895, 1.0855169, 1.8725895};
-    const std::vector<int32_t> meanShape = {3};
-    const std::vector<float> varianceData = {0.601868, 0.86580527, 0.38809904};
-    const std::vector<int32_t> varianceShape = {3};
-    const std::vector<float> scaleData = {0.17215693, -0.7909758, 0.12456307};
-    const ml::Operand scale =
-        utils::BuildConstant(builder, {3}, scaleData.data(), scaleData.size() * sizeof(float));
-
-    const std::vector<float> biasData = {0.5280557, -1.4475446, 0.1760742};
-    const ml::Operand bias =
-        utils::BuildConstant(builder, {3}, biasData.data(), biasData.size() * sizeof(float));
+    Tensor input = {
+        {2, 3, 4, 5},
+        {2.6973534,   -1.1874187,  -0.18637535, -1.7081367,  0.03293341,  1.4802791,   -0.68332213,
+         1.618039,    -1.6412221,  -0.52998835, 1.5229957,   -0.92798537, -0.35554567, 0.717948,
+         0.50108916,  1.0521007,   -0.68065745, 1.3121722,   0.50907123,  1.5093223,   -0.540522,
+         -0.80794656, -0.17974755, -1.8922086,  2.0955374,   0.46592507,  -0.2936382,  -0.43420887,
+         -0.11036888, -1.2171484,  -1.9003569,  0.32063156,  0.38756344,  0.4720109,   -0.4177193,
+         -0.7655141,  -1.2207903,  0.52860916,  0.22583283,  1.2220219,   -0.0248001,  0.6148501,
+         1.0967597,   0.8798244,   -0.6854243,  -0.8442876,  1.6188551,   -0.6460473,  0.76349306,
+         2.630077,    -0.85050315, 0.37401453,  0.08842833,  -0.5043717,  -0.7495827,  -0.98900026,
+         0.79681706,  -0.3573076,  0.8644746,   1.196009,    0.35148722,  0.39926755,  -0.21630785,
+         1.731195,    1.8644739,   -0.60227305, -1.0833911,  -0.6197943,  -0.05721893, -0.23889631,
+         -0.24901256, 1.3885167,   -0.67789817, -0.3381054,  0.33224156,  0.79065573,  1.1667213,
+         -0.47722074, 0.4234017,   0.2317288,   -0.18525974, -0.17303231, 0.41841915,  0.13230574,
+         0.1261528,   1.253214,    1.9984859,   -1.7275336,  0.6593169,   -1.3704892,  0.63530993,
+         -0.33128706, -1.2268444,  0.87340677,  1.4801403,   0.09598545,  0.30467814,  -0.15848571,
+         -0.16779709, 1.1372787,   0.3292992,   -0.2240395,  0.88280654,  1.3370756,   0.2533313,
+         0.84305125,  -1.6560661,  -0.09365056, -1.301057,   -0.1476929,  -1.2850751,  -1.286735,
+         -1.9894414,  -0.5574838,  -0.392564,   -0.92764777, -0.79910755, 0.9099533,   0.9825949,
+         -0.8327678}};
+    Tensor mean = {{3}, {0.3432895, 1.0855169, 1.8725895}};
+    Tensor variance = {{3}, {0.601868, 0.86580527, 0.38809904}};
+    Tensor scale = {{3}, {0.17215693, -0.7909758, 0.12456307}};
+    Tensor bias = {{3}, {0.5280557, -1.4475446, 0.1760742}};
     ml::BatchNormOptions options;
-    options.scale = scale;
-    options.bias = bias;
     options.epsilon = 1e-2;
 
     const std::vector<float> expectedValue = {
@@ -187,6 +181,5 @@ TEST_F(BatchNormTests, BatchNormWithEpsilon) {
         -2.7178437e-02, -5.2055711e-01, -2.1210325e-01, -4.5047081e-01, -2.2277233e-01,
         -4.4731563e-01, -4.4764340e-01, -5.8637255e-01, -3.0367374e-01, -2.7111509e-01,
         -3.7675196e-01, -3.5137540e-01, -1.3970569e-02, 3.7042797e-04,  -3.5802066e-01};
-    CheckBatchNorm(inputShape, inputData, meanData, meanShape, varianceData, varianceShape,
-                   expectedValue, &options);
+    CheckBatchNorm(input, mean, variance, expectedValue, scale, bias, options);
 }

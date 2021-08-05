@@ -25,9 +25,11 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"
+#include "webnn_native/ops/ClampOperator.h"
 #include "webnn_native/ops/Concat.h"
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
@@ -35,11 +37,14 @@
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/ops/LeakyReluOperator.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
+#include "webnn_native/ops/ReluOperator.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/SigmoidOperator.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
@@ -111,6 +116,11 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kRelu, input));
     }
 
+    OperatorBase* GraphBuilderBase::ReluOperator() {
+        Ref<OperatorBase> op = AcquireRef(new op::ReluOperator(this));
+        return op.Detach();
+    }
+
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Resample(this, input, options));
     }
@@ -129,6 +139,11 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
     }
 
+    OperatorBase* GraphBuilderBase::SigmoidOperator() {
+        Ref<OperatorBase> op = AcquireRef(new op::SigmoidOperator(this));
+        return op.Detach();
+    }
+
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kTanh, input));
     }
@@ -139,6 +154,11 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::LeakyRelu(OperandBase* input, LeakyReluOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::LeakyRelu(this, input, options));
+    }
+
+    OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
+        Ref<OperatorBase> op = AcquireRef(new op::LeakyReluOperator(this, options));
+        return op.Detach();
     }
 
     OperandBase* GraphBuilderBase::Concat(uint32_t inputsCount,
@@ -160,6 +180,11 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Clamp(OperandBase* input, ClampOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, input, options));
+    }
+
+    OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
+        Ref<OperatorBase> op = AcquireRef(new op::ClampOperator(this, options));
+        return op.Detach();
     }
 
     OperandBase* GraphBuilderBase::BatchNorm(OperandBase* input,

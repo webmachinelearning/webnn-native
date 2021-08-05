@@ -1,4 +1,3 @@
-// Copyright 2017 The Dawn Authors
 // Copyright 2021 The WebNN-native Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_FORWARD_H_
-#define WEBNN_NATIVE_FORWARD_H_
+#ifndef WEBNN_NATIVE_OPS_SIGMOIDOPERATOR_H_
+#define WEBNN_NATIVE_OPS_SIGMOIDOPERATOR_H_
 
-#include <cstdint>
+#include "webnn_native/Graph.h"
+#include "webnn_native/Operator.h"
 
-template <typename T>
-class Ref;
+namespace webnn_native { namespace op {
 
-namespace webnn_native {
+    class SigmoidOperator final : public OperatorBase {
+      public:
+        SigmoidOperator(GraphBuilderBase* builder);
+        ~SigmoidOperator() override = default;
 
-    class CompilationBase;
-    class GraphBase;
-    class GraphBuilderBase;
-    class NamedInputsBase;
-    class NamedOperandsBase;
-    class NamedOutputsBase;
-    class NamedResultsBase;
-    class OperandBase;
-    class OperatorBase;
-    class ResultBase;
+        OperatorType GetOperatorType() const override {
+            return mType;
+        }
 
-}  // namespace webnn_native
+      private:
+        OperatorType mType;
+    };
 
-#endif  // WEBNN_NATIVE_FORWARD_H_
+}}  // namespace webnn_native::op
+
+#endif  // WEBNN_NATIVE_OPS_SIGMOIDOPERATOR_H_

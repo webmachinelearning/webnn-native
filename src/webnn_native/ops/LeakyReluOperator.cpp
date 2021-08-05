@@ -1,4 +1,3 @@
-// Copyright 2017 The Dawn Authors
 // Copyright 2021 The WebNN-native Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,27 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_FORWARD_H_
-#define WEBNN_NATIVE_FORWARD_H_
+#include "webnn_native/ops/LeakyReluOperator.h"
+#include "common/Log.h"
 
-#include <cstdint>
+namespace webnn_native { namespace op {
 
-template <typename T>
-class Ref;
-
-namespace webnn_native {
-
-    class CompilationBase;
-    class GraphBase;
-    class GraphBuilderBase;
-    class NamedInputsBase;
-    class NamedOperandsBase;
-    class NamedOutputsBase;
-    class NamedResultsBase;
-    class OperandBase;
-    class OperatorBase;
-    class ResultBase;
-
-}  // namespace webnn_native
-
-#endif  // WEBNN_NATIVE_FORWARD_H_
+    LeakyReluOperator::LeakyReluOperator(GraphBuilderBase* builder, LeakyReluOptions const* options)
+        : OperatorBase(builder) {
+        mType = OperatorType::LeakyRelu;
+        mAlpha = options == nullptr ? 0.01 : options->alpha;
+    }
+}}  // namespace webnn_native::op

@@ -66,6 +66,146 @@ namespace webnn_native { namespace ie {
             return {};
         }
 
+// ngraph_node_t CreateClampNode(
+//     ngraph::Output<ngraph::Node> input_node,
+//     ClampOptions const* options) {
+//     std::vector<float> minValue;
+//     std::vector<size_t> minDimensions;
+//     if (options->minValue != nullptr) {
+//         DAWN_TRY(GetConstantData(mConstantSet, inputs[1], minValue, minDimensions));
+//     } else {
+//         minValue.push_back(std::numeric_limits<float>::lowest());
+//     }
+//     std::vector<float> maxValue;
+//     std::vector<size_t> maxDimensions;
+//     if (options->maxValue != nullptr) {
+//         size_t maxIndex = options->minValue != nullptr ? 2 : 1;
+//         DAWN_TRY(GetConstantData(mConstantSet, inputs[maxIndex], maxValue, maxDimensions));
+//     } else {
+//         maxValue.push_back(std::numeric_limits<float>::max());
+//     }
+//     // If minValue and maxValue are both scalars with shape {1} or shape {}, use
+//     // native Clamp to create graph. Otherwise, due to the limitation of Clamp's
+//     // attributes type, use Maximum and Minimum to implement Clamp as a
+//     // emulation. Note that this emulation may cause performance decline in
+//     // OpenVINO.
+//     ngraph_node_t* clampNode;
+//     IEStatusCode status;
+//     auto inputNode = mGraphNodeMap[inputs[0].Get()];
+//     if ((minDimensions.empty() && maxDimensions.empty()) ||
+//         (minDimensions.size() * maxDimensions.size() == 1 &&
+//          minDimensions[0] * maxDimensions[0] == 1)) {
+//         status = ngraph_clamp(inputNode, minValue[0], maxValue[0], &clampNode);
+//         DAWN_TRY(CheckStatusCode(status, "ngraph clamp"));
+//     } else {
+//         ngraph_node_t* maxNode = const_cast<ngraph_node_t*>(inputNode);
+//         if (!minValue.empty()) {
+//             const ngraph_node_t* minConstant =
+//                 AddConstantWithGraph<float>(precision_e::FP32, minDimensions, minValue);
+//             status = ngraph_max(inputNode, minConstant, &maxNode);
+//             DAWN_TRY(CheckStatusCode(status, "ngraph max"));
+//         }
+//         clampNode = maxNode;
+//         if (!maxValue.empty()) {
+//             const ngraph_node_t* maxConstant =
+//                 AddConstantWithGraph<float>(precision_e::FP32, maxDimensions, maxValue);
+//             status = ngraph_min(maxNode, maxConstant, &clampNode);
+//             DAWN_TRY(CheckStatusCode(status, "ngraph min"));
+//         }
+//     }
+//     return clamp_node;
+// }
+
+        ngraph_node_t* AddActivationNode(const ngraph_node_t* inputNode, OperatorBase* activation) {
+            ngraph_node_t* activationNode;
+            if (activation == nullptr) {
+                activationNode = const_cast<ngraph_node_t*> inputNode;
+                return activationNode;
+            }
+            auto operatorType = activation->GetOperatorType();
+            switch (operatorType) {
+                case OperatorType::None: {
+                    activationNode = const_cast<ngraph_node_t*> inputNode;
+                    break;
+                }
+                case OperatorType::Clamp: {
+                    ieActivation.type = ie_activation_type::Clamp;
+                    auto clamp = reinterpret_cast<op::ClampOperator*>(activation);
+                    auto options = clamp->GetOptions();
+                    std::vector<float> minValue;
+                    std::vector<size_t> minDimensions;
+                    if (options->minValue != nullptr) {
+                        DAWN_TRY(GetConstantData(mConstantSet, options->minValue, minValue,
+                                                 minDimensions));
+                    } else {
+                        minValue.push_back(std::numeric_limits<float>::lowest());
+                    }
+                    std::vector<float> maxValue;
+                    std::vector<size_t> maxDimensions;
+                    if (options->maxValue != nullptr) {
+                        DAWN_TRY(GetConstantData(mConstantSet, options->minValue, maxValue,
+                                                 maxDimensions));
+                    } else {
+                        maxValue.push_back(std::numeric_limits<float>::max());
+                    }
+                    // If minValue and maxValue are both scalars with shape {1} or shape {}, use
+                    // native Clamp to create graph. Otherwise, due to the limitation of Clamp's
+                    // attributes type, use Maximum and Minimum to implement Clamp as a
+                    // emulation. Note that this emulation may cause performance decline in
+                    // OpenVINO.
+                    ngraph_node_t* clampNode;
+                    IEStatusCode status;
+                    if ((minDimensions.empty() && maxDimensions.empty()) ||
+                        (minDimensions.size() * maxDimensions.size() == 1 &&
+                         minDimensions[0] * maxDimensions[0] == 1)) {
+                        status = ngraph_clamp(inputNode, minValue[0], maxValue[0], &clampNode);
+                        DAWN_TRY(CheckStatusCode(status, "ngraph clamp"));
+                    } else {
+                        ngraph_node_t* maxNode = const_cast<ngraph_node_t*>(inputNode);
+                        if (!minValue.empty()) {
+                            const ngraph_node_t* minConstant = AddConstantWithGraph<float>(
+                                precision_e::FP32, minDimensions, minValue);
+                            status = ngraph_max(inputNode, minConstant, &maxNode);
+                            DAWN_TRY(CheckStatusCode(status, "ngraph max"));
+                        }
+                        clampNode = maxNode;
+                        if (!maxValue.empty()) {
+                            const ngraph_node_t* maxConstant = AddConstantWithGraph<float>(
+                                precision_e::FP32, maxDimensions, maxValue);
+                            status = ngraph_min(maxNode, maxConstant, &clampNode);
+                            DAWN_TRY(CheckStatusCode(status, "ngraph min"));
+                        }
+                    }
+                    break;
+                }
+                case OperatorType::Relu: {
+                    IEStatusCode status = IEStatusCode::OK;
+                    status = ngraph_relu(inputNode, &activationNode);
+                    DAWN_TRY(CheckStatusCode(status, "ngraph relu"));
+
+                    break;
+                }
+                case OperatorType::Sigmoid: {
+                    IEStatusCode status = IEStatusCode::OK;
+                    status = ngraph_sigmoid(inputNode, &activationNode);
+                    DAWN_TRY(CheckStatusCode(status, "ngraph sigmoid"));
+                    break;
+                }
+                case OperatorType::LeakyRelu: {
+                    IEStatusCode status = IEStatusCode::OK;
+                    auto leakyRelu = reinterpret_cast<const op::LeakyReluOperator*>(activation);
+                    const ngraph_node_t* constantNode = AddConstantWithGraph<float>(
+                        precision_e::FP32, {1}, *{leakyRelu->GetAlpha()});
+                    status = ngraph_leaky_relu(inputNode, constantNode, &activationNode);
+                    DAWN_TRY(CheckStatusCode(status, "ngraph leakyRelu"));
+                    break;
+                }
+                default:
+                    WEBNN_ASSERT(0, "The OperatorType isn't supported.");
+            }
+            return activationNode;
+        }
+
         MaybeError GetConstantData(std::unordered_set<const OperandBase*>& constantSet,
                                    Ref<OperandBase>& constant,
                                    std::vector<float>& data,
@@ -468,6 +608,7 @@ namespace webnn_native { namespace ie {
     }
 
     MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
+        IEStatusCode status;
         auto options = conv2d->GetOptions();
         std::vector<size_t> strides(options->strides, options->strides + options->stridesCount);
         DAWN_ASSERT(strides.size() == 2);
@@ -493,7 +634,6 @@ namespace webnn_native { namespace ie {
             // Reshape the filter to support groups conv.
             const ngraph_node_t* reshapeNode =
                 AddConstantWithGraph<uint64_t>(precision_e::U64, {filterShape.size()}, filterShape);
-            IEStatusCode status;
             status = ngraph_reshape(filterNode, reshapeNode, &filterNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
             status = ngraph_group_convolution(
@@ -502,16 +642,25 @@ namespace webnn_native { namespace ie {
                 &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
         } else {
-            IEStatusCode status = ngraph_convolution(
+                status = ngraph_convolution(
                 input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
                 dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
                 &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
         }
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
-            conv2dNode = TransposeInputLayout(conv2dNode, false);
+        ngraph_node_t* addNode, biasNode;
+        if (options->bias != nullptr) {
+            biasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[2].Get()]);
+            status = ngraph_add(conv2dNode, biasNode, &addNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph add"));
+        } else {
+            addNode = conv2dNode;
         }
-        mGraphNodeMap[conv2d] = conv2dNode;
+        auto activationNode = AddActivationNode(addNode, options->activation);
+        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+            activationNode = TransposeInputLayout(activationNode, false);
+        }
+        mGraphNodeMap[conv2d] = activationNode;
         return {};
     }
 
@@ -903,5 +1052,4 @@ namespace webnn_native { namespace ie {
 
         return MLComputeGraphStatus_Success;
     }
-
 }}  // namespace webnn_native::ie
