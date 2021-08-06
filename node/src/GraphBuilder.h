@@ -33,6 +33,7 @@ namespace node {
         Napi::Value Input(const Napi::CallbackInfo& info);
         Napi::Value Add(const Napi::CallbackInfo& info);
         Napi::Value BatchNorm(const Napi::CallbackInfo& info);
+        Napi::Value InstanceNorm(const Napi::CallbackInfo& info);
         Napi::Value Mul(const Napi::CallbackInfo& info);
         Napi::Value Matmul(const Napi::CallbackInfo& info);
         Napi::Value Conv2d(const Napi::CallbackInfo& info);
