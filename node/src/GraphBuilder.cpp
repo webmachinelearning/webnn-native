@@ -97,10 +97,6 @@ namespace node {
         BUILD_BINARY(Div);
     }
 
-    Napi::Value GraphBuilder::Tanh(const Napi::CallbackInfo& info) {
-        BUILD_BINARY(Tanh);
-    }
-
     Napi::Value GraphBuilder::BatchNorm(const Napi::CallbackInfo& info) {
         return op::BatchNorm::Build(info, mImpl);
     }
@@ -143,6 +139,14 @@ namespace node {
 
     Napi::Value GraphBuilder::Softmax(const Napi::CallbackInfo& info) {
         BUILD_UNARY(Softmax);
+    }
+
+    Napi::Value GraphBuilder::Sigmoid(const Napi::CallbackInfo& info) {
+        BUILD_UNARY(Sigmoid);
+    }
+
+    Napi::Value GraphBuilder::Tanh(const Napi::CallbackInfo& info) {
+        BUILD_UNARY(Tanh);
     }
 
     Napi::Value GraphBuilder::LeakyRelu(const Napi::CallbackInfo& info) {
@@ -189,7 +193,6 @@ namespace node {
              InstanceMethod("mul", &GraphBuilder::Mul, napi_enumerable),
              InstanceMethod("matmul", &GraphBuilder::Matmul, napi_enumerable),
              InstanceMethod("div", &GraphBuilder::Div, napi_enumerable),
-             InstanceMethod("tanh", &GraphBuilder::Tanh, napi_enumerable),
              InstanceMethod("concat", &GraphBuilder::Concat, napi_enumerable),
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
@@ -203,6 +206,8 @@ namespace node {
              InstanceMethod("pad", &GraphBuilder::Pad, napi_enumerable),
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
              InstanceMethod("softmax", &GraphBuilder::Softmax, napi_enumerable),
+             InstanceMethod("sigmoid", &GraphBuilder::Sigmoid, napi_enumerable),
+             InstanceMethod("tanh", &GraphBuilder::Tanh, napi_enumerable),
              InstanceMethod("transpose", &GraphBuilder::Transpose, napi_enumerable),
              InstanceMethod("build", &GraphBuilder::Build, napi_enumerable)});
         constructor = Napi::Persistent(func);
