@@ -17,7 +17,7 @@
 
 @setlocal
 SETLOCAL EnableDelayedExpansion
-set "OPENVINO_DIR=%ProgramFiles(x86)%\Intel\openvino_2021"
+set "OPENVINO_VERSION=openvino_2021"
 set "ROOT_DIR=%~dp0"
 set "DISK_SYMBOL=%~d0"
 ::FOR /F "delims=\" %%i IN ("%ROOT_DIR%") DO set SAMPLES_TYPE=%%~nxi
@@ -30,11 +30,11 @@ set VS_PATH=
 set VS_VERSION=
 
 if "%INTEL_OPENVINO_DIR%"=="" (
-    if exist "%OPENVINO_DIR%\bin\setupvars.bat" (
-        call "%OPENVINO_DIR%\bin\setupvars.bat"
+    if exist "%ProgramFiles(x86)%\Intel\%OPENVINO_VERSION%\bin\setupvars.bat" (
+        call "%ProgramFiles(x86)%\Intel\%OPENVINO_VERSION%\bin\setupvars.bat"
     ) else (
-        if exist "%OPENVINO_DIR%\..\bin\setupvars.bat" (
-            call "%OPENVINO_DIR%\..\bin\setupvars.bat" 
+        if exist "%ProgramFiles(x86)%\IntelSWTools\%OPENVINO_VERSION%\bin\setupvars.bat" (
+            call "%ProgramFiles(x86)%\IntelSWTools\%OPENVINO_VERSION%\bin\setupvars.bat" 
       ) else (
          echo Failed to set the environment variables automatically    
          echo To fix, run the following command: ^<INSTALL_DIR^>\bin\setupvars.bat
@@ -139,8 +139,8 @@ xcopy "%ROOT_DIR%\build\intel64\Release\ngraph_c_api.dll" "%WEBNN_NATIVE_LIB_PAT
 xcopy "%ROOT_DIR%\build\intel64\Release\ngraph_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%" /y
 mkdir "%WEBNN_NATIVE_LIB_PATH%\inference_engine\include\c_api
 mkdir "%WEBNN_NATIVE_LIB_PATH%\inference_engine\lib\intel64\Release
-xcopy "%OPENVINO_DIR%\inference_engine\include\c_api" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\include\c_api" /y
-xcopy "%OPENVINO_DIR%\inference_engine\lib\intel64\Release\inference_engine_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\lib\intel64\Release" /y
+xcopy "%INTEL_OPENVINO_DIR%\inference_engine\include\c_api" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\include\c_api" /y
+xcopy "%INTEL_OPENVINO_DIR%\inference_engine\lib\intel64\Release\inference_engine_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\lib\intel64\Release" /y
 
 echo.
 echo ###############^|^| Build ngraph_c_api succeeded ^|^|###############
