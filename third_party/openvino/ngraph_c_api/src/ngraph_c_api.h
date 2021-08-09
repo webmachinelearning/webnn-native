@@ -91,7 +91,8 @@ create_ngraph_function(ngraph_node_t** output,
                        ngraph_node_t** input,
                        uint32_t input_count,
                        ngraph_function_t** function);
-NGRAPH_C_API(void) transpose_sinking(ngraph_function_t* ngraph_function);
+NGRAPH_C_API(IEStatusCode)
+transpose_sinking(ngraph_function_t* ngraph_function);
 NGRAPH_C_API(IEStatusCode)
 create_network(ngraph_function_t* ngraph_function, ie_network_t** network);
 NGRAPH_C_API(void) ngraph_function_free(ngraph_function_t* function);

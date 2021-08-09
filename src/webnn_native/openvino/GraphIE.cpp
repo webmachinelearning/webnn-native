@@ -24,12 +24,18 @@
 #include "webnn_native/NamedOutputs.h"
 #include "webnn_native/openvino/ErrorIE.h"
 
+#define WEBNN_ASSERT(condition, message) \
+    do {                                 \
+        dawn::ErrorLog() << message;     \
+        DAWN_ASSERT(condition);          \
+    } while (0)
+
 namespace webnn_native { namespace ie {
 
     namespace {
         MaybeError TensorDesc(OperandDescriptor const* desc, tensor_desc_t& tensorDesc) {
-            // Inference Engine C API only support rank 8, the issue
-            // https://github.com/openvinotoolkit/openvino/issues/6894 to support more ranks.
+            // Inference Engine C API only support rank 8 with defination of dimensions_t
+            // https://github.com/openvinotoolkit/openvino/blob/master/inference-engine/ie_bridges/c/include/c_api/ie_c_api.h#L132.
             if (desc->dimensionsCount > 8) {
                 return DAWN_INTERNAL_ERROR("Inference Engine C API only support rank 8.");
             }
@@ -150,7 +156,7 @@ namespace webnn_native { namespace ie {
                     order = std::vector<int64_t>{3, 0, 1, 2};
                     break;
                 default:
-                    DAWN_ASSERT(0);
+                    WEBNN_ASSERT(0, "The filter layout isn't supported.");
                     break;
             }
 

@@ -5,6 +5,7 @@
 
 #include <c_api/ie_c_api.h>
 #include <inference_engine.hpp>
+#include <iostream>
 #include <map>
 #include <memory>
 #include <ngraph/ngraph.hpp>
@@ -15,18 +16,38 @@
 
 #include "transpose_sinking.h"
 
+#define TRY_IE_EXCEPTIONS try {
+#define CATCH_IE_EXCEPTIONS                                               \
+  }                                                                       \
+  catch (const IE::Exception& e) {                                        \
+    std::cout << "The Inference Engine error messages are : " << e.what() \
+              << std::endl;                                               \
+    return IEStatusCode::UNEXPECTED;                                      \
+  }                                                                       \
+  catch (std::exception & e) {                                            \
+    std::cout << "The unexpected error message are : " << e.what()        \
+              << std::endl;                                               \
+    return IEStatusCode::UNEXPECTED;                                      \
+  }
+
 #define CREATE_NGRAPH_NODE(impl, node) \
   *node = new ngraph_node_t();         \
   (*node)->object = impl;              \
   return IEStatusCode::OK;
 
+#define CREATE_NODE_AND_CATCH_EXCEPTIONS(impl, node) \
+  CREATE_NGRAPH_NODE(impl, node)                     \
+  CATCH_IE_EXCEPTIONS
+
 #define BUILD_BINARY(operation, a, b, node)                                  \
+  TRY_IE_EXCEPTIONS                                                          \
   auto impl = std::make_shared<ngraph::op::operation>(a->object, b->object); \
-  CREATE_NGRAPH_NODE(impl, node)
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(impl, node)
 
 #define BUILD_UNARY(operation, a, node)                           \
+  TRY_IE_EXCEPTIONS                                               \
   auto impl = std::make_shared<ngraph::op::operation>(a->object); \
-  CREATE_NGRAPH_NODE(impl, node)
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(impl, node)
 
 struct ngraph_node {
   std::shared_ptr<ngraph::Node> object;
@@ -121,9 +142,10 @@ IEStatusCode ngraph_input(const tensor_desc_t* tensorDesc,
     return IEStatusCode::GENERAL_ERROR;
   }
 
+  TRY_IE_EXCEPTIONS
   auto input = std::make_shared<ngraph::op::v0::Parameter>(
       get_tensor_type(tensorDesc), get_tensor_shape(tensorDesc));
-  CREATE_NGRAPH_NODE(input, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(input, node);
   return IEStatusCode::OK;
 }
 
@@ -141,11 +163,12 @@ IEStatusCode ngraph_constant(const tensor_desc_t* tensorDesc,
     return IEStatusCode::GENERAL_ERROR;
   }
 
+  TRY_IE_EXCEPTIONS
   ie_blob_buffer_t buffer;
   ie_blob_get_buffer(blob, &buffer);
   auto constant = std::make_shared<ngraph::op::Constant>(
       get_tensor_type(tensorDesc), get_tensor_shape(tensorDesc), buffer.buffer);
-  CREATE_NGRAPH_NODE(constant, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(constant, node);
 }
 
 IEStatusCode ngraph_add(const ngraph_node_t* a,
@@ -176,17 +199,22 @@ IEStatusCode create_ngraph_function(ngraph_node_t** output,
         reinterpret_cast<ngraph::op::v0::Result*>(output[i]->object.get())));
   }
 
+  TRY_IE_EXCEPTIONS
   *function = new ngraph_function_t();
   (*function)->object =
       std::make_shared<ngraph::Function>(ngraph_outputs, ngraph_inputs);
+  CATCH_IE_EXCEPTIONS
   return IEStatusCode::OK;
 }
 
-void transpose_sinking(ngraph_function_t* ngraph_function) {
+IEStatusCode transpose_sinking(ngraph_function_t* ngraph_function) {
+  TRY_IE_EXCEPTIONS
   ngraph::pass::Manager passes;
   passes
       .register_pass<tensorflow::openvino_tensorflow::pass::TransposeSinking>();
   passes.run_passes(ngraph_function->object);
+  CATCH_IE_EXCEPTIONS
+  return IEStatusCode::OK;
 }
 
 IEStatusCode create_network(ngraph_function_t* ngraph_function,
@@ -224,9 +252,10 @@ IEStatusCode ngraph_leaky_relu(const ngraph_node_t* a,
 IEStatusCode ngraph_mat_mul(const ngraph_node_t* a,
                             const ngraph_node_t* b,
                             ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto matmul = std::make_shared<ngraph::op::v0::MatMul>(a->object, b->object,
                                                          false, false);
-  CREATE_NGRAPH_NODE(matmul, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(matmul, node);
 }
 
 IEStatusCode ngraph_transpose(const ngraph_node_t* a,
@@ -238,9 +267,10 @@ IEStatusCode ngraph_transpose(const ngraph_node_t* a,
 IEStatusCode ngraph_reshape(const ngraph_node_t* a,
                             const ngraph_node_t* b,
                             ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto reshape =
       std::make_shared<ngraph::op::v1::Reshape>(a->object, b->object, true);
-  CREATE_NGRAPH_NODE(reshape, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reshape, node);
 }
 
 IEStatusCode ngraph_max(const ngraph_node_t* a,
@@ -272,8 +302,9 @@ IEStatusCode ngraph_relu(const ngraph_node_t* a, ngraph_node_t** node) {
 }
 
 IEStatusCode ngraph_softmax(const ngraph_node_t* a, ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto softmax = std::make_shared<ngraph::op::v1::Softmax>(a->object, 1);
-  CREATE_NGRAPH_NODE(softmax, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(softmax, node);
 }
 
 IEStatusCode ngraph_sigmoid(const ngraph_node_t* a, ngraph_node_t** node) {
@@ -293,8 +324,9 @@ IEStatusCode ngraph_concat(ngraph_node_t** inputs,
   for (uint32_t i = 0; i < input_count; ++i) {
     inputs_vector.push_back(inputs[i]->object);
   }
+  TRY_IE_EXCEPTIONS
   auto concat = std::make_shared<ngraph::op::v0::Concat>(inputs_vector, axis);
-  CREATE_NGRAPH_NODE(concat, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(concat, node);
 }
 
 IEStatusCode ngraph_interpolate(const ngraph_node_t* input,
@@ -328,9 +360,10 @@ IEStatusCode ngraph_interpolate(const ngraph_node_t* input,
       assert(0);
       break;
   }
+  TRY_IE_EXCEPTIONS
   auto resample = std::make_shared<ngraph::op::v4::Interpolate>(
       input->object, sizes->object, scales->object, axes->object, ngraph_attrs);
-  CREATE_NGRAPH_NODE(resample, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(resample, node);
 }
 
 IEStatusCode ngraph_pad(const ngraph_node_t* input,
@@ -356,26 +389,29 @@ IEStatusCode ngraph_pad(const ngraph_node_t* input,
     default:
       assert(0);
   }
+  TRY_IE_EXCEPTIONS
   auto pad = std::make_shared<ngraph::op::v1::Pad>(
       input->object, begin->object, end->object, value->object, pad_mode);
-  CREATE_NGRAPH_NODE(pad, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(pad, node);
 }
 
 IEStatusCode ngraph_reduce_mean(const ngraph_node_t* input,
                                 const ngraph_node_t* axes,
                                 bool keep_dimensions,
                                 ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto reduce_mean = std::make_shared<ngraph::op::v1::ReduceMean>(
       input->object, axes->object, keep_dimensions);
-  CREATE_NGRAPH_NODE(reduce_mean, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_mean, node);
 }
 
 IEStatusCode ngraph_clamp(const ngraph_node_t* input,
                           float min,
                           float max,
                           ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto clamp = std::make_shared<ngraph::op::v0::Clamp>(input->object, min, max);
-  CREATE_NGRAPH_NODE(clamp, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(clamp, node);
 }
 
 IEStatusCode ngraph_batch_norm_inference(const ngraph_node_t* input,
@@ -385,10 +421,11 @@ IEStatusCode ngraph_batch_norm_inference(const ngraph_node_t* input,
                                          const ngraph_node_t* variance,
                                          double epsilon,
                                          ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
   auto batch_norm = std::make_shared<ngraph::op::v0::BatchNormInference>(
       input->object, scale->object, bias->object, mean->object,
       variance->object, epsilon);
-  CREATE_NGRAPH_NODE(batch_norm, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(batch_norm, node);
 }
 
 IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
@@ -404,10 +441,11 @@ IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
   ngraph::Shape pad_begin = {padding[0], padding[2]};
   ngraph::Shape pad_end = {padding[1], padding[3]};
   ngraph::Shape window_dimensions(dimensions, dimensions + dimensions_count);
+  TRY_IE_EXCEPTIONS
   auto pool2d = std::make_shared<ngraph::op::v1::AvgPool>(
       input->object, strides_vector, pad_begin, pad_end, window_dimensions,
       true, ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
-  CREATE_NGRAPH_NODE(pool2d, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(pool2d, node);
 }
 
 IEStatusCode ngraph_max_pool(const ngraph_node_t* input,
@@ -423,10 +461,11 @@ IEStatusCode ngraph_max_pool(const ngraph_node_t* input,
   ngraph::Shape pad_begin = {padding[0], padding[2]};
   ngraph::Shape pad_end = {padding[1], padding[3]};
   ngraph::Shape window_dimensions(dimensions, dimensions + dimensions_count);
+  TRY_IE_EXCEPTIONS
   auto pool2d = std::make_shared<ngraph::op::v1::MaxPool>(
       input->object, strides_vector, pad_begin, pad_end, window_dimensions,
       ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
-  CREATE_NGRAPH_NODE(pool2d, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(pool2d, node);
 }
 
 IEStatusCode ngraph_convolution(const ngraph_node_t* input,
@@ -443,10 +482,11 @@ IEStatusCode ngraph_convolution(const ngraph_node_t* input,
   ngraph::CoordinateDiff pad_begin = {padding[0], padding[2]};
   ngraph::CoordinateDiff pad_end = {padding[1], padding[3]};
   ngraph::Strides dilations_vector(dilations, dilations + dilations_count);
+  TRY_IE_EXCEPTIONS
   auto conv2d = std::make_shared<ngraph::op::v1::Convolution>(
       input->object, filter->object, strides_vector, pad_begin, pad_end,
       dilations_vector, GetAutoPad(mode));
-  CREATE_NGRAPH_NODE(conv2d, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
 
 IEStatusCode ngraph_group_convolution(const ngraph_node_t* input,
@@ -463,10 +503,11 @@ IEStatusCode ngraph_group_convolution(const ngraph_node_t* input,
   ngraph::CoordinateDiff pad_begin = {padding[0], padding[2]};
   ngraph::CoordinateDiff pad_end = {padding[1], padding[3]};
   ngraph::Strides dilations_vector(dilations, dilations + dilations_count);
+  TRY_IE_EXCEPTIONS
   auto conv2d = std::make_shared<ngraph::op::v1::GroupConvolution>(
       input->object, filter->object, strides_vector, pad_begin, pad_end,
       dilations_vector, GetAutoPad(mode));
-  CREATE_NGRAPH_NODE(conv2d, node);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
 
 // namespace IE = InferenceEngine;
