@@ -28,20 +28,45 @@ namespace node {
         if (info.Length() > 0) {
             Napi::Object optionsObject = info[0].As<Napi::Object>();
             if (optionsObject.Has("powerPreference")) {
+                if (!optionsObject.Get("powerPreference").IsString()) {
+                    Napi::Error::New(info.Env(), "Invaild powerPreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
                 std::string powerPreferenceOption = optionsObject.Get("powerPreference").ToString();
                 if (powerPreferenceOption == "default") {
-                    options.powerPreference = MLPowerPreference::MLPowerPreference_Default;
+                    options.powerPreference = MLPowerPreference_Default;
                 } else if (powerPreferenceOption == "low-power") {
-                    options.powerPreference = MLPowerPreference::MLPowerPreference_Low_power;
+                    options.powerPreference = MLPowerPreference_Low_power;
                 } else if (powerPreferenceOption == "high-performance") {
-                    options.powerPreference = MLPowerPreference::MLPowerPreference_High_performance;
+                    options.powerPreference = MLPowerPreference_High_performance;
                 } else {
-                    Napi::Error::New(info.Env(), "Invaild PowerPreference")
+                    Napi::Error::New(info.Env(), "Invaild powerPreference")
                         .ThrowAsJavaScriptException();
                     return;
                 }
             }
-            // The MLDevicePreference is waited to be implemented
+
+            if (optionsObject.Has("devicePreference")) {
+                if (!optionsObject.Get("devicePreference").IsString()) {
+                    Napi::Error::New(info.Env(), "Invaild devicePreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
+                std::string devicePreferenceOption =
+                    optionsObject.Get("devicePreference").ToString();
+                if (devicePreferenceOption == "default") {
+                    options.devicePreference = MLDevicePreference_Default;
+                } else if (devicePreferenceOption == "gpu") {
+                    options.devicePreference = MLDevicePreference_Gpu;
+                } else if (devicePreferenceOption == "cpu") {
+                    options.devicePreference = MLDevicePreference_Cpu;
+                } else {
+                    Napi::Error::New(info.Env(), "Invaild devicePreference")
+                        .ThrowAsJavaScriptException();
+                    return;
+                }
+            }
         }
 
         WebnnProcTable backendProcs = webnn_native::GetProcs();
