@@ -360,6 +360,14 @@
         ]
       },
       {
+        "name": "max",
+        "returns": "operand",
+        "args": [
+          {"name": "a", "type": "operand"},
+          {"name": "b", "type": "operand"}
+        ]
+      },
+      {
         "name": "conv2d",
         "returns": "operand",
         "args": [

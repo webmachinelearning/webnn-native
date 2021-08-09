@@ -408,6 +408,9 @@ namespace webnn_native { namespace ie {
             case op::BinaryOpType::kDiv:
                 status = ngraph_divide(primaryNode, secondaryNode, &binaryNode);
                 break;
+            case op::BinaryOpType::kMax:
+                status = ngraph_max(primaryNode, secondaryNode, &binaryNode);
+                break;
             default:
                 DAWN_ASSERT(0);
         }

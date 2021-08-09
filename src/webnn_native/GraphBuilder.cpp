@@ -86,6 +86,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kSub, a, b));
     }
 
+    OperandBase* GraphBuilderBase::Max(OperandBase* a, OperandBase* b) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMax, a, b));
+    }
+
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
