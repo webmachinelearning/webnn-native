@@ -19,10 +19,8 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/Operand.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
-#include "webnn_native/ops/LeakyRelu.h"
 
 namespace webnn_native { namespace dml {
 
@@ -137,7 +135,7 @@ namespace webnn_native { namespace dml {
                     oStride = 1;
                     break;
                 default:
-                    assert(0);
+                    DAWN_ASSERT(0);
                     break;
             }
             return {oStride, iStride, hStride, wStride};
@@ -178,7 +176,7 @@ namespace webnn_native { namespace dml {
                         CalculateFilterLayoutStrides(ml::FilterOperandLayout::Ihwo, filterDims));
                     break;
                 default:
-                    assert(0);
+                    DAWN_ASSERT(0);
                     break;
             }
             return filter;
@@ -201,7 +199,7 @@ namespace webnn_native { namespace dml {
                     wStride = 1;
                     return {nStride, hStride, wStride, cStride};
                 default:
-                    assert(0);
+                    DAWN_ASSERT(0);
                     break;
             }
         }
@@ -230,7 +228,7 @@ namespace webnn_native { namespace dml {
                                                CalculateInputLayoutStrides(NchwToNhwc, inputDims));
                     break;
                 default:
-                    assert(0);
+                    DAWN_ASSERT(0);
                     break;
             }
             return input;
@@ -334,7 +332,7 @@ namespace webnn_native { namespace dml {
                     paddingEnd = totalPadding / 2;
                     break;
                 default:
-                    assert(0);
+                    DAWN_ASSERT(0);
                     break;
             }
             padding.push_back(paddingBegin);
@@ -490,6 +488,37 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    ::dml::FusedActivation CreateFusedActivation(OperatorBase* activation) {
+        ::dml::FusedActivation dmlActivation;
+        if (activation != nullptr) {
+            switch (activation->GetOperatorType()) {
+                // Workaround(mingming): Currently we implement Relu6 operator by clamp. While
+                // Clamp operator is not supported for fusion, and to ensure that we can find
+                // the min and max operands from the graph, we have added a clamp node in
+                // GraphBuilder directly.
+                case OperatorType::Clamp: {
+                    return dmlActivation;
+                    break;
+                }
+                case OperatorType::Relu:
+                    dmlActivation = ::dml::FusedActivation::Relu();
+                    break;
+                case OperatorType::Sigmoid:
+                    dmlActivation = ::dml::FusedActivation::Sigmoid();
+                    break;
+                case OperatorType::LeakyRelu: {
+                    auto leakyRelu = reinterpret_cast<op::LeakyReluOperator*>(activation);
+                    float alpha = leakyRelu->GetAlpha();
+                    dmlActivation = ::dml::FusedActivation::LeakyRelu(alpha);
+                } break;
+                default:
+                    DAWN_ASSERT(0);
+                    break;
+            }
+        }
+        return dmlActivation;
+    }
+
     MaybeError Graph::AddInput(const op::Input* input) {
         const OperandDescriptor* desc = input->GetOperandDescriptor();
         DML_TENSOR_DATA_TYPE dmlTensorType;
@@ -565,10 +594,10 @@ namespace webnn_native { namespace dml {
             float bias = 0;
             expressions.push_back(BindingConstant(type, {1, 1, 1, 1}, &bias, sizeof(float)));
         }
-
+        auto fusedActivation = CreateFusedActivation(options->activation);
         ::dml::Expression output =
             ::dml::BatchNormalization(input, expressions[0], expressions[1], expressions[2],
-                                      expressions[3], true, options->epsilon);
+                                      expressions[3], true, options->epsilon, fusedActivation);
         if (options->axis == 3) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
@@ -688,7 +717,7 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
         auto inputsOperand = conv2d->Inputs();
-        DAWN_ASSERT(inputsOperand.size() == 2);
+        DAWN_ASSERT(inputsOperand.size() == 2 || inputsOperand.size() == 3);
         DAWN_ASSERT(mExpression.find(inputsOperand[0].Get()) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputsOperand[0].Get());
         DAWN_ASSERT(mExpression.find(inputsOperand[1].Get()) != mExpression.end());
@@ -718,17 +747,32 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> startPadding(startPaddingVector);
         std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
+
+        ::dml::Optional<::dml::Expression> bias = ::dml::NullOpt;
+        if (options->bias != nullptr) {
+            DAWN_ASSERT(mExpression.find(inputsOperand[2].Get()) != mExpression.end());
+            bias = mExpression.at(inputsOperand[2].Get());
+            ::dml::TensorDimensions biasDims = bias->GetOutputDesc().sizes;
+            if (biasDims[0] != filter.GetOutputDesc().sizes[0] || biasDims.size() != 1) {
+                return DAWN_INTERNAL_ERROR(
+                    "The bias should be 1-D tensor with the shape of [output_channels].");
+            }
+            // Reshape bias from 1-D to 4-D for NCHW layout.
+            ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
+            auto expandStrides = CalculateStrides(expandDimens);
+            bias = ::dml::Reinterpret(*bias, expandDimens, expandStrides);
+        }
+        auto fusedActivation = CreateFusedActivation(options->activation);
         ::dml::Expression output = ::dml::Convolution(
-            input, filter, ::dml::NullOpt, DML_CONVOLUTION_MODE_CROSS_CORRELATION,
+            input, filter, bias, DML_CONVOLUTION_MODE_CROSS_CORRELATION,
             DML_CONVOLUTION_DIRECTION_FORWARD, strides, dilations, startPadding, endPadding,
             // outPadding
             {},
             // groupCount
-            options->groups);
+            options->groups, fusedActivation);
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
-
         mExpression.insert(std::make_pair(conv2d, output));
         return {};
     }
@@ -793,10 +837,7 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output =
             ::dml::Padding(input, paddingMode, paddingValue, startPadding, endPadding);
-        // Reshape back according to input rank if needed.
-        ::dml::TensorDimensions outputDims = output.GetOutputDesc().sizes;
         mExpression.insert(std::make_pair(pad, output));
-        outputDims = output.GetOutputDesc().sizes;
         return {};
     }
 
@@ -994,7 +1035,7 @@ namespace webnn_native { namespace dml {
                 mode = DML_INTERPOLATION_MODE_LINEAR;
                 break;
             default:
-                assert(0);
+                DAWN_ASSERT(0);
                 break;
         }
 

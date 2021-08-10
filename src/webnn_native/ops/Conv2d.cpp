@@ -24,10 +24,8 @@ namespace webnn_native { namespace op {
                    OperandBase* filter,
                    Conv2dOptions const* options)
         : OperandBase(builder, {input, filter}) {
-        if (options != nullptr) {
-            if (options->bias != nullptr) {
-                mInputs.push_back(options->bias);
-            }
+        if (options != nullptr && options->bias != nullptr) {
+            mInputs.push_back(options->bias);
         }
         if (options == nullptr || options->padding == nullptr) {
             mPadding = std::vector<int32_t>(4, 0);
@@ -89,6 +87,13 @@ namespace webnn_native { namespace op {
         // The filter 4-D tensor
         if (filter->Rank() != 4) {
             return DAWN_VALIDATION_ERROR("Argument filter is not a 4D tensor.");
+        }
+        // The bias is 1-D tensor.
+        if (mOptions.bias != nullptr) {
+            auto bias = mInputs[2];
+            if (bias->Rank() != 1) {
+                return DAWN_VALIDATION_ERROR("Argument bias is not a 1D tensor.");
+            }
         }
         // padding: a sequence of long of length 4
         if (mOptions.paddingCount != 4) {

@@ -29,7 +29,6 @@
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"
-#include "webnn_native/ops/ClampOperator.h"
 #include "webnn_native/ops/Concat.h"
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
@@ -37,14 +36,11 @@
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
-#include "webnn_native/ops/LeakyReluOperator.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
-#include "webnn_native/ops/ReluOperator.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
-#include "webnn_native/ops/SigmoidOperator.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
@@ -94,6 +90,24 @@ namespace webnn_native {
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
+        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
+        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
+        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
+        // that we can find the min and max operands from the graph. We need to refactor codes once
+        // a backend requires fusing clamp.
+        if (options != nullptr && options->activation != nullptr) {
+            auto operatorType = options->activation->GetOperatorType();
+            if (operatorType == OperatorType::Clamp) {
+                OperandBase* conv2d = new op::Conv2d(this, input, filter, options);
+                if (GetContext()->ConsumedError(conv2d->ValidateAndInferTypes())) {
+                    delete conv2d;
+                    return OperandBase::MakeError(this);
+                }
+                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
+                auto clampOptions = clamp->GetOptions();
+                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, conv2d, clampOptions));
+            }
+        }
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Conv2d(this, input, filter, options));
     }
 
@@ -117,8 +131,7 @@ namespace webnn_native {
     }
 
     OperatorBase* GraphBuilderBase::ReluOperator() {
-        Ref<OperatorBase> op = AcquireRef(new op::ReluOperator(this));
-        return op.Detach();
+        return new op::ReluOperator(this);
     }
 
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
@@ -140,8 +153,7 @@ namespace webnn_native {
     }
 
     OperatorBase* GraphBuilderBase::SigmoidOperator() {
-        Ref<OperatorBase> op = AcquireRef(new op::SigmoidOperator(this));
-        return op.Detach();
+        return new op::SigmoidOperator(this);
     }
 
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
@@ -157,8 +169,7 @@ namespace webnn_native {
     }
 
     OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
-        Ref<OperatorBase> op = AcquireRef(new op::LeakyReluOperator(this, options));
-        return op.Detach();
+        return new op::LeakyReluOperator(this, options);
     }
 
     OperandBase* GraphBuilderBase::Concat(uint32_t inputsCount,
@@ -183,14 +194,32 @@ namespace webnn_native {
     }
 
     OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
-        Ref<OperatorBase> op = AcquireRef(new op::ClampOperator(this, options));
-        return op.Detach();
+        return new op::ClampOperator(this, options);
     }
 
     OperandBase* GraphBuilderBase::BatchNorm(OperandBase* input,
                                              OperandBase* mean,
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
+        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
+        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
+        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
+        // that we can find the min and max operands from the graph. We need to refactor codes once
+        // a backend requires fusing clamp.
+        if (options != nullptr && options->activation != nullptr) {
+            auto operatorType = options->activation->GetOperatorType();
+            if (operatorType == OperatorType::Clamp) {
+                OperandBase* batchNorm = new op::BatchNorm(this, input, mean, variance, options);
+                if (GetContext()->ConsumedError(batchNorm->ValidateAndInferTypes())) {
+                    delete batchNorm;
+                    return OperandBase::MakeError(this);
+                }
+                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
+                auto clampOptions = clamp->GetOptions();
+                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, batchNorm, clampOptions));
+            }
+        }
+
         DAWN_VALIDATE_AND_INFER_TYPES(new op::BatchNorm(this, input, mean, variance, options));
     }
 

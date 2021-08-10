@@ -61,16 +61,20 @@ namespace utils {
 
     enum FusedActivation { NONE, RELU, RELU6, SIGMOID, LEAKYRELU };
 
-    const ml::Operator createActivationOperator(std::vector<SHARED_DATA_TYPE>& constants,
-                                                const ml::GraphBuilder& builder,
-                                                FusedActivation activation = FusedActivation::NONE,
-                                                const std::vector<float>& options = {});
+    ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
+                                        const std::vector<int32_t>& minShape,
+                                        const std::vector<float>& minValue,
+                                        const std::vector<int32_t>& maxShape,
+                                        const std::vector<float>& maxValue);
 
-    const ml::Operand createActivationOperand(std::vector<SHARED_DATA_TYPE>& constants,
-                                              const ml::GraphBuilder& builder,
+    const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
+                                                FusedActivation activation = FusedActivation::NONE,
+                                                const void* options = nullptr);
+
+    const ml::Operand CreateActivationOperand(const ml::GraphBuilder& builder,
                                               const ml::Operand& input,
                                               FusedActivation activation,
-                                              const std::vector<float>& options);
+                                              const void* options = nullptr);
 
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
                            std::string name,

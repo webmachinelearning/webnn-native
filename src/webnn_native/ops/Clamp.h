@@ -17,18 +17,21 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/ops/Constant.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
-    class Clamp final : public OperandBase {
+    class ClampBase {
       public:
-        Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options);
-        ~Clamp() override = default;
-
-        MaybeError AddToGraph(GraphBase* graph) const override {
-            return graph->AddClamp(this);
+        ClampBase(ClampOptions const* options) {
+            if (options != nullptr) {
+                mOptions = *options;
+            } else {
+                mOptions.minValue = nullptr;
+                mOptions.maxValue = nullptr;
+            }
         }
+        ~ClampBase() = default;
 
         ClampOptions const* GetOptions() const {
             return &mOptions;
@@ -36,6 +39,34 @@ namespace webnn_native { namespace op {
 
       private:
         ClampOptions mOptions;
+    };
+
+    class Clamp final : public ClampBase, public OperandBase {
+      public:
+        Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
+            : ClampBase(options), OperandBase(builder, {input}) {
+            if (options != nullptr) {
+                if (options->minValue != nullptr) {
+                    mInputs.push_back(options->minValue);
+                }
+                if (options->maxValue != nullptr) {
+                    mInputs.push_back(options->maxValue);
+                }
+            }
+        }
+        ~Clamp() override = default;
+
+        MaybeError AddToGraph(GraphBase* graph) const override {
+            return graph->AddClamp(this);
+        }
+    };
+
+    class ClampOperator final : public ClampBase, public OperatorBase {
+      public:
+        ClampOperator(GraphBuilderBase* builder, ClampOptions const* options)
+            : ClampBase(options), OperatorBase(builder, OperatorType::Clamp) {
+        }
+        ~ClampOperator() override = default;
     };
 
 }}  // namespace webnn_native::op

@@ -15,12 +15,16 @@
 #include "src/tests/WebnnTest.h"
 
 class Conv2dTests : public WebnnTest {
+    void SetUp() override {
+        builder = ml::CreateGraphBuilder(GetContext());
+    }
+
   protected:
     struct Tensor {
         std::vector<int32_t> shape;
         std::vector<float> value;
     };
-    std::vector<SHARED_DATA_TYPE> mConstants;
+
     void CheckConv2d(const Tensor& input,
                      const Tensor& filter,
                      const Tensor& expected,
@@ -28,8 +32,7 @@ class Conv2dTests : public WebnnTest {
                      const Tensor& bias = {},
                      utils::FusedActivation activation = utils::FusedActivation::NONE,
                      bool fusion = false,
-                     const std::vector<float>& activationOptions = {}) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+                     void* activationOptions = nullptr) {
         const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
         const ml::Operand w = utils::BuildConstant(builder, filter.shape, filter.value.data(),
                                                    filter.value.size() * sizeof(float));
@@ -38,10 +41,6 @@ class Conv2dTests : public WebnnTest {
         if (!bias.value.empty()) {
             b = utils::BuildConstant(builder, bias.shape, bias.value.data(),
                                      bias.value.size() * sizeof(float));
-            if (options.inputLayout == ml::InputOperandLayout::Nchw) {
-                std::vector<int32_t> newShape = std::vector<int32_t>({1, -1, 1, 1});
-                b = builder.Reshape(b, newShape.data(), newShape.size());
-            }
         }
 
         if (fusion) {
@@ -49,19 +48,22 @@ class Conv2dTests : public WebnnTest {
                 options.bias = b;
             }
             if (activation != utils::FusedActivation::NONE) {
-                options.activation = utils::createActivationOperator(mConstants, builder,
-                                                                     activation, activationOptions);
+                options.activation =
+                    utils::CreateActivationOperator(builder, activation, activationOptions);
             }
         }
         ml::Operand y = builder.Conv2d(x, w, options.AsPtr());
 
         if (!fusion) {
             if (!bias.value.empty()) {
+                if (options.inputLayout == ml::InputOperandLayout::Nchw) {
+                    std::vector<int32_t> newShape = std::vector<int32_t>({1, -1, 1, 1});
+                    b = builder.Reshape(b, newShape.data(), newShape.size());
+                }
                 y = builder.Add(y, b);
             }
             if (activation != utils::FusedActivation::NONE) {
-                y = utils::createActivationOperand(mConstants, builder, y, activation,
-                                                   activationOptions);
+                y = utils::CreateActivationOperand(builder, y, activation, activationOptions);
             }
         }
 
@@ -71,6 +73,8 @@ class Conv2dTests : public WebnnTest {
         utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expected.value));
     }
+
+    ml::GraphBuilder builder;
 };
 
 TEST_F(Conv2dTests, Conv2dWithPaddingDefault) {
@@ -516,7 +520,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dDefault) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 4, 1, 1}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwHwio) {
@@ -533,7 +542,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwHwio) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{4}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwOhwi) {
@@ -550,7 +564,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwOhwi) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 4, 1, 1}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwIhwo) {
@@ -567,7 +586,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dNchwIhwo) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 4, 1, 1}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcOihw) {
@@ -584,7 +608,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcOihw) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 1, 4}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcHwio) {
@@ -601,7 +630,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcHwio) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 1, 4}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcOhwi) {
@@ -618,7 +652,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcOhwi) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 1, 4}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcIhwo) {
@@ -635,7 +674,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithNhwcIhwo) {
     CheckConv2d(input, filter, expected, options, bias);
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 1, 4}, {6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, DepthwiseConv2dWithNchwOihw) {
@@ -651,7 +695,12 @@ TEST_F(Conv2dTests, DepthwiseConv2dWithNchwOihw) {
     CheckConv2d(input, filter, expected, options);
     CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU, true);
     expected = {{1, 4, 1, 1}, {6, 6, 6, 0}};
-    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithExplicitAutoPad) {
@@ -667,7 +716,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithExplicitAutoPad) {
     CheckConv2d(input, filter, expected, options);
     CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU, true);
     expected = {{1, 2, 3, 3}, {6, 6, 5, 6, 6, 5, 5, 5, 2.5, 6, 6, 0, 6, 6, 0, 6, 6, 0}};
-    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithSameUpperAutoPad) {
@@ -682,7 +736,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithSameUpperAutoPad) {
     CheckConv2d(input, filter, expected, options);
     CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU, true);
     expected = {{1, 2, 3, 3}, {6, 6, 5, 6, 6, 5, 5, 5, 2.5, 6, 6, 0, 6, 6, 0, 6, 6, 0}};
-    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedDepthwiseConv2dWithSameLowerAutoPad) {
@@ -697,7 +756,12 @@ TEST_F(Conv2dTests, FusedDepthwiseConv2dWithSameLowerAutoPad) {
     CheckConv2d(input, filter, expected, options);
     CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU, true);
     expected = {{1, 2, 3, 3}, {2.5, 5, 5, 5, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6}};
-    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, {}, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingDefault) {
@@ -713,7 +777,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingDefault) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 5, 5}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
     expected = {{1, 1, 5, 5},
                 {-8.800000190734863,
                  -7.900000095367432,
@@ -740,8 +809,9 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingDefault) {
                  17,
                  23,
                  -1.600000023841858}};
+    ml::LeakyReluOptions leakyReluOptions = {0.10000000149011612};
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::LEAKYRELU, true,
-                {0.10000000149011612});
+                &leakyReluOptions);
     expected = {{1, 1, 5, 5},
                 {6.054601485195952e-39,
                  4.906094994852858e-35,
@@ -786,7 +856,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNchwHwio) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 5, 5}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingNchwOhwi) {
@@ -804,7 +879,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNchwOhwi) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 5, 5}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingNchwIhwo) {
@@ -822,7 +902,13 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNchwIhwo) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 1, 5, 5}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcOihw) {
@@ -840,7 +926,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcOihw) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 5, 5, 1}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
     expected = {{1, 5, 5, 1},
                 {-8.800000190734863,
                  -7.900000095367432,
@@ -867,8 +958,9 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcOihw) {
                  17,
                  23,
                  -1.600000023841858}};
+    ml::LeakyReluOptions leakyReluOptions = {0.10000000149011612};
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::LEAKYRELU, true,
-                {0.10000000149011612});
+                &leakyReluOptions);
     expected = {{1, 5, 5, 1},
                 {6.054601485195952e-39,
                  4.906094994852858e-35,
@@ -913,7 +1005,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcHwio) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 5, 5, 1}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcOhwi) {
@@ -931,7 +1028,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcOhwi) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 5, 5, 1}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcIhwo) {
@@ -949,7 +1051,12 @@ TEST_F(Conv2dTests, FusedConv2dWithPaddingNhwcIhwo) {
     CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU, true);
     expected = {{1, 5, 5, 1}, {0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 6.,
                                6., 0., 0., 6., 6., 6., 6., 0., 6., 6., 6., 0.}};
-    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true);
+    Tensor min = {{1}, {0}};
+    Tensor max = {{1}, {6}};
+    ml::ClampOptions clampOptions =
+        utils::CreateClampOptions(builder, min.shape, min.value, max.shape, max.value);
+    CheckConv2d(input, filter, expected, options, bias, utils::FusedActivation::RELU6, true,
+                &clampOptions);
 }
 
 TEST_F(Conv2dTests, Conv2dWithAutoPadSameLowerDefault) {

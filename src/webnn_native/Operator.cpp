@@ -21,8 +21,8 @@
 
 namespace webnn_native {
 
-    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder)
-        : ObjectBase(graphBuilder->GetContext()) {
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, OperatorType type)
+        : ObjectBase(graphBuilder->GetContext()), mType(type) {
     }
 
     OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)

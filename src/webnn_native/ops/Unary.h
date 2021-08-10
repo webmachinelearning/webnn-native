@@ -17,6 +17,7 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
@@ -45,6 +46,20 @@ namespace webnn_native { namespace op {
 
       private:
         UnaryOpType mOpType;
+    };
+
+    class SigmoidOperator final : public OperatorBase {
+      public:
+        SigmoidOperator(GraphBuilderBase* builder) : OperatorBase(builder, OperatorType::Sigmoid) {
+        }
+        ~SigmoidOperator() override = default;
+    };
+
+    class ReluOperator final : public OperatorBase {
+      public:
+        ReluOperator(GraphBuilderBase* builder) : OperatorBase(builder, OperatorType::Relu) {
+        }
+        ~ReluOperator() override = default;
     };
 
 }}  // namespace webnn_native::op

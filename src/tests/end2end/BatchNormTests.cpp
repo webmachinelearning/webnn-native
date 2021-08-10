@@ -24,7 +24,7 @@ class BatchNormTests : public WebnnTest {
         std::vector<int32_t> shape;
         std::vector<float> value;
     };
-    std::vector<SHARED_DATA_TYPE> mConstants;
+
     void CheckBatchNorm(const Tensor& input,
                         const Tensor& mean,
                         const Tensor& variance,
@@ -47,7 +47,7 @@ class BatchNormTests : public WebnnTest {
                                                 bias.value.size() * sizeof(float));
         }
         if (activation != utils::FusedActivation::NONE) {
-            options.activation = utils::createActivationOperator(mConstants, builder, activation);
+            options.activation = utils::CreateActivationOperator(builder, activation);
         }
         const ml::Operand output = builder.BatchNorm(x, m, v, &options);
         const ml::Graph graph = utils::Build(builder, {{"output", output}});
@@ -56,6 +56,7 @@ class BatchNormTests : public WebnnTest {
         utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
+
     ml::GraphBuilder builder;
 };
 

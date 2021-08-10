@@ -81,71 +81,73 @@ namespace utils {
         return prod;
     }
 
-    const ml::Operator createActivationOperator(std::vector<SHARED_DATA_TYPE>& constants,
-                                                const ml::GraphBuilder& builder,
+    // Create the ClampOptions by two constants.
+    ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
+                                        const std::vector<int32_t>& minShape,
+                                        const std::vector<float>& minValue,
+                                        const std::vector<int32_t>& maxShape,
+                                        const std::vector<float>& maxValue) {
+        ml::ClampOptions clampOptions;
+        clampOptions.minValue = utils::BuildConstant(builder, minShape, minValue.data(),
+                                                     minValue.size() * sizeof(float));
+        clampOptions.maxValue = utils::BuildConstant(builder, maxShape, maxValue.data(),
+                                                     maxValue.size() * sizeof(float));
+        return clampOptions;
+    }
+
+    const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
                                                 FusedActivation activation,
-                                                const std::vector<float>& options) {
+                                                const void* options) {
         ml::Operator activationOperator;
-        if (activation == FusedActivation::RELU) {
-            activationOperator = builder.ReluOperator();
-        } else if (activation == FusedActivation::RELU6) {
-            ml::ClampOptions clampOptions;
-            float min = 0;
-            auto minConstant = std::make_shared<std::vector<char>>(sizeof(float));
-            std::memcpy(minConstant->data(), &min, sizeof(float));
-            constants.push_back(minConstant);
-            float max = 6;
-            auto maxConstant = std::make_shared<std::vector<char>>(sizeof(float));
-            std::memcpy(maxConstant->data(), &max, sizeof(float));
-            constants.push_back(maxConstant);
-            clampOptions.minValue =
-                utils::BuildConstant(builder, {}, minConstant->data(), sizeof(float));
-            clampOptions.maxValue =
-                utils::BuildConstant(builder, {}, maxConstant->data(), sizeof(float));
-            activationOperator = builder.ClampOperator(&clampOptions);
-        } else if (activation == FusedActivation::SIGMOID) {
-            activationOperator = builder.SigmoidOperator();
-        } else if (activation == FusedActivation::LEAKYRELU) {
-            ml::LeakyReluOptions leakyReluOptions;
-            leakyReluOptions.alpha = options[0];
-            activationOperator = builder.LeakyReluOperator(&leakyReluOptions);
-        } else {
-            assert(0);
+        switch (activation) {
+            case FusedActivation::RELU:
+                activationOperator = builder.ReluOperator();
+                break;
+            case FusedActivation::RELU6: {
+                auto clampOptions = reinterpret_cast<ml::ClampOptions const*>(options);
+                activationOperator = builder.ClampOperator(clampOptions);
+                break;
+            }
+            case FusedActivation::SIGMOID:
+                activationOperator = builder.SigmoidOperator();
+                break;
+            case FusedActivation::LEAKYRELU: {
+                auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);
+                activationOperator = builder.LeakyReluOperator(leakyReluOptions);
+                break;
+            }
+            default:
+                dawn::ErrorLog() << "The activation is unsupported";
+                DAWN_ASSERT(0);
         }
         return activationOperator;
     }
 
-    const ml::Operand createActivationOperand(std::vector<SHARED_DATA_TYPE>& constants,
-                                              const ml::GraphBuilder& builder,
+    const ml::Operand CreateActivationOperand(const ml::GraphBuilder& builder,
                                               const ml::Operand& input,
                                               FusedActivation activation,
-                                              const std::vector<float>& options) {
+                                              const void* options) {
         ml::Operand activationOperand;
-        if (activation == FusedActivation::RELU) {
-            activationOperand = builder.Relu(input);
-        } else if (activation == FusedActivation::RELU6) {
-            ml::ClampOptions clampOptions;
-            float min = 0;
-            auto minConstant = std::make_shared<std::vector<char>>(sizeof(float));
-            std::memcpy(minConstant->data(), &min, sizeof(float));
-            constants.push_back(minConstant);
-            float max = 6;
-            auto maxConstant = std::make_shared<std::vector<char>>(sizeof(float));
-            std::memcpy(maxConstant->data(), &max, sizeof(float));
-            constants.push_back(maxConstant);
-            clampOptions.minValue =
-                utils::BuildConstant(builder, {}, minConstant->data(), sizeof(float));
-            clampOptions.maxValue =
-                utils::BuildConstant(builder, {}, maxConstant->data(), sizeof(float));
-            activationOperand = builder.Clamp(input, &clampOptions);
-        } else if (activation == FusedActivation::SIGMOID) {
-            activationOperand = builder.Sigmoid(input);
-        } else if (activation == FusedActivation::LEAKYRELU) {
-            ml::LeakyReluOptions leakyReluOptions;
-            leakyReluOptions.alpha = options[0];
-            activationOperand = builder.LeakyRelu(input, &leakyReluOptions);
-        } else {
-            assert(0);
+        switch (activation) {
+            case FusedActivation::RELU:
+                activationOperand = builder.Relu(input);
+                break;
+            case FusedActivation::RELU6: {
+                auto clampOptions = reinterpret_cast<ml::ClampOptions const*>(options);
+                activationOperand = builder.Clamp(input, clampOptions);
+                break;
+            }
+            case FusedActivation::SIGMOID:
+                activationOperand = builder.Sigmoid(input);
+                break;
+            case FusedActivation::LEAKYRELU: {
+                auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);
+                activationOperand = builder.LeakyRelu(input, leakyReluOptions);
+                break;
+            }
+            default:
+                dawn::ErrorLog() << "The activation is unsupported";
+                DAWN_ASSERT(0);
         }
         return activationOperand;
     }

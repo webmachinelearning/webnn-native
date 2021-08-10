@@ -22,6 +22,7 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 #include "webnn_native/ops/BatchNorm.h"
@@ -33,6 +34,7 @@
 #include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/InstanceNorm.h"
+#include "webnn_native/ops/LeakyRelu.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/ReduceMean.h"
