@@ -14,7 +14,7 @@
 # limitations under the License.
 
 import("//build_overrides/webnn.gni")
-import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
+import("scripts/webnn_overrides_with_defaults.gni")
 
 group("all") {
   testonly = true

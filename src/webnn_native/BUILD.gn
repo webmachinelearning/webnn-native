@@ -13,11 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
+import("../../scripts/webnn_overrides_with_defaults.gni")
 
 import("//build_overrides/build.gni")
-import("${dawn_root}/scripts/dawn_component.gni")
-import("${dawn_root}/scripts/dawn_features.gni")
+import("${webnn_dawn_root}/scripts/dawn_component.gni")
+import("${webnn_dawn_root}/scripts/dawn_features.gni")
 import("${webnn_root}/build_overrides/webnn_features.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 

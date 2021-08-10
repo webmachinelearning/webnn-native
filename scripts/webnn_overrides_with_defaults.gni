@@ -11,10 +11,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import("//build_overrides/webnn.gni")
 
-webnn_standalone = true
+if (!defined(webnn_standalone)) {
+  webnn_standalone = false
+}
 
-# The paths to WebNN's dependencies
-webnn_dawn_root = "//third_party/dawn"
-webnn_googletest_dir = "//third_party/googletest"
-webnn_jinja2_dir = "//third_party/jinja2"
+if (!defined(webnn_dawn_root)) {
+  webnn_dawn_root = "//third_party/dawn"
+}
+
+if (!defined(webnn_jinja2_dir)) {
+  webnn_jinja2_dir = "//third_party/jinja2"
+}
+
+if (!defined(webnn_root)) {
+  webnn_root = get_path_info("..", "abspath")
+}
+webnn_gen_root = get_path_info("${webnn_root}", "gen_dir")
+
+if (!defined(webnn_googletest_dir)) {
+  webnn_googletest_dir = "//third_party/googletest"
+}
