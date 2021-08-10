@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import("//third_party/dawn/scripts/dawn_overrides_with_defaults.gni")
+import("../scripts/webnn_overrides_with_defaults.gni")
 
 group("webnn_samples") {
   deps = [ ":LeNet" ]
