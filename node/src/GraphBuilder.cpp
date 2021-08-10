@@ -28,6 +28,7 @@
 #include "ops/Conv2d.h"
 #include "ops/Gemm.h"
 #include "ops/Input.h"
+#include "ops/InstanceNorm.h"
 #include "ops/LeakyRelu.h"
 #include "ops/Pad.h"
 #include "ops/Pool2d.h"
@@ -99,6 +100,10 @@ namespace node {
 
     Napi::Value GraphBuilder::BatchNorm(const Napi::CallbackInfo& info) {
         return op::BatchNorm::Build(info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::InstanceNorm(const Napi::CallbackInfo& info) {
+        return op::InstanceNorm::Build(info, mImpl);
     }
 
     Napi::Value GraphBuilder::Conv2d(const Napi::CallbackInfo& info) {
@@ -190,6 +195,7 @@ namespace node {
              InstanceMethod("add", &GraphBuilder::Add, napi_enumerable),
              InstanceMethod("sub", &GraphBuilder::Sub, napi_enumerable),
              InstanceMethod("batchNormalization", &GraphBuilder::BatchNorm, napi_enumerable),
+             InstanceMethod("instanceNormalization", &GraphBuilder::InstanceNorm, napi_enumerable),
              InstanceMethod("mul", &GraphBuilder::Mul, napi_enumerable),
              InstanceMethod("matmul", &GraphBuilder::Matmul, napi_enumerable),
              InstanceMethod("div", &GraphBuilder::Div, napi_enumerable),
