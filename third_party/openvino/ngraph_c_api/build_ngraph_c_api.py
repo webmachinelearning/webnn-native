@@ -21,11 +21,11 @@ import platform
 def run():
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description="Build ienn that is a c wrapper of nGraph.")
+        description="Build ngraph_c_api that is a c wrapper of nGraph.")
     parser.add_argument(
         '--webnn-native-lib-path',
         type=str,
-        help='Copy ienn binary to the webnn native lib path.'
+        help='Copy ngraph_c_api binary to the webnn native lib path.'
     )
     args = parser.parse_args()
 
@@ -33,14 +33,14 @@ def run():
 
     sys = platform.system()
     if sys == "Windows":
-        script_name = "build_ienn_msvc.bat"
+        script_name = "build_ngraph_c_api_msvc.bat"
     elif sys == "Linux":
-        script_name = "build_ienn_unix.sh"
+        script_name = "build_ngraph_c_api_unix.sh"
     output = subprocess.check_output(
         [os.path.join(os.path.abspath(os.path.dirname(__file__)), script_name),
         webnn_native_lib_path])
-    if output.find(b"Build ienn succeeded") == -1:
-        print(output)
+    # if output.find(b"Build ngraph_c_api succeeded") == -1:
+    print(output)
 
     return 0
 

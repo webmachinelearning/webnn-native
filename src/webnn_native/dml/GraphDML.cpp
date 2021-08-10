@@ -1012,12 +1012,10 @@ namespace webnn_native { namespace dml {
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
-        if (reshape->GetNewShapeCount() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+        auto newShape = reshape->GetNewShape();
+        if (newShape.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
             return DAWN_INTERNAL_ERROR("The size of new shape is not supported by DML.");
         }
-        std::vector<int32_t> newShape;
-        newShape.assign(reshape->GetNewShape(),
-                        reshape->GetNewShape() + reshape->GetNewShapeCount());
         ::dml::TensorDimensions newSizes(newShape.size());
         uint32_t outputElementCount = 1;
         int32_t inferAxis = -1;

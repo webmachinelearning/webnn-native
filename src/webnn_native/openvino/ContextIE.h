@@ -15,6 +15,8 @@
 #ifndef WEBNN_NATIVE_IE_CONTEXT_IE_H_
 #define WEBNN_NATIVE_IE_CONTEXT_IE_H_
 
+#include <ngraph_c_api.h>
+
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
 
@@ -23,10 +25,14 @@ namespace webnn_native { namespace ie {
     class Context : public ContextBase {
       public:
         explicit Context(ContextOptions const* options);
-        ~Context() override = default;
+        ~Context() override;
+
+        ie_core_t* InferenceEngineCore();
 
       private:
         GraphBase* CreateGraphImpl() override;
+
+        ie_core_t* mInferEngineCore;
     };
 
 }}  // namespace webnn_native::ie

@@ -25,6 +25,18 @@ namespace webnn_native { namespace ie {
     }
 
     Context::Context(ContextOptions const* options) : ContextBase(options) {
+        IEStatusCode status = ie_core_create("", &mInferEngineCore);
+        if (status != IEStatusCode::OK) {
+            dawn::ErrorLog() << "Failed to create inference engine core.";
+        }
+    }
+
+    Context::~Context() {
+        ie_core_free(&mInferEngineCore);
+    }
+
+    ie_core_t* Context::InferenceEngineCore() {
+        return mInferEngineCore;
     }
 
     GraphBase* Context::CreateGraphImpl() {

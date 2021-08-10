@@ -126,22 +126,24 @@ echo Creating Visual Studio %MSBUILD_VERSION% %PLATFORM% files in %SOLUTION_DIR6
 cd "%ROOT_DIR%" && cmake -E make_directory "%SOLUTION_DIR64%" && cd "%SOLUTION_DIR64%" && cmake -G "Visual Studio !MSBUILD_VERSION!" -A %PLATFORM% "%ROOT_DIR%"
 
 echo.
-echo ###############^|^| Build ienn using MS Visual Studio (MSBuild.exe) ^|^|###############
+echo ###############^|^| Build ngraph_c_api using MS Visual Studio (MSBuild.exe) ^|^|###############
 echo.
-echo "!MSBUILD_BIN!" ienn.sln /p:Configuration=Release
-"!MSBUILD_BIN!" ienn.sln /p:Configuration=Release
+echo "!MSBUILD_BIN!" ngraph_c_api.sln /p:Configuration=Release
+"!MSBUILD_BIN!" ngraph_c_api.sln /p:Configuration=Release
 if ERRORLEVEL 1 GOTO errorHandling
 
-:: copy the ie_nn_c_api.dll to webnn native library directory.
+:: copy the ngraph_c_api.dll to webnn native library directory.
 set "WEBNN_NATIVE_LIB_PATH=%ROOT_DIR%\..\..\..\%1"
 set "WEBNN_NATIVE_LIB_PATH=%WEBNN_NATIVE_LIB_PATH:/=\%"
-if exist "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.dll" del "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.dll"
-if exist "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.lib" del "%WEBNN_NATIVE_LIB_PATH%\ie_nn_c_api.lib"
-xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.dll" "%WEBNN_NATIVE_LIB_PATH%"
-xcopy "%ROOT_DIR%\build\intel64\Release\ie_nn_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%"
+xcopy "%ROOT_DIR%\build\intel64\Release\ngraph_c_api.dll" "%WEBNN_NATIVE_LIB_PATH%" /y
+xcopy "%ROOT_DIR%\build\intel64\Release\ngraph_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%" /y
+mkdir "%WEBNN_NATIVE_LIB_PATH%\inference_engine\include\c_api
+mkdir "%WEBNN_NATIVE_LIB_PATH%\inference_engine\lib\intel64\Release
+xcopy "%OPENVINO_DIR%\inference_engine\include\c_api" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\include\c_api" /y
+xcopy "%OPENVINO_DIR%\inference_engine\lib\intel64\Release\inference_engine_c_api.lib" "%WEBNN_NATIVE_LIB_PATH%\inference_engine\lib\intel64\Release" /y
 
 echo.
-echo ###############^|^| Build ienn succeeded ^|^|###############
+echo ###############^|^| Build ngraph_c_api succeeded ^|^|###############
 echo.
 goto :eof
 

@@ -4,7 +4,7 @@
 
 cmake_minimum_required (VERSION 2.8.12)
 
-project(ienn)
+project(ngraph_c_api)
 if(POLICY CMP0063)
     cmake_policy(SET CMP0063 NEW)
 endif()
@@ -26,12 +26,12 @@ if (NOT(BIN_FOLDER))
 endif()
 
 if(IE_MAIN_SOURCE_DIR)
-    # in case if ienn are built from IE repo
+    # in case if ngraph_c_api are built from IE repo
     set(IE_NN_MAIN_DIR ${OpenVINO_MAIN_SOURCE_DIR})
     # hint for find_package(InferenceEngine in the samples folder)
     set(InferenceEngine_DIR "${CMAKE_BINARY_DIR}")
 else()
-    # in case if ienn are built out of IE repo
+    # in case if ngraph_c_api are built out of IE repo
     set(IE_NN_MAIN_DIR ${CMAKE_CURRENT_BINARY_DIR})
 endif()
 
