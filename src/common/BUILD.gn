@@ -49,6 +49,7 @@ config("dawn_internal") {
     "${target_gen_dir}/../../src",
     "${webnn_root}/src",
     "${webnn_dawn_root}/src",
+    "${webnn_root}",
   ]
 
   defines = []
