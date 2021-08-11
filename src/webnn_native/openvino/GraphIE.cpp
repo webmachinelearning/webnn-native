@@ -657,6 +657,19 @@ namespace webnn_native { namespace ie {
                 scales.push_back(options->scales[i]);
             }
         }
+        // Interpolate layer only supports resize on spatial dimensions(height and width) according
+        // https://github.com/openvinotoolkit/openvino/blob/master/inference-engine/src/mkldnn_plugin/nodes/mkldnn_interpolate_node.cpp#L2047.
+        // "scales[0] * scales[3] == 1" means N and C aren't supported resize.
+        // "scales[1] * scales[2] != 1" means H and W need to be resized for NHWC.
+        bool transpose = scales[0] * scales[3] == 1 && scales[1] * scales[2] != 1 ? true : false;
+        if (transpose) {
+            std::vector<float> nchwScales = scales;
+            nchwScales[0] = scales[0];
+            nchwScales[1] = scales[3];
+            nchwScales[2] = scales[1];
+            nchwScales[3] = scales[2];
+            scales = std::move(nchwScales);
+        }
         const ngraph_node_t* scalesNode =
             AddConstantWithGraph<float>(precision_e::FP32, {scales.size()}, scales);
 
@@ -670,9 +683,16 @@ namespace webnn_native { namespace ie {
         } else {
             sizes.assign(options->sizes, options->sizes + options->sizesCount);
         }
+        if (transpose) {
+            std::vector<int32_t> nchwSizes = sizes;
+            nchwSizes[0] = sizes[0];
+            nchwSizes[1] = sizes[3];
+            nchwSizes[2] = sizes[1];
+            nchwSizes[3] = sizes[2];
+            sizes = std::move(nchwSizes);
+        }
         const ngraph_node_t* sizesNode =
             AddConstantWithGraph<int32_t>(precision_e::I32, {sizes.size()}, sizes);
-
         // attrs.
         interpolate_attrs_t attrs;
         attrs.mode = static_cast<ngraph_interpolation_mode>(options->mode);
@@ -684,9 +704,15 @@ namespace webnn_native { namespace ie {
         const ngraph_node_t* axes =
             AddConstantWithGraph<int64_t>(precision_e::I64, {4}, {0, 1, 2, 3});
         ngraph_node_t* resampleNode;
+        if (transpose) {
+            input = TransposeInputLayout(input, true);
+        }
         IEStatusCode status =
             ngraph_interpolate(input, sizesNode, scalesNode, axes, &attrs, &resampleNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph resample"));
+        if (transpose) {
+            resampleNode = TransposeInputLayout(resampleNode, false);
+        }
         mGraphNodeMap[resample] = resampleNode;
         return {};
     }
