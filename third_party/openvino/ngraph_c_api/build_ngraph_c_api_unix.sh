@@ -87,6 +87,7 @@ fi
 cp "$build_dir/$OS_PATH/Release/lib/libngraph_c_api.so" "$WEBNN_NATIVE_LIB_PATH"
 mkdir -p "$WEBNN_NATIVE_LIB_PATH/inference_engine/include/"
 mkdir -p "$WEBNN_NATIVE_LIB_PATH/inference_engine/lib/intel64/"
+mkdir -p "$WEBNN_NATIVE_LIB_PATH/inference_engine/lib/intel64/Release"
 yes | cp -rf "$INTEL_OPENVINO_DIR/inference_engine/include/c_api" "$WEBNN_NATIVE_LIB_PATH/inference_engine/include/c_api"
 yes | cp "$INTEL_OPENVINO_DIR/inference_engine/lib/intel64/libinference_engine_c_api.so" "$WEBNN_NATIVE_LIB_PATH/inference_engine/lib/intel64/Release"
 
