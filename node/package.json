@@ -22,7 +22,8 @@
     "test-api": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/api/*.js",
     "test-ops": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/ops/*.js",
     "test-cts": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/cts/from_nnapi/tests/cts.js",
-    "test-models": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/models/**/*.js"
+    "test-models": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/models/**/*.js",
+    "report": "cross-env NODE_ENV=test mocha --require ./node_setup.js third_party/webnn-polyfill/test/*/*.js third_party/webnn-polyfill/test/cts/from_nnapi/tests/cts.js third_party/webnn-polyfill/test/models/**/*.js  --reporter xunit --reporter-option output=result.xml"
   },
   "dependencies": {
     "bindings": "^1.5.0"
