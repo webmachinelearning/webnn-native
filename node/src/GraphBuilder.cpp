@@ -106,6 +106,10 @@ namespace node {
         BUILD_BINARY(Min);
     }
 
+    Napi::Value GraphBuilder::Pow(const Napi::CallbackInfo& info) {
+        BUILD_BINARY(Pow);
+    }
+
     Napi::Value GraphBuilder::BatchNorm(const Napi::CallbackInfo& info) {
         return op::BatchNorm::Build(info, mImpl);
     }
@@ -209,6 +213,7 @@ namespace node {
              InstanceMethod("div", &GraphBuilder::Div, napi_enumerable),
              InstanceMethod("max", &GraphBuilder::Max, napi_enumerable),
              InstanceMethod("min", &GraphBuilder::Min, napi_enumerable),
+             InstanceMethod("pow", &GraphBuilder::Pow, napi_enumerable),
              InstanceMethod("concat", &GraphBuilder::Concat, napi_enumerable),
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
