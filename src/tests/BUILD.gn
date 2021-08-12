@@ -185,6 +185,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/LeakyReluTests.cpp",
     "end2end/MatMulTests.cpp",
     "end2end/MaxTests.cpp",
+    "end2end/MinTests.cpp",
     "end2end/MulTests.cpp",
     "end2end/PadTests.cpp",
     "end2end/Pool2dTests.cpp",
