@@ -1,5 +1,7 @@
 import json
+import pathlib
 import sys
+from xml.dom import minidom
 
 def parseJson(filename, onlyFailure = False):
   failuresDict = {}
@@ -28,7 +30,64 @@ def parseJson(filename, onlyFailure = False):
     else:
       return c
 
-def getRegressionResultsList(baseline, target):
+def parseXml(filename,  onlyFailure = False):
+  resultDict = {}
+  doc = minidom.parse(filename)
+  tcList = doc.getElementsByTagName('testcase')
+  for tc in tcList:
+    className = tc.getAttribute('classname')
+    name = tc.getAttribute('name')
+    if resultDict.get(className) == None:
+      resultDict[className] = []
+    if tc.firstChild:
+      if tc.firstChild.nodeName == 'skipped':
+        if onlyFailure:
+          continue
+        else:
+          resultDict[className].append((name, 'SKIPPED', ''))
+      elif tc.firstChild.nodeName == 'failure':
+        resultDict[className].append(
+          (name, 'FAILED', tc.firstChild.firstChild.data))
+    else:
+        if onlyFailure:
+          continue
+        else:
+          resultDict[className].append((name, 'PASSED', ''))
+  return resultDict
+
+def getRegressionResultsListXml(baseline, target):
+  regressionResultsList = []
+  failureResultsDict = parseXml(target, True)
+
+  if len(failureResultsDict) == 0:
+    return regressionResultsList
+  else:
+    baseResultsDict = parseXml(baseline)
+    baseClassnameList = baseResultsDict.keys()
+    for className, failureResultsList in failureResultsDict.items():
+      if className not in baseClassnameList:
+        # Skip failure test case of new added class name
+        continue
+      else:
+        tcListByClassName = baseResultsDict[className]
+        baseTestcaseNameList = [
+          resultTuple[0] for resultTuple in tcListByClassName ]
+        for testcaseTuple in failureResultsList:
+          testcaseName = testcaseTuple[0]
+          if testcaseName not in baseTestcaseNameList:
+            # Skip new added failure testcase
+            continue
+          else:
+            baseTestcaseResultTuple = \
+              tcListByClassName[baseTestcaseNameList.index(testcaseName)]
+            if baseTestcaseResultTuple[1] in ['PASSED', 'SKIPPED']:
+              # Catch it, this one is a regression test.
+              errorMsg = testcaseTuple[2]
+              regressionResultsList.append((className, testcaseName, errorMsg))
+
+  return regressionResultsList
+
+def getRegressionResultsListJson(baseline, target):
   regressionResultsList = []
   failureResultsDict = parseJson(target, True)
 
@@ -63,16 +122,28 @@ def getRegressionResultsList(baseline, target):
 
   return regressionResultsList
 
+def getRegressionResultsList(baseline, target, suffix):
+    if suffix == '.json':
+      return getRegressionResultsListJson(baseline, target)
+    elif suffix == '.xml':
+      return getRegressionResultsListXml(baseline, target)
+    else:
+      print("Unsupport to check '%s' file" % suffix)
+      sys.exit(1)
+
 if __name__ == '__main__':
   baselineFile = sys.argv[1]
   targetFile = sys.argv[2]
+  fileSuffix = pathlib.Path(baselineFile).suffix
 
-  resultsList = getRegressionResultsList(baselineFile, targetFile)
+  resultsList = getRegressionResultsList(baselineFile, targetFile, fileSuffix)
 
   if resultsList:
     print('Regression check: FAIL, %d regressoion tests:' % len(resultsList))
+    char = '.' if fileSuffix == '.json' else '/'
     for result in resultsList:
-      print('[  FAILED  ] %s.%s\n%s' % (result[0], result[1], result[2]))
+        print('[  FAILED  ] %s%s%s\n%s' % \
+              (result[0], char, result[1], result[2]))
     sys.exit(1)
   else:
     print('Regression check: PASS')
