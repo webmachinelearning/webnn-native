@@ -39,6 +39,7 @@ namespace webnn_native {
         OperandBase* Div(OperandBase*, OperandBase*);
         OperandBase* Mul(OperandBase*, OperandBase*);
         OperandBase* Sub(OperandBase*, OperandBase*);
+        OperandBase* Max(OperandBase*, OperandBase*);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
         OperandBase* AveragePool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
