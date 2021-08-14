@@ -55,7 +55,6 @@ bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
             mNIter = atoi(argv[i + 1]);
         } else if (strcmp("-d", argv[i]) == 0 && i + 1 < argc) {
             mDevice = argv[i + 1];
-            transform(mDevice.begin(), mDevice.end(), mDevice.begin(), ::tolower);
         }
     }
 
@@ -274,6 +273,7 @@ namespace utils {
         } else {
             dawn::ErrorLog()
                 << "Invalid options, only support devices: \"cpu\", \"gpu\" and \"default\".";
+            DAWN_ASSERT(0);
         }
         return options;
     }

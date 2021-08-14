@@ -24,7 +24,7 @@ Napi::FunctionReference node::Context::constructor;
 namespace node {
 
     Context::Context(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Context>(info) {
-        MLContextOptions options;
+        MLContextOptions options = {MLDevicePreference_Default, MLPowerPreference_Default};
         if (info.Length() > 0) {
             Napi::Object optionsObject = info[0].As<Napi::Object>();
             if (optionsObject.Has("powerPreference")) {
@@ -33,12 +33,12 @@ namespace node {
                         .ThrowAsJavaScriptException();
                     return;
                 }
-                std::string powerPreferenceOption = optionsObject.Get("powerPreference").ToString();
-                if (powerPreferenceOption == "default") {
+                std::string powerPreference = optionsObject.Get("powerPreference").ToString();
+                if (powerPreference == "default") {
                     options.powerPreference = MLPowerPreference_Default;
-                } else if (powerPreferenceOption == "low-power") {
+                } else if (powerPreference == "low-power") {
                     options.powerPreference = MLPowerPreference_Low_power;
-                } else if (powerPreferenceOption == "high-performance") {
+                } else if (powerPreference == "high-performance") {
                     options.powerPreference = MLPowerPreference_High_performance;
                 } else {
                     Napi::Error::New(info.Env(), "Invaild powerPreference")
@@ -53,13 +53,12 @@ namespace node {
                         .ThrowAsJavaScriptException();
                     return;
                 }
-                std::string devicePreferenceOption =
-                    optionsObject.Get("devicePreference").ToString();
-                if (devicePreferenceOption == "default") {
+                std::string devicePreference = optionsObject.Get("devicePreference").ToString();
+                if (devicePreference == "default") {
                     options.devicePreference = MLDevicePreference_Default;
-                } else if (devicePreferenceOption == "gpu") {
+                } else if (devicePreference == "gpu") {
                     options.devicePreference = MLDevicePreference_Gpu;
-                } else if (devicePreferenceOption == "cpu") {
+                } else if (devicePreference == "cpu") {
                     options.devicePreference = MLDevicePreference_Cpu;
                 } else {
                     Napi::Error::New(info.Env(), "Invaild devicePreference")
