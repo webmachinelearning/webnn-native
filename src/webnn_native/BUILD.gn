@@ -165,7 +165,7 @@ source_set("webnn_native_sources") {
     ]
 
     include_dirs = [
-      "//third_party/openvino/ngraph_c_api/src",
+      "${webnn_root}/third_party/openvino/ngraph_c_api/src",
       "$root_out_dir/inference_engine/include",
     ]
 
@@ -173,7 +173,7 @@ source_set("webnn_native_sources") {
 
     if (is_win) {
       lib_dirs = [
-        "//third_party/openvino/ngraph_c_api/build/intel64/Release/",
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/",
         "$root_out_dir/inference_engine/lib/intel64/Release",
       ]
       libs = [
@@ -184,7 +184,7 @@ source_set("webnn_native_sources") {
 
     if (is_linux) {
       lib_dirs = [
-        "//third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
         "$root_out_dir/inference_engine/lib/intel64/Release",
       ]
       libs = [
@@ -217,11 +217,12 @@ source_set("webnn_native_sources") {
     ]
 
     include_dirs = [
-      "//third_party/DirectML/Libraries",
-      "//third_party/microsoft.ai.directml.1.5.1/include",
+      "${webnn_root}/third_party/DirectML/Libraries",
+      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include",
     ]
 
-    lib_dirs = [ "//third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
+    lib_dirs =
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
 
     libs = [
       "dxgi.lib",
@@ -246,21 +247,21 @@ source_set("webnn_native_sources") {
     ]
 
     include_dirs = [
-      "//third_party/oneDNN/include",
-      "//third_party/oneDNN/build/include",
+      "${webnn_root}/third_party/oneDNN/include",
+      "${webnn_root}/third_party/oneDNN/build/include",
     ]
 
     if (is_win) {
       if (is_debug) {
-        lib_dirs = [ "//third_party/oneDNN/build/src/Debug" ]
+        lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src/Debug" ]
       } else {
-        lib_dirs = [ "//third_party/oneDNN/build/src/Release" ]
+        lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src/Release" ]
       }
       libs = [ "dnnl.lib" ]
     }
 
     if (is_linux) {
-      lib_dirs = [ "//third_party/oneDNN/build/src" ]
+      lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src" ]
       libs = [ "dnnl" ]
     }
   }
@@ -274,8 +275,8 @@ source_set("webnn_native_sources") {
     ]
 
     include_dirs = [
-      "//third_party/XNNPACK/include",
-      "//third_party/XNNPACK/build/local/pthreadpool-source/include",
+      "${webnn_root}/third_party/XNNPACK/include",
+      "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool-source/include",
     ]
 
     libprefix = ""
@@ -297,10 +298,10 @@ source_set("webnn_native_sources") {
     }
 
     libs = [
-      "//third_party/XNNPACK/build/local/${libfolder}/${libprefix}XNNPACK.${libext}",
-      "//third_party/XNNPACK/build/local/clog/${libfolder}/${libprefix}clog.${libext}",
-      "//third_party/XNNPACK/build/local/cpuinfo/${libfolder}/${libprefix}cpuinfo.${libext}",
-      "//third_party/XNNPACK/build/local/pthreadpool/${libfolder}/${libprefix}pthreadpool.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/${libfolder}/${libprefix}XNNPACK.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/clog/${libfolder}/${libprefix}clog.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/cpuinfo/${libfolder}/${libprefix}cpuinfo.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool/${libfolder}/${libprefix}pthreadpool.${libext}",
     ]
   }
 }
@@ -328,7 +329,8 @@ dawn_component("webnn_native") {
 
 # An action that build ngraph_c_api binary that is a c wrapper of nGraph.
 action("build_ngraph_c_api") {
-  script = "//third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
+  script =
+      "${webnn_root}/third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
 
   args = [
     "--webnn-native-lib-path",
@@ -342,7 +344,8 @@ action("build_ngraph_c_api") {
 if (webnn_enable_dml) {
   dml_dll = "DirectML.dll"
   os_folder = "x64-win"
-  dml_dll_path = "//third_party/microsoft.ai.directml.1.5.1/bin/${os_folder}"
+  dml_dll_path =
+      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/${os_folder}"
   copy("copy_dml_dll") {
     sources = [ "${dml_dll_path}/${dml_dll}" ]
     outputs = [ "$root_out_dir/{{source_file_part}}" ]
@@ -352,13 +355,13 @@ if (webnn_enable_dml) {
 if (webnn_enable_onednn) {
   if (is_win) {
     if (is_debug) {
-      dnnl_dll_path = "//third_party/oneDNN/build/src/Debug"
+      dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src/Debug"
     } else {
-      dnnl_dll_path = "//third_party/oneDNN/build/src/Release"
+      dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src/Release"
     }
     dnnl_dlls = [ "${dnnl_dll_path}/dnnl.dll" ]
   } else if (is_linux) {
-    dnnl_dll_path = "//third_party/oneDNN/build/src"
+    dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src"
     dnnl_dlls = [
       "${dnnl_dll_path}/libdnnl.so",
       "${dnnl_dll_path}/libdnnl.so.2",
