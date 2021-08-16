@@ -849,10 +849,7 @@ namespace webnn_native { namespace ie {
 
     MaybeError Graph::CompileImpl() {
         ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
-        const char* deviceName = devicePreference == ml::DevicePreference::Cpu ||
-                                         devicePreference == ml::DevicePreference::Default
-                                     ? "CPU"
-                                     : "GPU";
+        const char* deviceName = devicePreference == ml::DevicePreference::Gpu ? "GPU" : "CPU";
 
         ie_config_t config = {NULL, NULL, NULL};
         ie_executable_network_t* executableNetwork;
