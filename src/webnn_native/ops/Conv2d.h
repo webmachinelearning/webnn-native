@@ -38,6 +38,7 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mPadding;
         std::vector<int32_t> mStride;
         std::vector<int32_t> mDilations;
+        Ref<OperatorBase> mActivation;
     };
 
 }}  // namespace webnn_native::op

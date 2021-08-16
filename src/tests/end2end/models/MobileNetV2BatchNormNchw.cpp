@@ -17,8 +17,11 @@
 
 class MobileNetV2BatchNormNchwTests : public WebnnTest {
   public:
-    void TestMobileNetV2Nchw(const std::string& inputFile, const std::string& expectedFile) {
+    void TestMobileNetV2Nchw(const std::string& inputFile,
+                             const std::string& expectedFile,
+                             bool fused = false) {
         MobileNetV2 mobilenetv2;
+        mobilenetv2.mFused = fused;
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/mobilenetv2_batchnorm_nchw/";
         mobilenetv2.mWeightsPath = nchwPath + "weights/";
@@ -44,4 +47,16 @@ TEST_F(MobileNetV2BatchNormNchwTests, NchwTest1) {
 
 TEST_F(MobileNetV2BatchNormNchwTests, NchwTest2) {
     TestMobileNetV2Nchw("2/input_0.npy", "2/output_0.npy");
+}
+
+TEST_F(MobileNetV2BatchNormNchwTests, FusedNchwTest0) {
+    TestMobileNetV2Nchw("0/input_0.npy", "0/output_0.npy", true);
+}
+
+TEST_F(MobileNetV2BatchNormNchwTests, FusedNchwTest1) {
+    TestMobileNetV2Nchw("1/input_0.npy", "1/output_0.npy", true);
+}
+
+TEST_F(MobileNetV2BatchNormNchwTests, FusedNchwTest2) {
+    TestMobileNetV2Nchw("2/input_0.npy", "2/output_0.npy", true);
 }

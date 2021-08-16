@@ -31,12 +31,13 @@ class MobileNetV2 : public ExampleBase {
     const ml::Operand BuildConv(const ml::GraphBuilder& builder,
                                 const ml::Operand& input,
                                 int32_t convIndex,
-                                bool fused,
+                                bool relu6,
                                 utils::Conv2dOptions* options = nullptr,
                                 const std::string& biasName = "");
     const ml::Operand BuildConvBatchNorm(const ml::GraphBuilder& builder,
                                          const ml::Operand& input,
                                          int32_t nameIndex,
+                                         bool relu,
                                          utils::Conv2dOptions* options = nullptr,
                                          int32_t subNameIndex = -1);
     const ml::Operand BuildFire(const ml::GraphBuilder& builder,

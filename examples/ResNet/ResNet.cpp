@@ -81,15 +81,29 @@ const ml::Operand ResNet::BuildNhwcConv(const ml::GraphBuilder& builder,
     const ml::Operand convWeights = BuildConstantFromNpy(builder, weightsPath);
     const std::string biasPath = prefix + "_Conv2D_bias.npy";
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
-    std::vector<int32_t> newShape = std::vector<int32_t>({1, 1, 1, -1});
-    const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
-    const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
-    const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
-    const ml::Operand add = builder.Add(conv, reshapedBias);
-    if (relu) {
-        return builder.Relu(add);
+    if (!mFused) {
+        const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
+        std::vector<int32_t> newShape = std::vector<int32_t>({1, 1, 1, -1});
+        const ml::Operand reshapedBias =
+            builder.Reshape(convBias, newShape.data(), newShape.size());
+        const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
+        const ml::Operand add = builder.Add(conv, reshapedBias);
+        if (relu) {
+            return builder.Relu(add);
+        }
+        return add;
+    } else {
+        utils::Conv2dOptions fusedOptions;
+        if (options != nullptr) {
+            fusedOptions = *options;
+        }
+        fusedOptions.bias = convBias;
+        if (relu) {
+            fusedOptions.activation =
+                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+        }
+        return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
     }
-    return add;
 }
 
 const ml::Operand ResNet::BuildBatchNorm(const ml::GraphBuilder& builder,
@@ -110,11 +124,19 @@ const ml::Operand ResNet::BuildBatchNorm(const ml::GraphBuilder& builder,
     ml::BatchNormOptions batchNormOptions;
     batchNormOptions.scale = scale;
     batchNormOptions.bias = bias;
-    const ml::Operand batchNorm = builder.BatchNorm(input, mean, variance, &batchNormOptions);
-    if (relu) {
-        return builder.Relu(batchNorm);
+    if (!mFused) {
+        const ml::Operand batchNorm = builder.BatchNorm(input, mean, variance, &batchNormOptions);
+        if (relu) {
+            return builder.Relu(batchNorm);
+        }
+        return batchNorm;
+    } else {
+        if (relu) {
+            batchNormOptions.activation =
+                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+        }
+        return builder.BatchNorm(input, mean, variance, &batchNormOptions);
     }
-    return batchNorm;
 }
 
 const ml::Operand ResNet::BuildFusedBatchNorm(const ml::GraphBuilder& builder,

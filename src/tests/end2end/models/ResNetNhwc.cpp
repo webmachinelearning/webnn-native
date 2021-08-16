@@ -17,8 +17,11 @@
 
 class ResNetNhwcTests : public WebnnTest {
   public:
-    void TestResNetNhwc(const std::string& inputFile, const std::string& expectedFile) {
+    void TestResNetNhwc(const std::string& inputFile,
+                        const std::string& expectedFile,
+                        bool fused = false) {
         ResNet resnet;
+        resnet.mFused = fused;
         const std::string nhwcPath =
             "node/third_party/webnn-polyfill/test-data/models/resnet101v2_nhwc/";
         resnet.mWeightsPath = nhwcPath + "weights/";
@@ -44,4 +47,16 @@ TEST_F(ResNetNhwcTests, NhwcTest1) {
 
 TEST_F(ResNetNhwcTests, NhwcTest2) {
     TestResNetNhwc("2/input_0.npy", "2/output_0.npy");
+}
+
+TEST_F(ResNetNhwcTests, FusedNhwcTest0) {
+    TestResNetNhwc("0/input_0.npy", "0/output_0.npy", true);
+}
+
+TEST_F(ResNetNhwcTests, FusedNhwcTest1) {
+    TestResNetNhwc("1/input_0.npy", "1/output_0.npy", true);
+}
+
+TEST_F(ResNetNhwcTests, FusedNhwcTest2) {
+    TestResNetNhwc("2/input_0.npy", "2/output_0.npy", true);
 }

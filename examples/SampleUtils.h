@@ -49,6 +49,7 @@ class ExampleBase {
     std::string mChannelScheme = "RGB";
     std::vector<int32_t> mOutputShape;
     std::string mDevice = "default";
+    bool mFused = true;
 };
 
 ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);

@@ -53,13 +53,25 @@ const ml::Operand SqueezeNet::BuildConv(const ml::GraphBuilder& builder,
     std::string biasSuffix = mLayout == "nchw" ? "_bias.npy" : "_Conv2D_bias.npy";
     const std::string biasPath = mWeightsPath + name + biasSuffix;
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
-    std::vector<int32_t> newShape;
-    mLayout == "nchw" ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
-    const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
-    const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
-    const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
-    const ml::Operand add = builder.Add(conv, reshapedBias);
-    return builder.Relu(add);
+    if (!mFused) {
+        const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
+        std::vector<int32_t> newShape;
+        mLayout == "nchw" ? newShape = {1, -1, 1, 1} : newShape = {1, 1, 1, -1};
+        const ml::Operand reshapedBias =
+            builder.Reshape(convBias, newShape.data(), newShape.size());
+        const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
+        const ml::Operand add = builder.Add(conv, reshapedBias);
+        return builder.Relu(add);
+    } else {
+        utils::Conv2dOptions fusedOptions;
+        if (options != nullptr) {
+            fusedOptions = *options;
+        }
+        fusedOptions.bias = convBias;
+        fusedOptions.activation =
+            utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+        return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
+    }
 }
 
 const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
