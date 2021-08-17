@@ -43,6 +43,12 @@ namespace webnn_native {
         OperandBase* Min(OperandBase*, OperandBase*);
         OperandBase* Pow(OperandBase*, OperandBase*);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
+        OperandArrayBase* Gru(OperandBase*,
+                              OperandBase*,
+                              OperandBase*,
+                              size_t steps,
+                              size_t hiddenSize,
+                              GruOptions const* options);
         OperandBase* AveragePool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);

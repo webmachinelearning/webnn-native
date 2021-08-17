@@ -213,6 +213,21 @@
       {"value": 1, "name": "linear"}
     ]
   },
+  "recurrent network weight layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "zrn"},
+      {"value": 1, "name": "rzn"}
+    ]
+  },
+  "recurrent network direction": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "forward"},
+      {"value": 1, "name": "backward"},
+      {"value": 2, "name": "both"}
+    ]
+  },
   "clamp options": {
     "category": "structure",
     "members": [
@@ -247,6 +262,18 @@
     "members": [
       {"name": "axes count", "type": "uint32_t", "default": 0},
       {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+    ]
+  },
+  "gru options": {
+    "category": "structure",
+    "members": [
+      {"name": "bias", "type": "operand"},
+      {"name": "recurrent bias", "type": "operand"},
+      {"name": "initial hidden state", "type": "operand"},
+      {"name": "reset after", "type": "bool", "default": "true"},
+      {"name": "return sequence", "type": "bool", "default": "false"},
+      {"name": "direction", "type": "recurrent network direction", "default": "forward"},
+      {"name": "layout", "type": "recurrent network weight layout", "default": "zrn"}
     ]
   },
   "pad options": {
@@ -434,6 +461,18 @@
           {"name": "input", "type": "operand"},
           {"name": "filter", "type": "operand"},
           {"name": "options", "type": "conv2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "gru",
+        "returns": "operand array",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "weight", "type": "operand"},
+          {"name": "recurrentWeight", "type": "operand"},
+          {"name": "steps", "type": "int32_t"},
+          {"name": "hiddenSize", "type": "int32_t"},
+          {"name": "options", "type": "gru options", "annotation": "const*", "optional": true}
         ]
       },
       {

@@ -32,6 +32,7 @@ namespace webnn_native {
         class BatchNorm;
         class Binary;
         class Conv2d;
+        class Gru;
         class Pad;
         class Pool2d;
         class Reduce;
@@ -60,6 +61,7 @@ namespace webnn_native {
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm);
         virtual MaybeError AddBinary(const op::Binary* binary);
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d);
+        virtual MaybeError AddGru(const op::Gru* gru);
         virtual MaybeError AddPad(const op::Pad* pad);
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d);
         virtual MaybeError AddReduce(const op::Reduce* reduce);

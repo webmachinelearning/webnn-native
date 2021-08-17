@@ -622,6 +622,102 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+    MaybeError Graph::AddGru(const op::Gru* gru) {
+        auto inputs = gru->Inputs();
+        auto options = gru->GetOptions();
+        // [steps, batch_size, input_size] => [batch_size, steps, input_size]
+        std::vector<int64_t> order3D = std::vector<int64_t>{1, 0, 2};
+        const ngraph_node_t* order3DNode =
+            AddConstantWithGraph<int64_t>(precision_e::I64, {order3D.size()}, order3D);
+        // [steps, num_directions, batch_size, hidden_size] => [batch_size, num_directions, steps,
+        // hidden_size]
+        std::vector<int64_t> order4D = std::vector<int64_t>{2, 0, 1, 3};
+        const ngraph_node_t* order4DNode =
+            AddConstantWithGraph<int64_t>(precision_e::I64, {order4D.size()}, order4D);
+        auto inputNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[0].Get()]);
+        ngraph_node_t* inputTransposeNode = nullptr;
+        IEStatusCode status = ngraph_transpose(inputNode, order3DNode, &inputTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "Transpose gru input layout"));
+
+        auto weightNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[1].Get()]);
+        auto recurrentWeightNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[2].Get()]);
+        dimensions_t shape;
+        ngraph_get_shape(inputTransposeNode, &shape);
+        auto batchSize = shape.dims[0];
+        ngraph_get_shape(weightNode, &shape);
+        auto numDirections = shape.dims[0];
+        auto steps = gru->GetSteps();
+        std::vector<size_t> stepsShape{batchSize};
+        std::vector<size_t> stepsData(batchSize, steps);
+        const ngraph_node_t* stepsNode =
+            AddConstantWithGraph<size_t>(precision_e::U64, stepsShape, stepsData);
+        auto hiddenSize = gru->GetHiddenSize();
+        ngraph_node_t* biasNode = nullptr;
+        int n = 3;
+        if (options->bias != nullptr) {
+            biasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> biasShape{numDirections, 3 * hiddenSize};
+            std::vector<float> biasData(numDirections * 3 * hiddenSize, 0);
+            biasNode = AddConstantWithGraph<float>(precision_e::FP32, biasShape, biasData);
+        }
+        ngraph_node_t* recurrentBiasNode = nullptr;
+        if (options->recurrentBias != nullptr) {
+            recurrentBiasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> recurrentBiasShape{numDirections, 3 * hiddenSize};
+            std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
+            recurrentBiasNode = AddConstantWithGraph<float>(precision_e::FP32, recurrentBiasShape,
+                                                            recurrentBiasData);
+        }
+        ngraph_node_t* initialHiddenStateNode = nullptr;
+        if (options->initialHiddenState != nullptr) {
+            initialHiddenStateNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> initialHiddenStateShape{numDirections, batchSize, hiddenSize};
+            std::vector<float> initialHiddenStateData(numDirections * batchSize * hiddenSize, 0);
+            initialHiddenStateNode = AddConstantWithGraph<float>(
+                precision_e::FP32, initialHiddenStateShape, initialHiddenStateData);
+        }
+        ngraph_node_t* initialHiddenStateTransposeNode = nullptr;
+        status =
+            ngraph_transpose(initialHiddenStateNode, order3DNode, &initialHiddenStateTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "Transpose gru initialHiddenState layout"));
+        auto direction = static_cast<ngraph_recurrent_sequence_direction>(options->direction);
+        // TODO: layout
+        /**
+         * If resetAfter is set to true, then the bias shape will  be set to
+         * [num_directions, 4 * hidden_size] (not support)
+         */
+        bool linear_before_reset = options->resetAfter == true ? false : false;
+        bool return_sequence = options->returnSequence;
+        ngraph_node_t* gruNode0;
+        status = ngraph_gru_sequence(inputTransposeNode, initialHiddenStateTransposeNode, stepsNode,
+                                     weightNode, recurrentWeightNode, biasNode, hiddenSize,
+                                     direction, linear_before_reset, &gruNode0);
+        DAWN_TRY(CheckStatusCode(status, "ngraph gru"));
+
+        uint32_t ngraph_output_number;
+        status = ngraph_get_output_number(gruNode0, &ngraph_output_number);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output number"));
+
+        ngraph_node_t* outputNode;
+        ngraph_node_t* outputTransposeNode;
+        status = ngraph_get_output(gruNode0, 1, &outputNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
+        status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
+        mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
+        if (return_sequence) {
+            status = ngraph_get_output(gruNode0, 0, &outputNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph get output 0"));
+            status = ngraph_transpose(outputNode, order4DNode, &outputTransposeNode);
+            DAWN_TRY(CheckStatusCode(status, "transpose gru output 0 layout"));
+            mGraphNodeMap[gru->Outputs()[1].Get()] = outputTransposeNode;
+        }
+        return {};
+    }
+
     MaybeError Graph::AddPad(const op::Pad* pad) {
         auto inputs = pad->Inputs();
         if (mConstantSet.find(inputs[1].Get()) == mConstantSet.end()) {

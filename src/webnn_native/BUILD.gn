@@ -125,6 +125,8 @@ source_set("webnn_native_sources") {
     "ops/Conv2d.h",
     "ops/Gemm.cpp",
     "ops/Gemm.h",
+    "ops/Gru.cpp",
+    "ops/Gru.h",
     "ops/Input.h",
     "ops/InstanceNorm.cpp",
     "ops/InstanceNorm.h",

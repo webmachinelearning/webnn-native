@@ -34,6 +34,7 @@
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
+#include "webnn_native/ops/Gru.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
@@ -116,6 +117,16 @@ namespace webnn_native {
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
         VALIDATE_FOR_OPERAND(new op::Conv2d(this, input, filter, options));
+    }
+
+    OperandArrayBase* GraphBuilderBase::Gru(OperandBase* input,
+                                            OperandBase* weight,
+                                            OperandBase* recurrentWeight,
+                                            size_t steps,
+                                            size_t hiddenSize,
+                                            GruOptions const* options) {
+        VALIDATE_ARRAY_OPERAND(
+            new op::Gru(this, input, weight, recurrentWeight, steps, hiddenSize, options));
     }
 
     OperandBase* GraphBuilderBase::AveragePool2d(OperandBase* input, Pool2dOptions const* options) {

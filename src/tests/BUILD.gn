@@ -182,6 +182,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/DivTests.cpp",
     "end2end/GemmTests.cpp",
     "end2end/HardSwishTests.cpp",
+    "end2end/GruTests.cpp",
     "end2end/InstanceNormTests.cpp",
     "end2end/LeakyReluTests.cpp",
     "end2end/MatMulTests.cpp",
