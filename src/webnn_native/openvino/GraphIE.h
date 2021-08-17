@@ -23,6 +23,7 @@
 #include "webnn_native/Error.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/openvino/ContextIE.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"

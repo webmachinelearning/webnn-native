@@ -123,6 +123,40 @@ namespace webnn_native { namespace ie {
             return constantNode;
         }
 
+        IEStatusCode AddActivationNode(const ngraph_node_t* inputNode,
+                                       OperatorBase* activation,
+                                       ngraph_node_t** activationNode) {
+            IEStatusCode status = IEStatusCode::OK;
+            if (activation == nullptr) {
+                *activationNode = const_cast<ngraph_node_t*>(inputNode);
+                return status;
+            }
+            switch (activation->GetOperatorType()) {
+                // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
+                // case OperatorType::Clamp, we added a clamp node in GraphBuilder
+                // directly to ensure that we can find the min and max operands from the graph.
+                case OperatorType::Clamp:
+                    *activationNode = const_cast<ngraph_node_t*>(inputNode);
+                    break;
+                case OperatorType::Relu:
+                    status = ngraph_relu(inputNode, activationNode);
+                    break;
+                case OperatorType::Sigmoid:
+                    status = ngraph_sigmoid(inputNode, activationNode);
+                    break;
+                case OperatorType::LeakyRelu: {
+                    auto leakyRelu = reinterpret_cast<const op::LeakyReluOperator*>(activation);
+                    const ngraph_node_t* constantNode = AddConstantWithGraph<float>(
+                        precision_e::FP32, {1}, {leakyRelu->GetAlpha()});
+                    status = ngraph_leaky_relu(inputNode, constantNode, activationNode);
+                    break;
+                }
+                default:
+                    WEBNN_ASSERT(0, "The OperatorType isn't supported.");
+            }
+            return status;
+        }
+
         // Transpose NHWC <=> NCHW.
         ngraph_node_t* TransposeInputLayout(const ngraph_node_t* input, bool nhwc_to_nchw) {
             std::vector<int64_t> order =
@@ -379,10 +413,13 @@ namespace webnn_native { namespace ie {
             ngraph_batch_norm_inference(inputNode, scaleNode, biasNode, meanNode, varianceNode,
                                         options->epsilon, &batchNormNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph batch norm inference"));
+        ngraph_node_t* activationNode;
+        status = AddActivationNode(batchNormNode, options->activation, &activationNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
         if (nhwc) {
-            batchNormNode = TransposeInputLayout(batchNormNode, false);
+            activationNode = TransposeInputLayout(activationNode, false);
         }
-        mGraphNodeMap[batchNorm] = batchNormNode;
+        mGraphNodeMap[batchNorm] = activationNode;
         return {};
     }
 
@@ -474,6 +511,7 @@ namespace webnn_native { namespace ie {
     }
 
     MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
+        IEStatusCode status;
         auto options = conv2d->GetOptions();
         std::vector<size_t> strides(options->strides, options->strides + options->stridesCount);
         DAWN_ASSERT(strides.size() == 2);
@@ -489,17 +527,16 @@ namespace webnn_native { namespace ie {
         auto filterNode = const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[1].Get()]);
         filterNode = TransposeFilterLayout(filterNode, options->filterLayout);
         ngraph_node_t* conv2dNode;
+        dimensions_t filterDims;
+        ngraph_get_shape(filterNode, &filterDims);
         if (options->groups > 1) {
             // Insert the groups to the shape of filter as first item.
-            dimensions_t shape;
-            ngraph_get_shape(filterNode, &shape);
-            std::vector<size_t> filterShape(shape.dims, shape.dims + shape.ranks);
+            std::vector<size_t> filterShape(filterDims.dims, filterDims.dims + filterDims.ranks);
             filterShape.at(0) = filterShape.at(0) / options->groups;
             filterShape.insert(filterShape.begin(), options->groups);
             // Reshape the filter to support groups conv.
             const ngraph_node_t* reshapeNode =
                 AddConstantWithGraph<uint64_t>(precision_e::U64, {filterShape.size()}, filterShape);
-            IEStatusCode status;
             status = ngraph_reshape(filterNode, reshapeNode, &filterNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
             status = ngraph_group_convolution(
@@ -508,16 +545,35 @@ namespace webnn_native { namespace ie {
                 &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
         } else {
-            IEStatusCode status = ngraph_convolution(
+            status = ngraph_convolution(
                 input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
                 dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
                 &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
         }
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
-            conv2dNode = TransposeInputLayout(conv2dNode, false);
+        if (options->bias != nullptr) {
+            ngraph_node_t* biasNode =
+                const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[2].Get()]);
+            dimensions_t biasDims;
+            ngraph_get_shape(biasNode, &biasDims);
+            if (biasDims.ranks != 1 || biasDims.dims[0] != filterDims.dims[0]) {
+                return DAWN_INTERNAL_ERROR(
+                    "The bias should be 1-D tensor with the shape of [output_channels].");
+            }
+            // Reshape bias from 1-D to 4-D for NCHW layout.
+            const ngraph_node_t* reshapeNode =
+                AddConstantWithGraph<int64_t>(precision_e::I64, {4}, {1, -1, 1, 1});
+            status = ngraph_reshape(biasNode, reshapeNode, &biasNode);
+            status = ngraph_add(conv2dNode, biasNode, &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph add"));
         }
-        mGraphNodeMap[conv2d] = conv2dNode;
+        ngraph_node_t* activationNode;
+        status = AddActivationNode(conv2dNode, options->activation, &activationNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
+        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+            activationNode = TransposeInputLayout(activationNode, false);
+        }
+        mGraphNodeMap[conv2d] = activationNode;
         return {};
     }
 
@@ -932,5 +988,4 @@ namespace webnn_native { namespace ie {
 
         return MLComputeGraphStatus_Success;
     }
-
 }}  // namespace webnn_native::ie

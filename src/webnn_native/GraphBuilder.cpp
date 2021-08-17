@@ -25,6 +25,7 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"
@@ -97,6 +98,24 @@ namespace webnn_native {
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
+        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
+        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
+        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
+        // that we can find the min and max operands from the graph. We need to refactor codes once
+        // a backend requires fusing clamp.
+        if (options != nullptr && options->activation != nullptr) {
+            auto operatorType = options->activation->GetOperatorType();
+            if (operatorType == OperatorType::Clamp) {
+                OperandBase* conv2d = new op::Conv2d(this, input, filter, options);
+                if (GetContext()->ConsumedError(conv2d->ValidateAndInferTypes())) {
+                    delete conv2d;
+                    return OperandBase::MakeError(this);
+                }
+                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
+                auto clampOptions = clamp->GetOptions();
+                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, conv2d, clampOptions));
+            }
+        }
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Conv2d(this, input, filter, options));
     }
 
@@ -119,6 +138,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kRelu, input));
     }
 
+    OperatorBase* GraphBuilderBase::ReluOperator() {
+        return new op::ReluOperator(this);
+    }
+
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Resample(this, input, options));
     }
@@ -137,6 +160,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
     }
 
+    OperatorBase* GraphBuilderBase::SigmoidOperator() {
+        return new op::SigmoidOperator(this);
+    }
+
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kTanh, input));
     }
@@ -147,6 +174,10 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::LeakyRelu(OperandBase* input, LeakyReluOptions const* options) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::LeakyRelu(this, input, options));
+    }
+
+    OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
+        return new op::LeakyReluOperator(this, options);
     }
 
     OperandBase* GraphBuilderBase::Concat(uint32_t inputsCount,
@@ -170,10 +201,33 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, input, options));
     }
 
+    OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
+        return new op::ClampOperator(this, options);
+    }
+
     OperandBase* GraphBuilderBase::BatchNorm(OperandBase* input,
                                              OperandBase* mean,
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
+        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
+        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
+        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
+        // that we can find the min and max operands from the graph. We need to refactor codes once
+        // a backend requires fusing clamp.
+        if (options != nullptr && options->activation != nullptr) {
+            auto operatorType = options->activation->GetOperatorType();
+            if (operatorType == OperatorType::Clamp) {
+                OperandBase* batchNorm = new op::BatchNorm(this, input, mean, variance, options);
+                if (GetContext()->ConsumedError(batchNorm->ValidateAndInferTypes())) {
+                    delete batchNorm;
+                    return OperandBase::MakeError(this);
+                }
+                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
+                auto clampOptions = clamp->GetOptions();
+                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, batchNorm, clampOptions));
+            }
+        }
+
         DAWN_VALIDATE_AND_INFER_TYPES(new op::BatchNorm(this, input, mean, variance, options));
     }
 

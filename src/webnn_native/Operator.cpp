@@ -9,22 +9,23 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/Operator.h"
 
-#include <algorithm>
-
+#include "common/Assert.h"
 #include "common/Log.h"
-#include "webnn_native/Error.h"
+#include "webnn_native/GraphBuilder.h"
 
-namespace webnn_native { namespace op {
-    LeakyRelu::LeakyRelu(GraphBuilderBase* builder,
-                         OperandBase* input,
-                         LeakyReluOptions const* options)
-        : Unary(builder, kLeakyRelu, input) {
-        mAlpha = options == nullptr ? 0.01 : options->alpha;
+namespace webnn_native {
+
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, OperatorType type)
+        : ObjectBase(graphBuilder->GetContext()), mType(type) {
     }
 
-}}  // namespace webnn_native::op
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)
+        : ObjectBase(graphBuilder->GetContext(), tag) {
+    }
+}  // namespace webnn_native

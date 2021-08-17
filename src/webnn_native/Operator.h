@@ -15,11 +15,30 @@
 #ifndef WEBNN_NATIVE_OPERATOR_H_
 #define WEBNN_NATIVE_OPERATOR_H_
 
+#include "webnn_native/Forward.h"
+#include "webnn_native/ObjectBase.h"
+
 namespace webnn_native {
+
+    enum class OperatorType : uint32_t {
+        Clamp = 0x00000000,
+        Relu = 0x00000001,
+        Sigmoid = 0x00000002,
+        LeakyRelu = 0x00000003,
+    };
 
     class OperatorBase : public ObjectBase {
       public:
+        explicit OperatorBase(GraphBuilderBase* GraphBuilder, OperatorType type);
         virtual ~OperatorBase() = default;
+
+        OperatorType GetOperatorType() const {
+            return mType;
+        }
+
+      private:
+        OperatorBase(GraphBuilderBase* GraphBuilder, ObjectBase::ErrorTag tag);
+        OperatorType mType;
     };
 }  // namespace webnn_native
 

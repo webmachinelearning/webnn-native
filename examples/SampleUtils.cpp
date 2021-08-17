@@ -80,6 +80,77 @@ namespace utils {
         return prod;
     }
 
+    // Create the ClampOptions by two constants.
+    ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
+                                        const std::vector<int32_t>& minShape,
+                                        const std::vector<float>& minValue,
+                                        const std::vector<int32_t>& maxShape,
+                                        const std::vector<float>& maxValue) {
+        ml::ClampOptions clampOptions;
+        clampOptions.minValue = utils::BuildConstant(builder, minShape, minValue.data(),
+                                                     minValue.size() * sizeof(float));
+        clampOptions.maxValue = utils::BuildConstant(builder, maxShape, maxValue.data(),
+                                                     maxValue.size() * sizeof(float));
+        return clampOptions;
+    }
+
+    const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
+                                                FusedActivation activation,
+                                                const void* options) {
+        ml::Operator activationOperator;
+        switch (activation) {
+            case FusedActivation::RELU:
+                activationOperator = builder.ReluOperator();
+                break;
+            case FusedActivation::RELU6: {
+                auto clampOptions = reinterpret_cast<ml::ClampOptions const*>(options);
+                activationOperator = builder.ClampOperator(clampOptions);
+                break;
+            }
+            case FusedActivation::SIGMOID:
+                activationOperator = builder.SigmoidOperator();
+                break;
+            case FusedActivation::LEAKYRELU: {
+                auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);
+                activationOperator = builder.LeakyReluOperator(leakyReluOptions);
+                break;
+            }
+            default:
+                dawn::ErrorLog() << "The activation is unsupported";
+                DAWN_ASSERT(0);
+        }
+        return activationOperator;
+    }
+
+    const ml::Operand CreateActivationOperand(const ml::GraphBuilder& builder,
+                                              const ml::Operand& input,
+                                              FusedActivation activation,
+                                              const void* options) {
+        ml::Operand activationOperand;
+        switch (activation) {
+            case FusedActivation::RELU:
+                activationOperand = builder.Relu(input);
+                break;
+            case FusedActivation::RELU6: {
+                auto clampOptions = reinterpret_cast<ml::ClampOptions const*>(options);
+                activationOperand = builder.Clamp(input, clampOptions);
+                break;
+            }
+            case FusedActivation::SIGMOID:
+                activationOperand = builder.Sigmoid(input);
+                break;
+            case FusedActivation::LEAKYRELU: {
+                auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);
+                activationOperand = builder.LeakyRelu(input, leakyReluOptions);
+                break;
+            }
+            default:
+                dawn::ErrorLog() << "The activation is unsupported";
+                DAWN_ASSERT(0);
+        }
+        return activationOperand;
+    }
+
     ml::Operand BuildInput(const ml::GraphBuilder& builder,
                            std::string name,
                            const std::vector<int32_t>& dimensions,

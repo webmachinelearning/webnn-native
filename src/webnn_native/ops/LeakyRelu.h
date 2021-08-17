@@ -15,14 +15,17 @@
 #ifndef WEBNN_NATIVE_OPS_LEAKYRELU_H_
 #define WEBNN_NATIVE_OPS_LEAKYRELU_H_
 
+#include "webnn_native/Operator.h"
 #include "webnn_native/ops/Unary.h"
 
 namespace webnn_native { namespace op {
 
-    class LeakyRelu final : public Unary {
+    class LeakyReluBase {
       public:
-        LeakyRelu(GraphBuilderBase* builder, OperandBase* input, LeakyReluOptions const* options);
-        ~LeakyRelu() override = default;
+        LeakyReluBase(LeakyReluOptions const* options) {
+            mAlpha = options == nullptr ? 0.01 : options->alpha;
+        }
+        ~LeakyReluBase() = default;
 
         float GetAlpha() const {
             return mAlpha;
@@ -30,6 +33,22 @@ namespace webnn_native { namespace op {
 
       private:
         float mAlpha;
+    };
+
+    class LeakyRelu final : public LeakyReluBase, public Unary {
+      public:
+        LeakyRelu(GraphBuilderBase* builder, OperandBase* input, LeakyReluOptions const* options)
+            : LeakyReluBase(options), Unary(builder, kLeakyRelu, input) {
+        }
+        ~LeakyRelu() override = default;
+    };
+
+    class LeakyReluOperator final : public LeakyReluBase, public OperatorBase {
+      public:
+        LeakyReluOperator(GraphBuilderBase* builder, LeakyReluOptions const* options)
+            : LeakyReluBase(options), OperatorBase(builder, OperatorType::LeakyRelu) {
+        }
+        ~LeakyReluOperator() override = default;
     };
 
 }}  // namespace webnn_native::op

@@ -108,6 +108,8 @@ source_set("webnn_native_sources") {
     "ObjectBase.h",
     "Operand.cpp",
     "Operand.h",
+    "Operator.cpp",
+    "Operator.h",
   ]
 
   sources += [
@@ -115,7 +117,6 @@ source_set("webnn_native_sources") {
     "ops/BatchNorm.h",
     "ops/Binary.cpp",
     "ops/Binary.h",
-    "ops/Clamp.cpp",
     "ops/Clamp.h",
     "ops/Concat.cpp",
     "ops/Concat.h",
@@ -129,7 +130,6 @@ source_set("webnn_native_sources") {
     "ops/Input.h",
     "ops/InstanceNorm.cpp",
     "ops/InstanceNorm.h",
-    "ops/LeakyRelu.cpp",
     "ops/LeakyRelu.h",
     "ops/Pad.cpp",
     "ops/Pad.h",

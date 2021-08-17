@@ -48,15 +48,19 @@ namespace webnn_native {
         OperandBase* ReduceMean(OperandBase*, ReduceMeanOptions const* options);
         OperandBase* Resample(OperandBase*, ResampleOptions const* options);
         OperandBase* Relu(OperandBase*);
+        OperatorBase* ReluOperator();
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Softmax(OperandBase*);
         OperandBase* Sigmoid(OperandBase*);
+        OperatorBase* SigmoidOperator();
         OperandBase* Tanh(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);
+        OperatorBase* LeakyReluOperator(LeakyReluOptions const* options);
         OperandBase* Concat(uint32_t inputsCount, OperandBase* const* inputs, uint32_t axis);
         OperandBase* Gemm(OperandBase*, OperandBase*, GemmOptions const* options);
         OperandBase* Clamp(OperandBase*, ClampOptions const* options);
+        OperatorBase* ClampOperator(ClampOptions const* options);
         OperandBase* BatchNorm(OperandBase*,
                                OperandBase*,
                                OperandBase*,
