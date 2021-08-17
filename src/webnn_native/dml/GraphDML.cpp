@@ -668,6 +668,10 @@ namespace webnn_native { namespace dml {
             c = ::dml::Multiply(a, b);
         } else if (binary->GetType() == op::BinaryOpType::kSub) {
             c = ::dml::Subtract(a, b);
+        } else if (binary->GetType() == op::BinaryOpType::kMax) {
+            c = ::dml::Max(a, b);
+        } else if (binary->GetType() == op::BinaryOpType::kMin) {
+            c = ::dml::Min(a, b);
         } else {
             std::string errorMessage = std::string(" Binary op ") +
                                        OpTypeToString(binary->GetType()) +
