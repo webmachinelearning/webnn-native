@@ -451,6 +451,9 @@ namespace webnn_native { namespace ie {
             case op::BinaryOpType::kMin:
                 status = ngraph_min(primaryNode, secondaryNode, &binaryNode);
                 break;
+            case op::BinaryOpType::kPower:
+                status = ngraph_power(primaryNode, secondaryNode, &binaryNode);
+                break;
             default:
                 DAWN_ASSERT(0);
         }

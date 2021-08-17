@@ -95,6 +95,10 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMin, a, b));
     }
 
+    OperandBase* GraphBuilderBase::Pow(OperandBase* a, OperandBase* b) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kPower, a, b));
+    }
+
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {

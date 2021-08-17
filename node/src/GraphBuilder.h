@@ -40,6 +40,7 @@ namespace node {
         Napi::Value Div(const Napi::CallbackInfo& info);
         Napi::Value Max(const Napi::CallbackInfo& info);
         Napi::Value Min(const Napi::CallbackInfo& info);
+        Napi::Value Pow(const Napi::CallbackInfo& info);
         Napi::Value Conv2d(const Napi::CallbackInfo& info);
         Napi::Value Concat(const Napi::CallbackInfo& info);
         Napi::Value Clamp(const Napi::CallbackInfo& info);

@@ -28,6 +28,7 @@ namespace webnn_native { namespace op {
         kMax,
         kMin,
         kMatMul,
+        kPower,
     };
 
     class Binary final : public OperandBase {
