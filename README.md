@@ -3,6 +3,7 @@
 [![DirectML backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
 [![Node Binding (DirectML backend)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml)
 [![OpenVINO backend (Linux)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_linux.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_linux.yml)
+[![Node Binding (OpenVINO backend / Linux)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_linux.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_linux.yml)
 
 # WebNN-native
 
