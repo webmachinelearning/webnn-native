@@ -1,4 +1,4 @@
-name: DirectML backend
+name: DirectML backend (Windows)
 
 on: [push, pull_request]
 

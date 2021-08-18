@@ -1,4 +1,4 @@
-name: Node Binding (DirectML backend)
+name: Node Binding (DirectML backend / Windows)
 
 on: [push, pull_request]
 
