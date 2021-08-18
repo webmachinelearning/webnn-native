@@ -200,8 +200,8 @@
   "clamp options": {
     "category": "structure",
     "members": [
-      {"name": "min value", "type": "operand"},
-      {"name": "max value", "type": "operand"}
+      {"name": "min value", "type": "operand", "optional": true},
+      {"name": "max value", "type": "operand", "optional": true}
     ]
   },
   "conv2d options": {
@@ -217,8 +217,8 @@
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
       {"name": "filter layout", "type": "filter operand layout", "default": "oihw"},
-      {"name": "bias", "type": "operand"},
-      {"name": "activation", "type": "operator"}
+      {"name": "bias", "type": "operand", "optional": true},
+      {"name": "activation", "type": "operator", "optional": true}
     ]
   },
   "pad options": {
@@ -287,18 +287,18 @@
   "batchNorm options": {
     "category": "structure",
     "members": [
-      {"name": "scale", "type": "operand"},
-      {"name": "bias", "type": "operand"},
+      {"name": "scale", "type": "operand", "optional": true},
+      {"name": "bias", "type": "operand", "optional": true},
       {"name": "axis", "type": "uint32_t", "default": 1},
       {"name": "epsilon", "type": "float", "default": 1e-5},
-      {"name": "activation", "type": "operator"}
+      {"name": "activation", "type": "operator", "optional": true}
     ]
   },
   "instanceNorm options": {
   "category": "structure",
     "members": [
-      {"name": "scale", "type": "operand"},
-      {"name": "bias", "type": "operand"},
+      {"name": "scale", "type": "operand", "optional": true},
+      {"name": "bias", "type": "operand", "optional": true},
       {"name": "epsilon", "type": "float", "default": 1e-5},
       {"name": "layout", "type": "input operand layout", "default": "nchw"}
     ]
