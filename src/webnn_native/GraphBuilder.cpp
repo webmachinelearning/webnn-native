@@ -41,6 +41,7 @@
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
@@ -156,12 +157,16 @@ namespace webnn_native {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Reshape(this, input, new_shape, new_shape_count));
     }
 
+    OperandBase* GraphBuilderBase::Sigmoid(OperandBase* input) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
+    }
+
     OperandBase* GraphBuilderBase::Softmax(OperandBase* input) {
         DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
     }
 
-    OperandBase* GraphBuilderBase::Sigmoid(OperandBase* input) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
+    OperandBase* GraphBuilderBase::Squeeze(OperandBase* input, SqueezeOptions const* options) {
+        DAWN_VALIDATE_AND_INFER_TYPES(new op::Squeeze(this, input, options));
     }
 
     OperatorBase* GraphBuilderBase::SigmoidOperator() {

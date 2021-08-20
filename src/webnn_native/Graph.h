@@ -37,6 +37,7 @@ namespace webnn_native {
         class ReduceMean;
         class Resample;
         class Reshape;
+        class Squeeze;
         class Transpose;
         class Unary;
         class LeakyRelu;
@@ -62,6 +63,7 @@ namespace webnn_native {
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean);
         virtual MaybeError AddResample(const op::Resample* resample);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
+        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);
         virtual MaybeError AddLeakyRelu(const op::LeakyRelu* leakyRelu);

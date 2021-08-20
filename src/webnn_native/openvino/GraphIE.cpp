@@ -14,6 +14,7 @@
 
 #include "webnn_native/openvino/GraphIE.h"
 
+#include <algorithm>
 #include <vector>
 
 #include "common/Assert.h"
@@ -794,23 +795,24 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+        auto input = mGraphNodeMap[squeeze->Inputs()[0].Get()];
+        std::vector<int32_t> axes = squeeze->GetAxes();
+        const ngraph_node_t* constantNode =
+            axes.empty() ? nullptr
+                         : AddConstantWithGraph<int32_t>(precision_e::I32, {axes.size()}, axes);
+        ngraph_node_t* squeezeNode;
+        IEStatusCode status = ngraph_squeeze(input, constantNode, &squeezeNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph squeeze"));
+        mGraphNodeMap[squeeze] = squeezeNode;
+        return {};
+    }
+
     MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
         auto input = mGraphNodeMap[transpose->Inputs()[0].Get()];
-        TransposeOptions const* options = transpose->GetOptions();
-        std::vector<int64_t> permutation;
-        if (options->permutationCount == 0) {
-            // When it’s not specified, it’s set to [N-1...0].
-            dimensions_t inputShape;
-            ngraph_get_shape(input, &inputShape);
-            for (size_t i = 0; i < inputShape.ranks; ++i) {
-                permutation.insert(permutation.begin(), i);
-            }
-        } else {
-            permutation.assign(options->permutation,
-                               options->permutation + options->permutationCount);
-        }
-        const ngraph_node_t* constantNode = AddConstantWithGraph<int64_t>(
-            precision_e::I64, {options->permutationCount}, permutation);
+        std::vector<int32_t> permutation = transpose->GetPermutation();
+        const ngraph_node_t* constantNode =
+            AddConstantWithGraph<int32_t>(precision_e::I32, {permutation.size()}, permutation);
         ngraph_node_t* transposeNode;
         IEStatusCode status = ngraph_transpose(input, constantNode, &transposeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph transpose"));

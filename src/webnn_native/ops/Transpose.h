@@ -34,8 +34,6 @@ namespace webnn_native { namespace op {
                 mPermutation.assign(options->permutation,
                                     options->permutation + options->permutationCount);
             }
-            mOptions.permutation = mPermutation.data();
-            mOptions.permutationCount = mPermutation.size();
         }
         ~Transpose() override = default;
 
@@ -44,12 +42,11 @@ namespace webnn_native { namespace op {
         }
         MaybeError ValidateAndInferTypes() override;
 
-        TransposeOptions const* GetOptions() const {
-            return &mOptions;
+        std::vector<int32_t> GetPermutation() const {
+            return mPermutation;
         }
 
       private:
-        TransposeOptions mOptions;
         std::vector<int32_t> mPermutation;
     };
 

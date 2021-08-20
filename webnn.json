@@ -277,6 +277,13 @@
       {"name": "sizes", "type": "int32_t", "annotation": "const*", "length": "sizes count", "optional": true}
     ]
   },
+  "squeeze options": {
+    "category": "structure",
+    "members": [
+      {"name": "axes count", "type": "uint32_t", "default": 0},
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+    ]
+  },
   "transpose options": {
     "category": "structure",
     "members": [
@@ -492,14 +499,22 @@
         "returns": "operator"
       },
       {
-        "name": "tanh",
+        "name": "squeeze",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "squeeze options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "softmax",
         "returns": "operand",
         "args": [
           {"name": "input", "type": "operand"}
         ]
       },
       {
-        "name": "softmax",
+        "name": "tanh",
         "returns": "operand",
         "args": [
           {"name": "input", "type": "operand"}

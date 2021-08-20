@@ -14,6 +14,8 @@
 
 #include "webnn_native/dml/GraphDML.h"
 
+#include <algorithm>
+
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
@@ -88,10 +90,12 @@ namespace webnn_native { namespace dml {
             return newDims;
         }
 
-        // Refer to
+        // Strides are used to express broadcasting (by specifying a stride of 0) as well as
+        // padding. If Strides is not specified, each dimension in the tensor is considered to be
+        // contiguously packed, with no additional padding. The calculated strides refer to
         // https://docs.microsoft.com/en-us/windows/win32/direct3d12/dml-helper-functions#calculatestrides
-        ::dml::TensorDimensions CalculateStrides(::dml::TensorDimensions dims,
-                                                 std::vector<bool> broadcast = {}) {
+        ::dml::TensorDimensions CalculateBroadcastStrides(::dml::TensorDimensions dims,
+                                                          std::vector<bool> broadcast = {}) {
             size_t rank = dims.size();
             if (broadcast.empty()) {
                 broadcast.resize(rank, false);
@@ -277,8 +281,8 @@ namespace webnn_native { namespace dml {
                     return false;
                 }
             }
-            aNewStrides = CalculateStrides(aNewDims, aBroadcast);
-            bNewStrides = CalculateStrides(bNewDims, bBroadcast);
+            aNewStrides = CalculateBroadcastStrides(aNewDims, aBroadcast);
+            bNewStrides = CalculateBroadcastStrides(bNewDims, bBroadcast);
             return true;
         }
 
@@ -576,8 +580,7 @@ namespace webnn_native { namespace dml {
             // Set 1 to automatically broadcast those dimensions across the input.
             ::dml::TensorDimensions expandDimens(4, 1);
             expandDimens[axis] = dimensions[0];
-            auto expandStrides = CalculateStrides(expandDimens);
-            expressions.push_back(::dml::Reinterpret(expression, expandDimens, expandStrides));
+            expressions.push_back(::dml::Reinterpret(expression, expandDimens, ::dml::NullOpt));
         }
         // Set tensor's dimensions to {1, 1, 1, 1} if scale or bias is null.
         const DML_TENSOR_DATA_TYPE type = DML_TENSOR_DATA_TYPE_FLOAT32;
@@ -640,7 +643,7 @@ namespace webnn_native { namespace dml {
                 aDims = ExpandDimensions(aDims, 4);
                 aDimsChanged = true;
                 aNewDims = aDims;
-                aNewStrides = CalculateStrides(aNewDims);
+                aNewStrides = CalculateBroadcastStrides(aNewDims);
             }
 
             if (bRank < 4) {
@@ -652,7 +655,7 @@ namespace webnn_native { namespace dml {
                 bDims = ExpandDimensions(bDims, 4);
                 bDimsChanged = true;
                 bNewDims = bDims;
-                bNewStrides = CalculateStrides(bNewDims);
+                bNewStrides = CalculateBroadcastStrides(bNewDims);
             }
 
             if (aRank > 2 || bRank > 2) {
@@ -698,6 +701,8 @@ namespace webnn_native { namespace dml {
             c = ::dml::Max(a, b);
         } else if (binary->GetType() == op::BinaryOpType::kMin) {
             c = ::dml::Min(a, b);
+        } else if (binary->GetType() == op::BinaryOpType::kPower) {
+            c = ::dml::Pow(a, b);
         } else {
             std::string errorMessage = std::string(" Binary op ") +
                                        OpTypeToString(binary->GetType()) +
@@ -709,8 +714,7 @@ namespace webnn_native { namespace dml {
         ::dml::TensorDimensions cDims = c.GetOutputDesc().sizes;
         if (cRank != 0 && cRank < cDims.size()) {
             ::dml::TensorDimensions cNewDims = ShrinkDimensions(cDims, cRank);
-            ::dml::TensorDimensions cNewStrides = CalculateStrides(cNewDims);
-            c = ::dml::Reinterpret(c, cNewDims, cNewStrides);
+            c = ::dml::Reinterpret(c, cNewDims, ::dml::NullOpt);
         }
         mExpression.insert(std::make_pair(binary, c));
         return {};
@@ -760,8 +764,7 @@ namespace webnn_native { namespace dml {
             }
             // Reshape bias from 1-D to 4-D for NCHW layout.
             ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
-            auto expandStrides = CalculateStrides(expandDimens);
-            bias = ::dml::Reinterpret(*bias, expandDimens, expandStrides);
+            bias = ::dml::Reinterpret(*bias, expandDimens, ::dml::NullOpt);
         }
         auto fusedActivation = CreateFusedActivation(options->activation);
         ::dml::Expression output = ::dml::Convolution(
@@ -1003,8 +1006,7 @@ namespace webnn_native { namespace dml {
             if (newDims.empty()) {
                 newDims.push_back(1);
             }
-            auto strides = CalculateStrides(newDims);
-            output = ::dml::Reinterpret(output, newDims, strides);
+            output = ::dml::Reinterpret(output, newDims, ::dml::NullOpt);
         }
 
         mExpression.insert(std::make_pair(reduceMean, output));
@@ -1090,36 +1092,52 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+        DAWN_ASSERT(squeeze->Inputs().size() == 1);
+        const OperandBase* inputOperand = squeeze->Inputs()[0].Get();
+        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputOperand);
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        ::dml::TensorDimensions squeezeDims;
+        std::vector<int32_t> axes = squeeze->GetAxes();
+        if (axes.empty()) {
+            for (auto& dim : inputDims) {
+                if (dim != 1) {
+                    squeezeDims.push_back(dim);
+                }
+            }
+        } else {
+            squeezeDims = inputDims;
+            // Descending sort the axes so that they can be erased orderly.
+            std::sort(axes.begin(), axes.end(), std::greater<int>());
+            for (auto& axis : axes) {
+                if (inputDims[axis] != 1) {
+                    return DAWN_INTERNAL_ERROR(
+                        "The size of the axis is not 1 that can't be squeezed.");
+                } else {
+                    squeezeDims.erase(squeezeDims.begin() + axis);
+                }
+            }
+        }
+        ::dml::Expression output =
+            ::dml::Identity(::dml::Reinterpret(input, squeezeDims, ::dml::NullOpt));
+        mExpression.insert(std::make_pair(squeeze, output));
+        return {};
+    }
+
     MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
         DAWN_ASSERT(transpose->Inputs().size() == 1);
         const OperandBase* inputOperand = transpose->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
-        const TransposeOptions* options = transpose->GetOptions();
-        if (options->permutationCount > DML_TENSOR_DIMENSION_COUNT_MAX) {
+        std::vector<int32_t> permutation = transpose->GetPermutation();
+        if (permutation.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
             return DAWN_INTERNAL_ERROR("The size of permutation is not supported by DML.");
-        }
-        const size_t inputRank = input.GetOutputDesc().sizes.size();
-        ::dml::TensorDimensions permutation(inputRank);
-        if (options->permutationCount == 0) {
-            size_t index = inputRank;
-            for (auto& p : permutation) {
-                p = --index;
-            }
-        } else if (options->permutationCount == inputRank) {
-            for (size_t i = 0; i < inputRank; ++i) {
-                if (options->permutation[i] < 0) {
-                    return DAWN_VALIDATION_ERROR("The value of permutation is invalid.");
-                } else {
-                    permutation[i] = options->permutation[i];
-                }
-            }
-        } else {
-            return DAWN_VALIDATION_ERROR("The size of permutation is invalid.");
         }
 
         // Transpose is implemented by dml::Reinterpret and dml::Identity
         // See details at: https://github.com/microsoft/DirectML/issues/75
+        const size_t inputRank = input.GetOutputDesc().sizes.size();
         ::dml::TensorDimensions inputStrides;
         if (!input.GetOutputDesc().strides) {
             inputStrides.resize(inputRank);
@@ -1132,14 +1150,12 @@ namespace webnn_native { namespace dml {
             inputStrides = input.GetOutputDesc().strides.value();
         }
 
-        ::dml::TensorDimensions transposedSizes(inputRank);
-        ::dml::TensorDimensions transposedStrides(inputRank);
-
+        ::dml::TensorDimensions transposedSizes;
+        ::dml::TensorDimensions transposedStrides;
         // Permute the shape and strides.
-        for (size_t i = 0; i < inputRank; ++i) {
-            size_t dimPermuted = permutation[i];
-            transposedSizes[i] = input.GetOutputDesc().sizes[dimPermuted];
-            transposedStrides[i] = inputStrides[dimPermuted];
+        for (auto dimPermuted : permutation) {
+            transposedSizes.push_back(input.GetOutputDesc().sizes[dimPermuted]);
+            transposedStrides.push_back(inputStrides[dimPermuted]);
         }
 
         ::dml::Expression output =
@@ -1178,8 +1194,7 @@ namespace webnn_native { namespace dml {
             // Set 1 to automatically broadcast those dimensions across the input.
             ::dml::TensorDimensions expandDimens(4, 1);
             expandDimens[1] = dimensions[0];
-            auto expandStrides = CalculateStrides(expandDimens);
-            expressions.push_back(::dml::Reinterpret(expression, expandDimens, expandStrides));
+            expressions.push_back(::dml::Reinterpret(expression, expandDimens, ::dml::NullOpt));
         }
         // Set tensor's dimensions to {1, channel, 1, 1} if scale or bias is null.
         const DML_TENSOR_DATA_TYPE type = DML_TENSOR_DATA_TYPE_FLOAT32;
@@ -1268,8 +1283,7 @@ namespace webnn_native { namespace dml {
             if (inputDims.size() < DML_TENSOR_DIMENSION_COUNT_MAX) {
                 auto newDims = ExpandDimensions(inputDims, DML_TENSOR_DIMENSION_COUNT_MAX);
                 axis = concat->GetAxis() + (DML_TENSOR_DIMENSION_COUNT_MAX - inputDims.size());
-                auto strides = CalculateStrides(newDims);
-                input = ::dml::Reinterpret(input, newDims, strides);
+                input = ::dml::Reinterpret(input, newDims, ::dml::NullOpt);
             }
             inputs.push_back(input);
         }
@@ -1278,8 +1292,7 @@ namespace webnn_native { namespace dml {
         // Reshape back according to output rank if needed.
         if (primaryDims.size() < outputDims.size()) {
             auto dims = ShrinkDimensions(outputDims, primaryDims.size());
-            auto strides = CalculateStrides(dims);
-            output = ::dml::Reinterpret(output, dims, strides);
+            output = ::dml::Reinterpret(output, dims, ::dml::NullOpt);
         }
         mExpression.insert(std::make_pair(concat, output));
         return {};
@@ -1299,8 +1312,7 @@ namespace webnn_native { namespace dml {
         // so expand dimensions to 4D.
         DAWN_ASSERT(aDims.size() == 2);
         auto expandDims = ExpandDimensions(aDims, 4);
-        auto expandStrides = CalculateStrides(expandDims);
-        a = ::dml::Reinterpret(a, expandDims, expandStrides);
+        a = ::dml::Reinterpret(a, expandDims, ::dml::NullOpt);
 
         DAWN_ASSERT(mExpression.find(inputs[1].Get()) != mExpression.end());
         ::dml::Expression b = mExpression.at(inputs[1].Get());
@@ -1310,8 +1322,7 @@ namespace webnn_native { namespace dml {
         // so expand dimensions to 4D.
         DAWN_ASSERT(bDims.size() == 2);
         expandDims = ExpandDimensions(bDims, 4);
-        expandStrides = CalculateStrides(expandDims);
-        b = ::dml::Reinterpret(b, expandDims, expandStrides);
+        b = ::dml::Reinterpret(b, expandDims, ::dml::NullOpt);
 
         // The operand c is optional.
         ::dml::Optional<::dml::Expression> c = ::dml::NullOpt;
@@ -1338,7 +1349,7 @@ namespace webnn_native { namespace dml {
             // so expand dimensions to 4D.
             DAWN_ASSERT(cDims.size() == 2);
             auto expandDims = ExpandDimensions(cDims, 4);
-            auto expandStrides = CalculateStrides(expandDims, broadcast);
+            auto expandStrides = CalculateBroadcastStrides(expandDims, broadcast);
             c = ::dml::Reinterpret(c->Impl(), expandDims, expandStrides);
         }
 
@@ -1352,8 +1363,7 @@ namespace webnn_native { namespace dml {
             ::dml::Gemm(a, b, c, aTranspose, bTranspose, options->alpha, options->beta);
         // Reshape back according to output rank.
         auto shrinkDims = ShrinkDimensions(output.GetOutputDesc().sizes, 2);
-        auto shrinkStrides = CalculateStrides(shrinkDims);
-        output = ::dml::Reinterpret(output, shrinkDims, shrinkStrides);
+        output = ::dml::Reinterpret(output, shrinkDims, ::dml::NullOpt);
 
         mExpression.insert(std::make_pair(gemm, output));
         return {};
