@@ -24,6 +24,8 @@ namespace webnn_native {
 {% macro render_cpp_default_value(member) -%}
     {%- if member.annotation in ["*", "const*", "const*const*"] and member.optional -%}
         {{" "}}= nullptr
+    {%- elif member.type.category == "object" and member.optional -%}
+        {{" "}}= nullptr
     {%- elif member.type.category in ["enum", "bitmask"] and member.default_value != None -%}
         {{" "}}= ml::{{as_cppType(member.type.name)}}::{{as_cppEnum(Name(member.default_value))}}
     {%- elif member.type.category == "native" and member.default_value != None -%}
