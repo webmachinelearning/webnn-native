@@ -65,6 +65,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddReshape");
     }
 
+    MaybeError GraphBase::AddSqueeze(const op::Squeeze* squeeze) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddSqueeze");
+    }
+
     MaybeError GraphBase::AddTranspose(const op::Transpose* transpose) {
         return DAWN_UNIMPLEMENTED_ERROR("AddTranspose");
     }

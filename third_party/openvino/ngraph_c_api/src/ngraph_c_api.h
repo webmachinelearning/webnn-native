@@ -118,6 +118,10 @@ ngraph_transpose(const ngraph_node_t* a,
                  const ngraph_node_t* b,
                  ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
+ngraph_squeeze(const ngraph_node_t* a,
+               const ngraph_node_t* b,
+               ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
 ngraph_reshape(const ngraph_node_t* a,
                const ngraph_node_t* b,
                ngraph_node_t** node);

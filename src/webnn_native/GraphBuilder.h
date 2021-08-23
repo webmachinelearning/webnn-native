@@ -51,9 +51,10 @@ namespace webnn_native {
         OperandBase* Relu(OperandBase*);
         OperatorBase* ReluOperator();
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
-        OperandBase* Softmax(OperandBase*);
         OperandBase* Sigmoid(OperandBase*);
         OperatorBase* SigmoidOperator();
+        OperandBase* Softmax(OperandBase*);
+        OperandBase* Squeeze(OperandBase*, SqueezeOptions const* options);
         OperandBase* Tanh(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);

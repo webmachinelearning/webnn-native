@@ -258,6 +258,16 @@ IEStatusCode ngraph_mat_mul(const ngraph_node_t* a,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(matmul, node);
 }
 
+IEStatusCode ngraph_squeeze(const ngraph_node_t* a,
+                            const ngraph_node_t* b,
+                            ngraph_node_t** node) {
+  if (b == nullptr) {
+    BUILD_UNARY(v0::Squeeze, a, node);
+  } else {
+    BUILD_BINARY(v0::Squeeze, a, b, node);
+  }
+}
+
 IEStatusCode ngraph_transpose(const ngraph_node_t* a,
                               const ngraph_node_t* b,
                               ngraph_node_t** node) {
