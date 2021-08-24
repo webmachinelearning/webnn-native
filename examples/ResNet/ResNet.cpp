@@ -99,8 +99,7 @@ const ml::Operand ResNet::BuildNhwcConv(const ml::GraphBuilder& builder,
         }
         fusedOptions.bias = convBias;
         if (relu) {
-            fusedOptions.activation =
-                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+            fusedOptions.activation = builder.ReluOperator();
         }
         return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
     }
@@ -132,8 +131,7 @@ const ml::Operand ResNet::BuildBatchNorm(const ml::GraphBuilder& builder,
         return batchNorm;
     } else {
         if (relu) {
-            batchNormOptions.activation =
-                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+            batchNormOptions.activation = builder.ReluOperator();
         }
         return builder.BatchNorm(input, mean, variance, &batchNormOptions);
     }

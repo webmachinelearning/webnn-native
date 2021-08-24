@@ -19,7 +19,7 @@ class SqueezeNetNchwTests : public WebnnTest {
   public:
     void TestSqueezeNetNchw(const std::string& inputFile,
                             const std::string& expectedFile,
-                            bool fused = false) {
+                            bool fused = true) {
         SqueezeNet squeezenet;
         squeezenet.mFused = fused;
         const std::string nchwPath =
@@ -38,25 +38,25 @@ class SqueezeNetNchwTests : public WebnnTest {
 };
 
 TEST_F(SqueezeNetNchwTests, NchwTest0) {
-    TestSqueezeNetNchw("0/input_0.npy", "0/output_0.npy");
+    TestSqueezeNetNchw("0/input_0.npy", "0/output_0.npy", false);
 }
 
 TEST_F(SqueezeNetNchwTests, NchwTest1) {
-    TestSqueezeNetNchw("1/input_0.npy", "1/output_0.npy");
+    TestSqueezeNetNchw("1/input_0.npy", "1/output_0.npy", false);
 }
 
 TEST_F(SqueezeNetNchwTests, NchwTest2) {
-    TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy");
+    TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy", false);
 }
 
 TEST_F(SqueezeNetNchwTests, FusedNchwTest0) {
-    TestSqueezeNetNchw("0/input_0.npy", "0/output_0.npy", true);
+    TestSqueezeNetNchw("0/input_0.npy", "0/output_0.npy");
 }
 
 TEST_F(SqueezeNetNchwTests, FusedNchwTest1) {
-    TestSqueezeNetNchw("1/input_0.npy", "1/output_0.npy", true);
+    TestSqueezeNetNchw("1/input_0.npy", "1/output_0.npy");
 }
 
 TEST_F(SqueezeNetNchwTests, FusedNchwTest2) {
-    TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy", true);
+    TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy");
 }
