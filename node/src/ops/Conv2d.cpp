@@ -28,6 +28,8 @@ namespace node { namespace op {
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
         ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
+        ml::Operand bias;
+        ml::Operator activation;
 
         const ml::Conv2dOptions* AsPtr() {
             if (!padding.empty()) {
@@ -46,6 +48,8 @@ namespace node { namespace op {
             mOptions.autoPad = autoPad;
             mOptions.inputLayout = inputLayout;
             mOptions.filterLayout = filterLayout;
+            mOptions.bias = bias;
+            mOptions.activation = activation;
             return &mOptions;
         }
 
@@ -72,6 +76,8 @@ namespace node { namespace op {
         //   long groups = 1;
         //   InputOperandLayout inputLayout = "nchw";
         //   FilterOperandLayout filterLayout = "oihw";
+        //   Operand bias;
+        //   Operator activation;
         // };
         Conv2dOptions options;
         if (info.Length() == 3 && !info[2].IsUndefined()) {
@@ -89,6 +95,14 @@ namespace node { namespace op {
                 WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("dilations"), options.dilations, 2),
                                   "The dilations parameter is invalid.");
             }
+            if (HasOptionMember(jsOptions, "autoPad")) {
+                WEBNN_NODE_ASSERT(GetAutopad(jsOptions.Get("autoPad"), options.autoPad),
+                                  "The autoPad parameter is invalid.");
+            }
+            if (HasOptionMember(jsOptions, "transpose")) {
+                WEBNN_NODE_THROW_AND_RETURN(
+                    "The transpose parameter isn't supported in webNN-native.");
+            }
             if (HasOptionMember(jsOptions, "groups")) {
                 WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("groups"), options.groups),
                                   "The groups parameter is invalid.");
@@ -103,13 +117,13 @@ namespace node { namespace op {
                     GetFilterOperandLayout(jsOptions.Get("filterLayout"), options.filterLayout),
                     "The filterLayout parameter is invalid.");
             }
-            if (HasOptionMember(jsOptions, "autoPad")) {
-                WEBNN_NODE_ASSERT(GetAutopad(jsOptions.Get("autoPad"), options.autoPad),
-                                  "The autoPad parameter is invalid.");
+            if (HasOptionMember(jsOptions, "bias")) {
+                WEBNN_NODE_ASSERT(GetOperand(jsOptions.Get("bias"), options.bias, args),
+                                  "The bias parameter is invalid.");
             }
-            if (HasOptionMember(jsOptions, "transpose")) {
-                WEBNN_NODE_THROW_AND_RETURN(
-                    "The transpose parameter isn't supported in webNN-native.");
+            if (HasOptionMember(jsOptions, "activation")) {
+                WEBNN_NODE_ASSERT(GetOperator(jsOptions.Get("activation"), options.activation),
+                                  "The activation parameter is invalid.");
             }
         }
 

@@ -12,24 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "Index.h"
-
-#include "Context.h"
-#include "Graph.h"
-#include "GraphBuilder.h"
-#include "ML.h"
-#include "Operand.h"
 #include "Operator.h"
 
-Napi::Object Init(Napi::Env env, Napi::Object exports) {
-    node::ML::Initialize(env, exports);
-    node::Context::Initialize(env, exports);
-    node::GraphBuilder::Initialize(env, exports);
-    node::Graph::Initialize(env, exports);
-    node::Operand::Initialize(env, exports);
-    node::Operator::Initialize(env, exports);
+#include "Utils.h"
 
-    return exports;
-}
+Napi::FunctionReference node::Operator::constructor;
 
-NODE_API_MODULE(addon, Init)
+namespace node {
+
+    Operator::Operator(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Operator>(info) {
+    }
+
+    Napi::Object Operator::Initialize(Napi::Env env, Napi::Object exports) {
+        Napi::HandleScope scope(env);
+        Napi::Function func = DefineClass(env, "MLOperator", {});
+        constructor = Napi::Persistent(func);
+        constructor.SuppressDestruct();
+    }
+
+}  // namespace node

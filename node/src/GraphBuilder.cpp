@@ -20,6 +20,7 @@
 #include "Context.h"
 #include "Graph.h"
 #include "Operand.h"
+#include "Operator.h"
 #include "Utils.h"
 #include "ops/BatchNorm.h"
 #include "ops/Clamp.h"
@@ -51,7 +52,7 @@ Napi::FunctionReference node::GraphBuilder::constructor;
     operand->SetImpl(mImpl.op(a, b));                                               \
     return object;
 
-#define BUILD_UNARY(op)                                                                     \
+#define BUILD_UNARY_OPERAND(op)                                                             \
     WEBNN_NODE_ASSERT(info.Length() == 1, "The number of arguments is invalid.");           \
     std::vector<napi_value> args;                                                           \
     ml::Operand input;                                                                      \
@@ -59,6 +60,13 @@ Napi::FunctionReference node::GraphBuilder::constructor;
     Napi::Object object = Operand::constructor.New(args);                                   \
     Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);                           \
     operand->SetImpl(mImpl.op(input));                                                      \
+    return object;
+
+#define BUILD_UNARY_OPERATOR(op)                                                  \
+    WEBNN_NODE_ASSERT(info.Length() == 0, "The number of arguments is invalid."); \
+    Napi::Object object = Operator::constructor.New({});                          \
+    Operator* mlOperator = Napi::ObjectWrap<Operator>::Unwrap({object});          \
+    mlOperator->SetImpl(mImpl.op##Operator());                                    \
     return object;
 
 namespace node {
@@ -151,19 +159,27 @@ namespace node {
     }
 
     Napi::Value GraphBuilder::Relu(const Napi::CallbackInfo& info) {
-        BUILD_UNARY(Relu);
+        if (info.Length() == 0) {
+            BUILD_UNARY_OPERATOR(Relu);
+        } else {
+            BUILD_UNARY_OPERAND(Relu);
+        }
     }
 
     Napi::Value GraphBuilder::Softmax(const Napi::CallbackInfo& info) {
-        BUILD_UNARY(Softmax);
+        BUILD_UNARY_OPERAND(Softmax);
     }
 
     Napi::Value GraphBuilder::Sigmoid(const Napi::CallbackInfo& info) {
-        BUILD_UNARY(Sigmoid);
+        if (info.Length() == 0) {
+            BUILD_UNARY_OPERATOR(Sigmoid);
+        } else {
+            BUILD_UNARY_OPERAND(Sigmoid);
+        };
     }
 
     Napi::Value GraphBuilder::Tanh(const Napi::CallbackInfo& info) {
-        BUILD_UNARY(Tanh);
+        BUILD_UNARY_OPERAND(Tanh);
     }
 
     Napi::Value GraphBuilder::LeakyRelu(const Napi::CallbackInfo& info) {

@@ -22,6 +22,7 @@
 #include <unordered_map>
 
 #include "Operand.h"
+#include "Operator.h"
 
 #define WEBNN_NODE_THROW(message) \
     Napi::Error::New(info.Env(), message).ThrowAsJavaScriptException();
@@ -264,6 +265,18 @@ namespace node {
         }
         operand = Napi::ObjectWrap<Operand>::Unwrap(jsObject)->GetImpl();
         args.push_back(jsObject.As<Napi::Value>());
+        return true;
+    }
+
+    inline bool GetOperator(const Napi::Value& jsValue, ml::Operator& mlOperator) {
+        if (!jsValue.IsObject()) {
+            return false;
+        }
+        Napi::Object jsObject = jsValue.As<Napi::Object>();
+        if (!jsObject.InstanceOf(Operator::constructor.Value())) {
+            return false;
+        }
+        mlOperator = Napi::ObjectWrap<Operator>::Unwrap(jsObject)->GetImpl();
         return true;
     }
 
