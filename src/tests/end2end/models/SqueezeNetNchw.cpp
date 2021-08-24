@@ -17,8 +17,11 @@
 
 class SqueezeNetNchwTests : public WebnnTest {
   public:
-    void TestSqueezeNetNchw(const std::string& inputFile, const std::string& expectedFile) {
+    void TestSqueezeNetNchw(const std::string& inputFile,
+                            const std::string& expectedFile,
+                            bool fused = false) {
         SqueezeNet squeezenet;
+        squeezenet.mFused = fused;
         const std::string nchwPath =
             "node/third_party/webnn-polyfill/test-data/models/squeezenet1.1_nchw/";
         squeezenet.mWeightsPath = nchwPath + "weights/";
@@ -44,4 +47,16 @@ TEST_F(SqueezeNetNchwTests, NchwTest1) {
 
 TEST_F(SqueezeNetNchwTests, NchwTest2) {
     TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy");
+}
+
+TEST_F(SqueezeNetNchwTests, FusedNchwTest0) {
+    TestSqueezeNetNchw("0/input_0.npy", "0/output_0.npy", true);
+}
+
+TEST_F(SqueezeNetNchwTests, FusedNchwTest1) {
+    TestSqueezeNetNchw("1/input_0.npy", "1/output_0.npy", true);
+}
+
+TEST_F(SqueezeNetNchwTests, FusedNchwTest2) {
+    TestSqueezeNetNchw("2/input_0.npy", "2/output_0.npy", true);
 }

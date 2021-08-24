@@ -39,6 +39,7 @@ namespace webnn_native { namespace op {
             mOptions.bias = nullptr;
             mOptions.activation = nullptr;
         }
+        mActivation = Ref<OperatorBase>(mOptions.activation);
     }
 
     MaybeError BatchNorm::ValidateAndInferTypes() {

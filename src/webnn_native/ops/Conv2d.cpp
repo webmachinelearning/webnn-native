@@ -16,6 +16,7 @@
 
 #include "common/Log.h"
 #include "webnn_native/Error.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
@@ -59,6 +60,7 @@ namespace webnn_native { namespace op {
         mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
         mOptions.bias = options == nullptr ? nullptr : options->bias;
         mOptions.activation = options == nullptr ? nullptr : options->activation;
+        mActivation = Ref<OperatorBase>(mOptions.activation);
     }
 
     MaybeError Conv2d::AddToGraph(GraphBase* graph) const {

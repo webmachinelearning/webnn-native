@@ -48,7 +48,7 @@ const ml::Operand MobileNetV2::BuildConstantFromNpy(const ml::GraphBuilder& buil
 const ml::Operand MobileNetV2::BuildConv(const ml::GraphBuilder& builder,
                                          const ml::Operand& input,
                                          int32_t convIndex,
-                                         bool fused,
+                                         bool relu6,
                                          utils::Conv2dOptions* options,
                                          const std::string& biasName) {
     std::string prefix = mLayout == "nchw" ? mWeightsPath + "conv_" : mWeightsPath + "Const_";
@@ -63,37 +63,48 @@ const ml::Operand MobileNetV2::BuildConv(const ml::GraphBuilder& builder,
     const std::string biasPath = prefix + biasName + "_bias.npy";
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
 
-    std::vector<int32_t> newShape = mLayout == "nchw" ? std::vector<int32_t>({1, -1, 1, 1})
-                                                      : std::vector<int32_t>({1, 1, 1, -1});
-    const ml::Operand reshapedBias = builder.Reshape(convBias, newShape.data(), newShape.size());
+    ml::ClampOptions clampOptions;
+    auto minConstant = SHARED_DATA_TYPE(new std::vector<char>(sizeof(float)));
+    *(reinterpret_cast<float*>(minConstant->data())) = 0;
+    mConstants.push_back(minConstant);
+    auto maxConstant = SHARED_DATA_TYPE(new std::vector<char>(sizeof(float)));
+    *(reinterpret_cast<float*>(maxConstant->data())) = 6;
+    mConstants.push_back(maxConstant);
+    clampOptions.minValue = utils::BuildConstant(builder, {}, minConstant->data(), sizeof(float));
+    clampOptions.maxValue = utils::BuildConstant(builder, {}, maxConstant->data(), sizeof(float));
 
-    const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
-    const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
-    const ml::Operand add = builder.Add(conv, reshapedBias);
-    if (fused) {
-        ml::ClampOptions clampOptions;
-        float min = 0;
-        auto minConstant = std::make_shared<std::vector<char>>(sizeof(float));
-        std::memcpy(minConstant->data(), &min, sizeof(float));
-        mConstants.push_back(minConstant);
-        float max = 6;
-        auto maxConstant = std::make_shared<std::vector<char>>(sizeof(float));
-        std::memcpy(maxConstant->data(), &max, sizeof(float));
-        mConstants.push_back(maxConstant);
-        clampOptions.minValue =
-            utils::BuildConstant(builder, {}, minConstant->data(), sizeof(float));
-        clampOptions.maxValue =
-            utils::BuildConstant(builder, {}, maxConstant->data(), sizeof(float));
-        const ml::Operand clamp = builder.Clamp(add, &clampOptions);
-        return clamp;
+    if (!mFused) {
+        std::vector<int32_t> newShape = mLayout == "nchw" ? std::vector<int32_t>({1, -1, 1, 1})
+                                                          : std::vector<int32_t>({1, 1, 1, -1});
+        const ml::Operand reshapedBias =
+            builder.Reshape(convBias, newShape.data(), newShape.size());
+
+        const ml::Conv2dOptions* conv2dOptions = options != nullptr ? options->AsPtr() : nullptr;
+        const ml::Operand conv = builder.Conv2d(input, convWeights, conv2dOptions);
+        const ml::Operand add = builder.Add(conv, reshapedBias);
+        if (relu6) {
+            return builder.Clamp(add, &clampOptions);
+        } else {
+            return add;
+        }
     } else {
-        return add;
+        utils::Conv2dOptions fusedOptions;
+        if (options != nullptr) {
+            fusedOptions = *options;
+        }
+        fusedOptions.bias = convBias;
+        if (relu6) {
+            fusedOptions.activation = utils::CreateActivationOperator(
+                builder, utils::FusedActivation::RELU6, &clampOptions);
+        }
+        return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
     }
 }
 
 const ml::Operand MobileNetV2::BuildConvBatchNorm(const ml::GraphBuilder& builder,
                                                   const ml::Operand& input,
                                                   int32_t nameIndex,
+                                                  bool relu,
                                                   utils::Conv2dOptions* options,
                                                   int32_t subNameIndex) {
     const std::string subName =
@@ -115,7 +126,19 @@ const ml::Operand MobileNetV2::BuildConvBatchNorm(const ml::GraphBuilder& builde
     ml::BatchNormOptions batchNormOptions;
     batchNormOptions.scale = scale;
     batchNormOptions.bias = bias;
-    return builder.BatchNorm(conv, mean, variance, &batchNormOptions);
+    if (mFused) {
+        if (relu) {
+            batchNormOptions.activation =
+                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+        }
+    }
+    auto batchNorm = builder.BatchNorm(conv, mean, variance, &batchNormOptions);
+    if (!mFused) {
+        if (relu) {
+            batchNorm = builder.Relu(batchNorm);
+        }
+    }
+    return batchNorm;
 }
 
 const ml::Operand MobileNetV2::BuildGemm(const ml::GraphBuilder& builder,
@@ -158,10 +181,11 @@ const ml::Operand MobileNetV2::BuildBatchNormFire(const ml::GraphBuilder& builde
                                                   const ml::Operand& input,
                                                   int32_t subNameIndex,
                                                   utils::Conv2dOptions* options) {
-    const ml::Operand batchNorm0 = BuildConvBatchNorm(builder, input, 0, nullptr, subNameIndex);
+    const ml::Operand batchNorm0 =
+        BuildConvBatchNorm(builder, input, 0, true, nullptr, subNameIndex);
     const ml::Operand batchNorm1 =
-        BuildConvBatchNorm(builder, builder.Relu(batchNorm0), 1, options, subNameIndex);
-    return BuildConvBatchNorm(builder, builder.Relu(batchNorm1), 2, nullptr, subNameIndex);
+        BuildConvBatchNorm(builder, batchNorm0, 1, true, options, subNameIndex);
+    return BuildConvBatchNorm(builder, batchNorm1, 2, false, nullptr, subNameIndex);
 }
 
 const ml::Operand MobileNetV2::BuildLinearBottleneck(const ml::GraphBuilder& builder,
@@ -381,12 +405,11 @@ const ml::Operand MobileNetV2::LoadBatchNormNCHW(const ml::GraphBuilder& builder
     utils::Conv2dOptions conv0Options;
     conv0Options.padding = padding;
     conv0Options.strides = strides;
-    const ml::Operand batchNorm0 = BuildConvBatchNorm(builder, input, 0, &conv0Options);
+    const ml::Operand batchNorm0 = BuildConvBatchNorm(builder, input, 0, true, &conv0Options);
     utils::Conv2dOptions fire0Options;
     fire0Options.padding = padding;
     fire0Options.groups = 32;
-    const ml::Operand fire0 =
-        BuildBatchNormFire(builder, builder.Relu(batchNorm0), 0, &fire0Options);
+    const ml::Operand fire0 = BuildBatchNormFire(builder, batchNorm0, 0, &fire0Options);
     utils::Conv2dOptions fire1Options;
     fire1Options = conv0Options;
     fire1Options.groups = 96;
@@ -444,8 +467,8 @@ const ml::Operand MobileNetV2::LoadBatchNormNCHW(const ml::GraphBuilder& builder
     const ml::Operand add9 = builder.Add(add8, fire15);
     utils::Conv2dOptions fire16Options = fire14Options;
     const ml::Operand fire16 = BuildBatchNormFire(builder, add9, 16, &fire16Options);
-    const ml::Operand batchNorm1 = BuildConvBatchNorm(builder, fire16, 1);
-    const ml::Operand pool0 = builder.AveragePool2d(builder.Relu(batchNorm1));
+    const ml::Operand batchNorm1 = BuildConvBatchNorm(builder, fire16, 1, true);
+    const ml::Operand pool0 = builder.AveragePool2d(batchNorm1);
     const ml::Operand convWeights1 =
         BuildConstantFromNpy(builder, mWeightsPath + "mobilenetv20_output_pred_weight.npy");
     const ml::Operand conv1 = builder.Conv2d(pool0, convWeights1);
