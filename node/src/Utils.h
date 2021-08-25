@@ -17,6 +17,7 @@
 
 #define NAPI_EXPERIMENTAL
 #include <napi.h>
+#include <node.h>
 #include <cmath>
 #include <unordered_map>
 
@@ -325,10 +326,35 @@ namespace node {
         return true;
     }
 
-    inline bool GetBufferView(const Napi::Value& jsValue,
-                              const ml::OperandType type,
-                              const std::vector<int32_t>& dimensions,
-                              ml::ArrayBufferView& arrayBuffer) {
+    inline bool GetArrayBufferView(const Napi::Value& jsValue,
+                                   ml::ArrayBufferView& arrayBufferView) {
+        if (!jsValue.IsTypedArray()) {
+            return false;
+        }
+        Napi::TypedArray jsTypedArray = jsValue.As<Napi::TypedArray>();
+        // As the current N-API doesn't support accessing SharedArrayBuffer,
+        // use V8 API instead, see https://github.com/nodejs/node/issues/23276
+        static_assert(sizeof(v8::Local<v8::Value>) == sizeof(napi_value),
+                      "Cannot convert between v8::Local<v8::Value> and napi_value");
+        napi_value napiValue = jsTypedArray.ArrayBuffer();
+        v8::Local<v8::Value> v8Value;
+        memcpy(static_cast<void*>(&v8Value), &napiValue, sizeof(napiValue));
+        if (v8Value->IsSharedArrayBuffer()) {
+            auto backingStore = v8Value.As<v8::SharedArrayBuffer>()->GetBackingStore();
+            arrayBufferView.buffer = backingStore->Data();
+        } else {
+            arrayBufferView.buffer = reinterpret_cast<void*>(
+                reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
+        }
+        arrayBufferView.byteLength = jsTypedArray.ByteLength();
+        arrayBufferView.byteOffset = jsTypedArray.ByteOffset();
+        return true;
+    }
+
+    inline bool GetArrayBufferView(const Napi::Value& jsValue,
+                                   const ml::OperandType type,
+                                   const std::vector<int32_t>& dimensions,
+                                   ml::ArrayBufferView& arrayBufferView) {
         const std::unordered_map<ml::OperandType, napi_typedarray_type> arrayTypeMap = {
             {ml::OperandType::Float32, napi_float32_array},
             {ml::OperandType::Float16, napi_uint16_array},
@@ -340,6 +366,7 @@ namespace node {
         if (!jsValue.IsTypedArray()) {
             return false;
         }
+
         Napi::TypedArray jsTypedArray = jsValue.As<Napi::TypedArray>();
         if (arrayTypeMap.find(type) == arrayTypeMap.end()) {
             return false;
@@ -347,10 +374,11 @@ namespace node {
         if (arrayTypeMap.at(type) != jsTypedArray.TypedArrayType()) {
             return false;
         }
-        arrayBuffer.buffer =
-            reinterpret_cast<void*>(reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
-        arrayBuffer.byteLength = jsTypedArray.ByteLength();
-        arrayBuffer.byteOffset = jsTypedArray.ByteOffset();
+
+        if (!GetArrayBufferView(jsTypedArray, arrayBufferView)) {
+            return false;
+        }
+
         size_t expectedSize;
         switch (type) {
             case ml::OperandType::Float32:
@@ -375,7 +403,7 @@ namespace node {
                 return false;
         }
         expectedSize *= SizeOfShape(dimensions);
-        if (expectedSize != arrayBuffer.byteLength) {
+        if (expectedSize != arrayBufferView.byteLength) {
             return false;
         }
         return true;

@@ -39,7 +39,7 @@ namespace node { namespace op {
         Napi::Object object = Operand::constructor.New({});
         OperandDescriptor desc;
         Scalar scalar;
-        ml::ArrayBufferView arrayBuffer;
+        ml::ArrayBufferView arrayBufferView;
         if (info[0].IsNumber()) {
             // Operand constant(double value, optional OperandType type = "float32");
             if (info.Length() == 1) {
@@ -90,20 +90,21 @@ namespace node { namespace op {
             // Keep a reference of value.
             object.Set("value", jsArrayBuffer);
 
-            arrayBuffer.buffer = value;
-            arrayBuffer.byteLength = size;
-            arrayBuffer.byteOffset = 0;
+            arrayBufferView.buffer = value;
+            arrayBufferView.byteLength = size;
+            arrayBufferView.byteOffset = 0;
         } else {
             WEBNN_NODE_ASSERT(GetOperandDescriptor(info[0], desc),
                               "The desc parameter is invalid.");
-            WEBNN_NODE_ASSERT(GetBufferView(info[1], desc.type, desc.dimensions, arrayBuffer),
-                              "The value parameter is invalid.");
+            WEBNN_NODE_ASSERT(
+                GetArrayBufferView(info[1], desc.type, desc.dimensions, arrayBufferView),
+                "The value parameter is invalid.");
             // Keep a reference of value.
             object.Set("value", info[1]);
         }
 
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.Constant(desc.AsPtr(), &arrayBuffer));
+        operand->SetImpl(builder.Constant(desc.AsPtr(), &arrayBufferView));
         return object;
     }
 

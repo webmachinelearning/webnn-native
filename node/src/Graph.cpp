@@ -23,15 +23,11 @@ namespace node {
 
     struct Input {
       public:
-        void* buffer = nullptr;
-        size_t byteLength;
-        size_t byteOffset;
+        ml::ArrayBufferView bufferView;
         std::vector<int32_t> dimensions;
 
         const ml::Input* AsPtr() {
-            mInput.resource.buffer = buffer;
-            mInput.resource.byteLength = byteLength;
-            mInput.resource.byteOffset = byteOffset;
+            mInput.resource = bufferView;
             if (!dimensions.empty()) {
                 mInput.dimensions = dimensions.data();
                 mInput.dimensionsCount = dimensions.size();
@@ -43,72 +39,73 @@ namespace node {
         ml::Input mInput;
     };
 
-    struct Output {
-      public:
-        void* buffer = nullptr;
-        size_t byteLength;
-        size_t byteOffset;
-        std::vector<int32_t> dimensions;
-
-        const ml::ArrayBufferView* AsPtr() {
-            mOutput.buffer = buffer;
-            mOutput.byteLength = byteLength;
-            mOutput.byteOffset = byteOffset;
-            return &mOutput;
-        }
-
-      private:
-        ml::ArrayBufferView mOutput;
-    };
-
-    template <class T>
-    bool GetNamedResources(const Napi::Value& jsValue, std::map<std::string, T>& namedResources) {
+    bool GetNamedInputs(const Napi::Value& jsValue, std::map<std::string, Input>& namedInputs) {
         if (!jsValue.IsObject()) {
             return false;
         }
-        Napi::Object jsResources = jsValue.As<Napi::Object>();
-        Napi::Array names = jsResources.GetPropertyNames();
+        Napi::Object jsNamedInputs = jsValue.As<Napi::Object>();
+        Napi::Array names = jsNamedInputs.GetPropertyNames();
         if (names.Length() == 0) {
             return false;
         }
-
         // typedef (MLBufferView or WebGLTexture or GPUTexture) MLResource;
         // dictionary MLInput {
         //   required MLResource resource;
         //   required sequence<long> dimensions;
         // };
         // typedef record<DOMString, (MLResource or MLInput)> MLNamedInputs;
-        // typedef record<DOMString, MLResource> MLNamedOutputs;
         for (size_t i = 0; i < names.Length(); ++i) {
-            T resource = {};
+            Input input = {};
             std::string name = names.Get(i).As<Napi::String>().Utf8Value();
             // FIXME: validate the type of typed array.
             Napi::TypedArray jsTypedArray;
-            if (jsResources.Get(name).IsTypedArray()) {
-                jsTypedArray = jsResources.Get(name).As<Napi::TypedArray>();
+            if (jsNamedInputs.Get(name).IsTypedArray()) {
+                jsTypedArray = jsNamedInputs.Get(name).As<Napi::TypedArray>();
             } else {
-                Napi::Object jsResource = jsResources.Get(name).As<Napi::Object>();
-                if (!jsResource.Has("resource") || !jsResource.Has("dimensions")) {
-                    // Input buffer and dimensions are required.
+                Napi::Object jsInput = jsNamedInputs.Get(name).As<Napi::Object>();
+                if (!jsInput.Has("resource") || !jsInput.Has("dimensions")) {
+                    // Input resource and dimensions are required.
                     return false;
                 }
-                if (!jsResource.Get("resource").IsTypedArray()) {
+                if (!jsInput.Get("resource").IsTypedArray()) {
                     return false;
                 }
-                jsTypedArray = jsResource.Get("resource").As<Napi::TypedArray>();
+                jsTypedArray = jsInput.Get("resource").As<Napi::TypedArray>();
 
-                if (!GetArray(jsResource.Get("dimensions"), resource.dimensions)) {
+                if (!GetArray(jsInput.Get("dimensions"), input.dimensions)) {
                     return false;
                 }
-                if (SizeOfShape(resource.dimensions) != jsTypedArray.ElementSize()) {
+                if (SizeOfShape(input.dimensions) != jsTypedArray.ElementSize()) {
                     return false;
                 }
             }
-            resource.buffer = reinterpret_cast<void*>(
-                reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
-            resource.byteLength = jsTypedArray.ByteLength();
-            resource.byteOffset = jsTypedArray.ByteOffset();
-            namedResources[name] = resource;
+            if (!GetArrayBufferView(jsTypedArray, input.bufferView)) {
+                return false;
+            }
+            namedInputs[name] = input;
+        }
+        return true;
+    }
+
+    bool GetNamedOutputs(const Napi::Value& jsValue,
+                         std::map<std::string, ml::ArrayBufferView>& namedOutputs) {
+        if (!jsValue.IsObject()) {
+            return false;
+        }
+        Napi::Object jsNamedOutputs = jsValue.As<Napi::Object>();
+        Napi::Array names = jsNamedOutputs.GetPropertyNames();
+        if (names.Length() == 0) {
+            return false;
+        }
+        // typedef (MLBufferView or WebGLTexture or GPUTexture) MLResource;
+        // typedef record<DOMString, MLResource> MLNamedOutputs;
+        for (size_t i = 0; i < names.Length(); ++i) {
+            ml::ArrayBufferView arrayBuffer = {};
+            std::string name = names.Get(i).As<Napi::String>().Utf8Value();
+            if (!GetArrayBufferView(jsNamedOutputs.Get(name), arrayBuffer)) {
+                return false;
+            }
+            namedOutputs[name] = arrayBuffer;
         }
         return true;
     }
@@ -122,12 +119,10 @@ namespace node {
         // status compute(NamedInputs inputs, NamedOutputs outputs);
         WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");
         std::map<std::string, Input> inputs;
-        WEBNN_NODE_ASSERT(GetNamedResources<Input>(info[0], inputs),
-                          "The inputs parameter is invalid.");
+        WEBNN_NODE_ASSERT(GetNamedInputs(info[0], inputs), "The inputs parameter is invalid.");
 
-        std::map<std::string, Output> outputs;
-        WEBNN_NODE_ASSERT(GetNamedResources<Output>(info[1], outputs),
-                          "The outputs parameter is invalid.");
+        std::map<std::string, ml::ArrayBufferView> outputs;
+        WEBNN_NODE_ASSERT(GetNamedOutputs(info[1], outputs), "The outputs parameter is invalid.");
 
         ml::NamedInputs namedInputs = ml::CreateNamedInputs();
         for (auto& input : inputs) {
@@ -135,7 +130,7 @@ namespace node {
         }
         ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
         for (auto& output : outputs) {
-            namedOutputs.Set(output.first.data(), output.second.AsPtr());
+            namedOutputs.Set(output.first.data(), &output.second);
         }
         ml::ComputeGraphStatus status = mImpl.Compute(namedInputs, namedOutputs);
 
