@@ -19,7 +19,7 @@ class ResNetNchwTests : public WebnnTest {
   public:
     void TestResNetNchw(const std::string& inputFile,
                         const std::string& expectedFile,
-                        bool fused = false) {
+                        bool fused = true) {
         ResNet resnet;
         resnet.mFused = fused;
         const std::string nchwPath =
@@ -38,25 +38,25 @@ class ResNetNchwTests : public WebnnTest {
 };
 
 TEST_F(ResNetNchwTests, NchwTest0) {
-    TestResNetNchw("0/input_0.npy", "0/output_0.npy");
+    TestResNetNchw("0/input_0.npy", "0/output_0.npy", false);
 }
 
 TEST_F(ResNetNchwTests, NchwTest1) {
-    TestResNetNchw("1/input_0.npy", "1/output_0.npy");
+    TestResNetNchw("1/input_0.npy", "1/output_0.npy", false);
 }
 
 TEST_F(ResNetNchwTests, NchwTest2) {
-    TestResNetNchw("2/input_0.npy", "2/output_0.npy");
+    TestResNetNchw("2/input_0.npy", "2/output_0.npy", false);
 }
 
 TEST_F(ResNetNchwTests, FusedNchwTest0) {
-    TestResNetNchw("0/input_0.npy", "0/output_0.npy", true);
+    TestResNetNchw("0/input_0.npy", "0/output_0.npy");
 }
 
 TEST_F(ResNetNchwTests, FusedNchwTest1) {
-    TestResNetNchw("1/input_0.npy", "1/output_0.npy", true);
+    TestResNetNchw("1/input_0.npy", "1/output_0.npy");
 }
 
 TEST_F(ResNetNchwTests, FusedNchwTest2) {
-    TestResNetNchw("2/input_0.npy", "2/output_0.npy", true);
+    TestResNetNchw("2/input_0.npy", "2/output_0.npy");
 }

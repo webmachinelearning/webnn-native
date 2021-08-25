@@ -68,8 +68,7 @@ const ml::Operand SqueezeNet::BuildConv(const ml::GraphBuilder& builder,
             fusedOptions = *options;
         }
         fusedOptions.bias = convBias;
-        fusedOptions.activation =
-            utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+        fusedOptions.activation = builder.ReluOperator();
         return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
     }
 }

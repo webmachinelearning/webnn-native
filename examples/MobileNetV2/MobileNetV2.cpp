@@ -94,8 +94,7 @@ const ml::Operand MobileNetV2::BuildConv(const ml::GraphBuilder& builder,
         }
         fusedOptions.bias = convBias;
         if (relu6) {
-            fusedOptions.activation = utils::CreateActivationOperator(
-                builder, utils::FusedActivation::RELU6, &clampOptions);
+            fusedOptions.activation = builder.ClampOperator(&clampOptions);
         }
         return builder.Conv2d(input, convWeights, fusedOptions.AsPtr());
     }
@@ -128,8 +127,7 @@ const ml::Operand MobileNetV2::BuildConvBatchNorm(const ml::GraphBuilder& builde
     batchNormOptions.bias = bias;
     if (mFused) {
         if (relu) {
-            batchNormOptions.activation =
-                utils::CreateActivationOperator(builder, utils::FusedActivation::RELU);
+            batchNormOptions.activation = builder.ReluOperator();
         }
     }
     auto batchNorm = builder.BatchNorm(conv, mean, variance, &batchNormOptions);

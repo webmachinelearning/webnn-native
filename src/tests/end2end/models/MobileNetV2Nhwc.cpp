@@ -19,7 +19,7 @@ class MobileNetV2NhwcTests : public WebnnTest {
   public:
     void TestMobileNetV2Nhwc(const std::string& inputFile,
                              const std::string& expectedFile,
-                             bool fused = false) {
+                             bool fused = true) {
         MobileNetV2 mobilenetv2;
         mobilenetv2.mFused = fused;
         const std::string nhwcPath =
@@ -39,25 +39,25 @@ class MobileNetV2NhwcTests : public WebnnTest {
 };
 
 TEST_F(MobileNetV2NhwcTests, NhwcTest0) {
-    TestMobileNetV2Nhwc("0/input_0.npy", "0/output_0.npy");
+    TestMobileNetV2Nhwc("0/input_0.npy", "0/output_0.npy", false);
 }
 
 TEST_F(MobileNetV2NhwcTests, NhwcTest1) {
-    TestMobileNetV2Nhwc("1/input_0.npy", "1/output_0.npy");
+    TestMobileNetV2Nhwc("1/input_0.npy", "1/output_0.npy", false);
 }
 
 TEST_F(MobileNetV2NhwcTests, NhwcTest2) {
-    TestMobileNetV2Nhwc("2/input_0.npy", "2/output_0.npy");
+    TestMobileNetV2Nhwc("2/input_0.npy", "2/output_0.npy", false);
 }
 
 TEST_F(MobileNetV2NhwcTests, FusedNhwcTest0) {
-    TestMobileNetV2Nhwc("0/input_0.npy", "0/output_0.npy", true);
+    TestMobileNetV2Nhwc("0/input_0.npy", "0/output_0.npy");
 }
 
 TEST_F(MobileNetV2NhwcTests, FusedNhwcTest1) {
-    TestMobileNetV2Nhwc("1/input_0.npy", "1/output_0.npy", true);
+    TestMobileNetV2Nhwc("1/input_0.npy", "1/output_0.npy");
 }
 
 TEST_F(MobileNetV2NhwcTests, FusedNhwcTest2) {
-    TestMobileNetV2Nhwc("2/input_0.npy", "2/output_0.npy", true);
+    TestMobileNetV2Nhwc("2/input_0.npy", "2/output_0.npy");
 }
