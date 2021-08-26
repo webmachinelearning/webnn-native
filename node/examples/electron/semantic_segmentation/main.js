@@ -12,7 +12,9 @@ function createWindow() {
     width: 1220,
     height: 840,
     webPreferences: {
-      nodeIntegration: true,
+      nodeIntegrationInWorker: true,
+      contextIsolation: false,
+      enableBlinkFeatures: "WebAssemblySimd,WebAssemblyThreads",
       preload: app.getAppPath().replace('semantic_segmentation','../../node_setup.js')
     }
   })
