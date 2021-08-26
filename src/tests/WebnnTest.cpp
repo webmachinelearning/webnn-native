@@ -62,7 +62,7 @@ void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userd
         ASSERT_FALSE(self->mError) << "Got two errors in expect block";
         self->mError = true;
     } else {
-        ASSERT_TRUE(type != MLErrorType_NoError) << "Got unexpected error: " << message;
+        ASSERT_TRUE(type == MLErrorType_NoError) << "Got unexpected error: " << message;
     }
 }
 
