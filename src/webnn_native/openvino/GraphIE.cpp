@@ -293,7 +293,13 @@ namespace webnn_native { namespace ie {
         mGraphOutputs.push_back(graphOutput);
         char* originalName;
         ngraph_get_name(mGraphNodeMap[output], &originalName);
-        mOutputNameMap[name] = std::string(originalName);
+        uint32_t number = 0;
+        status = ngraph_get_output_number(mGraphNodeMap[output], &number);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output number"));
+        size_t index = 0;
+        ngraph_get_index(mGraphNodeMap[output], &index);
+        std::string suffix = number > 1 ? "." + std::to_string(index) : "";
+        mOutputNameMap[name] = std::string(originalName) + suffix;
         ie_network_name_free(&originalName);
         return {};
     }
@@ -798,6 +804,37 @@ namespace webnn_native { namespace ie {
         IEStatusCode status = ngraph_reshape(input, constantNode, &reshapeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
         mGraphNodeMap[reshape->PrimaryOutput()] = reshapeNode;
+        return {};
+    }
+
+    MaybeError Graph::AddSplit(const op::Split* split) {
+        auto input = mGraphNodeMap[split->Inputs()[0].Get()];
+        const ngraph_node_t* axisNode =
+            AddConstantWithGraph<int32_t>(precision_e::I32, {}, {split->GetAxis()});
+
+        ngraph_node_t* outputNodes;
+        std::vector<uint32_t> splits = split->GetSplits();
+        IEStatusCode status = IEStatusCode::OK;
+        if (splits.size() == 1) {
+            status = ngraph_split(input, axisNode, splits[0], &outputNodes);
+        } else {
+            ngraph_node_t* splitsNode =
+                AddConstantWithGraph<uint32_t>(precision_e::U32, {splits.size()}, splits);
+            status = ngraph_variadic_split(input, axisNode, splitsNode, &outputNodes);
+            ngraph_node_free(&splitsNode);
+        }
+        DAWN_TRY(CheckStatusCode(status, "ngraph split"));
+        uint32_t number;
+        status = ngraph_get_output_number(outputNodes, &number);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output number"));
+        DAWN_ASSERT(number == split->Outputs().size());
+        for (uint32_t i = 0; i < number; ++i) {
+            ngraph_node_t* outputNode;
+            status = ngraph_get_output(outputNodes, i, &outputNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph get output with index"));
+            mGraphNodeMap[split->Outputs()[i].Get()] = outputNode;
+        }
+        ngraph_node_free(&outputNodes);
         return {};
     }
 

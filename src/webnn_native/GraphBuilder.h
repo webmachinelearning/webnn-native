@@ -57,6 +57,10 @@ namespace webnn_native {
         OperatorBase* SigmoidOperator();
         OperandBase* Softmax(OperandBase*);
         OperandBase* Squeeze(OperandBase*, SqueezeOptions const* options);
+        OperandArrayBase* Split(OperandBase*,
+                                uint32_t const*,
+                                uint32_t,
+                                SplitOptions const* options);
         OperandBase* Tanh(OperandBase*);
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);

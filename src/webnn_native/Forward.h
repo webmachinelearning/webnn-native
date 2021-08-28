@@ -30,6 +30,7 @@ namespace webnn_native {
     class NamedOperandsBase;
     class NamedOutputsBase;
     class NamedResultsBase;
+    class OperandArrayBase;
     class OperandBase;
     class OperatorBase;
     class ResultBase;

@@ -31,8 +31,10 @@ namespace webnn_native {
 
     class OperatorBase : public ObjectBase {
       public:
-        OperatorBase(GraphBuilderBase* GraphBuilder, std::vector<Ref<OperandBase>> = {});
-        OperatorBase(GraphBuilderBase* GraphBuilder, FusedOperator fusedOperator);
+        explicit OperatorBase(GraphBuilderBase* GraphBuilder,
+                              std::vector<Ref<OperandBase>> inputs = {},
+                              size_t outputSize = 1);
+        explicit OperatorBase(GraphBuilderBase* GraphBuilder, FusedOperator fusedOperator);
         virtual ~OperatorBase() = default;
 
         const std::vector<Ref<OperandBase>>& Inputs() const;
@@ -44,10 +46,10 @@ namespace webnn_native {
         virtual MaybeError Validate();
         FusedOperator GetFusedOperator() const;
 
-        static OperatorBase* MakeError(GraphBuilderBase* modelBuilder);
+        static OperatorBase* MakeError(GraphBuilderBase* graphBuilder);
 
       private:
-        OperatorBase(GraphBuilderBase* GraphBuilder, ObjectBase::ErrorTag tag);
+        OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag);
         FusedOperator mFusedOperator;
 
       protected:
@@ -56,6 +58,7 @@ namespace webnn_native {
         // The output operands of operator.
         std::vector<Ref<OperandBase>> mOutputs;
     };
+
 }  // namespace webnn_native
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

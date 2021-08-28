@@ -162,8 +162,8 @@ namespace utils {
     };
 
     typedef struct {
-        const std::string& name;
-        const ml::Operand& operand;
+        const std::string name;
+        const ml::Operand operand;
     } NamedOperand;
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
@@ -207,7 +207,7 @@ namespace utils {
         for (auto& output : outputs) {
             const ml::ArrayBufferView resource = {output.resource.data(),
                                                   output.resource.size() * sizeof(float)};
-            mlOutputs.push_back({resource});
+            mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
         return graph.Compute(namedInputs, namedOutputs);

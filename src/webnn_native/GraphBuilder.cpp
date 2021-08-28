@@ -25,6 +25,7 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/OperandArray.h"
 #include "webnn_native/Operator.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
@@ -41,6 +42,7 @@
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
@@ -59,6 +61,9 @@
 #define VALIDATE_FUSED_OPERATOR(ptr)  \
     DAWN_VALIDATE(ptr, OperatorBase); \
     return op.Detach()
+#define VALIDATE_ARRAY_OPERAND(ptr)       \
+    DAWN_VALIDATE(ptr, OperandArrayBase); \
+    return new OperandArrayBase(this, op->Outputs())
 
 namespace webnn_native {
 
@@ -180,6 +185,13 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Softmax(OperandBase* input) {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
+    }
+
+    OperandArrayBase* GraphBuilderBase::Split(OperandBase* input,
+                                              uint32_t const* splits,
+                                              uint32_t splitsCount,
+                                              SplitOptions const* options) {
+        VALIDATE_ARRAY_OPERAND(new op::Split(this, input, splits, splitsCount, options));
     }
 
     OperandBase* GraphBuilderBase::Squeeze(OperandBase* input, SqueezeOptions const* options) {

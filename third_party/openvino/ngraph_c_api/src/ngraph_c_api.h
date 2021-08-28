@@ -64,6 +64,15 @@ enum ngraph_auto_pad : uint32_t {
 };
 
 NGRAPH_C_API(IEStatusCode)
+ngraph_get_output_number(const ngraph_node_t* node, uint32_t* number);
+NGRAPH_C_API(IEStatusCode)
+ngraph_get_output(const ngraph_node_t* input,
+                  uint32_t index,
+                  ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_get_index(const ngraph_node_t* node, size_t* index);
+
+NGRAPH_C_API(IEStatusCode)
 ngraph_get_shape(const ngraph_node_t* node, dimensions_t* dimensions);
 NGRAPH_C_API(IEStatusCode)
 ngraph_get_name(const ngraph_node_t* node, char** name);
@@ -241,5 +250,17 @@ ngraph_group_convolution(const ngraph_node_t* input,
                          uint32_t dilations_count,
                          ngraph_auto_pad mode,
                          ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_split(const ngraph_node_t* input,
+             const ngraph_node_t* axis,
+             size_t num_splits,
+             ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_variadic_split(const ngraph_node_t* input,
+                      const ngraph_node_t* axis,
+                      const ngraph_node_t* splits,
+                      ngraph_node_t** node);
 
 #endif  // NGRAPH_C_API_H

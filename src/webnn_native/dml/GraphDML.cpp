@@ -1102,6 +1102,35 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddSplit(const op::Split* split) {
+        DAWN_ASSERT(split->Inputs().size() == 1);
+        const OperandBase* inputOperand = split->Inputs()[0].Get();
+        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputOperand);
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+
+        // dml::Span just holds the refernces, need a variable to hold the memory.
+        std::vector<uint32_t> splits = split->GetSplits();
+        int32_t axis = split->GetAxis();
+        if (splits.size() == 1) {
+            if (inputDims[axis] % splits[0] != 0) {
+                return DAWN_INTERNAL_ERROR("the axis " + std::to_string(axis) + " with size " +
+                                           std::to_string(splits.size()) +
+                                           " can't be divisible by splits[0] " +
+                                           std::to_string(splits[0]) + ".");
+            }
+            splits = std::vector(splits[0], inputDims[axis] / splits[0]);
+        }
+        ::dml::Span<const uint32_t> splitsSpan(splits);
+        std::vector<::dml::Expression> output = ::dml::Split(input, axis, splitsSpan);
+        size_t outputSize = split->Outputs().size();
+        DAWN_ASSERT(outputSize == output.size());
+        for (size_t i = 0; i < outputSize; ++i) {
+            mExpression.insert(std::make_pair(split->Outputs()[i].Get(), output[i]));
+        }
+        return {};
+    }
+
     MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
         DAWN_ASSERT(squeeze->Inputs().size() == 1);
         const OperandBase* inputOperand = squeeze->Inputs()[0].Get();

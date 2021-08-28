@@ -69,6 +69,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddSqueeze");
     }
 
+    MaybeError GraphBase::AddSplit(const op::Split* split) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddSplit");
+    }
+
     MaybeError GraphBase::AddTranspose(const op::Transpose* transpose) {
         return DAWN_UNIMPLEMENTED_ERROR("AddTranspose");
     }
