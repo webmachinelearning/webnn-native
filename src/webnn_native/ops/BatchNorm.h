@@ -21,7 +21,7 @@
 
 namespace webnn_native { namespace op {
 
-    class BatchNorm final : public OperandBase {
+    class BatchNorm final : public OperatorBase {
       public:
         BatchNorm(GraphBuilderBase* builder,
                   OperandBase* input,
@@ -33,7 +33,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddBatchNorm(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         BatchNormOptions const* GetOptions() const {
             return &mOptions;

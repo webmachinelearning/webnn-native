@@ -17,10 +17,11 @@
 
 #include "webnn_native/Forward.h"
 #include "webnn_native/ObjectBase.h"
+#include "webnn_native/Operand.h"
 
 namespace webnn_native {
 
-    enum class OperatorType : uint32_t {
+    enum class FusedOperator : uint32_t {
         Clamp = 0x00000000,
         Relu = 0x00000001,
         Sigmoid = 0x00000002,
@@ -29,16 +30,30 @@ namespace webnn_native {
 
     class OperatorBase : public ObjectBase {
       public:
-        explicit OperatorBase(GraphBuilderBase* GraphBuilder, OperatorType type);
+        OperatorBase(GraphBuilderBase* GraphBuilder, std::vector<Ref<OperandBase>> = {});
+        OperatorBase(GraphBuilderBase* GraphBuilder, FusedOperator fusedOperator);
         virtual ~OperatorBase() = default;
 
-        OperatorType GetOperatorType() const {
-            return mType;
-        }
+        const std::vector<Ref<OperandBase>>& Inputs() const;
+        const std::vector<Ref<OperandBase>>& Outputs() const;
+        OperandBase* PrimaryOutput() const;
+
+        // Add the operand to model for specific backend.
+        virtual MaybeError AddToGraph(GraphBase* graph) const;
+        virtual MaybeError Validate();
+        FusedOperator GetFusedOperator() const;
+
+        static OperatorBase* MakeError(GraphBuilderBase* modelBuilder);
 
       private:
         OperatorBase(GraphBuilderBase* GraphBuilder, ObjectBase::ErrorTag tag);
-        OperatorType mType;
+        FusedOperator mFusedOperator;
+
+      protected:
+        // The input operands of operator.
+        std::vector<Ref<OperandBase>> mInputs;
+        // The output operands of operator.
+        std::vector<Ref<OperandBase>> mOutputs;
     };
 }  // namespace webnn_native
 

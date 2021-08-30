@@ -18,24 +18,26 @@
 
 namespace webnn_native { namespace op {
 
-    MaybeError Concat::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Concat::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
+        auto inputType = mInputs[0]->Type();
+        auto inputRank = mInputs[0]->Rank();
         for (auto& input : mInputs) {
-            if (input->Type() != mType) {
+            if (input->Type() != inputType) {
                 return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
             }
-            if (input->Rank() != mRank) {
+            if (input->Rank() != inputRank) {
                 return DAWN_VALIDATION_ERROR(
                     "Argument inputs must have same shape except for the size of the dimension to "
                     "concatenate on.");
             }
         }
 
-        if (mAxis >= mRank) {
+        if (mAxis >= inputRank) {
             return DAWN_VALIDATION_ERROR("The axis is out of rank range.");
         }
         return {};

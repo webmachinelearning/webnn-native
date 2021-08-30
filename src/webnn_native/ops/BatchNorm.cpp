@@ -25,7 +25,7 @@ namespace webnn_native { namespace op {
                          OperandBase* mean,
                          OperandBase* variance,
                          BatchNormOptions const* options)
-        : OperandBase(builder, {input, mean, variance}) {
+        : OperatorBase(builder, {input, mean, variance}) {
         if (options != nullptr) {
             mOptions = *options;
             if (options->scale != nullptr) {
@@ -42,8 +42,8 @@ namespace webnn_native { namespace op {
         mActivation = Ref<OperatorBase>(mOptions.activation);
     }
 
-    MaybeError BatchNorm::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError BatchNorm::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

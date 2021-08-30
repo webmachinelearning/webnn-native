@@ -40,15 +40,10 @@ namespace webnn_native { namespace op {
         LeakyRelu(GraphBuilderBase* builder, OperandBase* input, LeakyReluOptions const* options)
             : LeakyReluBase(options), Unary(builder, kLeakyRelu, input) {
         }
-        ~LeakyRelu() override = default;
-    };
-
-    class LeakyReluOperator final : public LeakyReluBase, public OperatorBase {
-      public:
-        LeakyReluOperator(GraphBuilderBase* builder, LeakyReluOptions const* options)
-            : LeakyReluBase(options), OperatorBase(builder, OperatorType::LeakyRelu) {
+        LeakyRelu(GraphBuilderBase* builder, LeakyReluOptions const* options)
+            : LeakyReluBase(options), Unary(builder, kLeakyRelu, FusedOperator::LeakyRelu) {
         }
-        ~LeakyReluOperator() override = default;
+        ~LeakyRelu() override = default;
     };
 
 }}  // namespace webnn_native::op

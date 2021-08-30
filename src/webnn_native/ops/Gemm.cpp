@@ -24,7 +24,7 @@ namespace webnn_native { namespace op {
                OperandBase* a,
                OperandBase* b,
                GemmOptions const* options)
-        : OperandBase(builder, {a, b}) {
+        : OperatorBase(builder, {a, b}) {
         mOptions.alpha = options == nullptr ? 1.0 : options->alpha;
         mOptions.beta = options == nullptr ? 1.0 : options->beta;
         mOptions.aTranspose = options == nullptr ? false : options->aTranspose;
@@ -34,11 +34,10 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError Gemm::ValidateAndInferTypes() {
-        for (auto input : mInputs) {
-            if (input->IsError()) {
-                return DAWN_VALIDATION_ERROR("Argument input is invalid.");
-            }
+    MaybeError Gemm::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
+        if (maybeError.IsError()) {
+            return maybeError;
         }
         if (mInputs[0]->Rank() != 2) {
             return DAWN_VALIDATION_ERROR("The first input is not 2D.");
@@ -53,8 +52,6 @@ namespace webnn_native { namespace op {
                     "unidirectionally broadcastable.");
             }
         }
-        mRank = mInputs[0]->Rank();
-        mType = mInputs[0]->Type();
 
         return {};
     }

@@ -20,7 +20,7 @@
 
 namespace webnn_native { namespace op {
 
-    class Conv2d final : public OperandBase {
+    class Conv2d final : public OperatorBase {
       public:
         Conv2d(GraphBuilderBase* builder,
                OperandBase* input,
@@ -29,7 +29,7 @@ namespace webnn_native { namespace op {
         ~Conv2d() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override;
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         Conv2dOptions const* GetOptions() const;
 

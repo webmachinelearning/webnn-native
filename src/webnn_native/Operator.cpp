@@ -21,11 +21,50 @@
 
 namespace webnn_native {
 
-    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, OperatorType type)
-        : ObjectBase(graphBuilder->GetContext()), mType(type) {
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, std::vector<Ref<OperandBase>> inputs)
+        : ObjectBase(graphBuilder->GetContext()), mInputs(std::move(inputs)) {
+        mOutputs.push_back(new OperandBase(graphBuilder, this));
+    }
+
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, FusedOperator fusedOperator)
+        : ObjectBase(graphBuilder->GetContext()), mFusedOperator(fusedOperator) {
     }
 
     OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)
         : ObjectBase(graphBuilder->GetContext(), tag) {
+    }
+
+    const std::vector<Ref<OperandBase>>& OperatorBase::Inputs() const {
+        return mInputs;
+    }
+
+    const std::vector<Ref<OperandBase>>& OperatorBase::Outputs() const {
+        return mOutputs;
+    }
+
+    OperandBase* OperatorBase::PrimaryOutput() const {
+        return mOutputs[0].Get();
+    }
+
+    MaybeError OperatorBase::AddToGraph(GraphBase* graph) const {
+        DAWN_UNREACHABLE();
+    }
+
+    MaybeError OperatorBase::Validate() {
+        for (auto& input : mInputs) {
+            if (input->IsError()) {
+                return DAWN_VALIDATION_ERROR("Argument inputs are invalid.");
+            }
+        }
+        return {};
+    }
+
+    FusedOperator OperatorBase::GetFusedOperator() const {
+        return mFusedOperator;
+    }
+
+    // static
+    OperatorBase* OperatorBase::MakeError(GraphBuilderBase* GraphBuilder) {
+        return new OperatorBase(GraphBuilder, ObjectBase::kError);
     }
 }  // namespace webnn_native

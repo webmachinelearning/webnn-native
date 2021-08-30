@@ -23,23 +23,26 @@
 
 namespace webnn_native { namespace op {
 
-    class Input final : public OperandBase {
+    class Input final : public OperatorBase {
       public:
         Input(GraphBuilderBase* builder, const std::string& name, const OperandDescriptor* desc)
-            : OperandBase(builder), mName(name) {
+            : OperatorBase(builder), mName(name) {
             mDescriptor.type = desc->type;
-            mType = desc->type;
-            mRank = desc->dimensionsCount;
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
+
+            mOutputs[0]->SetRank(desc->dimensionsCount);
+            mOutputs[0]->SetType(desc->type);
         }
         ~Input() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddInput(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override {
+            return {};
+        }
 
         const std::string& GetName() const {
             return mName;

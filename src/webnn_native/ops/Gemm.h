@@ -20,7 +20,7 @@
 
 namespace webnn_native { namespace op {
 
-    class Gemm final : public OperandBase {
+    class Gemm final : public OperatorBase {
       public:
         Gemm(GraphBuilderBase* builder, OperandBase* a, OperandBase* b, GemmOptions const* options);
         ~Gemm() override = default;
@@ -28,7 +28,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddGemm(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         GemmOptions const* GetOptions() const {
             return &mOptions;

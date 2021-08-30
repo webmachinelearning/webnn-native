@@ -21,36 +21,41 @@
 #include "webnn_native/Forward.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/ObjectBase.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/webnn_platform.h"
 
 namespace webnn_native {
 
     class OperandBase : public ObjectBase {
       public:
-        explicit OperandBase(GraphBuilderBase* GraphBuilder, std::vector<Ref<OperandBase>> = {});
+        OperandBase(GraphBuilderBase*, OperatorBase*);
         virtual ~OperandBase() = default;
 
-        // It's used for getting inputs when traversaling model tree.
-        const std::vector<Ref<OperandBase>>& Inputs() const;
-        // Add the operand to model for specific backend.
-        virtual MaybeError AddToGraph(GraphBase* graph) const;
+        const OperatorBase* Operator() {
+            return mOperator.Get();
+        }
 
         ml::OperandType Type() const {
             return mType;
         }
+        void SetType(ml::OperandType type) {
+            mType = type;
+        }
         uint32_t Rank() const {
             return mRank;
         }
+        void SetRank(uint32_t rank) {
+            mRank = rank;
+        }
 
         static OperandBase* MakeError(GraphBuilderBase* modelBuilder);
-        virtual MaybeError ValidateAndInferTypes();
 
       private:
         OperandBase(GraphBuilderBase* GraphBuilder, ObjectBase::ErrorTag tag);
 
       protected:
-        // The inputs of operand.
-        std::vector<Ref<OperandBase>> mInputs;
+        // The operator of generating the operand.
+        Ref<OperatorBase> mOperator;
         // The operand type.
         ml::OperandType mType;
         // only set rank for dimensions

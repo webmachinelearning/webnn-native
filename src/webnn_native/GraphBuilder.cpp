@@ -45,14 +45,20 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-#define DAWN_VALIDATE_AND_INFER_TYPES(ptr)                          \
-    Ref<OperandBase> op = AcquireRef(ptr);                          \
-    if (GetContext()->ConsumedError(op->ValidateAndInferTypes())) { \
-        return OperandBase::MakeError(this);                        \
-    }                                                               \
-    return op.Detach();                                             \
-    for (;;)                                                        \
+#define DAWN_VALIDATE(ptr, objectBase)                 \
+    Ref<OperatorBase> op = AcquireRef(ptr);            \
+    if (GetContext()->ConsumedError(op->Validate())) { \
+        return objectBase::MakeError(this);            \
+    }                                                  \
+    for (;;)                                           \
     break
+
+#define VALIDATE_FOR_OPERAND(ptr)    \
+    DAWN_VALIDATE(ptr, OperandBase); \
+    return op->PrimaryOutput()
+#define VALIDATE_FUSED_OPERATOR(ptr)  \
+    DAWN_VALIDATE(ptr, OperatorBase); \
+    return op.Detach()
 
 namespace webnn_native {
 
@@ -61,43 +67,43 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Constant(OperandDescriptor const* desc,
                                             ArrayBufferView const* arrayBuffer) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Constant(this, desc, arrayBuffer));
+        VALIDATE_FOR_OPERAND(new op::Constant(this, desc, arrayBuffer));
     }
 
     OperandBase* GraphBuilderBase::Input(char const* name, OperandDescriptor const* desc) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Input(this, std::string(name), desc));
+        VALIDATE_FOR_OPERAND(new op::Input(this, std::string(name), desc));
     }
 
     OperandBase* GraphBuilderBase::Matmul(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMatMul, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMatMul, a, b));
     }
 
     OperandBase* GraphBuilderBase::Add(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kAdd, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kAdd, a, b));
     }
 
     OperandBase* GraphBuilderBase::Div(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kDiv, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kDiv, a, b));
     }
 
     OperandBase* GraphBuilderBase::Mul(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMul, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMul, a, b));
     }
 
     OperandBase* GraphBuilderBase::Sub(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kSub, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kSub, a, b));
     }
 
     OperandBase* GraphBuilderBase::Max(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMax, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMax, a, b));
     }
 
     OperandBase* GraphBuilderBase::Min(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kMin, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMin, a, b));
     }
 
     OperandBase* GraphBuilderBase::Pow(OperandBase* a, OperandBase* b) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Binary(this, op::BinaryOpType::kPower, a, b));
+        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kPower, a, b));
     }
 
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
@@ -109,84 +115,82 @@ namespace webnn_native {
         // that we can find the min and max operands from the graph. We need to refactor codes once
         // a backend requires fusing clamp.
         if (options != nullptr && options->activation != nullptr) {
-            auto operatorType = options->activation->GetOperatorType();
-            if (operatorType == OperatorType::Clamp) {
-                OperandBase* conv2d = new op::Conv2d(this, input, filter, options);
-                if (GetContext()->ConsumedError(conv2d->ValidateAndInferTypes())) {
-                    delete conv2d;
+            auto operatorType = options->activation->GetFusedOperator();
+            if (operatorType == FusedOperator::Clamp) {
+                Ref<OperatorBase> conv2d = AcquireRef(new op::Conv2d(this, input, filter, options));
+                if (GetContext()->ConsumedError(conv2d->Validate())) {
                     return OperandBase::MakeError(this);
                 }
-                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
-                auto clampOptions = clamp->GetOptions();
-                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, conv2d, clampOptions));
+                auto clamp = reinterpret_cast<op::Clamp*>(options->activation);
+                VALIDATE_FOR_OPERAND(
+                    new op::Clamp(this, conv2d->PrimaryOutput(), clamp->GetOptions()));
             }
         }
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Conv2d(this, input, filter, options));
+        VALIDATE_FOR_OPERAND(new op::Conv2d(this, input, filter, options));
     }
 
     OperandBase* GraphBuilderBase::AveragePool2d(OperandBase* input, Pool2dOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(
-            new op::Pool2d(this, op::Pool2dType::kAveragePool2d, input, options));
+        VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kAveragePool2d, input, options));
     }
 
     OperandBase* GraphBuilderBase::MaxPool2d(OperandBase* input, Pool2dOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(
-            new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
+        VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input,
                                               ReduceMeanOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::ReduceMean(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::ReduceMean(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kRelu, input));
+        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kRelu, input));
     }
 
     OperatorBase* GraphBuilderBase::ReluOperator() {
-        return new op::ReluOperator(this);
+        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
     }
 
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Resample(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::Resample(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Reshape(OperandBase* input,
                                            int32_t const* new_shape,
                                            size_t new_shape_count) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Reshape(this, input, new_shape, new_shape_count));
+        VALIDATE_FOR_OPERAND(new op::Reshape(this, input, new_shape, new_shape_count));
     }
 
     OperandBase* GraphBuilderBase::Sigmoid(OperandBase* input) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
-    }
-
-    OperandBase* GraphBuilderBase::Softmax(OperandBase* input) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
-    }
-
-    OperandBase* GraphBuilderBase::Squeeze(OperandBase* input, SqueezeOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Squeeze(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
     }
 
     OperatorBase* GraphBuilderBase::SigmoidOperator() {
-        return new op::SigmoidOperator(this);
+        VALIDATE_FUSED_OPERATOR(
+            new op::Unary(this, op::UnaryOpType::kSigmoid, FusedOperator::Sigmoid));
+    }
+
+    OperandBase* GraphBuilderBase::Softmax(OperandBase* input) {
+        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
+    }
+
+    OperandBase* GraphBuilderBase::Squeeze(OperandBase* input, SqueezeOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Squeeze(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Unary(this, op::UnaryOpType::kTanh, input));
+        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kTanh, input));
     }
 
     OperandBase* GraphBuilderBase::Transpose(OperandBase* input, TransposeOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Transpose(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::Transpose(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::LeakyRelu(OperandBase* input, LeakyReluOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::LeakyRelu(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::LeakyRelu(this, input, options));
     }
 
     OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
-        return new op::LeakyReluOperator(this, options);
+        VALIDATE_FUSED_OPERATOR(new op::LeakyRelu(this, options));
     }
 
     OperandBase* GraphBuilderBase::Concat(uint32_t inputsCount,
@@ -197,21 +201,21 @@ namespace webnn_native {
         for (uint32_t i = 0; i < inputsCount; ++i) {
             operandInputs.push_back(inputs[i]);
         }
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Concat(this, std::move(operandInputs), axis));
+        VALIDATE_FOR_OPERAND(new op::Concat(this, std::move(operandInputs), axis));
     }
 
     OperandBase* GraphBuilderBase::Gemm(OperandBase* a,
                                         OperandBase* b,
                                         GemmOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Gemm(this, a, b, options));
+        VALIDATE_FOR_OPERAND(new op::Gemm(this, a, b, options));
     }
 
     OperandBase* GraphBuilderBase::Clamp(OperandBase* input, ClampOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::Clamp(this, input, options));
     }
 
     OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
-        return new op::ClampOperator(this, options);
+        VALIDATE_FUSED_OPERATOR(new op::Clamp(this, options));
     }
 
     OperandBase* GraphBuilderBase::BatchNorm(OperandBase* input,
@@ -224,31 +228,31 @@ namespace webnn_native {
         // that we can find the min and max operands from the graph. We need to refactor codes once
         // a backend requires fusing clamp.
         if (options != nullptr && options->activation != nullptr) {
-            auto operatorType = options->activation->GetOperatorType();
-            if (operatorType == OperatorType::Clamp) {
-                OperandBase* batchNorm = new op::BatchNorm(this, input, mean, variance, options);
-                if (GetContext()->ConsumedError(batchNorm->ValidateAndInferTypes())) {
-                    delete batchNorm;
+            auto operatorType = options->activation->GetFusedOperator();
+            if (operatorType == FusedOperator::Clamp) {
+                Ref<OperatorBase> batchNorm =
+                    AcquireRef(new op::BatchNorm(this, input, mean, variance, options));
+                if (GetContext()->ConsumedError(batchNorm->Validate())) {
                     return OperandBase::MakeError(this);
                 }
-                auto clamp = reinterpret_cast<op::ClampOperator*>(options->activation);
+                auto clamp = reinterpret_cast<op::Clamp*>(options->activation);
                 auto clampOptions = clamp->GetOptions();
-                DAWN_VALIDATE_AND_INFER_TYPES(new op::Clamp(this, batchNorm, clampOptions));
+                VALIDATE_FOR_OPERAND(new op::Clamp(this, batchNorm->PrimaryOutput(), clampOptions));
             }
         }
 
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::BatchNorm(this, input, mean, variance, options));
+        VALIDATE_FOR_OPERAND(new op::BatchNorm(this, input, mean, variance, options));
     }
 
     OperandBase* GraphBuilderBase::Pad(OperandBase* input,
                                        OperandBase* padding,
                                        PadOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::Pad(this, input, padding, options));
+        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, options));
     }
 
     OperandBase* GraphBuilderBase::InstanceNorm(OperandBase* input,
                                                 InstanceNormOptions const* options) {
-        DAWN_VALIDATE_AND_INFER_TYPES(new op::InstanceNorm(this, input, options));
+        VALIDATE_FOR_OPERAND(new op::InstanceNorm(this, input, options));
     }
 
     GraphBase* GraphBuilderBase::Build(NamedOperandsBase const* namedOperands) {
@@ -265,7 +269,7 @@ namespace webnn_native {
         for (auto& namedOutput : namedOperands->GetRecords()) {
             outputs.push_back(namedOutput.second);
         }
-        std::vector<const OperandBase*> sorted_operands = TopologicalSort(outputs);
+        std::vector<const OperatorBase*> sorted_operands = TopologicalSort(outputs);
         Ref<GraphBase> graph = AcquireRef(GetContext()->CreateGraph());
         for (auto& op : sorted_operands) {
             if (op->IsError() || GetContext()->ConsumedError(op->AddToGraph(graph.Get()))) {
@@ -311,23 +315,23 @@ namespace webnn_native {
     // See the License for the specific language governing permissions and
     // limitations under the License.
     //*****************************************************************************
-    std::vector<const OperandBase*> GraphBuilderBase::TopologicalSort(
+    std::vector<const OperatorBase*> GraphBuilderBase::TopologicalSort(
         std::vector<const OperandBase*>& rootNodes) {
-        std::stack<const OperandBase*> nodesToDo;
-        std::unordered_set<const OperandBase*> nodesDone;
-        std::vector<const OperandBase*> result;
+        std::stack<const OperatorBase*> nodesToDo;
+        std::unordered_set<const OperatorBase*> nodesDone;
+        std::vector<const OperatorBase*> result;
 
-        for (auto& node : rootNodes) {
-            nodesToDo.push(node);
+        for (auto node : rootNodes) {
+            nodesToDo.push(const_cast<OperandBase*>(node)->Operator());
         }
         while (nodesToDo.size() > 0) {
-            const OperandBase* node = nodesToDo.top();
+            const OperatorBase* node = nodesToDo.top();
             if (nodesDone.count(node) == 0) {
                 bool can_add = true;
                 for (auto& dep : node->Inputs()) {
-                    if (nodesDone.count(dep.Get()) == 0) {
+                    if (nodesDone.count(dep->Operator()) == 0) {
                         can_add = false;
-                        nodesToDo.push(dep.Get());
+                        nodesToDo.push(dep->Operator());
                     }
                 }
                 if (can_add) {

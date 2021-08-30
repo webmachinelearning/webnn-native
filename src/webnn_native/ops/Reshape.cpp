@@ -19,8 +19,8 @@
 
 namespace webnn_native { namespace op {
 
-    MaybeError Reshape::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Reshape::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -37,7 +37,6 @@ namespace webnn_native { namespace op {
                 hasMinus1 = true;
             }
         }
-        mRank = mNewShape.size();
 
         return {};
     }

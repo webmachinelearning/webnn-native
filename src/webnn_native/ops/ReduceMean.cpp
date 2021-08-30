@@ -21,7 +21,7 @@ namespace webnn_native { namespace op {
     ReduceMean::ReduceMean(GraphBuilderBase* builder,
                            OperandBase* input,
                            ReduceMeanOptions const* options)
-        : OperandBase(builder, {input}) {
+        : OperatorBase(builder, {input}) {
         if (options == nullptr || options->axes == nullptr) {
             int32_t rank = input->Rank();
             mAxes.resize(rank);
@@ -38,14 +38,15 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError ReduceMean::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError ReduceMean::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
         // The number of values in the sequence must be smaller than the rank of the input tensor.
-        if (mOptions.axesCount > mRank) {
+        size_t inputRank = mInputs[0]->Rank();
+        if (mOptions.axesCount > inputRank) {
             return DAWN_VALIDATION_ERROR("axes size is invalid.");
         }
 
@@ -54,7 +55,7 @@ namespace webnn_native { namespace op {
         // Besides, axis can also be -1 to represent the last dimension.
         std::map<int32_t, size_t> axesMap;
         for (size_t i = 0; i < mAxes.size(); ++i) {
-            if (mAxes[i] > static_cast<int32_t>(mRank - 1) || mAxes[i] < -1) {
+            if (mAxes[i] > static_cast<int32_t>(inputRank - 1) || mAxes[i] < -1) {
                 return DAWN_VALIDATION_ERROR("axes value is invalid.");
             }
 

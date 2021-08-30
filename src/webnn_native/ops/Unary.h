@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_UNARY_H_
 #define WEBNN_NATIVE_OPS_UNARY_H_
 
+#include "common/Log.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
@@ -29,37 +30,26 @@ namespace webnn_native { namespace op {
         kTanh,
     };
 
-    class Unary : public OperandBase {
+    class Unary : public OperatorBase {
       public:
         Unary(GraphBuilderBase* builder, UnaryOpType opType, OperandBase* input)
-            : OperandBase(builder, {input}), mOpType(opType) {
+            : OperatorBase(builder, {input}), mOpType(opType) {
+        }
+        Unary(GraphBuilderBase* builder, UnaryOpType opType, FusedOperator fusedType)
+            : OperatorBase(builder, fusedType), mOpType(opType) {
         }
         ~Unary() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddUnary(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
         UnaryOpType GetType() const {
             return mOpType;
         }
 
       private:
         UnaryOpType mOpType;
-    };
-
-    class SigmoidOperator final : public OperatorBase {
-      public:
-        SigmoidOperator(GraphBuilderBase* builder) : OperatorBase(builder, OperatorType::Sigmoid) {
-        }
-        ~SigmoidOperator() override = default;
-    };
-
-    class ReluOperator final : public OperatorBase {
-      public:
-        ReluOperator(GraphBuilderBase* builder) : OperatorBase(builder, OperatorType::Relu) {
-        }
-        ~ReluOperator() override = default;
     };
 
 }}  // namespace webnn_native::op

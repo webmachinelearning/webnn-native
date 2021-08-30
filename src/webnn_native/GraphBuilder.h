@@ -72,7 +72,8 @@ namespace webnn_native {
 
       private:
         // Topological sort of nodes needed to compute rootNodes
-        std::vector<const OperandBase*> TopologicalSort(std::vector<const OperandBase*>& rootNodes);
+        std::vector<const OperatorBase*> TopologicalSort(
+            std::vector<const OperandBase*>& rootNodes);
     };
 
 }  // namespace webnn_native
