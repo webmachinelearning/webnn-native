@@ -176,27 +176,47 @@ namespace webnn_native { namespace ie {
             return transposeNode;
         }
 
-        // hwio => oihw or ohwi => oihw
+        // FilterOperandLayout => oihw or FilterOperandLayout => iohw
         ngraph_node_t* TransposeFilterLayout(const ngraph_node_t* node,
-                                             ml::FilterOperandLayout layout) {
-            if (layout == ml::FilterOperandLayout::Oihw) {
-                return const_cast<ngraph_node_t*>(node);
-            }
-
+                                             ml::FilterOperandLayout layout,
+                                             bool transpose = false) {
             std::vector<int64_t> order;
-            switch (layout) {
-                case ml::FilterOperandLayout::Hwio:
-                    order = std::vector<int64_t>{3, 2, 0, 1};
-                    break;
-                case ml::FilterOperandLayout::Ohwi:
-                    order = std::vector<int64_t>{0, 3, 1, 2};
-                    break;
-                case ml::FilterOperandLayout::Ihwo:
-                    order = std::vector<int64_t>{3, 0, 1, 2};
-                    break;
-                default:
-                    WEBNN_ASSERT(0, "The filter layout isn't supported.");
-                    break;
+            if (transpose) {
+                // FilterOperandLayout => iohw
+                switch (layout) {
+                    case ml::FilterOperandLayout::Oihw:
+                        order = std::vector<int64_t>{1, 0, 2, 3};
+                        break;
+                    case ml::FilterOperandLayout::Hwio:
+                        order = std::vector<int64_t>{2, 3, 0, 1};
+                        break;
+                    case ml::FilterOperandLayout::Ohwi:
+                        order = std::vector<int64_t>{3, 0, 1, 2};
+                        break;
+                    case ml::FilterOperandLayout::Ihwo:
+                        order = std::vector<int64_t>{0, 3, 1, 2};
+                        break;
+                    default:
+                        WEBNN_ASSERT(0, "The filter layout isn't supported.");
+                        break;
+                }
+            } else {
+                switch (layout) {
+                    case ml::FilterOperandLayout::Oihw:
+                        return const_cast<ngraph_node_t*>(node);
+                    case ml::FilterOperandLayout::Hwio:
+                        order = std::vector<int64_t>{3, 2, 0, 1};
+                        break;
+                    case ml::FilterOperandLayout::Ohwi:
+                        order = std::vector<int64_t>{0, 3, 1, 2};
+                        break;
+                    case ml::FilterOperandLayout::Ihwo:
+                        order = std::vector<int64_t>{3, 0, 1, 2};
+                        break;
+                    default:
+                        WEBNN_ASSERT(0, "The filter layout isn't supported.");
+                        break;
+                }
             }
 
             const ngraph_node_t* orderNode =
@@ -533,13 +553,26 @@ namespace webnn_native { namespace ie {
         DAWN_ASSERT(padding.size() == 4);
         std::vector<size_t> dilations(options->dilations,
                                       options->dilations + options->dilationsCount);
-        DAWN_ASSERT(strides.size() == 2);
+        DAWN_ASSERT(dilations.size() == 2);
+        std::vector<int32_t> outputPadding(options->outputPadding,
+                                           options->outputPadding + options->outputPaddingCount);
+        DAWN_ASSERT(outputPadding.size() == 2);
+        ngraph_node_t* outputShapeNode = nullptr;
+        bool transpose = options->transpose;
+        if (transpose && options->outputSizes != nullptr) {
+            std::vector<int32_t> outputSizes(options->outputSizes,
+                                             options->outputSizes + options->outputSizesCount);
+            DAWN_ASSERT(outputSizes.size() == 2);
+            outputShapeNode =
+                AddConstantWithGraph<int32_t>(precision_e::I32, {outputSizes.size()}, outputSizes);
+        }
+
         auto input = mGraphNodeMap[conv2d->Inputs()[0].Get()];
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, true);
         }
         auto filterNode = const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[1].Get()]);
-        filterNode = TransposeFilterLayout(filterNode, options->filterLayout);
+        filterNode = TransposeFilterLayout(filterNode, options->filterLayout, transpose);
         ngraph_node_t* conv2dNode;
         dimensions_t filterDims;
         ngraph_get_shape(filterNode, &filterDims);
@@ -553,17 +586,35 @@ namespace webnn_native { namespace ie {
                 AddConstantWithGraph<uint64_t>(precision_e::U64, {filterShape.size()}, filterShape);
             status = ngraph_reshape(filterNode, reshapeNode, &filterNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
-            status = ngraph_group_convolution(
-                input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
-                dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
-                &conv2dNode);
-            DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
+            if (transpose) {
+                status = ngraph_group_convolution_backprop_data(
+                    input, filterNode, outputShapeNode, strides.data(), strides.size(),
+                    padding.data(), padding.size(), dilations.data(), dilations.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                    outputPadding.size(), &conv2dNode);
+                DAWN_TRY(CheckStatusCode(status, "ngraph group convolution backprop data"));
+            } else {
+                status = ngraph_group_convolution(
+                    input, filterNode, strides.data(), strides.size(), padding.data(),
+                    padding.size(), dilations.data(), dilations.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad), &conv2dNode);
+                DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
+            }
         } else {
-            status = ngraph_convolution(
-                input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
-                dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
-                &conv2dNode);
-            DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
+            if (transpose) {
+                status = ngraph_convolution_backprop_data(
+                    input, filterNode, outputShapeNode, strides.data(), strides.size(),
+                    padding.data(), padding.size(), dilations.data(), dilations.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                    outputPadding.size(), &conv2dNode);
+                DAWN_TRY(CheckStatusCode(status, "ngraph convolution backprop data"));
+            } else {
+                status = ngraph_convolution(
+                    input, filterNode, strides.data(), strides.size(), padding.data(),
+                    padding.size(), dilations.data(), dilations.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad), &conv2dNode);
+                DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
+            }
         }
         if (options->bias != nullptr) {
             ngraph_node_t* biasNode =

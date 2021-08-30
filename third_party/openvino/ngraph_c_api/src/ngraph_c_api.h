@@ -240,6 +240,21 @@ ngraph_convolution(const ngraph_node_t* input,
                    ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
+ngraph_convolution_backprop_data(const ngraph_node_t* input,
+                                 const ngraph_node_t* filter,
+                                 const ngraph_node_t* output_shape,
+                                 size_t const* strides,
+                                 uint32_t strides_count,
+                                 int32_t const* padding,
+                                 uint32_t padding_count,
+                                 size_t const* dilations,
+                                 uint32_t dilations_count,
+                                 ngraph_auto_pad mode,
+                                 int32_t const* output_padding,
+                                 uint32_t output_padding_count,
+                                 ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
 ngraph_group_convolution(const ngraph_node_t* input,
                          const ngraph_node_t* filter,
                          size_t const* strides,
@@ -262,5 +277,20 @@ ngraph_variadic_split(const ngraph_node_t* input,
                       const ngraph_node_t* axis,
                       const ngraph_node_t* splits,
                       ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_group_convolution_backprop_data(const ngraph_node_t* input,
+                                       const ngraph_node_t* filter,
+                                       const ngraph_node_t* output_shape,
+                                       size_t const* strides,
+                                       uint32_t strides_count,
+                                       int32_t const* padding,
+                                       uint32_t padding_count,
+                                       size_t const* dilations,
+                                       uint32_t dilations_count,
+                                       ngraph_auto_pad mode,
+                                       int32_t const* output_padding,
+                                       uint32_t output_padding_count,
+                                       ngraph_node_t** node);
 
 #endif  // NGRAPH_C_API_H

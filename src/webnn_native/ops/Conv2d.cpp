@@ -52,14 +52,31 @@ namespace webnn_native { namespace op {
         mOptions.dilations = mDilations.data();
         mOptions.dilationsCount = mDilations.size();
 
-        mOptions.groups = options == nullptr ? 1 : options->groups;
-        mOptions.inputLayout =
-            options == nullptr ? ml::InputOperandLayout::Nchw : options->inputLayout;
-        mOptions.filterLayout =
-            options == nullptr ? ml::FilterOperandLayout::Oihw : options->filterLayout;
-        mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
-        mOptions.bias = options == nullptr ? nullptr : options->bias;
-        mOptions.activation = options == nullptr ? nullptr : options->activation;
+        if (options == nullptr || options->outputPadding == nullptr) {
+            mOutputPadding = std::vector<int32_t>(2, 0);
+        } else {
+            mOutputPadding.assign(options->outputPadding,
+                                  options->outputPadding + options->outputPaddingCount);
+        }
+        mOptions.outputPadding = mOutputPadding.data();
+        mOptions.outputPaddingCount = mOutputPadding.size();
+
+        if (options != nullptr && options->outputSizes != nullptr) {
+            mOutputSizes.assign(options->outputSizes,
+                                options->outputSizes + options->outputSizesCount);
+            mOptions.outputSizes = mOutputSizes.data();
+            mOptions.outputSizesCount = mOutputSizes.size();
+        }
+
+        if (options != nullptr) {
+            mOptions.transpose = options->transpose;
+            mOptions.groups = options->groups;
+            mOptions.inputLayout = options->inputLayout;
+            mOptions.filterLayout = options->filterLayout;
+            mOptions.autoPad = options->autoPad;
+            mOptions.bias = options->bias;
+            mOptions.activation = options->activation;
+        }
         mActivation = Ref<OperatorBase>(mOptions.activation);
     }
 
