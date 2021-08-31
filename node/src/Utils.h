@@ -268,7 +268,9 @@ namespace node {
         return true;
     }
 
-    inline bool GetOperator(const Napi::Value& jsValue, ml::Operator& mlOperator) {
+    inline bool GetOperator(const Napi::Value& jsValue,
+                            ml::Operator& mlOperator,
+                            std::vector<napi_value>& args) {
         if (!jsValue.IsObject()) {
             return false;
         }
@@ -277,6 +279,7 @@ namespace node {
             return false;
         }
         mlOperator = Napi::ObjectWrap<Operator>::Unwrap(jsObject)->GetImpl();
+        args.push_back(jsObject.As<Napi::Value>());
         return true;
     }
 

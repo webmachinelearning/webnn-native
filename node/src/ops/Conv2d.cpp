@@ -14,6 +14,7 @@
 
 #include "ops/Conv2d.h"
 
+#include <iostream>
 #include "Operand.h"
 #include "Utils.h"
 
@@ -122,8 +123,9 @@ namespace node { namespace op {
                                   "The bias parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "activation")) {
-                WEBNN_NODE_ASSERT(GetOperator(jsOptions.Get("activation"), options.activation),
-                                  "The activation parameter is invalid.");
+                WEBNN_NODE_ASSERT(
+                    GetOperator(jsOptions.Get("activation"), options.activation, args),
+                    "The activation parameter is invalid.");
             }
         }
 

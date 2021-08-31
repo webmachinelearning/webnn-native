@@ -62,8 +62,9 @@ namespace node { namespace op {
                                   "The epsilon parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "activation")) {
-                WEBNN_NODE_ASSERT(GetOperator(jsOptions.Get("activation"), options.activation),
-                                  "The activation parameter is invalid.");
+                WEBNN_NODE_ASSERT(
+                    GetOperator(jsOptions.Get("activation"), options.activation, args),
+                    "The activation parameter is invalid.");
             }
         }
 

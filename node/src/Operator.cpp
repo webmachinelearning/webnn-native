@@ -21,6 +21,12 @@ Napi::FunctionReference node::Operator::constructor;
 namespace node {
 
     Operator::Operator(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Operator>(info) {
+        for (size_t i = 0; i < info.Length(); ++i) {
+            Napi::Object operand = info[i].As<Napi::Object>();
+            WEBNN_NODE_ASSERT_AND_RETURN(operand.InstanceOf(Operand::constructor.Value()),
+                                         "The argument must be an operand object.");
+            mOperands.push_back(Napi::Persistent(operand));
+        }
     }
 
     Napi::Object Operator::Initialize(Napi::Env env, Napi::Object exports) {
@@ -28,6 +34,8 @@ namespace node {
         Napi::Function func = DefineClass(env, "MLOperator", {});
         constructor = Napi::Persistent(func);
         constructor.SuppressDestruct();
+        exports.Set("MLOperator", func);
+        return exports;
     }
 
 }  // namespace node

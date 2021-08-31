@@ -25,10 +25,11 @@ namespace node { namespace op {
         // Operator clamp(optional ClampOptions options = {});
         std::vector<napi_value> args;
         ml::Operand input;
-        bool isOperator = info.Length() == 0 ||
-                          (info.Length() == 1 && info[0].IsObject() &&
-                           !info[0].As<Napi::Object>().InstanceOf(Operand::constructor.Value()));
-        if (!isOperator) {
+        bool isFusedOperator =
+            info.Length() == 0 ||
+            (info.Length() == 1 && info[0].IsObject() &&
+             !info[0].As<Napi::Object>().InstanceOf(Operand::constructor.Value()));
+        if (!isFusedOperator) {
             WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                               "The number of arguments is invalid.");
             WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
@@ -42,7 +43,7 @@ namespace node { namespace op {
         //   Operand maxValue;
         // };
         ml::ClampOptions options;
-        size_t argumentsCount = isOperator ? 1 : 2;
+        size_t argumentsCount = isFusedOperator ? 1 : 2;
         if (info.Length() == argumentsCount && !info[argumentsCount - 1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[argumentsCount - 1].IsObject(),
                               "The options must be an object.");
@@ -56,7 +57,7 @@ namespace node { namespace op {
                                   "The maxValue parameter is invalid.");
             }
         }
-        if (!isOperator) {
+        if (!isFusedOperator) {
             Napi::Object object = Operand::constructor.New(args);
             Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
             operand->SetImpl(builder.Clamp(input, &options));

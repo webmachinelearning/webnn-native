@@ -37,6 +37,7 @@ namespace node {
 
       private:
         ml::Operator mImpl;
+        std::vector<Napi::ObjectReference> mOperands;
     };
 
 }  // namespace node
