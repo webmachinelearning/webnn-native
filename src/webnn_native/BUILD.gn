@@ -326,17 +326,19 @@ dawn_component("webnn_native") {
 }
 
 # An action that build ngraph_c_api binary that is a c wrapper of nGraph.
-action("build_ngraph_c_api") {
-  script =
-      "${webnn_root}/third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
+if (webnn_enable_openvino) {
+  action("build_ngraph_c_api") {
+    script =
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
 
-  args = [
-    "--webnn-native-lib-path",
-    "$root_out_dir/{{source_file_part}}",
-  ]
+    args = [
+      "--webnn-native-lib-path",
+      "$root_out_dir/{{source_file_part}}",
+    ]
 
-  # Output a stamp file to never need to be rebuilt.
-  outputs = [ "${webnn_gen_root}/build_ngraph_c_api.stamp" ]
+    # Output a stamp file to never need to be rebuilt.
+    outputs = [ "${webnn_gen_root}/build_ngraph_c_api.stamp" ]
+  }
 }
 
 if (webnn_enable_dml) {
