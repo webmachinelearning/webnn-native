@@ -14,7 +14,7 @@ module.exports = {
    ],
   hooks: {
     generateAssets: async () => {
-      // Copy WebNN libs, source code and dependences of semantic segmentation sample
+      // Copy WebNN libs, source code and dependences of LeNet sample
       const node_path = '../../../';
       const samples_path = node_path + 'third_party/webnn-samples/';
       const copy_list = [
@@ -22,12 +22,9 @@ module.exports = {
         {"from": `${node_path}lib`, "to": 'lib'},
         {"from": `${node_path}build`, "to": 'build'},
         {"from": `${samples_path}common`, "to": 'common'},
-        {"from": `${samples_path}test-data/models/deeplabv3_mnv2_nhwc`,
-         "to": 'test-data/models/deeplabv3_mnv2_nhwc'},
-         {"from": `${samples_path}test-data/models/deeplabv3_mnv2_nchw`,
-         "to": 'test-data/models/deeplabv3_mnv2_nchw'},
-        {"from": `${samples_path}semantic_segmentation`,
-         "to": 'semantic_segmentation'},
+        {"from": `${samples_path}test-data/models/lenet_nchw`,
+         "to": 'test-data/models/lenet_nchw'},
+        {"from": `${samples_path}lenet`, "to": 'lenet'},
       ];
      for (let copy of copy_list) {
       await fse.copy(copy.from, copy.to, {overwrite: true});
