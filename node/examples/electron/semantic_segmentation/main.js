@@ -19,7 +19,7 @@ function createWindow() {
     }
   })
 
-  // Load the index.html with 'numRunsParm' to run inference multiple times.
+  // Load the index.html with 'numRuns' to run inference multiple times.
   let url = `file://${__dirname}/semantic_segmentation/index.html`
   for (let argv of process.argv) {
     if (argv.startsWith("numRuns")) {

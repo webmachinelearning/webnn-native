@@ -28,7 +28,7 @@ npm run package
 
 ### Distribution
 
-Creates a distributable using Forge's `make` command:
+Creates a distributable using Electron Forge's `make` command:
 
 ```bash
 npm run make
