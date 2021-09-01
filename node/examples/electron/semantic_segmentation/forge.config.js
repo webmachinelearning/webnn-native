@@ -2,7 +2,6 @@ const fse = require('fs-extra');
 
 module.exports = {
   packagerConfig: {
-    prune: true,
     asar: {
       unpack: "node_setup.js",
       unpackDir: "{lib,build}"
