@@ -26,7 +26,7 @@ namespace webnn_native { namespace op {
         kMaxPool2d,
     };
 
-    class Pool2d final : public OperandBase {
+    class Pool2d final : public OperatorBase {
       public:
         Pool2d(GraphBuilderBase* builder,
                Pool2dType type,
@@ -35,7 +35,7 @@ namespace webnn_native { namespace op {
         ~Pool2d() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override;
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         Pool2dOptions const* GetOptions() const;
         Pool2dType GetType() const;

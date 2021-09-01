@@ -23,7 +23,7 @@ namespace webnn_native { namespace op {
                    Pool2dType opType,
                    OperandBase* input,
                    Pool2dOptions const* options)
-        : OperandBase(builder, {input}), mOpType(opType) {
+        : OperatorBase(builder, {input}), mOpType(opType) {
         if (options != nullptr && options->windowDimensions != nullptr) {
             mWindowDimensions.assign(options->windowDimensions,
                                      options->windowDimensions + options->windowDimensionsCount);
@@ -76,8 +76,8 @@ namespace webnn_native { namespace op {
         return mOpType;
     }
 
-    MaybeError Pool2d::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Pool2d::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

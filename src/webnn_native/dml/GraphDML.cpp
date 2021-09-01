@@ -484,31 +484,31 @@ namespace webnn_native { namespace dml {
 
         auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetBuffer(),
                                            constant->GetByteLength());
-        mExpression.insert(std::make_pair(constant, dmlConstant));
-        mConstantSet.insert(constant);
+        mExpression.insert(std::make_pair(constant->PrimaryOutput(), dmlConstant));
+        mConstantSet.insert(constant->PrimaryOutput());
         return {};
     }
 
     ::dml::FusedActivation CreateFusedActivation(OperatorBase* activation) {
         ::dml::FusedActivation dmlActivation;
         if (activation != nullptr) {
-            switch (activation->GetOperatorType()) {
+            switch (activation->GetFusedOperator()) {
                 // Workaround(mingming): Currently we implement Relu6 operator by clamp. While
                 // Clamp operator is not supported for fusion, and to ensure that we can find
                 // the min and max operands from the graph, we have added a clamp node in
                 // GraphBuilder directly.
-                case OperatorType::Clamp: {
+                case FusedOperator::Clamp: {
                     return dmlActivation;
                     break;
                 }
-                case OperatorType::Relu:
+                case FusedOperator::Relu:
                     dmlActivation = ::dml::FusedActivation::Relu();
                     break;
-                case OperatorType::Sigmoid:
+                case FusedOperator::Sigmoid:
                     dmlActivation = ::dml::FusedActivation::Sigmoid();
                     break;
-                case OperatorType::LeakyRelu: {
-                    auto leakyRelu = reinterpret_cast<op::LeakyReluOperator*>(activation);
+                case FusedOperator::LeakyRelu: {
+                    auto leakyRelu = reinterpret_cast<op::LeakyRelu*>(activation);
                     float alpha = leakyRelu->GetAlpha();
                     dmlActivation = ::dml::FusedActivation::LeakyRelu(alpha);
                 } break;
@@ -533,7 +533,7 @@ namespace webnn_native { namespace dml {
         ::dml::TensorDesc dmlTensorDesc(dmlTensorType, dmlTensorDims,
                                         ::dml::TensorPolicy::Default());
         ::dml::Expression dmlInput = ::dml::InputTensor(*mGraph, mBindings.size(), dmlTensorDesc);
-        mExpression.insert(std::make_pair(input, dmlInput));
+        mExpression.insert(std::make_pair(input->PrimaryOutput(), dmlInput));
         std::unique_ptr<::pydml::Binding> binding(new ::pydml::Binding(dmlInput, nullptr, 0));
         mBindings.push_back(std::move(binding));
         mInputs.insert(std::make_pair(input->GetName(), mBindings.back().get()));
@@ -601,7 +601,7 @@ namespace webnn_native { namespace dml {
         if (options->axis == 3) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
-        mExpression.insert(std::make_pair(batchNorm, output));
+        mExpression.insert(std::make_pair(batchNorm->PrimaryOutput(), output));
         return {};
     }
 
@@ -716,7 +716,7 @@ namespace webnn_native { namespace dml {
             ::dml::TensorDimensions cNewDims = ShrinkDimensions(cDims, cRank);
             c = ::dml::Reinterpret(c, cNewDims, ::dml::NullOpt);
         }
-        mExpression.insert(std::make_pair(binary, c));
+        mExpression.insert(std::make_pair(binary->PrimaryOutput(), c));
         return {};
     }
 
@@ -777,7 +777,7 @@ namespace webnn_native { namespace dml {
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
-        mExpression.insert(std::make_pair(conv2d, output));
+        mExpression.insert(std::make_pair(conv2d->PrimaryOutput(), output));
         return {};
     }
 
@@ -797,12 +797,12 @@ namespace webnn_native { namespace dml {
 
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
         uint32_t inputRank = inputDims.size();
-        op::Constant* paddingConstant;
-        if (mConstantSet.find(inputsOperand[1].Get()) != mConstantSet.end()) {
-            paddingConstant = reinterpret_cast<op::Constant*>(inputsOperand[1].Get());
-        } else {
+        if (mConstantSet.find(inputsOperand[1].Get()) == mConstantSet.end()) {
             return DAWN_INTERNAL_ERROR("The padding constant is not found.");
         }
+
+        const op::Constant* paddingConstant =
+            reinterpret_cast<const op::Constant*>(inputsOperand[1]->Operator());
         ::dml::TensorDimensions paddingDims = padding.GetOutputDesc().sizes;
         if (paddingDims[1] != 2 || paddingDims[0] != inputRank) {
             return DAWN_INTERNAL_ERROR(
@@ -841,7 +841,7 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output =
             ::dml::Padding(input, paddingMode, paddingValue, startPadding, endPadding);
-        mExpression.insert(std::make_pair(pad, output));
+        mExpression.insert(std::make_pair(pad->PrimaryOutput(), output));
         return {};
     }
 
@@ -896,7 +896,7 @@ namespace webnn_native { namespace dml {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
-        mExpression.insert(std::make_pair(pool2d, output));
+        mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
         return {};
     }
 
@@ -972,7 +972,7 @@ namespace webnn_native { namespace dml {
         if (options->minValue == nullptr && options->maxValue == nullptr) {
             output = ::dml::Identity(output);
         }
-        mExpression.insert(std::make_pair(clamp, output));
+        mExpression.insert(std::make_pair(clamp->PrimaryOutput(), output));
         return {};
     }
 
@@ -1009,7 +1009,7 @@ namespace webnn_native { namespace dml {
             output = ::dml::Reinterpret(output, newDims, ::dml::NullOpt);
         }
 
-        mExpression.insert(std::make_pair(reduceMean, output));
+        mExpression.insert(std::make_pair(reduceMean->PrimaryOutput(), output));
         return {};
     }
 
@@ -1047,7 +1047,7 @@ namespace webnn_native { namespace dml {
         // InputPixelOffsets = 0.5f for each dimension
         // OutputPixelOffsets = -0.5f for each dimension
         ::dml::Expression output = ::dml::Resample(input, outputSizes, mode, {}, {}, {});
-        mExpression.insert(std::make_pair(resample, output));
+        mExpression.insert(std::make_pair(resample->PrimaryOutput(), output));
         return {};
     }
 
@@ -1088,7 +1088,7 @@ namespace webnn_native { namespace dml {
         }
 
         ::dml::Expression output = ::dml::Reinterpret(input, newSizes, ::dml::NullOpt);
-        mExpression.insert(std::make_pair(reshape, output));
+        mExpression.insert(std::make_pair(reshape->PrimaryOutput(), output));
         return {};
     }
 
@@ -1121,7 +1121,7 @@ namespace webnn_native { namespace dml {
         }
         ::dml::Expression output =
             ::dml::Identity(::dml::Reinterpret(input, squeezeDims, ::dml::NullOpt));
-        mExpression.insert(std::make_pair(squeeze, output));
+        mExpression.insert(std::make_pair(squeeze->PrimaryOutput(), output));
         return {};
     }
 
@@ -1160,7 +1160,7 @@ namespace webnn_native { namespace dml {
 
         ::dml::Expression output =
             ::dml::Identity(::dml::Reinterpret(input, transposedSizes, transposedStrides));
-        mExpression.insert(std::make_pair(transpose, output));
+        mExpression.insert(std::make_pair(transpose->PrimaryOutput(), output));
         return {};
     }
 
@@ -1216,7 +1216,7 @@ namespace webnn_native { namespace dml {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
-        mExpression.insert(std::make_pair(instanceNorm, output));
+        mExpression.insert(std::make_pair(instanceNorm->PrimaryOutput(), output));
         return {};
     }
 
@@ -1248,7 +1248,7 @@ namespace webnn_native { namespace dml {
                                        std::string(" is not implemented.");
             return DAWN_UNIMPLEMENTED_ERROR(errorMessage);
         }
-        mExpression.insert(std::make_pair(unary, output));
+        mExpression.insert(std::make_pair(unary->PrimaryOutput(), output));
         return {};
     }
 
@@ -1294,7 +1294,7 @@ namespace webnn_native { namespace dml {
             auto dims = ShrinkDimensions(outputDims, primaryDims.size());
             output = ::dml::Reinterpret(output, dims, ::dml::NullOpt);
         }
-        mExpression.insert(std::make_pair(concat, output));
+        mExpression.insert(std::make_pair(concat->PrimaryOutput(), output));
         return {};
     }
 
@@ -1365,7 +1365,7 @@ namespace webnn_native { namespace dml {
         auto shrinkDims = ShrinkDimensions(output.GetOutputDesc().sizes, 2);
         output = ::dml::Reinterpret(output, shrinkDims, ::dml::NullOpt);
 
-        mExpression.insert(std::make_pair(gemm, output));
+        mExpression.insert(std::make_pair(gemm->PrimaryOutput(), output));
         return {};
     }
 

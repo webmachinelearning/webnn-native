@@ -21,7 +21,7 @@
 
 namespace webnn_native { namespace op {
 
-    class ReduceMean final : public OperandBase {
+    class ReduceMean final : public OperatorBase {
       public:
         ReduceMean(GraphBuilderBase* builder, OperandBase* input, ReduceMeanOptions const* options);
         ~ReduceMean() override = default;
@@ -30,7 +30,7 @@ namespace webnn_native { namespace op {
             return graph->AddReduceMean(this);
         }
 
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         ReduceMeanOptions const* GetOptions() const {
             return &mOptions;

@@ -23,7 +23,7 @@ namespace webnn_native { namespace op {
     InstanceNorm::InstanceNorm(GraphBuilderBase* builder,
                                OperandBase* input,
                                InstanceNormOptions const* options)
-        : OperandBase(builder, {input}) {
+        : OperatorBase(builder, {input}) {
         if (options != nullptr) {
             mOptions = *options;
             if (options->scale != nullptr) {
@@ -38,8 +38,8 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError InstanceNorm::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError InstanceNorm::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

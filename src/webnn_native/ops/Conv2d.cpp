@@ -24,7 +24,7 @@ namespace webnn_native { namespace op {
                    OperandBase* input,
                    OperandBase* filter,
                    Conv2dOptions const* options)
-        : OperandBase(builder, {input, filter}) {
+        : OperatorBase(builder, {input, filter}) {
         if (options != nullptr && options->bias != nullptr) {
             mInputs.push_back(options->bias);
         }
@@ -71,8 +71,8 @@ namespace webnn_native { namespace op {
         return &mOptions;
     }
 
-    MaybeError Conv2d::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Conv2d::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

@@ -23,7 +23,7 @@ namespace webnn_native { namespace op {
     Resample::Resample(GraphBuilderBase* builder,
                        OperandBase* input,
                        ResampleOptions const* options)
-        : OperandBase(builder, {input}), mScales({}), mSizes({}) {
+        : OperatorBase(builder, {input}), mScales({}), mSizes({}) {
         mOptions.mode = options == nullptr ? ml::InterpolationMode::NearestNeighbor : options->mode;
         if (options != nullptr && options->scales != nullptr) {
             mScales.assign(options->scales, options->scales + options->scalesCount);
@@ -38,8 +38,8 @@ namespace webnn_native { namespace op {
         mOptions.sizesCount = mSizes.size();
     }
 
-    MaybeError Resample::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Resample::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

@@ -22,10 +22,10 @@
 
 namespace webnn_native { namespace op {
 
-    class Concat final : public OperandBase {
+    class Concat final : public OperatorBase {
       public:
         Concat(GraphBuilderBase* builder, std::vector<Ref<OperandBase>> inputs, uint32_t axis)
-            : OperandBase(builder, std::move(inputs)), mAxis(axis) {
+            : OperatorBase(builder, std::move(inputs)), mAxis(axis) {
         }
         ~Concat() override = default;
 
@@ -35,7 +35,7 @@ namespace webnn_native { namespace op {
         uint32_t GetAxis() const {
             return mAxis;
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
       private:
         uint32_t mAxis;

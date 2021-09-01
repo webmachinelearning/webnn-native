@@ -17,13 +17,14 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
-    class Transpose final : public OperandBase {
+    class Transpose final : public OperatorBase {
       public:
         Transpose(GraphBuilderBase* builder, OperandBase* input, TransposeOptions const* options)
-            : OperandBase(builder, {input}) {
+            : OperatorBase(builder, {input}) {
             if (options == nullptr || options->permutation == nullptr) {
                 int32_t rank = input->Rank();
                 mPermutation.resize(rank);
@@ -40,7 +41,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddTranspose(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         std::vector<int32_t> GetPermutation() const {
             return mPermutation;

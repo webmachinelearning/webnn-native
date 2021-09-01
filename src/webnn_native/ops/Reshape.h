@@ -17,24 +17,27 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
-    class Reshape final : public OperandBase {
+    class Reshape final : public OperatorBase {
       public:
         Reshape(GraphBuilderBase* builder,
                 OperandBase* input,
                 int32_t const* newShape,
                 size_t newShapeCount)
-            : OperandBase(builder, {input}) {
+            : OperatorBase(builder, {input}) {
             mNewShape.assign(newShape, newShape + newShapeCount);
+
+            mOutputs[0]->SetRank(mNewShape.size());
         }
         ~Reshape() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddReshape(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
         std::vector<int32_t> GetNewShape() const {
             return mNewShape;
         }

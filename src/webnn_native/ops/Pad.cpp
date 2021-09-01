@@ -22,13 +22,13 @@ namespace webnn_native { namespace op {
              OperandBase* input,
              OperandBase* padding,
              PadOptions const* options)
-        : OperandBase(builder, {input, padding}) {
+        : OperatorBase(builder, {input, padding}) {
         mOptions.mode = options == nullptr ? ml::PaddingMode::Constant : options->mode;
         mOptions.value = options == nullptr ? 0 : options->value;
     }
 
-    MaybeError Pad::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Pad::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

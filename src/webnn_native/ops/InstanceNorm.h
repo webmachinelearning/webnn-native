@@ -20,7 +20,7 @@
 
 namespace webnn_native { namespace op {
 
-    class InstanceNorm final : public OperandBase {
+    class InstanceNorm final : public OperatorBase {
       public:
         InstanceNorm(GraphBuilderBase* builder,
                      OperandBase* input,
@@ -30,7 +30,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddInstanceNorm(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         InstanceNormOptions const* GetOptions() const {
             return &mOptions;

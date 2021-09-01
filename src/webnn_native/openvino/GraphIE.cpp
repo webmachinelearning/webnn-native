@@ -75,7 +75,8 @@ namespace webnn_native { namespace ie {
                 return DAWN_INTERNAL_ERROR("The input is not a constant");
             }
 
-            op::Constant* minConstant = reinterpret_cast<op::Constant*>(constant.Get());
+            const op::Constant* minConstant =
+                reinterpret_cast<const op::Constant*>(constant->Operator());
             const float* value = static_cast<const float*>(minConstant->GetBuffer());
             const int32_t* dims = minConstant->GetOperandDescriptor()->dimensions;
             uint32_t dimensionsCount = minConstant->GetOperandDescriptor()->dimensionsCount;
@@ -132,21 +133,21 @@ namespace webnn_native { namespace ie {
                 *activationNode = const_cast<ngraph_node_t*>(inputNode);
                 return status;
             }
-            switch (activation->GetOperatorType()) {
+            switch (activation->GetFusedOperator()) {
                 // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
                 // case OperatorType::Clamp, we added a clamp node in GraphBuilder
                 // directly to ensure that we can find the min and max operands from the graph.
-                case OperatorType::Clamp:
+                case FusedOperator::Clamp:
                     *activationNode = const_cast<ngraph_node_t*>(inputNode);
                     break;
-                case OperatorType::Relu:
+                case FusedOperator::Relu:
                     status = ngraph_relu(inputNode, activationNode);
                     break;
-                case OperatorType::Sigmoid:
+                case FusedOperator::Sigmoid:
                     status = ngraph_sigmoid(inputNode, activationNode);
                     break;
-                case OperatorType::LeakyRelu: {
-                    auto leakyRelu = reinterpret_cast<const op::LeakyReluOperator*>(activation);
+                case FusedOperator::LeakyRelu: {
+                    auto leakyRelu = reinterpret_cast<const op::LeakyRelu*>(activation);
                     const ngraph_node_t* constantNode = AddConstantWithGraph<float>(
                         precision_e::FP32, {1}, {leakyRelu->GetAlpha()});
                     status = ngraph_leaky_relu(inputNode, constantNode, activationNode);
@@ -265,8 +266,8 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* ngraphConstant;
         status = ngraph_constant(&tensorDesc, blob, &ngraphConstant);
         DAWN_TRY(CheckStatusCode(status, "ngraph add constant"));
-        mGraphNodeMap[constant] = ngraphConstant;
-        mConstantSet.insert(constant);
+        mGraphNodeMap[constant->PrimaryOutput()] = ngraphConstant;
+        mConstantSet.insert(constant->PrimaryOutput());
         return {};
     }
 
@@ -277,7 +278,7 @@ namespace webnn_native { namespace ie {
         IEStatusCode status = ngraph_input(&tensorDesc, &graphInput);
         DAWN_TRY(CheckStatusCode(status, "ngraph add input"));
         mGraphInputs.push_back(graphInput);
-        mGraphNodeMap[input] = graphInput;
+        mGraphNodeMap[input->PrimaryOutput()] = graphInput;
         mInputIdMap[input->GetName()] = mGraphInputs.size() - 1;
         return {};
     }
@@ -373,7 +374,7 @@ namespace webnn_native { namespace ie {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             instanceNormNode = TransposeInputLayout(instanceNormNode, false);
         }
-        mGraphNodeMap[instanceNorm] = instanceNormNode;
+        mGraphNodeMap[instanceNorm->PrimaryOutput()] = instanceNormNode;
 
         return {};
     }
@@ -420,7 +421,7 @@ namespace webnn_native { namespace ie {
         if (nhwc) {
             activationNode = TransposeInputLayout(activationNode, false);
         }
-        mGraphNodeMap[batchNorm] = activationNode;
+        mGraphNodeMap[batchNorm->PrimaryOutput()] = activationNode;
         return {};
     }
 
@@ -459,7 +460,7 @@ namespace webnn_native { namespace ie {
                 DAWN_ASSERT(0);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph add binary"));
-        mGraphNodeMap[binary] = binaryNode;
+        mGraphNodeMap[binary->PrimaryOutput()] = binaryNode;
         return {};
     }
 
@@ -510,7 +511,7 @@ namespace webnn_native { namespace ie {
                 DAWN_TRY(CheckStatusCode(status, "ngraph min"));
             }
         }
-        mGraphNodeMap[clamp] = clampNode;
+        mGraphNodeMap[clamp->PrimaryOutput()] = clampNode;
         return {};
     }
 
@@ -577,7 +578,7 @@ namespace webnn_native { namespace ie {
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             activationNode = TransposeInputLayout(activationNode, false);
         }
-        mGraphNodeMap[conv2d] = activationNode;
+        mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
         return {};
     }
 
@@ -586,7 +587,7 @@ namespace webnn_native { namespace ie {
         if (mConstantSet.find(inputs[1].Get()) == mConstantSet.end()) {
             return DAWN_INTERNAL_ERROR("The padding is not a constant");
         }
-        op::Constant* padding = reinterpret_cast<op::Constant*>(inputs[1].Get());
+        const op::Constant* padding = reinterpret_cast<const op::Constant*>(inputs[1]->Operator());
         int32_t const* paddingDimensions = padding->GetOperandDescriptor()->dimensions;
         uint32_t inputRank = inputs[0]->Rank();
         uint32_t padCount = padding->GetByteLength() / sizeof(int32_t);
@@ -612,7 +613,7 @@ namespace webnn_native { namespace ie {
         IEStatusCode status = ngraph_pad(input, padBeginNode, padEndNode, padValueNode,
                                          static_cast<ngraph_padding_mode>(options->mode), &padNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph pad"));
-        mGraphNodeMap[pad] = padNode;
+        mGraphNodeMap[pad->PrimaryOutput()] = padNode;
         return {};
     }
 
@@ -662,7 +663,7 @@ namespace webnn_native { namespace ie {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             poolNode = TransposeInputLayout(poolNode, false);
         }
-        mGraphNodeMap[pool2d] = poolNode;
+        mGraphNodeMap[pool2d->PrimaryOutput()] = poolNode;
 
         return {};
     }
@@ -686,7 +687,7 @@ namespace webnn_native { namespace ie {
             status = ngraph_tanh(input, &unaryNode);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph unary"));
-        mGraphNodeMap[unary] = unaryNode;
+        mGraphNodeMap[unary->PrimaryOutput()] = unaryNode;
 
         return {};
     }
@@ -701,7 +702,7 @@ namespace webnn_native { namespace ie {
         IEStatusCode status =
             ngraph_reduce_mean(input, axesNode, options->keepDimensions, &reduceMeanNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph reduce mean"));
-        mGraphNodeMap[reduceMean] = reduceMeanNode;
+        mGraphNodeMap[reduceMean->PrimaryOutput()] = reduceMeanNode;
         return {};
     }
 
@@ -779,7 +780,7 @@ namespace webnn_native { namespace ie {
         if (transpose) {
             resampleNode = TransposeInputLayout(resampleNode, false);
         }
-        mGraphNodeMap[resample] = resampleNode;
+        mGraphNodeMap[resample->PrimaryOutput()] = resampleNode;
         return {};
     }
 
@@ -791,7 +792,7 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* reshapeNode;
         IEStatusCode status = ngraph_reshape(input, constantNode, &reshapeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
-        mGraphNodeMap[reshape] = reshapeNode;
+        mGraphNodeMap[reshape->PrimaryOutput()] = reshapeNode;
         return {};
     }
 
@@ -804,7 +805,7 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* squeezeNode;
         IEStatusCode status = ngraph_squeeze(input, constantNode, &squeezeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph squeeze"));
-        mGraphNodeMap[squeeze] = squeezeNode;
+        mGraphNodeMap[squeeze->PrimaryOutput()] = squeezeNode;
         return {};
     }
 
@@ -816,7 +817,7 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* transposeNode;
         IEStatusCode status = ngraph_transpose(input, constantNode, &transposeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph transpose"));
-        mGraphNodeMap[transpose] = transposeNode;
+        mGraphNodeMap[transpose->PrimaryOutput()] = transposeNode;
         return {};
     }
 
@@ -831,7 +832,7 @@ namespace webnn_native { namespace ie {
         IEStatusCode status =
             ngraph_concat(inputNodes.data(), inputNodes.size(), concat->GetAxis(), &concatNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph concat"));
-        mGraphNodeMap[concat] = concatNode;
+        mGraphNodeMap[concat->PrimaryOutput()] = concatNode;
         return {};
     }
 
@@ -875,7 +876,7 @@ namespace webnn_native { namespace ie {
             status = ngraph_add(gemmNode, betaNode, &gemmNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph add"));
         }
-        mGraphNodeMap[gemm] = gemmNode;
+        mGraphNodeMap[gemm->PrimaryOutput()] = gemmNode;
         return {};
     }
 

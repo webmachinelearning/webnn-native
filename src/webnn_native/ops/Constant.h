@@ -20,24 +20,24 @@
 
 namespace webnn_native { namespace op {
 
-    class Constant final : public OperandBase {
+    class Constant final : public OperatorBase {
       public:
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  const ArrayBufferView* arrayBuffer)
-            : OperandBase(builder) {
+            : OperatorBase(builder) {
             if (desc == nullptr || arrayBuffer == nullptr) {
                 return;
             }
-            mType = desc->type;
-            mRank = desc->dimensionsCount;
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
             mDescriptor.type = desc->type;
-
             mBuffer = static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset;
             mByteLength = arrayBuffer->byteLength;
+
+            mOutputs[0]->SetRank(desc->dimensionsCount);
+            mOutputs[0]->SetType(desc->type);
         }
         ~Constant() override = default;
 
@@ -45,7 +45,13 @@ namespace webnn_native { namespace op {
             return graph->AddConstant(this);
         }
 
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override {
+            if (mBuffer == nullptr || mByteLength == 0) {
+                return DAWN_VALIDATION_ERROR("Constant array buffer is invalid.");
+            }
+            return {};
+        }
+
         const OperandDescriptor* GetOperandDescriptor() const {
             return &mDescriptor;
         }

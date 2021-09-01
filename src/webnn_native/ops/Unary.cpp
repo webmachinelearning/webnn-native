@@ -19,8 +19,8 @@
 
 namespace webnn_native { namespace op {
 
-    MaybeError Unary::ValidateAndInferTypes() {
-        MaybeError maybeError = OperandBase::ValidateAndInferTypes();
+    MaybeError Unary::Validate() {
+        MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }

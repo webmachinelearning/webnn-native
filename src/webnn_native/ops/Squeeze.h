@@ -17,13 +17,14 @@
 
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
-    class Squeeze final : public OperandBase {
+    class Squeeze final : public OperatorBase {
       public:
         Squeeze(GraphBuilderBase* builder, OperandBase* input, SqueezeOptions const* options)
-            : OperandBase(builder, {input}) {
+            : OperatorBase(builder, {input}) {
             if (options && options->axes) {
                 mAxes.assign(options->axes, options->axes + options->axesCount);
             }

@@ -41,10 +41,10 @@ namespace webnn_native { namespace op {
         ClampOptions mOptions;
     };
 
-    class Clamp final : public ClampBase, public OperandBase {
+    class Clamp final : public ClampBase, public OperatorBase {
       public:
         Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
-            : ClampBase(options), OperandBase(builder, {input}) {
+            : ClampBase(options), OperatorBase(builder, {input}) {
             if (options != nullptr) {
                 if (options->minValue != nullptr) {
                     mInputs.push_back(options->minValue);
@@ -54,19 +54,14 @@ namespace webnn_native { namespace op {
                 }
             }
         }
+        Clamp(GraphBuilderBase* builder, ClampOptions const* options)
+            : ClampBase(options), OperatorBase(builder, FusedOperator::Clamp) {
+        }
         ~Clamp() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddClamp(this);
         }
-    };
-
-    class ClampOperator final : public ClampBase, public OperatorBase {
-      public:
-        ClampOperator(GraphBuilderBase* builder, ClampOptions const* options)
-            : ClampBase(options), OperatorBase(builder, OperatorType::Clamp) {
-        }
-        ~ClampOperator() override = default;
     };
 
 }}  // namespace webnn_native::op

@@ -20,7 +20,7 @@
 
 namespace webnn_native { namespace op {
 
-    class Resample final : public OperandBase {
+    class Resample final : public OperatorBase {
       public:
         Resample(GraphBuilderBase* builder, OperandBase* input, ResampleOptions const* options);
         ~Resample() override = default;
@@ -28,7 +28,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddResample(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         ResampleOptions const* GetOptions() const {
             return &mOptions;

@@ -21,7 +21,7 @@
 
 namespace webnn_native { namespace op {
 
-    class Pad final : public OperandBase {
+    class Pad final : public OperatorBase {
       public:
         Pad(GraphBuilderBase* builder,
             OperandBase* input,
@@ -32,7 +32,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddPad(this);
         }
-        MaybeError ValidateAndInferTypes() override;
+        MaybeError Validate() override;
 
         PadOptions const* GetOptions() const {
             return &mOptions;
