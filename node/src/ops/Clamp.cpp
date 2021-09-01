@@ -15,27 +15,39 @@
 #include "ops/Clamp.h"
 
 #include "Operand.h"
+#include "Operator.h"
 #include "Utils.h"
 
 namespace node { namespace op {
 
     Napi::Value Clamp::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
         // Operand clamp(Operand x, optional ClampOptions options = {});
-        WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
-                          "The number of arguments is invalid.");
-
+        // Operator clamp(optional ClampOptions options = {});
         std::vector<napi_value> args;
         ml::Operand input;
-        WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
+        bool isFusedOperator =
+            info.Length() == 0 ||
+            (info.Length() == 1 && info[0].IsObject() &&
+             !info[0].As<Napi::Object>().InstanceOf(Operand::constructor.Value()));
+        if (!isFusedOperator) {
+            WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
+                              "The number of arguments is invalid.");
+            WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
+        } else {
+            WEBNN_NODE_ASSERT(info.Length() == 0 || info.Length() == 1,
+                              "The number of arguments is invalid.");
+        }
 
         // dictionary ClampOptions {
         //   Operand minValue;
         //   Operand maxValue;
         // };
         ml::ClampOptions options;
-        if (info.Length() == 2 && !info[1].IsUndefined()) {
-            WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
-            Napi::Object jsOptions = info[1].As<Napi::Object>();
+        size_t argumentsCount = isFusedOperator ? 1 : 2;
+        if (info.Length() == argumentsCount && !info[argumentsCount - 1].IsUndefined()) {
+            WEBNN_NODE_ASSERT(info[argumentsCount - 1].IsObject(),
+                              "The options must be an object.");
+            Napi::Object jsOptions = info[argumentsCount - 1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "minValue")) {
                 WEBNN_NODE_ASSERT(GetOperand(jsOptions.Get("minValue"), options.minValue, args),
                                   "The minValue parameter is invalid.");
@@ -45,11 +57,17 @@ namespace node { namespace op {
                                   "The maxValue parameter is invalid.");
             }
         }
-
-        Napi::Object object = Operand::constructor.New(args);
-        Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.Clamp(input, &options));
-        return object;
+        if (!isFusedOperator) {
+            Napi::Object object = Operand::constructor.New(args);
+            Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
+            operand->SetImpl(builder.Clamp(input, &options));
+            return object;
+        } else {
+            Napi::Object object = Operator::constructor.New(args);
+            Operator* mlOperator = Napi::ObjectWrap<Operator>::Unwrap(object);
+            mlOperator->SetImpl(builder.ClampOperator(&options));
+            return object;
+        }
     }
 
 }}  // namespace node::op

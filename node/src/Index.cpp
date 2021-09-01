@@ -19,6 +19,7 @@
 #include "GraphBuilder.h"
 #include "ML.h"
 #include "Operand.h"
+#include "Operator.h"
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
     node::ML::Initialize(env, exports);
@@ -26,6 +27,7 @@ Napi::Object Init(Napi::Env env, Napi::Object exports) {
     node::GraphBuilder::Initialize(env, exports);
     node::Graph::Initialize(env, exports);
     node::Operand::Initialize(env, exports);
+    node::Operator::Initialize(env, exports);
 
     return exports;
 }

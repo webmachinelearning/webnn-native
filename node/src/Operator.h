@@ -12,36 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE_ML_OPERAND_H_
-#define NODE_ML_OPERAND_H_
+#ifndef NODE_ML_OPERATOR_H_
+#define NODE_ML_OPERATOR_H_
 
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
 
 namespace node {
 
-    class ModelBuilder;
-
-    class Operand : public Napi::ObjectWrap<Operand> {
+    class Operator : public Napi::ObjectWrap<Operator> {
       public:
         static Napi::Object Initialize(Napi::Env env, Napi::Object exports);
         static Napi::FunctionReference constructor;
 
-        explicit Operand(const Napi::CallbackInfo& info);
-        ~Operand() = default;
+        explicit Operator(const Napi::CallbackInfo& info);
+        ~Operator() = default;
 
-        ml::Operand GetImpl() const {
+        ml::Operator GetImpl() const {
             return mImpl;
         };
-        void SetImpl(const ml::Operand& operand) {
-            mImpl = operand;
+        void SetImpl(const ml::Operator& mlOperator) {
+            mImpl = mlOperator;
         };
 
       private:
-        ml::Operand mImpl;
-        std::vector<Napi::ObjectReference> mObjects;
+        ml::Operator mImpl;
+        std::vector<Napi::ObjectReference> mOperands;
     };
 
 }  // namespace node
 
-#endif  // NODE_ML_OPERAND_H_
+#endif  // NODE_ML_OPERATOR_H_

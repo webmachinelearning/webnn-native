@@ -12,30 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "Operand.h"
+#include "Operator.h"
 
 #include "Utils.h"
 
-Napi::FunctionReference node::Operand::constructor;
+Napi::FunctionReference node::Operator::constructor;
 
 namespace node {
 
-    Operand::Operand(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Operand>(info) {
+    Operator::Operator(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Operator>(info) {
         for (size_t i = 0; i < info.Length(); ++i) {
-            Napi::Object object = info[i].As<Napi::Object>();
-            WEBNN_NODE_ASSERT_AND_RETURN(object.InstanceOf(Operand::constructor.Value()) ||
-                                             object.InstanceOf(Operator::constructor.Value()),
-                                         "The argument must be Operand or Operator object.");
-            mObjects.push_back(Napi::Persistent(object));
+            Napi::Object operand = info[i].As<Napi::Object>();
+            WEBNN_NODE_ASSERT_AND_RETURN(operand.InstanceOf(Operand::constructor.Value()),
+                                         "The argument must be an operand object.");
+            mOperands.push_back(Napi::Persistent(operand));
         }
     }
 
-    Napi::Object Operand::Initialize(Napi::Env env, Napi::Object exports) {
+    Napi::Object Operator::Initialize(Napi::Env env, Napi::Object exports) {
         Napi::HandleScope scope(env);
-        Napi::Function func = DefineClass(env, "MLOperand", {});
+        Napi::Function func = DefineClass(env, "MLOperator", {});
         constructor = Napi::Persistent(func);
         constructor.SuppressDestruct();
-        exports.Set("MLOperand", func);
+        exports.Set("MLOperator", func);
         return exports;
     }
 

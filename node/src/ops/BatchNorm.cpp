@@ -39,6 +39,7 @@ namespace node { namespace op {
         //   Operand bias;
         //   long axis = 1;
         //   float epsilon = 1e-5;
+        //   Operator activation;
         // };
         ml::BatchNormOptions options;
         if (info.Length() == 4 && !info[3].IsUndefined()) {
@@ -59,6 +60,11 @@ namespace node { namespace op {
             if (HasOptionMember(jsOptions, "epsilon")) {
                 WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("epsilon"), options.epsilon),
                                   "The epsilon parameter is invalid.");
+            }
+            if (HasOptionMember(jsOptions, "activation")) {
+                WEBNN_NODE_ASSERT(
+                    GetOperator(jsOptions.Get("activation"), options.activation, args),
+                    "The activation parameter is invalid.");
             }
         }
 
