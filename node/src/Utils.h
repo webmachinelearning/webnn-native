@@ -348,20 +348,12 @@ namespace node {
             return false;
         }
         Napi::TypedArray jsTypedArray = jsValue.As<Napi::TypedArray>();
-        // As the current N-API doesn't support accessing SharedArrayBuffer,
-        // use V8 API instead, see https://github.com/nodejs/node/issues/23276
-        static_assert(sizeof(v8::Local<v8::Value>) == sizeof(napi_value),
-                      "Cannot convert between v8::Local<v8::Value> and napi_value");
-        napi_value napiValue = jsTypedArray.ArrayBuffer();
-        v8::Local<v8::Value> v8Value;
-        memcpy(static_cast<void*>(&v8Value), &napiValue, sizeof(napiValue));
-        if (v8Value->IsSharedArrayBuffer()) {
-            auto backingStore = v8Value.As<v8::SharedArrayBuffer>()->GetBackingStore();
-            arrayBufferView.buffer = backingStore->Data();
-        } else {
-            arrayBufferView.buffer = reinterpret_cast<void*>(
-                reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
-        }
+        // FIXME: Invalid argument error when passing SharedArrayBuffer
+        // see https://github.com/webmachinelearning/webnn-native/issues/106
+        // The fix depends N-API to support accessing SharedArrayBuffer,
+        // see https://github.com/nodejs/node/issues/23276
+        arrayBufferView.buffer =
+            reinterpret_cast<void*>(reinterpret_cast<int8_t*>(jsTypedArray.ArrayBuffer().Data()));
         arrayBufferView.byteLength = jsTypedArray.ByteLength();
         arrayBufferView.byteOffset = jsTypedArray.ByteOffset();
         return true;
