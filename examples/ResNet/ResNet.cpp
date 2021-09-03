@@ -380,12 +380,12 @@ const ml::Operand ResNet::LoadNHWC(const ml::GraphBuilder& builder, bool softmax
     const ml::Operand bottleneck13 =
         BuildNhwcBottlenectV2(builder, bottleneck12, {"4", "3"}, false, false);
     const ml::Operand fusedBn = BuildFusedBatchNorm(builder, bottleneck13, {"postnorm"});
-    ml::ReduceMeanOptions reduceMeanOptions;
+    ml::ReduceOptions reduceOptions;
     const std::vector<int32_t> axes = {1, 2};
-    reduceMeanOptions.axes = axes.data();
-    reduceMeanOptions.axesCount = axes.size();
-    reduceMeanOptions.keepDimensions = true;
-    const ml::Operand mean = builder.ReduceMean(fusedBn, &reduceMeanOptions);
+    reduceOptions.axes = axes.data();
+    reduceOptions.axesCount = axes.size();
+    reduceOptions.keepDimensions = true;
+    const ml::Operand mean = builder.ReduceMean(fusedBn, &reduceOptions);
     utils::Conv2dOptions conv2Options;
     conv2Options.autoPad = ml::AutoPad::SameUpper;
     conv2Options.inputLayout = ml::InputOperandLayout::Nhwc;

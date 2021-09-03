@@ -259,7 +259,7 @@
       {"name": "alpha", "type": "float", "default": 0.01}
     ]
   },
-  "reduceMean options": {
+  "reduce options": {
     "category": "structure",
     "members": [
       {"name": "axes count", "type": "uint32_t", "default": 0},
@@ -452,11 +452,59 @@
       ]
       },
       {
+        "name": "reduce l1",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce l2",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce max",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
         "name": "reduce mean",
         "returns": "operand",
         "args": [
           {"name": "input", "type": "operand"},
-          {"name": "options", "type": "reduceMean options", "annotation": "const*", "optional": true}
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce min",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce product",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "reduce sum",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
         ]
       },
       {

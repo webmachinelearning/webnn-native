@@ -12,16 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/ops/ReduceMean.h"
+#include "webnn_native/ops/Reduce.h"
 
+#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
 
-    ReduceMean::ReduceMean(GraphBuilderBase* builder,
-                           OperandBase* input,
-                           ReduceMeanOptions const* options)
-        : OperatorBase(builder, {input}) {
+    Reduce::Reduce(GraphBuilderBase* builder,
+                   ReduceType opType,
+                   OperandBase* input,
+                   ReduceOptions const* options)
+        : OperatorBase(builder, {input}), mOpType(opType) {
         if (options == nullptr || options->axes == nullptr) {
             int32_t rank = input->Rank();
             mAxes.resize(rank);
@@ -38,7 +40,7 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError ReduceMean::Validate() {
+    MaybeError Reduce::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;

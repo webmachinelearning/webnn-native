@@ -12,14 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ops/ReduceMean.h"
+#include "ops/Reduce.h"
 
 #include "Utils.h"
 
 namespace node { namespace op {
 
-    Napi::Value ReduceMean::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
-        // Operand reduceMean(Operand input, optional ReduceMeanOptions options = {});
+    Napi::Value Reduce::Build(ReduceType opType,
+                              const Napi::CallbackInfo& info,
+                              ml::GraphBuilder builder) {
+        // Operand Reduce(Operand input, optional ReduceOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
@@ -27,11 +29,11 @@ namespace node { namespace op {
         ml::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
-        // dictionary ReduceMeanOptions {
+        // dictionary ReduceOptions {
         //   sequence<long> axes;
         //   boolean keepDimensions = false;
         // };
-        ml::ReduceMeanOptions options;
+        ml::ReduceOptions options;
         std::vector<int32_t> axes;
         if (info.Length() == 2 && !info[1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
@@ -51,7 +53,32 @@ namespace node { namespace op {
 
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.ReduceMean(input, &options));
+        switch (opType) {
+            case op::ReduceType::kReduceL1:
+                operand->SetImpl(builder.ReduceL1(input, &options));
+                break;
+            case op::ReduceType::kReduceL2:
+                operand->SetImpl(builder.ReduceL2(input, &options));
+                break;
+            case op::ReduceType::kReduceMax:
+                operand->SetImpl(builder.ReduceMax(input, &options));
+                break;
+            case op::ReduceType::kReduceMean:
+                operand->SetImpl(builder.ReduceMean(input, &options));
+                break;
+            case op::ReduceType::kReduceMin:
+                operand->SetImpl(builder.ReduceMin(input, &options));
+                break;
+            case op::ReduceType::kReduceProduct:
+                operand->SetImpl(builder.ReduceProduct(input, &options));
+                break;
+            case op::ReduceType::kReduceSum:
+                operand->SetImpl(builder.ReduceSum(input, &options));
+                break;
+            default:
+                WEBNN_NODE_ASSERT(0, "The reduce op type isn't supported.");
+                break;
+        }
         return object;
     }
 

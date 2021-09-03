@@ -33,7 +33,7 @@
 #include "ops/LeakyRelu.h"
 #include "ops/Pad.h"
 #include "ops/Pool2d.h"
-#include "ops/ReduceMean.h"
+#include "ops/Reduce.h"
 #include "ops/Resample.h"
 #include "ops/Reshape.h"
 #include "ops/Transpose.h"
@@ -150,8 +150,32 @@ namespace node {
         return op::Pool2d::Build(info, mImpl, op::Pool2dType::kAveragePool2d);
     }
 
+    Napi::Value GraphBuilder::ReduceL1(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceL1, info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::ReduceL2(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceL2, info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::ReduceMax(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceMax, info, mImpl);
+    }
+
     Napi::Value GraphBuilder::ReduceMean(const Napi::CallbackInfo& info) {
-        return op::ReduceMean::Build(info, mImpl);
+        return op::Reduce::Build(op::ReduceType::kReduceMean, info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::ReduceMin(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceMin, info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::ReduceProduct(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceProduct, info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::ReduceSum(const Napi::CallbackInfo& info) {
+        return op::Reduce::Build(op::ReduceType::kReduceSum, info, mImpl);
     }
 
     Napi::Value GraphBuilder::Resample(const Napi::CallbackInfo& info) {
@@ -236,7 +260,13 @@ namespace node {
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
              InstanceMethod("maxPool2d", &GraphBuilder::MaxPool2d, napi_enumerable),
              InstanceMethod("averagePool2d", &GraphBuilder::AveragePool2d, napi_enumerable),
+             InstanceMethod("reduceL1", &GraphBuilder::ReduceL1, napi_enumerable),
+             InstanceMethod("reduceL2", &GraphBuilder::ReduceL2, napi_enumerable),
+             InstanceMethod("reduceMax", &GraphBuilder::ReduceMax, napi_enumerable),
              InstanceMethod("reduceMean", &GraphBuilder::ReduceMean, napi_enumerable),
+             InstanceMethod("reduceMin", &GraphBuilder::ReduceMin, napi_enumerable),
+             InstanceMethod("reduceProduct", &GraphBuilder::ReduceProduct, napi_enumerable),
+             InstanceMethod("reduceSum", &GraphBuilder::ReduceSum, napi_enumerable),
              InstanceMethod("relu", &GraphBuilder::Relu, napi_enumerable),
              InstanceMethod("resample", &GraphBuilder::Resample, napi_enumerable),
              InstanceMethod("leakyRelu", &GraphBuilder::LeakyRelu, napi_enumerable),

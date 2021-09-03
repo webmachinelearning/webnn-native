@@ -53,8 +53,8 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddPool2d");
     }
 
-    MaybeError GraphBase::AddReduceMean(const op::ReduceMean* reduceMean) {
-        return DAWN_UNIMPLEMENTED_ERROR("AddReduceMean");
+    MaybeError GraphBase::AddReduce(const op::Reduce* reduce) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddReduce");
     }
 
     MaybeError GraphBase::AddResample(const op::Resample* resample) {
