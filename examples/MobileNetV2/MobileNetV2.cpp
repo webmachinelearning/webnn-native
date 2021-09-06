@@ -62,17 +62,7 @@ const ml::Operand MobileNetV2::BuildConv(const ml::GraphBuilder& builder,
     }
     const std::string biasPath = prefix + biasName + "_bias.npy";
     const ml::Operand convBias = BuildConstantFromNpy(builder, biasPath);
-
-    ml::ClampOptions clampOptions;
-    auto minConstant = SHARED_DATA_TYPE(new std::vector<char>(sizeof(float)));
-    *(reinterpret_cast<float*>(minConstant->data())) = 0;
-    mConstants.push_back(minConstant);
-    auto maxConstant = SHARED_DATA_TYPE(new std::vector<char>(sizeof(float)));
-    *(reinterpret_cast<float*>(maxConstant->data())) = 6;
-    mConstants.push_back(maxConstant);
-    clampOptions.minValue = utils::BuildConstant(builder, {}, minConstant->data(), sizeof(float));
-    clampOptions.maxValue = utils::BuildConstant(builder, {}, maxConstant->data(), sizeof(float));
-
+    ml::ClampOptions clampOptions = {0, 6};
     if (!mFused) {
         std::vector<int32_t> newShape = mLayout == "nchw" ? std::vector<int32_t>({1, -1, 1, 1})
                                                           : std::vector<int32_t>({1, 1, 1, -1});

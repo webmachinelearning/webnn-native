@@ -18,6 +18,8 @@
 #include "webnn/webnn.h"
 #include "webnn/EnumClassBitmasks.h"
 
+#include <limits>
+
 namespace ml {
 
     {% for type in by_category["enum"] %}
