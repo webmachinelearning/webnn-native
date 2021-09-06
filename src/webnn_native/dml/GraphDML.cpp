@@ -29,6 +29,13 @@ namespace webnn_native { namespace dml {
     namespace {
         enum TransposeType { NhwcToNchw, NchwToNhwc };
 
+        uint32_t SizeOfShape(::dml::TensorDimensions& dims) {
+            uint32_t prod = 1;
+            for (size_t i = 0; i < dims.size(); ++i)
+                prod *= dims[i];
+            return prod;
+        }
+
         bool GetDmlTensorDataType(ml::OperandType operandType,
                                   DML_TENSOR_DATA_TYPE& dmlTensorDataType) {
             if (operandType == ml::OperandType::Float32) {
@@ -489,33 +496,38 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    ::dml::FusedActivation CreateFusedActivation(OperatorBase* activation) {
-        ::dml::FusedActivation dmlActivation;
-        if (activation != nullptr) {
-            switch (activation->GetFusedOperator()) {
-                // Workaround(mingming): Currently we implement Relu6 operator by clamp. While
-                // Clamp operator is not supported for fusion, and to ensure that we can find
-                // the min and max operands from the graph, we have added a clamp node in
-                // GraphBuilder directly.
-                case FusedOperator::Clamp: {
-                    return dmlActivation;
-                    break;
-                }
-                case FusedOperator::Relu:
-                    dmlActivation = ::dml::FusedActivation::Relu();
-                    break;
-                case FusedOperator::Sigmoid:
-                    dmlActivation = ::dml::FusedActivation::Sigmoid();
-                    break;
-                case FusedOperator::LeakyRelu: {
-                    auto leakyRelu = reinterpret_cast<op::LeakyRelu*>(activation);
-                    float alpha = leakyRelu->GetAlpha();
-                    dmlActivation = ::dml::FusedActivation::LeakyRelu(alpha);
-                } break;
-                default:
-                    DAWN_ASSERT(0);
-                    break;
+    ::dml::FusedActivation Graph::FuseOperator(OperatorBase* activation, ::dml::Expression& input) {
+        ::dml::FusedActivation dmlActivation = ::dml::FusedActivation::None();
+        if (activation == nullptr) {
+            return dmlActivation;
+        }
+
+        switch (activation->GetFusedOperator()) {
+            case FusedOperator::HardSwish: {
+                auto output = HardSwish(input);
+                DAWN_ASSERT(input.GetOutputDesc().sizes == output.GetOutputDesc().sizes);
+                input = output;
+                break;
             }
+            // Workaround(mingming): Currently we implement Relu6 operator by clamp. While
+            // Clamp operator is not supported for fusion, and to ensure that we can find
+            // the min and max operands from the graph, we have added a clamp node in
+            // GraphBuilder directly.
+            case FusedOperator::Clamp:
+                break;
+            case FusedOperator::Relu:
+                dmlActivation = ::dml::FusedActivation::Relu();
+                break;
+            case FusedOperator::Sigmoid:
+                dmlActivation = ::dml::FusedActivation::Sigmoid();
+                break;
+            case FusedOperator::LeakyRelu:
+                dmlActivation = ::dml::FusedActivation::LeakyRelu(
+                    reinterpret_cast<op::LeakyRelu*>(activation)->GetAlpha());
+                break;
+            default:
+                DAWN_ASSERT(0);
+                break;
         }
         return dmlActivation;
     }
@@ -594,10 +606,9 @@ namespace webnn_native { namespace dml {
             float bias = 0;
             expressions.push_back(BindingConstant(type, {1, 1, 1, 1}, &bias, sizeof(float)));
         }
-        auto fusedActivation = CreateFusedActivation(options->activation);
-        ::dml::Expression output =
-            ::dml::BatchNormalization(input, expressions[0], expressions[1], expressions[2],
-                                      expressions[3], true, options->epsilon, fusedActivation);
+        ::dml::Expression output = ::dml::BatchNormalization(
+            input, expressions[0], expressions[1], expressions[2], expressions[3], true,
+            options->epsilon, FuseOperator(options->activation, input));
         if (options->axis == 3) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
@@ -766,14 +777,13 @@ namespace webnn_native { namespace dml {
             ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
             bias = ::dml::Reinterpret(*bias, expandDimens, ::dml::NullOpt);
         }
-        auto fusedActivation = CreateFusedActivation(options->activation);
         ::dml::Expression output = ::dml::Convolution(
             input, filter, bias, DML_CONVOLUTION_MODE_CROSS_CORRELATION,
             DML_CONVOLUTION_DIRECTION_FORWARD, strides, dilations, startPadding, endPadding,
             // outPadding
             {},
             // groupCount
-            options->groups, fusedActivation);
+            options->groups, FuseOperator(options->activation, input));
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
@@ -1220,6 +1230,30 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    ::dml::Expression Graph::HardSwish(::dml::Expression& input) {
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        // x + 3
+        uint32_t length = SizeOfShape(inputDims);
+        std::vector<float> constant(length, 3);
+        ::dml::Expression output =
+            ::dml::Add(input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
+                                              constant.data(), sizeof(float) * length));
+        // min(6, (x + 3))
+        constant = std::vector<float>(length, 6);
+        auto expressionSix = BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
+                                             constant.data(), sizeof(float) * length);
+        output = ::dml::Min(output, expressionSix);
+        constant = std::vector<float>(length, 0);
+        // max(0, min(6, (x + 3)))
+        output = ::dml::Max(output, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
+                                                    constant.data(), sizeof(float) * length));
+        // x * max(0, min(6, (x + 3)))
+        output = ::dml::Multiply(input, output);
+        // x * max(0, min(6, (x + 3))) / 6
+        output = ::dml::Divide(output, expressionSix);
+        return output;
+    }
+
     MaybeError Graph::AddUnary(const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         const OperandBase* inputOperand = unary->Inputs()[0].Get();
@@ -1231,22 +1265,31 @@ namespace webnn_native { namespace dml {
         }
 
         ::dml::Expression output;
-        if (unary->GetType() == op::UnaryOpType::kRelu) {
-            output = ::dml::ActivationRelu(input);
-        } else if (unary->GetType() == op::UnaryOpType::kLeakyRelu) {
-            const op::LeakyRelu* leakyRelu = reinterpret_cast<const op::LeakyRelu*>(unary);
-            output = ::dml::ActivationLeakyRelu(input, leakyRelu->GetAlpha());
-        } else if (unary->GetType() == op::UnaryOpType::kSoftmax) {
-            output = ::dml::ActivationSoftmax(input);
-        } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
-            output = ::dml::ActivationSigmoid(input);
-        } else if (unary->GetType() == op::UnaryOpType::kTanh) {
-            output = ::dml::ActivationTanh(input);
-        } else {
-            std::string errorMessage = std::string(" Unary op ") +
-                                       OpTypeToString(unary->GetType()) +
-                                       std::string(" is not implemented.");
-            return DAWN_UNIMPLEMENTED_ERROR(errorMessage);
+        switch (unary->GetType()) {
+            case op::UnaryOpType::kRelu:
+                output = ::dml::ActivationRelu(input);
+                break;
+            case op::UnaryOpType::kLeakyRelu:
+                output = ::dml::ActivationLeakyRelu(
+                    input, reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha());
+                break;
+            case op::UnaryOpType::kSoftmax:
+                output = ::dml::ActivationSoftmax(input);
+                break;
+            case op::UnaryOpType::kSigmoid:
+                output = ::dml::ActivationSigmoid(input);
+                break;
+            case op::UnaryOpType::kTanh:
+                output = ::dml::ActivationTanh(input);
+                break;
+            case op::UnaryOpType::kHardSwish:
+                dawn::WarningLog() << "The hardSwish is emulated from other operations, maybe the "
+                                      "performance isn't best";
+                output = HardSwish(input);
+                break;
+            default:
+                return DAWN_UNIMPLEMENTED_ERROR(" Unary op " + OpTypeToString(unary->GetType()) +
+                                                " is not implemented.");
         }
         mExpression.insert(std::make_pair(unary->PrimaryOutput(), output));
         return {};

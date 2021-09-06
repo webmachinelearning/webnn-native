@@ -150,6 +150,8 @@ NGRAPH_C_API(IEStatusCode)
 ngraph_sigmoid(const ngraph_node_t* input, ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
 ngraph_tanh(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_hard_swish(const ngraph_node_t* input, ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
 ngraph_concat(ngraph_node_t** inputs,

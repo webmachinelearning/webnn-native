@@ -150,6 +150,15 @@ namespace webnn_native {
         VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
     }
 
+    OperandBase* GraphBuilderBase::HardSwish(OperandBase* input) {
+        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kHardSwish, input));
+    }
+
+    OperatorBase* GraphBuilderBase::HardSwishOperator() {
+        VALIDATE_FUSED_OPERATOR(
+            new op::Unary(this, op::UnaryOpType::kHardSwish, FusedOperator::HardSwish));
+    }
+
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
         VALIDATE_FOR_OPERAND(new op::Resample(this, input, options));
     }

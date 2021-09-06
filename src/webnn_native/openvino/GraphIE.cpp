@@ -153,6 +153,9 @@ namespace webnn_native { namespace ie {
                     status = ngraph_leaky_relu(inputNode, constantNode, activationNode);
                     break;
                 }
+                case FusedOperator::HardSwish:
+                    status = ngraph_hard_swish(inputNode, activationNode);
+                    break;
                 default:
                     WEBNN_ASSERT(0, "The OperatorType isn't supported.");
             }
@@ -685,6 +688,8 @@ namespace webnn_native { namespace ie {
             status = ngraph_sigmoid(input, &unaryNode);
         } else if (unary->GetType() == op::UnaryOpType::kTanh) {
             status = ngraph_tanh(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kHardSwish) {
+            status = ngraph_hard_swish(input, &unaryNode);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph unary"));
         mGraphNodeMap[unary->PrimaryOutput()] = unaryNode;

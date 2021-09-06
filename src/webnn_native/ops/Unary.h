@@ -28,6 +28,7 @@ namespace webnn_native { namespace op {
         kSoftmax,
         kSigmoid,
         kTanh,
+        kHardSwish,
     };
 
     class Unary : public OperatorBase {
