@@ -311,6 +311,10 @@ IEStatusCode ngraph_relu(const ngraph_node_t* a, ngraph_node_t** node) {
   BUILD_UNARY(v0::Relu, a, node);
 }
 
+IEStatusCode ngraph_hard_swish(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v4::HSwish, a, node);
+}
+
 IEStatusCode ngraph_softmax(const ngraph_node_t* a, ngraph_node_t** node) {
   TRY_IE_EXCEPTIONS
   auto softmax = std::make_shared<ngraph::op::v1::Softmax>(a->object, 1);

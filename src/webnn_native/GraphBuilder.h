@@ -49,6 +49,8 @@ namespace webnn_native {
         OperandBase* ReduceMean(OperandBase*, ReduceMeanOptions const* options);
         OperandBase* Resample(OperandBase*, ResampleOptions const* options);
         OperandBase* Relu(OperandBase*);
+        OperandBase* HardSwish(OperandBase*);
+        OperatorBase* HardSwishOperator();
         OperatorBase* ReluOperator();
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Sigmoid(OperandBase*);

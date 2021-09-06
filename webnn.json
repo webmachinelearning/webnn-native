@@ -411,6 +411,17 @@
         ]
       },
       {
+        "name": "hard swish",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"}
+        ]
+      },
+      {
+        "name": "hard swish operator",
+        "returns": "operator"
+      },
+      {
         "name": "gemm",
         "returns": "operand",
         "args": [

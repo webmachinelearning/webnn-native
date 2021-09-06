@@ -83,6 +83,8 @@ namespace webnn_native { namespace dml {
                                           ::dml::TensorDimensions dmlTensorDims,
                                           void const* value,
                                           size_t size);
+        ::dml::Expression HardSwish(::dml::Expression& input);
+        ::dml::FusedActivation FuseOperator(OperatorBase* activation, ::dml::Expression& input);
 
         std::shared_ptr<::pydml::Device> mDevice;
         // The mutex is used to lock mDevice.

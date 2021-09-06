@@ -26,6 +26,7 @@ namespace webnn_native {
         Relu = 0x00000001,
         Sigmoid = 0x00000002,
         LeakyRelu = 0x00000003,
+        HardSwish = 0x00000004,
     };
 
     class OperatorBase : public ObjectBase {
