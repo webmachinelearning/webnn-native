@@ -52,6 +52,18 @@
         {"value": 4, "name": "device lost"}
     ]
   },
+  "ObjectType": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
+  "ObjectId": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
+  "ObjectHandle": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
   "char": {
     "category": "native"
   },
@@ -59,6 +71,9 @@
     "category": "native"
   },
   "const void*": {
+    "category": "native"
+  },
+  "uint8_t": {
     "category": "native"
   },
   "uint32_t": {
@@ -124,6 +139,14 @@
   "context": {
     "category": "object",
     "methods": [
+      {
+        "name": "inject error",
+        "args": [
+            {"name": "type", "type": "error type"},
+            {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"}
+        ],
+        "TODO": "enga@: Make this a Dawn extension"
+      },
       {
         "name": "set uncaptured error callback",
         "args": [

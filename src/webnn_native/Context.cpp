@@ -33,6 +33,21 @@ namespace webnn_native {
         return CreateGraphImpl();
     }
 
+    void ContextBase::InjectError(ml::ErrorType type, const char* message) {
+        if (ConsumedError(ValidateErrorType(type))) {
+            return;
+        }
+
+        // This method should only be used to make error scope reject.
+        if (type != ml::ErrorType::Validation && type != ml::ErrorType::OutOfMemory) {
+            HandleError(
+                DAWN_VALIDATION_ERROR("Invalid injected error, must be Validation or OutOfMemory"));
+            return;
+        }
+
+        HandleError(DAWN_MAKE_ERROR(FromMLErrorType(type), message));
+    }
+
     void ContextBase::PushErrorScope(ml::ErrorFilter filter) {
         if (ConsumedError(ValidateErrorFilter(filter))) {
             return;

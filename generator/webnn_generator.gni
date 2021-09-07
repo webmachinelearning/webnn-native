@@ -41,6 +41,9 @@ import("../scripts/webnn_overrides_with_defaults.gni")
 webnn_allowed_gen_output_dirs = [
   "src/webnn/",
   "src/webnn_native/",
+  "src/webnn_wire/client/",
+  "src/webnn_wire/server/",
+  "src/webnn_wire/",
   "src/include/webnn/",
 ]
 
@@ -107,6 +110,8 @@ template("webnn_json_generator") {
     args = [
       "--webnn-json",
       rebase_path("${webnn_root}/webnn.json", root_build_dir),
+      "--wire-json",
+      rebase_path("${webnn_root}/webnn_wire.json", root_build_dir),
       "--targets",
       invoker.target,
       "--dawn-generator-path",

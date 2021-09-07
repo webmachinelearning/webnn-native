@@ -23,6 +23,7 @@ import("webnn_generator.gni")
 _stale_dirs = [
   "webnn",
   "webnn_native",
+  "webnn_wire",
   "mock",
   "src",
 ]

@@ -40,6 +40,7 @@ static_library("webnn_sample_utils") {
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
+    "${webnn_root}/src/webnn_wire",
   ]
 
   defines = [
