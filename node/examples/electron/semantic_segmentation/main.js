@@ -15,14 +15,19 @@ function createWindow() {
       nodeIntegrationInWorker: true,
       contextIsolation: false,
       enableBlinkFeatures: "WebAssemblySimd,WebAssemblyThreads",
-      preload: app.getAppPath().replace('semantic_segmentation','../../node_setup.js')
+      preload: path.join(__dirname, 'node_setup.js')
     }
   })
 
-  // Load the index.html with 'numRunsParm' to run inference multiple times.
-  let url = `file://${__dirname}/../../../third_party/webnn-samples/semantic_segmentation/index.html`
-  const numRunsParm = '?' + process.argv[2]
-  mainWindow.loadURL(url + numRunsParm)
+  // Load the index.html with 'numRuns' to run inference multiple times.
+  let url = `file://${__dirname}/semantic_segmentation/index.html`
+  for (let argv of process.argv) {
+    if (argv.startsWith("numRuns")) {
+      url += '?' + argv
+      break
+    }
+  }
+  mainWindow.loadURL(url)
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function() {
