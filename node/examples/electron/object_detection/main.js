@@ -13,13 +13,19 @@ function createWindow() {
     height: 840,
     webPreferences: {
       nodeIntegration: true,
-      preload: app.getAppPath().replace('object_detection','../../node_setup.js')
+      contextIsolation: false,
+      preload: path.join(__dirname, 'node_setup.js')
     }
   })
 
-  // Load the index.html with 'numRunsParm' to run inference multiple times.
-  let url = `file://${__dirname}/../../../third_party/webnn-samples/object_detection/index.html`
-  const numRunsParm = '?' + process.argv[2]
+  // Load the index.html with 'numRuns' to run inference multiple times.
+  let url = `file://${__dirname}/object_detection/index.html`
+  for (let argv of process.argv) {
+    if (argv.startsWith("numRuns")) {
+      url += '?' + argv
+      break
+    }
+  }
   mainWindow.loadURL(url)
 
   // Emitted when the window is closed.

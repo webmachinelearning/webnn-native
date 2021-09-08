@@ -18,6 +18,22 @@ You can also run multiple times with "numRuns" to get the median inference time,
 npm start numRuns=100
 ```
 
+### Package
+
+Bundles source code with a renamed Electron executable and supporting files into `out` folder ready for distribution.
+
+```bash
+npm run package
+```
+
+### Distribution
+
+Creates a distributable using Electron Forge's `make` command:
+
+```bash
+npm run make
+```
+
 ### Screenshot
 
 ![screenshot](screenshot.png)
