@@ -20,10 +20,14 @@
 #include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native {
-
-    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, std::vector<Ref<OperandBase>> inputs)
+    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder,
+                               std::vector<Ref<OperandBase>> inputs,
+                               size_t outputSize)
         : ObjectBase(graphBuilder->GetContext()), mInputs(std::move(inputs)) {
-        mOutputs.push_back(new OperandBase(graphBuilder, this));
+        mOutputs.reserve(outputSize);
+        for (size_t i = 0; i < outputSize; ++i) {
+            mOutputs.push_back(new OperandBase(graphBuilder, this));
+        }
     }
 
     OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, FusedOperator fusedOperator)
@@ -64,7 +68,7 @@ namespace webnn_native {
     }
 
     // static
-    OperatorBase* OperatorBase::MakeError(GraphBuilderBase* GraphBuilder) {
-        return new OperatorBase(GraphBuilder, ObjectBase::kError);
+    OperatorBase* OperatorBase::MakeError(GraphBuilderBase* graphBuilder) {
+        return new OperatorBase(graphBuilder, ObjectBase::kError);
     }
 }  // namespace webnn_native

@@ -157,6 +157,22 @@
       }
     ]
   },
+  "operand array": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "size",
+        "returns": "size_t"
+      },
+      {
+        "name": "get",
+        "returns": "operand",
+        "args": [
+          {"name": "index", "type": "size_t"}
+        ]
+      }
+    ]
+  },
   "input operand layout": {
     "category": "enum",
     "values": [
@@ -275,6 +291,12 @@
       {"name": "scales", "type": "float", "annotation": "const*", "length": "scales count", "optional": true},
       {"name": "sizes count", "type": "uint32_t", "default": 0},
       {"name": "sizes", "type": "int32_t", "annotation": "const*", "length": "sizes count", "optional": true}
+    ]
+  },
+  "split options": {
+    "category": "structure",
+    "members": [
+      {"name": "axis", "type": "int32_t", "default": 0}
     ]
   },
   "squeeze options": {
@@ -508,6 +530,16 @@
       {
         "name": "sigmoid operator",
         "returns": "operator"
+      },
+      {
+        "name": "split",
+        "returns": "operand array",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "splits", "type": "uint32_t", "annotation": "const*", "length": "splits count"},
+          {"name": "splits count", "type": "uint32_t"},
+          {"name": "options", "type": "split options", "annotation": "const*", "optional": true}
+        ]
       },
       {
         "name": "squeeze",

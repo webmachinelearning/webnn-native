@@ -40,6 +40,7 @@
 #include "webnn_native/ops/ReduceMean.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
@@ -65,6 +66,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddReduceMean(const op::ReduceMean* reduceMean) override;
         virtual MaybeError AddResample(const op::Resample* resample) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
+        virtual MaybeError AddSplit(const op::Split* split) override;
         virtual MaybeError AddSqueeze(const op::Squeeze* squeeze) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;

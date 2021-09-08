@@ -30,14 +30,16 @@
     return IEStatusCode::UNEXPECTED;                                      \
   }
 
-#define CREATE_NGRAPH_NODE(impl, node) \
-  *node = new ngraph_node_t();         \
-  (*node)->object = impl;              \
+#define CREATE_NGRAPH_NODE(impl, node, index) \
+  *node = new ngraph_node_t();                \
+  (*node)->object = impl->output(index);      \
   return IEStatusCode::OK;
 
 #define CREATE_NODE_AND_CATCH_EXCEPTIONS(impl, node) \
-  CREATE_NGRAPH_NODE(impl, node)                     \
-  CATCH_IE_EXCEPTIONS
+  CREATE_NGRAPH_NODE(impl, node, 0) CATCH_IE_EXCEPTIONS
+
+#define CREATE_NODE_WITH_INDEX_AND_CATCH_EXCEPTIONS(impl, index, node) \
+  CREATE_NGRAPH_NODE(impl, node, index) CATCH_IE_EXCEPTIONS
 
 #define BUILD_BINARY(operation, a, b, node)                                  \
   TRY_IE_EXCEPTIONS                                                          \
@@ -50,7 +52,7 @@
   CREATE_NODE_AND_CATCH_EXCEPTIONS(impl, node)
 
 struct ngraph_node {
-  std::shared_ptr<ngraph::Node> object;
+  ngraph::Output<ngraph::Node> object;
 };
 
 struct ngraph_function {
@@ -116,12 +118,36 @@ inline ngraph::op::PadType GetAutoPad(ngraph_auto_pad autoPad) {
   return auto_pad;
 }
 
+IEStatusCode ngraph_get_output_number(const ngraph_node_t* node,
+                                      uint32_t* number) {
+  TRY_IE_EXCEPTIONS
+  auto node_shared_ptr = node->object.get_node_shared_ptr();
+  *number = node_shared_ptr->get_output_size();
+  CATCH_IE_EXCEPTIONS
+  return IEStatusCode::OK;
+}
+
+IEStatusCode ngraph_get_output(const ngraph_node_t* input,
+                               uint32_t index,
+                               ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  CREATE_NODE_WITH_INDEX_AND_CATCH_EXCEPTIONS(
+      input->object.get_node_shared_ptr(), index, node);
+}
+
+IEStatusCode ngraph_get_index(const ngraph_node_t* node, size_t* index) {
+  TRY_IE_EXCEPTIONS
+  *index = node->object.get_index();
+  CATCH_IE_EXCEPTIONS
+  return IEStatusCode::OK;
+}
+
 IEStatusCode ngraph_get_shape(const ngraph_node_t* node,
                               dimensions_t* dimensions) {
   if (node == nullptr) {
     return IEStatusCode::GENERAL_ERROR;
   }
-  IE::SizeVector shape = node->object->get_shape();
+  IE::SizeVector shape = node->object.get_shape();
   dimensions->ranks = shape.size();
   for (size_t i = 0; i < dimensions->ranks; ++i) {
     dimensions->dims[i] = shape[i];
@@ -130,7 +156,7 @@ IEStatusCode ngraph_get_shape(const ngraph_node_t* node,
 }
 
 IEStatusCode ngraph_get_name(const ngraph_node_t* node, char** name) {
-  std::string node_name = node->object->get_name();
+  std::string node_name = node->object.get_node_shared_ptr()->get_name();
   *name = new char[node_name.length() + 1];
   memcpy(*name, node_name.c_str(), node_name.length() + 1);
   return IEStatusCode::OK;
@@ -190,19 +216,19 @@ IEStatusCode create_ngraph_function(ngraph_node_t** output,
   ngraph_inputs.reserve(input_count);
   for (size_t i = 0; i < input_count; ++i) {
     ngraph_inputs.push_back(std::shared_ptr<ngraph::op::v0::Parameter>(
-        reinterpret_cast<ngraph::op::v0::Parameter*>(input[i]->object.get())));
+        reinterpret_cast<ngraph::op::v0::Parameter*>(
+            input[i]->object.get_node_shared_ptr().get())));
   }
-  std::vector<std::shared_ptr<ngraph::op::v0::Result>> ngraph_outputs;
-  ngraph_outputs.reserve(output_count);
+  ngraph::OutputVector ngraph_nodes;
+  ngraph_nodes.reserve(output_count);
   for (size_t i = 0; i < output_count; ++i) {
-    ngraph_outputs.push_back(std::shared_ptr<ngraph::op::v0::Result>(
-        reinterpret_cast<ngraph::op::v0::Result*>(output[i]->object.get())));
+    ngraph_nodes.push_back(output[i]->object);
   }
 
   TRY_IE_EXCEPTIONS
   *function = new ngraph_function_t();
   (*function)->object =
-      std::make_shared<ngraph::Function>(ngraph_outputs, ngraph_inputs);
+      std::make_shared<ngraph::Function>(ngraph_nodes, ngraph_inputs);
   CATCH_IE_EXCEPTIONS
   return IEStatusCode::OK;
 }
@@ -522,6 +548,26 @@ IEStatusCode ngraph_group_convolution(const ngraph_node_t* input,
       input->object, filter->object, strides_vector, pad_begin, pad_end,
       dilations_vector, GetAutoPad(mode));
   CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
+}
+
+IEStatusCode ngraph_split(const ngraph_node_t* input,
+                          const ngraph_node_t* axis,
+                          size_t num_splits,
+                          ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto split = std::make_shared<ngraph::op::v1::Split>(
+      input->object, axis->object, num_splits);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
+}
+
+IEStatusCode ngraph_variadic_split(const ngraph_node_t* input,
+                                   const ngraph_node_t* axis,
+                                   const ngraph_node_t* splits,
+                                   ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto split = std::make_shared<ngraph::op::v1::VariadicSplit>(
+      input->object, axis->object, splits->object);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
 }
 
 // namespace IE = InferenceEngine;
