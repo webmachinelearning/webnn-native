@@ -19,14 +19,21 @@ function createWindow() {
     }
   })
 
-  // Load the index.html with 'numRuns' to run inference multiple times.
   let url = `file://${__dirname}/semantic_segmentation/index.html`
+  let numRunsParam, deviceParam
   for (let argv of process.argv) {
-    if (argv.startsWith("numRuns")) {
-      url += '?' + argv
-      break
+    if (argv.startsWith("numRuns=") && !numRunsParam) {
+      // Load the index.html with 'numRuns' to run inference multiple times.
+      numRunsParam = argv
+      url = deviceParam ? `${url}&${argv}` : `${url}?${argv}`
+    }
+    if (argv.startsWith("device=") && !deviceParam) {
+      // Load the index.html with 'device' to set preferred kind of device used.
+      deviceParam = argv
+      url = numRunsParam ? `${url}&${argv}` : `${url}?${argv}`
     }
   }
+
   mainWindow.loadURL(url)
 
   // Emitted when the window is closed.
