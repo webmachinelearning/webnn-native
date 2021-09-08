@@ -40,6 +40,7 @@
 #include "webnn_native/ops/Reduce.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Slice.h"
 #include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
@@ -64,6 +65,7 @@ namespace webnn_native { namespace ie {
         virtual MaybeError AddReduce(const op::Reduce* reduce) override;
         virtual MaybeError AddResample(const op::Resample* resample) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
+        virtual MaybeError AddSlice(const op::Slice* slice) override;
         virtual MaybeError AddSplit(const op::Split* split) override;
         virtual MaybeError AddSqueeze(const op::Squeeze* squeeze) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;

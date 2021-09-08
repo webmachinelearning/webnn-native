@@ -532,6 +532,18 @@ IEStatusCode ngraph_batch_norm_inference(const ngraph_node_t* input,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(batch_norm, node);
 }
 
+IEStatusCode ngraph_slice_inference(const ngraph_node_t* input,
+                                    const ngraph_node_t* begin,
+                                    const ngraph_node_t* end,
+                                    ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  std::vector<int64_t> begin_mask_ = {};
+  std::vector<int64_t> end_mask_ = {};
+  auto slice = std::make_shared<ngraph::op::v1::StridedSlice>(
+      input->object, begin->object, end->object, begin_mask_, end_mask_);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(slice, node);
+}
+
 IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
                                  size_t const* strides,
                                  uint32_t strides_count,
@@ -703,5 +715,4 @@ IEStatusCode ngraph_group_convolution_backprop_data(
   }
   CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
-
 // namespace IE = InferenceEngine;

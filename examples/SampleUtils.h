@@ -139,6 +139,21 @@ namespace utils {
         ml::Conv2dOptions mOptions;
     };
 
+    struct SliceOptions {
+        std::vector<int32_t> axes;
+        const ml::SliceOptions* AsPtr() {
+            if (!axes.empty()) {
+                mOptions.axesCount = axes.size();
+                mOptions.axes = axes.data();
+            }
+
+            return &mOptions;
+        }
+
+      private:
+        ml::SliceOptions mOptions;
+    };
+
     struct Pool2dOptions {
       public:
         std::vector<int32_t> windowDimensions;

@@ -41,6 +41,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddBatchNorm");
     }
 
+    MaybeError GraphBase::AddSlice(const op::Slice* batchNorm) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddSlice");
+    }
+
     MaybeError GraphBase::AddBinary(const op::Binary* binary) {
         return DAWN_UNIMPLEMENTED_ERROR("AddBinary");
     }

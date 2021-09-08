@@ -80,6 +80,12 @@ namespace webnn_native {
                                OperandBase*,
                                BatchNormOptions const* options);
         OperandBase* InstanceNorm(OperandBase*, InstanceNormOptions const* options);
+        OperandBase* Slice(OperandBase*,
+                           int32_t const* starts,
+                           uint32_t startsCount,
+                           int32_t const* sizes,
+                           uint32_t sizesCount,
+                           SliceOptions const* options);
         GraphBase* Build(NamedOperandsBase const* namedOperands);
 
       private:

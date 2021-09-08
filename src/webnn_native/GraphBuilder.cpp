@@ -42,6 +42,7 @@
 #include "webnn_native/ops/Reduce.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Slice.h"
 #include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
@@ -250,6 +251,16 @@ namespace webnn_native {
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
         VALIDATE_FOR_OPERAND(new op::BatchNorm(this, input, mean, variance, options));
+    }
+
+    OperandBase* GraphBuilderBase::Slice(OperandBase* input,
+                                         int32_t const* starts,
+                                         uint32_t startsCount,
+                                         int32_t const* sizes,
+                                         uint32_t sizesCount,
+                                         SliceOptions const* options) {
+        VALIDATE_FOR_OPERAND(
+            new op::Slice(this, input, starts, startsCount, sizes, sizesCount, options));
     }
 
     OperandBase* GraphBuilderBase::Pad(OperandBase* input,
