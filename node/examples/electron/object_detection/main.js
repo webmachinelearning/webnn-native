@@ -19,19 +19,23 @@ function createWindow() {
   })
 
   let url = `file://${__dirname}/object_detection/index.html`
-  let numRunsParam, deviceParam
+  let params = {numRuns: "", device: ""}
+  let urlPrex = ""
   for (let argv of process.argv) {
-    if (argv.startsWith("numRuns=") && !numRunsParam) {
+    if (argv.startsWith("numRuns=")) {
       // Load the index.html with 'numRuns' to run inference multiple times.
-      numRunsParam = argv
-      url = deviceParam ? `${url}&${argv}` : `${url}?${argv}`
+      params.numRuns = argv
     }
-    if (argv.startsWith("device=") && !deviceParam) {
+    if (argv.startsWith("device=")) {
       // Load the index.html with 'device' to set preferred kind of device used.
-      deviceParam = argv
-      url = numRunsParam ? `${url}&${argv}` : `${url}?${argv}`
+      params.device = argv
     }
   }
+  for (let param in params) {
+    if (params[param])
+      urlPrex = urlPrex ? `${urlPrex}&${params[param]}` : `?${params[param]}`
+  }
+  url += urlPrex
 
   mainWindow.loadURL(url)
 
