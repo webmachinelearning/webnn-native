@@ -93,8 +93,11 @@ namespace utils {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
-        int32_t groups = 1;
+        std::vector<int32_t> outputPadding;
+        std::vector<int32_t> outputSizes;
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
+        bool transpose = false;
+        int32_t groups = 1;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
         ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
         ml::Operand bias;
@@ -113,12 +116,22 @@ namespace utils {
                 mOptions.dilationsCount = dilations.size();
                 mOptions.dilations = dilations.data();
             }
+            if (!outputPadding.empty()) {
+                mOptions.outputPaddingCount = outputPadding.size();
+                mOptions.outputPadding = outputPadding.data();
+            }
+            if (!outputSizes.empty()) {
+                mOptions.outputSizesCount = outputSizes.size();
+                mOptions.outputSizes = outputSizes.data();
+            }
+            mOptions.transpose = transpose;
             mOptions.groups = groups;
             mOptions.autoPad = autoPad;
             mOptions.inputLayout = inputLayout;
             mOptions.filterLayout = filterLayout;
             mOptions.bias = bias;
             mOptions.activation = activation;
+
             return &mOptions;
         }
 

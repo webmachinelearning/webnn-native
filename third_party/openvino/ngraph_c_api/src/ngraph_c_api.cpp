@@ -112,6 +112,7 @@ inline ngraph::op::PadType GetAutoPad(ngraph_auto_pad autoPad) {
       break;
     case Explicit:
       auto_pad = ngraph::op::PadType::EXPLICIT;
+      break;
     default:
       assert(0);
   }
@@ -191,7 +192,10 @@ IEStatusCode ngraph_constant(const tensor_desc_t* tensorDesc,
 
   TRY_IE_EXCEPTIONS
   ie_blob_buffer_t buffer;
-  ie_blob_get_buffer(blob, &buffer);
+  auto status = ie_blob_get_buffer(blob, &buffer);
+  if (status != IEStatusCode::OK) {
+    return status;
+  }
   auto constant = std::make_shared<ngraph::op::Constant>(
       get_tensor_type(tensorDesc), get_tensor_shape(tensorDesc), buffer.buffer);
   CREATE_NODE_AND_CATCH_EXCEPTIONS(constant, node);
@@ -529,6 +533,41 @@ IEStatusCode ngraph_convolution(const ngraph_node_t* input,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
 
+IEStatusCode ngraph_convolution_backprop_data(const ngraph_node_t* input,
+                                              const ngraph_node_t* filter,
+                                              const ngraph_node_t* output_shape,
+                                              size_t const* strides,
+                                              uint32_t strides_count,
+                                              int32_t const* padding,
+                                              uint32_t padding_count,
+                                              size_t const* dilations,
+                                              uint32_t dilations_count,
+                                              ngraph_auto_pad mode,
+                                              int32_t const* output_padding,
+                                              uint32_t output_padding_count,
+                                              ngraph_node_t** node) {
+  ngraph::Strides strides_vector(strides, strides + strides_count);
+  ngraph::CoordinateDiff pad_begin = {padding[0], padding[2]};
+  ngraph::CoordinateDiff pad_end = {padding[1], padding[3]};
+  ngraph::op::PadType autoPad = GetAutoPad(mode);
+  ngraph::Strides dilations_vector(dilations, dilations + dilations_count);
+  ngraph::CoordinateDiff output_padding_vector(
+      output_padding, output_padding + output_padding_count);
+  std::shared_ptr<ngraph::Node> conv2d;
+
+  TRY_IE_EXCEPTIONS
+  if (output_shape == nullptr) {
+    conv2d = std::make_shared<ngraph::op::v1::ConvolutionBackpropData>(
+        input->object, filter->object, strides_vector, pad_begin, pad_end,
+        dilations_vector, autoPad, output_padding_vector);
+  } else {
+    conv2d = std::make_shared<ngraph::op::v1::ConvolutionBackpropData>(
+        input->object, filter->object, output_shape->object, strides_vector,
+        pad_begin, pad_end, dilations_vector, autoPad, output_padding_vector);
+  }
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
+}
+
 IEStatusCode ngraph_group_convolution(const ngraph_node_t* input,
                                       const ngraph_node_t* filter,
                                       size_t const* strides,
@@ -568,6 +607,41 @@ IEStatusCode ngraph_variadic_split(const ngraph_node_t* input,
   auto split = std::make_shared<ngraph::op::v1::VariadicSplit>(
       input->object, axis->object, splits->object);
   CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
+}
+
+IEStatusCode ngraph_group_convolution_backprop_data(
+    const ngraph_node_t* input,
+    const ngraph_node_t* filter,
+    const ngraph_node_t* output_shape,
+    size_t const* strides,
+    uint32_t strides_count,
+    int32_t const* padding,
+    uint32_t padding_count,
+    size_t const* dilations,
+    uint32_t dilations_count,
+    ngraph_auto_pad mode,
+    int32_t const* output_padding,
+    uint32_t output_padding_count,
+    ngraph_node_t** node) {
+  ngraph::Strides strides_vector(strides, strides + strides_count);
+  ngraph::CoordinateDiff pad_begin = {padding[0], padding[2]};
+  ngraph::CoordinateDiff pad_end = {padding[1], padding[3]};
+  ngraph::Strides dilations_vector(dilations, dilations + dilations_count);
+  ngraph::CoordinateDiff output_padding_vector(
+      output_padding, output_padding + output_padding_count);
+  std::shared_ptr<ngraph::Node> conv2d;
+  TRY_IE_EXCEPTIONS
+  if (output_shape == nullptr) {
+    conv2d = std::make_shared<ngraph::op::v1::GroupConvolutionBackpropData>(
+        input->object, filter->object, strides_vector, pad_begin, pad_end,
+        dilations_vector, GetAutoPad(mode), output_padding_vector);
+  } else {
+    conv2d = std::make_shared<ngraph::op::v1::GroupConvolutionBackpropData>(
+        input->object, filter->object, output_shape->object, strides_vector,
+        pad_begin, pad_end, dilations_vector, GetAutoPad(mode),
+        output_padding_vector);
+  }
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
 
 // namespace IE = InferenceEngine;
