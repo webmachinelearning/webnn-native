@@ -39,7 +39,7 @@
 #include "webnn_native/ops/LeakyRelu.h"
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
-#include "webnn_native/ops/ReduceMean.h"
+#include "webnn_native/ops/Reduce.h"
 #include "webnn_native/ops/Resample.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Split.h"
@@ -142,9 +142,32 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
     }
 
-    OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input,
-                                              ReduceMeanOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::ReduceMean(this, input, options));
+    OperandBase* GraphBuilderBase::ReduceL2(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL2, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceL1(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL1, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceMax(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMax, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMean, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceMin(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMin, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceProduct(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceProduct, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceSum(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceSum, input, options));
     }
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {

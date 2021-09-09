@@ -185,10 +185,40 @@ ngraph_pad(const ngraph_node_t* input,
            ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_l1(const ngraph_node_t* input,
+                 const ngraph_node_t* axes,
+                 bool keep_dimensions,
+                 ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_l2(const ngraph_node_t* input,
+                 const ngraph_node_t* axes,
+                 bool keep_dimensions,
+                 ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_max(const ngraph_node_t* input,
+                  const ngraph_node_t* axes,
+                  bool keep_dimensions,
+                  ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
 ngraph_reduce_mean(const ngraph_node_t* input,
                    const ngraph_node_t* axes,
                    bool keep_dimensions,
                    ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_min(const ngraph_node_t* input,
+                  const ngraph_node_t* axes,
+                  bool keep_dimensions,
+                  ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_product(const ngraph_node_t* input,
+                      const ngraph_node_t* axes,
+                      bool keep_dimensions,
+                      ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_reduce_sum(const ngraph_node_t* input,
+                  const ngraph_node_t* axes,
+                  bool keep_dimensions,
+                  ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
 ngraph_clamp(const ngraph_node_t* input,

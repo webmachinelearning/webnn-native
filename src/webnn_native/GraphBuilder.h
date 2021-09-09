@@ -46,7 +46,13 @@ namespace webnn_native {
         OperandBase* AveragePool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
-        OperandBase* ReduceMean(OperandBase*, ReduceMeanOptions const* options);
+        OperandBase* ReduceL1(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceL2(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceMax(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceMean(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceMin(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceProduct(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceSum(OperandBase*, ReduceOptions const* options);
         OperandBase* Resample(OperandBase*, ResampleOptions const* options);
         OperandBase* Relu(OperandBase*);
         OperandBase* HardSwish(OperandBase*);

@@ -47,7 +47,13 @@ namespace node {
         Napi::Value Gemm(const Napi::CallbackInfo& info);
         Napi::Value MaxPool2d(const Napi::CallbackInfo& info);
         Napi::Value AveragePool2d(const Napi::CallbackInfo& info);
+        Napi::Value ReduceL1(const Napi::CallbackInfo& info);
+        Napi::Value ReduceL2(const Napi::CallbackInfo& info);
+        Napi::Value ReduceMax(const Napi::CallbackInfo& info);
         Napi::Value ReduceMean(const Napi::CallbackInfo& info);
+        Napi::Value ReduceMin(const Napi::CallbackInfo& info);
+        Napi::Value ReduceProduct(const Napi::CallbackInfo& info);
+        Napi::Value ReduceSum(const Napi::CallbackInfo& info);
         Napi::Value Relu(const Napi::CallbackInfo& info);
         Napi::Value Resample(const Napi::CallbackInfo& info);
         Napi::Value LeakyRelu(const Napi::CallbackInfo& info);

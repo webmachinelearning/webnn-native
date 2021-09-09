@@ -986,12 +986,12 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Graph::AddReduceMean(const op::ReduceMean* reduceMean) {
-        DAWN_ASSERT(reduceMean->Inputs().size() == 1);
-        const OperandBase* inputOperand = reduceMean->Inputs()[0].Get();
+    MaybeError Graph::AddReduce(const op::Reduce* reduce) {
+        DAWN_ASSERT(reduce->Inputs().size() == 1);
+        const OperandBase* inputOperand = reduce->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
-        const ReduceMeanOptions* options = reduceMean->GetOptions();
+        const ReduceOptions* options = reduce->GetOptions();
         std::vector<std::uint32_t> axesVector;
         size_t inputRank = input.GetOutputDesc().sizes.size();
         for (size_t i = 0; i < options->axesCount; ++i) {
@@ -1001,12 +1001,37 @@ namespace webnn_native { namespace dml {
             axesVector.push_back(axis);
         }
         ::dml::Span<const uint32_t> axes(axesVector);
-        ::dml::Expression output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_AVERAGE, axes);
+        ::dml::Expression output;
+        switch (reduce->GetType()) {
+            case op::ReduceType::kReduceL1:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_L1, axes);
+                break;
+            case op::ReduceType::kReduceL2:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_L2, axes);
+                break;
+            case op::ReduceType::kReduceMax:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_MAX, axes);
+                break;
+            case op::ReduceType::kReduceMean:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_AVERAGE, axes);
+                break;
+            case op::ReduceType::kReduceMin:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_MIN, axes);
+                break;
+            case op::ReduceType::kReduceProduct:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_MULTIPLY, axes);
+                break;
+            case op::ReduceType::kReduceSum:
+                output = ::dml::Reduce(input, DML_REDUCE_FUNCTION_SUM, axes);
+                break;
+            default:
+                return DAWN_INTERNAL_ERROR("The reduce op type isn't supported.");
+        }
         ::dml::TensorDimensions outputDims = output.GetOutputDesc().sizes;
         if (!options->keepDimensions) {
             ::dml::TensorDimensions newDims;
             for (size_t i = 0; i < outputDims.size(); ++i) {
-                // ReduceMean in DML always keep dimensions,
+                // Reduce in DML always keep dimensions,
                 // manually remove the reduced dimension whose value is 1.
                 if (!(outputDims[i] == 1 && std::find(axes.begin(), axes.end(), i) != axes.end())) {
                     newDims.push_back(outputDims[i]);
@@ -1019,7 +1044,7 @@ namespace webnn_native { namespace dml {
             output = ::dml::Reinterpret(output, newDims, ::dml::NullOpt);
         }
 
-        mExpression.insert(std::make_pair(reduceMean->PrimaryOutput(), output));
+        mExpression.insert(std::make_pair(reduce->PrimaryOutput(), output));
         return {};
     }
 

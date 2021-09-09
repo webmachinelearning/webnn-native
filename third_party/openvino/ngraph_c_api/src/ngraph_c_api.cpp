@@ -439,6 +439,36 @@ IEStatusCode ngraph_pad(const ngraph_node_t* input,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(pad, node);
 }
 
+IEStatusCode ngraph_reduce_l1(const ngraph_node_t* input,
+                              const ngraph_node_t* axes,
+                              bool keep_dimensions,
+                              ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_l1 = std::make_shared<ngraph::op::v4::ReduceL1>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_l1, node);
+}
+
+IEStatusCode ngraph_reduce_l2(const ngraph_node_t* input,
+                              const ngraph_node_t* axes,
+                              bool keep_dimensions,
+                              ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_l2 = std::make_shared<ngraph::op::v4::ReduceL2>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_l2, node);
+}
+
+IEStatusCode ngraph_reduce_max(const ngraph_node_t* input,
+                               const ngraph_node_t* axes,
+                               bool keep_dimensions,
+                               ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_max = std::make_shared<ngraph::op::v1::ReduceMax>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_max, node);
+}
+
 IEStatusCode ngraph_reduce_mean(const ngraph_node_t* input,
                                 const ngraph_node_t* axes,
                                 bool keep_dimensions,
@@ -447,6 +477,36 @@ IEStatusCode ngraph_reduce_mean(const ngraph_node_t* input,
   auto reduce_mean = std::make_shared<ngraph::op::v1::ReduceMean>(
       input->object, axes->object, keep_dimensions);
   CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_mean, node);
+}
+
+IEStatusCode ngraph_reduce_min(const ngraph_node_t* input,
+                               const ngraph_node_t* axes,
+                               bool keep_dimensions,
+                               ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_min = std::make_shared<ngraph::op::v1::ReduceMin>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_min, node);
+}
+
+IEStatusCode ngraph_reduce_product(const ngraph_node_t* input,
+                                   const ngraph_node_t* axes,
+                                   bool keep_dimensions,
+                                   ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_product = std::make_shared<ngraph::op::v1::ReduceProd>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_product, node);
+}
+
+IEStatusCode ngraph_reduce_sum(const ngraph_node_t* input,
+                               const ngraph_node_t* axes,
+                               bool keep_dimensions,
+                               ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto reduce_sum = std::make_shared<ngraph::op::v1::ReduceSum>(
+      input->object, axes->object, keep_dimensions);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(reduce_sum, node);
 }
 
 IEStatusCode ngraph_clamp(const ngraph_node_t* input,

@@ -754,17 +754,43 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Graph::AddReduceMean(const op::ReduceMean* reduceMean) {
-        auto options = reduceMean->GetOptions();
+    MaybeError Graph::AddReduce(const op::Reduce* reduce) {
+        auto options = reduce->GetOptions();
         std::vector<int64_t> axes(options->axes, options->axes + options->axesCount);
-        auto input = mGraphNodeMap[reduceMean->Inputs()[0].Get()];
+        auto input = mGraphNodeMap[reduce->Inputs()[0].Get()];
         const ngraph_node_t* axesNode =
             AddConstantWithGraph<int64_t>(precision_e::I64, {axes.size()}, axes);
-        ngraph_node_t* reduceMeanNode;
-        IEStatusCode status =
-            ngraph_reduce_mean(input, axesNode, options->keepDimensions, &reduceMeanNode);
-        DAWN_TRY(CheckStatusCode(status, "ngraph reduce mean"));
-        mGraphNodeMap[reduceMean->PrimaryOutput()] = reduceMeanNode;
+        ngraph_node_t* ReduceNode = nullptr;
+        IEStatusCode status = IEStatusCode::OK;
+        switch (reduce->GetType()) {
+            case op::ReduceType::kReduceL1:
+                status = ngraph_reduce_l1(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceL2:
+                status = ngraph_reduce_l2(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceMax:
+                status = ngraph_reduce_max(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceMean:
+                status = ngraph_reduce_mean(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceMin:
+                status = ngraph_reduce_min(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceProduct:
+                status =
+                    ngraph_reduce_product(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            case op::ReduceType::kReduceSum:
+                status = ngraph_reduce_sum(input, axesNode, options->keepDimensions, &ReduceNode);
+                break;
+            default:
+                WEBNN_ASSERT(0, "The reduce op type isn't supported.");
+                break;
+        }
+        DAWN_TRY(CheckStatusCode(status, "ngraph reduce"));
+        mGraphNodeMap[reduce->PrimaryOutput()] = ReduceNode;
         return {};
     }
 

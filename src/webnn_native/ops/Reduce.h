@@ -12,35 +12,54 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_OPS_REDUCEMEAN_H_
-#define WEBNN_NATIVE_OPS_REDUCEMEAN_H_
+#ifndef WEBNN_NATIVE_OPS_REDUCE_H_
+#define WEBNN_NATIVE_OPS_REDUCE_H_
 
+#include "common/Log.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
-#include "webnn_native/ops/Constant.h"
+#include "webnn_native/Operator.h"
 
 namespace webnn_native { namespace op {
 
-    class ReduceMean final : public OperatorBase {
+    enum ReduceType {
+        kReduceL1 = 0,
+        kReduceL2,
+        kReduceMax,
+        kReduceMean,
+        kReduceMin,
+        kReduceProduct,
+        kReduceSum,
+    };
+
+    class Reduce : public OperatorBase {
       public:
-        ReduceMean(GraphBuilderBase* builder, OperandBase* input, ReduceMeanOptions const* options);
-        ~ReduceMean() override = default;
+        Reduce(GraphBuilderBase* builder,
+               ReduceType opType,
+               OperandBase* input,
+               ReduceOptions const* options);
+
+        ~Reduce() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
-            return graph->AddReduceMean(this);
+            return graph->AddReduce(this);
         }
-
         MaybeError Validate() override;
 
-        ReduceMeanOptions const* GetOptions() const {
+        ReduceType GetType() const {
+            return mOpType;
+        }
+
+        ReduceOptions const* GetOptions() const {
             return &mOptions;
         }
 
       private:
-        ReduceMeanOptions mOptions;
+        ReduceType mOpType;
+        ReduceOptions mOptions;
         std::vector<int32_t> mAxes;
     };
 
 }}  // namespace webnn_native::op
 
-#endif  // WEBNN_NATIVE_OPS_REDUCEMEAN_H_
+#endif  // WEBNN_NATIVE_OPS_REDUCE_H_
