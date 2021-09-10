@@ -69,10 +69,12 @@ HRESULT Device::Init()
     // Create DML resources
     //
 
+    // DMLCreateDevice1 is supported since DML 1.1.0 and dml_resource_version specified by download_dml.py must exceed this version.
+    // TODO: Consider relaxing DML_FEATURE_LEVEL_3_0 requirement to support more hardware.
     if (    !m_useDebugLayer 
-        ||  FAILED(DMLCreateDevice(m_d3d12Device.Get(), DML_CREATE_DEVICE_FLAG_DEBUG, IID_PPV_ARGS(&m_dmlDevice))))
+        ||  FAILED(DMLCreateDevice1(m_d3d12Device.Get(), DML_CREATE_DEVICE_FLAG_DEBUG, DML_FEATURE_LEVEL_3_0, IID_PPV_ARGS(&m_dmlDevice))))
     {
-        ReturnIfFailed(DMLCreateDevice(m_d3d12Device.Get(), DML_CREATE_DEVICE_FLAG_NONE, IID_PPV_ARGS(&m_dmlDevice)));
+        ReturnIfFailed(DMLCreateDevice1(m_d3d12Device.Get(), DML_CREATE_DEVICE_FLAG_NONE, DML_FEATURE_LEVEL_3_0, IID_PPV_ARGS(&m_dmlDevice)));
     }
 
     ReturnIfFailed(m_dmlDevice->CreateCommandRecorder(IID_PPV_ARGS(&m_commandRecorder)));
