@@ -25,6 +25,9 @@ namespace node { namespace op {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
+        std::vector<int32_t> outputPadding;
+        std::vector<int32_t> outputSizes;
+        bool transpose = false;
         int32_t groups = 1;
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
@@ -45,6 +48,15 @@ namespace node { namespace op {
                 mOptions.dilationsCount = dilations.size();
                 mOptions.dilations = dilations.data();
             }
+            if (!outputPadding.empty()) {
+                mOptions.outputPaddingCount = outputPadding.size();
+                mOptions.outputPadding = outputPadding.data();
+            }
+            if (!outputSizes.empty()) {
+                mOptions.outputSizesCount = outputSizes.size();
+                mOptions.outputSizes = outputSizes.data();
+            }
+            mOptions.transpose = transpose;
             mOptions.groups = groups;
             mOptions.autoPad = autoPad;
             mOptions.inputLayout = inputLayout;
@@ -73,7 +85,10 @@ namespace node { namespace op {
         //   sequence<long> padding;
         //   sequence<long> strides;
         //   sequence<long> dilations;
+        //   std::vector<int32_t> outputPadding;
+        //   std::vector<int32_t> outputSizes;
         //   AutoPad autoPad = "explicit";
+        //   bool transpose = false;
         //   long groups = 1;
         //   InputOperandLayout inputLayout = "nchw";
         //   FilterOperandLayout filterLayout = "oihw";
@@ -96,13 +111,22 @@ namespace node { namespace op {
                 WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("dilations"), options.dilations, 2),
                                   "The dilations parameter is invalid.");
             }
+            if (HasOptionMember(jsOptions, "outputPadding")) {
+                WEBNN_NODE_ASSERT(
+                    GetArray(jsOptions.Get("outputPadding"), options.outputPadding, 2),
+                    "The outputPadding parameter is invalid.");
+            }
+            if (HasOptionMember(jsOptions, "outputSizes")) {
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("outputSizes"), options.outputSizes, 2),
+                                  "The outputSizes parameter is invalid.");
+            }
             if (HasOptionMember(jsOptions, "autoPad")) {
                 WEBNN_NODE_ASSERT(GetAutopad(jsOptions.Get("autoPad"), options.autoPad),
                                   "The autoPad parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "transpose")) {
-                WEBNN_NODE_THROW_AND_RETURN(
-                    "The transpose parameter isn't supported in webNN-native.");
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("transpose"), options.transpose),
+                                  "The transpose parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "groups")) {
                 WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("groups"), options.groups),
@@ -128,7 +152,6 @@ namespace node { namespace op {
                     "The activation parameter is invalid.");
             }
         }
-
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
         operand->SetImpl(builder.Conv2d(input, filter, options.AsPtr()));
