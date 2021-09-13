@@ -13,9 +13,15 @@ npm install
 npm start
 ```
 
-You can also run multiple times with "numRuns" to get the median inference time, for example:
+### Run with parameters
+
+- `numRuns`: typeof `number`, used for runing inference multiple times to get the median inference time, e.g.:
 ```bash
 npm start numRuns=100
+```
+- `device`: one of `["default", "gpu", "cpu"]`, used for setting preferred kind of device used, e.g.:
+```bash
+npm start device=gpu
 ```
 
 ### Package

@@ -18,14 +18,26 @@ function createWindow() {
     }
   })
 
-  // Load the index.html with 'numRuns' to run inference multiple times.
+
   let url = `file://${__dirname}/image_classification/index.html`
+  let params = {numRuns: "", device: ""}
+  let urlPrex = ""
   for (let argv of process.argv) {
-    if (argv.startsWith("numRuns")) {
-      url += '?' + argv
-      break
+    if (argv.startsWith("numRuns=")) {
+      // Load the index.html with 'numRuns' to run inference multiple times.
+      params.numRuns = argv
+    }
+    if (argv.startsWith("device=")) {
+      // Load the index.html with 'device' to set preferred kind of device used.
+      params.device = argv
     }
   }
+  for (let param in params) {
+    if (params[param])
+      urlPrex = urlPrex ? `${urlPrex}&${params[param]}` : `?${params[param]}`
+  }
+  url += urlPrex
+
   mainWindow.loadURL(url)
 
   // Emitted when the window is closed.
