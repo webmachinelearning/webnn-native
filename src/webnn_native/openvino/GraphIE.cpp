@@ -67,35 +67,6 @@ namespace webnn_native { namespace ie {
             return {};
         }
 
-        MaybeError GetConstantData(std::unordered_set<const OperandBase*>& constantSet,
-                                   Ref<OperandBase>& constant,
-                                   std::vector<float>& data,
-                                   std::vector<size_t>& dimensions) {
-            if (constantSet.find(constant.Get()) == constantSet.end()) {
-                return DAWN_INTERNAL_ERROR("The input is not a constant");
-            }
-
-            const op::Constant* minConstant =
-                reinterpret_cast<const op::Constant*>(constant->Operator());
-            const float* value = static_cast<const float*>(minConstant->GetBuffer());
-            const int32_t* dims = minConstant->GetOperandDescriptor()->dimensions;
-            uint32_t dimensionsCount = minConstant->GetOperandDescriptor()->dimensionsCount;
-            if (dimensionsCount == 0) {
-                data.push_back(*value);
-                return {};
-            }
-            size_t size = 1;
-            for (size_t i = 0; i < dimensionsCount; ++i) {
-                if (dims[i] < 0) {
-                    return DAWN_INTERNAL_ERROR("OpenVINO can't support the type.");
-                }
-                dimensions.push_back(dims[i]);
-                size *= dims[i];
-            }
-            data.assign(value, value + size);
-            return {};
-        }
-
         template <typename TYPE>
         ngraph_node_t* AddConstantWithGraph(precision_e type,
                                             std::vector<size_t> shape,
@@ -134,12 +105,13 @@ namespace webnn_native { namespace ie {
                 return status;
             }
             switch (activation->GetFusedOperator()) {
-                // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
-                // case OperatorType::Clamp, we added a clamp node in GraphBuilder
-                // directly to ensure that we can find the min and max operands from the graph.
-                case FusedOperator::Clamp:
-                    *activationNode = const_cast<ngraph_node_t*>(inputNode);
+                // Currently we implement Relu6 operator by Clamp.
+                case FusedOperator::Clamp: {
+                    auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+                    status = ngraph_clamp(inputNode, clamp->GetMinValue(), clamp->GetMaxValue(),
+                                          activationNode);
                     break;
+                }
                 case FusedOperator::Relu:
                     status = ngraph_relu(inputNode, activationNode);
                     break;
@@ -495,51 +467,11 @@ namespace webnn_native { namespace ie {
 
     MaybeError Graph::AddClamp(const op::Clamp* clamp) {
         auto inputs = clamp->Inputs();
-        auto options = clamp->GetOptions();
-        std::vector<float> minValue;
-        std::vector<size_t> minDimensions;
-        if (options->minValue != nullptr) {
-            DAWN_TRY(GetConstantData(mConstantSet, inputs[1], minValue, minDimensions));
-        } else {
-            minValue.push_back(std::numeric_limits<float>::lowest());
-        }
-        std::vector<float> maxValue;
-        std::vector<size_t> maxDimensions;
-        if (options->maxValue != nullptr) {
-            size_t maxIndex = options->minValue != nullptr ? 2 : 1;
-            DAWN_TRY(GetConstantData(mConstantSet, inputs[maxIndex], maxValue, maxDimensions));
-        } else {
-            maxValue.push_back(std::numeric_limits<float>::max());
-        }
-        // If minValue and maxValue are both scalars with shape {1} or shape {}, use
-        // native Clamp to create graph. Otherwise, due to the limitation of Clamp's
-        // attributes type, use Maximum and Minimum to implement Clamp as a
-        // emulation. Note that this emulation may cause performance decline in
-        // OpenVINO.
         ngraph_node_t* clampNode;
         IEStatusCode status;
         auto inputNode = mGraphNodeMap[inputs[0].Get()];
-        if ((minDimensions.empty() && maxDimensions.empty()) ||
-            (minDimensions.size() * maxDimensions.size() == 1 &&
-             minDimensions[0] * maxDimensions[0] == 1)) {
-            status = ngraph_clamp(inputNode, minValue[0], maxValue[0], &clampNode);
-            DAWN_TRY(CheckStatusCode(status, "ngraph clamp"));
-        } else {
-            ngraph_node_t* maxNode = const_cast<ngraph_node_t*>(inputNode);
-            if (!minValue.empty()) {
-                const ngraph_node_t* minConstant =
-                    AddConstantWithGraph<float>(precision_e::FP32, minDimensions, minValue);
-                status = ngraph_max(inputNode, minConstant, &maxNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph max"));
-            }
-            clampNode = maxNode;
-            if (!maxValue.empty()) {
-                const ngraph_node_t* maxConstant =
-                    AddConstantWithGraph<float>(precision_e::FP32, maxDimensions, maxValue);
-                status = ngraph_min(maxNode, maxConstant, &clampNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph min"));
-            }
-        }
+        status = ngraph_clamp(inputNode, clamp->GetMinValue(), clamp->GetMaxValue(), &clampNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph clamp"));
         mGraphNodeMap[clamp->PrimaryOutput()] = clampNode;
         return {};
     }

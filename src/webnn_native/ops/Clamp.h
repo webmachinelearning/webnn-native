@@ -24,35 +24,28 @@ namespace webnn_native { namespace op {
     class ClampBase {
       public:
         ClampBase(ClampOptions const* options) {
-            if (options != nullptr) {
-                mOptions = *options;
-            } else {
-                mOptions.minValue = nullptr;
-                mOptions.maxValue = nullptr;
-            }
+            mMinValue =
+                options == nullptr ? std::numeric_limits<float>::lowest() : options->minValue;
+            mMaxValue = options == nullptr ? std::numeric_limits<float>::max() : options->maxValue;
         }
         ~ClampBase() = default;
 
-        ClampOptions const* GetOptions() const {
-            return &mOptions;
+        float GetMinValue() const {
+            return mMinValue;
+        }
+        float GetMaxValue() const {
+            return mMaxValue;
         }
 
       private:
-        ClampOptions mOptions;
+        float mMinValue;
+        float mMaxValue;
     };
 
     class Clamp final : public ClampBase, public OperatorBase {
       public:
         Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, {input}) {
-            if (options != nullptr) {
-                if (options->minValue != nullptr) {
-                    mInputs.push_back(options->minValue);
-                }
-                if (options->maxValue != nullptr) {
-                    mInputs.push_back(options->maxValue);
-                }
-            }
         }
         Clamp(GraphBuilderBase* builder, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, FusedOperator::Clamp) {

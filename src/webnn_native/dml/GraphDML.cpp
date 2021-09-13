@@ -496,25 +496,16 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    ::dml::FusedActivation Graph::FuseOperator(OperatorBase* activation, ::dml::Expression& input) {
+    ::dml::FusedActivation CreateFusedActivation(OperatorBase* activation) {
         ::dml::FusedActivation dmlActivation = ::dml::FusedActivation::None();
         if (activation == nullptr) {
             return dmlActivation;
         }
 
         switch (activation->GetFusedOperator()) {
-            case FusedOperator::HardSwish: {
-                auto output = HardSwish(input);
-                DAWN_ASSERT(input.GetOutputDesc().sizes == output.GetOutputDesc().sizes);
-                input = output;
-                break;
-            }
-            // Workaround(mingming): Currently we implement Relu6 operator by clamp. While
-            // Clamp operator is not supported for fusion, and to ensure that we can find
-            // the min and max operands from the graph, we have added a clamp node in
-            // GraphBuilder directly.
             case FusedOperator::Clamp:
-                break;
+            case FusedOperator::HardSwish:
+                return dmlActivation;
             case FusedOperator::Relu:
                 dmlActivation = ::dml::FusedActivation::Relu();
                 break;
@@ -527,9 +518,25 @@ namespace webnn_native { namespace dml {
                 break;
             default:
                 DAWN_ASSERT(0);
-                break;
         }
         return dmlActivation;
+    }
+
+    ::dml::Expression Graph::EmulateFusedActivation(OperatorBase* activation,
+                                                    ::dml::Expression& input) {
+        if (activation == nullptr) {
+            return input;
+        }
+        // HardSwish and Clamp are not supported for fusion, so we add them directly to emulate.
+        // Currently we implement Relu6 operator by Clamp.
+        auto type = activation->GetFusedOperator();
+        if (type == FusedOperator::HardSwish) {
+            return HardSwish(input);
+        } else if (type == FusedOperator::Clamp) {
+            auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+            return ::dml::Clip(input, clamp->GetMinValue(), clamp->GetMaxValue());
+        }
+        return input;
     }
 
     MaybeError Graph::AddInput(const op::Input* input) {
@@ -608,10 +615,11 @@ namespace webnn_native { namespace dml {
         }
         ::dml::Expression output = ::dml::BatchNormalization(
             input, expressions[0], expressions[1], expressions[2], expressions[3], true,
-            options->epsilon, FuseOperator(options->activation, input));
+            options->epsilon, CreateFusedActivation(options->activation));
         if (options->axis == 3) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
+        output = EmulateFusedActivation(options->activation, output);
         mExpression.insert(std::make_pair(batchNorm->PrimaryOutput(), output));
         return {};
     }
@@ -783,10 +791,11 @@ namespace webnn_native { namespace dml {
             // outPadding
             {},
             // groupCount
-            options->groups, FuseOperator(options->activation, input));
+            options->groups, CreateFusedActivation(options->activation));
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
+        output = EmulateFusedActivation(options->activation, output);
         mExpression.insert(std::make_pair(conv2d->PrimaryOutput(), output));
         return {};
     }
@@ -912,76 +921,13 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddClamp(const op::Clamp* clamp) {
         auto inputsOperand = clamp->Inputs();
-        DAWN_ASSERT(inputsOperand.size() == 1 || inputsOperand.size() == 2 ||
-                    inputsOperand.size() == 3);
+        DAWN_ASSERT(inputsOperand.size() == 1);
         ::dml::Expression input = mExpression.at(inputsOperand[0].Get());
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
         if (inputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX1) {
             return DAWN_INTERNAL_ERROR("The size of input dimensions is greater than max");
         }
-
-        const ClampOptions* options = clamp->GetOptions();
-        ::dml::Expression temp;
-        // compare input with minValue
-        if (options->minValue != nullptr) {
-            DAWN_ASSERT(mExpression.find(inputsOperand[1].Get()) != mExpression.end());
-            ::dml::Expression min = mExpression.at(inputsOperand[1].Get());
-            ::dml::TensorDimensions minDims = min.GetOutputDesc().sizes;
-            if (minDims < inputDims) {
-                ::dml::TensorDimensions inputNewDims, minNewDims;
-                ::dml::TensorDimensions inputNewStrides, minNewStrides;
-                bool inputDimsChanged = false, minDimsChanged = false;
-                size_t broadcastSkipAxis = 0;
-                if (!BroadcastDimensions(inputDims, minDims, inputDimsChanged, inputNewDims,
-                                         inputNewStrides, minDimsChanged, minNewDims, minNewStrides,
-                                         broadcastSkipAxis)) {
-                    return DAWN_INTERNAL_ERROR("Failed to broadcast input and min.");
-                }
-                if (minDimsChanged) {
-                    min = ::dml::Reinterpret(min, minNewDims, minNewStrides);
-                }
-            } else if (minDims > inputDims) {
-                return DAWN_INTERNAL_ERROR(
-                    "the minValue dimensions size is greater than input dimension size.");
-            }
-            temp = ::dml::Max(input, min);
-        } else {
-            temp = input;
-        }
-
-        // Compare input with max value.
-        ::dml::Expression output;
-        if (options->maxValue != nullptr) {
-            auto index = options->minValue == nullptr ? 1 : 2;
-            DAWN_ASSERT(mExpression.find(inputsOperand[index].Get()) != mExpression.end());
-            ::dml::Expression max = mExpression.at(inputsOperand[index].Get());
-            ::dml::TensorDimensions maxDims = max.GetOutputDesc().sizes;
-            ::dml::TensorDimensions tempDims = temp.GetOutputDesc().sizes;
-            if (maxDims < tempDims) {
-                ::dml::TensorDimensions tempNewDims, maxNewDims;
-                ::dml::TensorDimensions tempNewStrides, maxNewStrides;
-                bool tempDimsChanged = false, maxDimsChanged = false;
-                size_t broadcastSkipAxis = 0;
-                if (!BroadcastDimensions(tempDims, maxDims, tempDimsChanged, tempNewDims,
-                                         tempNewStrides, maxDimsChanged, maxNewDims, maxNewStrides,
-                                         broadcastSkipAxis)) {
-                    return DAWN_INTERNAL_ERROR("Failed to broadcast input and max.");
-                }
-                if (maxDimsChanged) {
-                    max = ::dml::Reinterpret(max, maxNewDims, maxNewStrides);
-                }
-            } else if (maxDims > tempDims) {
-                return DAWN_INTERNAL_ERROR(
-                    "the maxValue dimensions size is greater than input dimension size.");
-            }
-            output = ::dml::Min(temp, max);
-        } else {
-            output = temp;
-        }
-
-        if (options->minValue == nullptr && options->maxValue == nullptr) {
-            output = ::dml::Identity(output);
-        }
+        auto output = ::dml::Clip(input, clamp->GetMinValue(), clamp->GetMaxValue());
         mExpression.insert(std::make_pair(clamp->PrimaryOutput(), output));
         return {};
     }

@@ -114,23 +114,6 @@ namespace webnn_native {
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
-        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
-        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
-        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
-        // that we can find the min and max operands from the graph. We need to refactor codes once
-        // a backend requires fusing clamp.
-        if (options != nullptr && options->activation != nullptr) {
-            auto operatorType = options->activation->GetFusedOperator();
-            if (operatorType == FusedOperator::Clamp) {
-                Ref<OperatorBase> conv2d = AcquireRef(new op::Conv2d(this, input, filter, options));
-                if (GetContext()->ConsumedError(conv2d->Validate())) {
-                    return OperandBase::MakeError(this);
-                }
-                auto clamp = reinterpret_cast<op::Clamp*>(options->activation);
-                VALIDATE_FOR_OPERAND(
-                    new op::Clamp(this, conv2d->PrimaryOutput(), clamp->GetOptions()));
-            }
-        }
         VALIDATE_FOR_OPERAND(new op::Conv2d(this, input, filter, options));
     }
 
@@ -266,25 +249,6 @@ namespace webnn_native {
                                              OperandBase* mean,
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
-        // Workaround(mingming): Currently we implement Relu6 operator by clamp. For
-        // case OperatorType::Clamp, OpenVINO can fuse clamp by its graph compiler and DML doesn't
-        // support fuse clamp today. So We added a clamp node in GraphBuilder directly to ensure
-        // that we can find the min and max operands from the graph. We need to refactor codes once
-        // a backend requires fusing clamp.
-        if (options != nullptr && options->activation != nullptr) {
-            auto operatorType = options->activation->GetFusedOperator();
-            if (operatorType == FusedOperator::Clamp) {
-                Ref<OperatorBase> batchNorm =
-                    AcquireRef(new op::BatchNorm(this, input, mean, variance, options));
-                if (GetContext()->ConsumedError(batchNorm->Validate())) {
-                    return OperandBase::MakeError(this);
-                }
-                auto clamp = reinterpret_cast<op::Clamp*>(options->activation);
-                auto clampOptions = clamp->GetOptions();
-                VALIDATE_FOR_OPERAND(new op::Clamp(this, batchNorm->PrimaryOutput(), clampOptions));
-            }
-        }
-
         VALIDATE_FOR_OPERAND(new op::BatchNorm(this, input, mean, variance, options));
     }
 

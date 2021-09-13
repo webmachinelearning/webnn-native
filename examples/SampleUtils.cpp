@@ -80,20 +80,6 @@ namespace utils {
         return prod;
     }
 
-    // Create the ClampOptions by two constants.
-    ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
-                                        const std::vector<int32_t>& minShape,
-                                        const std::vector<float>& minValue,
-                                        const std::vector<int32_t>& maxShape,
-                                        const std::vector<float>& maxValue) {
-        ml::ClampOptions clampOptions;
-        clampOptions.minValue = utils::BuildConstant(builder, minShape, minValue.data(),
-                                                     minValue.size() * sizeof(float));
-        clampOptions.maxValue = utils::BuildConstant(builder, maxShape, maxValue.data(),
-                                                     maxValue.size() * sizeof(float));
-        return clampOptions;
-    }
-
     const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
                                                 FusedActivation activation,
                                                 const void* options) {

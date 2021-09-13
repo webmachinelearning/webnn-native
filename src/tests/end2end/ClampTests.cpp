@@ -19,20 +19,10 @@ class ClampTests : public WebnnTest {
     void TestClamp(const std::vector<int32_t>& inputShape,
                    const std::vector<float>& inputData,
                    const std::vector<float>& expectedValue,
-                   const std::vector<float>& minValue = {},
-                   const std::vector<float>& maxValue = {}) {
+                   const ml::ClampOptions* options = nullptr) {
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
         const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        ml::ClampOptions options;
-        if (!minValue.empty()) {
-            options.minValue =
-                utils::BuildConstant(builder, {}, minValue.data(), minValue.size() * sizeof(float));
-        }
-        if (!maxValue.empty()) {
-            options.maxValue =
-                utils::BuildConstant(builder, {}, maxValue.data(), maxValue.size() * sizeof(float));
-        }
-        const ml::Operand b = builder.Clamp(a, &options);
+        const ml::Operand b = builder.Clamp(a, options);
         const ml::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(inputShape));
@@ -42,10 +32,13 @@ class ClampTests : public WebnnTest {
 };
 
 TEST_F(ClampTests, Clamp) {
-    TestClamp({3}, {-2, 0, 2}, {-1, 0, 1}, {-1}, {1});
-    TestClamp({3}, {-1, 0, 1}, {-1, 0, 1}, {-5}, {5});
-    TestClamp({3}, {-6, 0, 6}, {-5, 0, 5}, {-5}, {5});
-    TestClamp({3}, {-1, 0, 6}, {-1, 0, 5}, {-5}, {5});
+    ml::ClampOptions options = {-5, 5};
+    TestClamp({3}, {-1, 0, 1}, {-1, 0, 1}, &options);
+    TestClamp({3}, {-6, 0, 6}, {-5, 0, 5}, &options);
+    TestClamp({3}, {-1, 0, 6}, {-1, 0, 5}, &options);
+
+    options = {-1, 1};
+    TestClamp({3}, {-2, 0, 2}, {-1, 0, 1}, &options);
     TestClamp(
         {3, 4, 5},
         {0.58585083,  1.1363881,   0.67161655, -0.9741674,  -1.6196846,  0.572627,   1.9026182,
@@ -66,11 +59,13 @@ TEST_F(ClampTests, Clamp) {
          -0.18669093, -1.,         1.,         -0.01876706, 1.,          0.59794647, 1.,
          -0.21977298, 0.90072393,  0.8913641,  -0.55512637, -0.17248231, -1.,        -1.,
          0.1265688,   0.7930071,   0.63802403, 0.3400246},
-        {-1}, {1});
+        &options);
 }
 
 TEST_F(ClampTests, ClampWithDefaults) {
     TestClamp({3}, {-1, 0, 1}, {-1, 0, 1});
+    ml::ClampOptions options;
+    options.minValue = 0;
     TestClamp(
         {3, 4, 5},
         {0.86301714, -0.5896978,  -0.27253276, 0.7375215,   0.43311873,  -0.21018882, 1.3207943,
@@ -91,7 +86,10 @@ TEST_F(ClampTests, ClampWithDefaults) {
          0.,         0.,         0.6006052,  0.,        0.17437305, 0.,         0.,
          0.,         0.,         0.9219348,  0.,        0.,         0.,         0.45028883,
          0.,         1.2341441,  1.4498476,  0.},
-        {0}, {});
+        &options);
+
+    options = {};
+    options.maxValue = 0;
     TestClamp(
         {3, 4, 5},
         {-0.24508175, -0.7786755,  -1.6853821,  0.30301106,  0.7335949,   2.0118642,   -0.8974095,
@@ -115,5 +113,5 @@ TEST_F(ClampTests, ClampWithDefaults) {
             -0.12858754, 0.,          0.,          -2.1573563,  0.,         0.,
             -0.7802799,  0.,          -0.2568697,  0.,          0.,         -0.72000146,
         },
-        {}, {0});
+        &options);
 }

@@ -216,8 +216,8 @@
   "clamp options": {
     "category": "structure",
     "members": [
-      {"name": "min value", "type": "operand", "optional": true},
-      {"name": "max value", "type": "operand", "optional": true}
+      {"name": "min value", "type": "float", "default": "std::numeric_limits<float>::lowest()"},
+      {"name": "max value", "type": "float", "default": "std::numeric_limits<float>::max()"}
     ]
   },
   "conv2d options": {

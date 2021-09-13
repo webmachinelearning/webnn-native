@@ -39,8 +39,8 @@ namespace node { namespace op {
         }
 
         // dictionary ClampOptions {
-        //   Operand minValue;
-        //   Operand maxValue;
+        //   float minValue = std::numeric_limits<float>::lowest();
+        //   float maxValue = std::numeric_limits<float>::max();
         // };
         ml::ClampOptions options;
         size_t argumentsCount = isFusedOperator ? 1 : 2;
@@ -49,11 +49,11 @@ namespace node { namespace op {
                               "The options must be an object.");
             Napi::Object jsOptions = info[argumentsCount - 1].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "minValue")) {
-                WEBNN_NODE_ASSERT(GetOperand(jsOptions.Get("minValue"), options.minValue, args),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("minValue"), options.minValue),
                                   "The minValue parameter is invalid.");
             }
             if (HasOptionMember(jsOptions, "maxValue")) {
-                WEBNN_NODE_ASSERT(GetOperand(jsOptions.Get("maxValue"), options.maxValue, args),
+                WEBNN_NODE_ASSERT(GetValue(jsOptions.Get("maxValue"), options.maxValue),
                                   "The maxValue parameter is invalid.");
             }
         }
