@@ -228,6 +228,13 @@
       {"value": 2, "name": "both"}
     ]
   },
+  "gru operators": {
+    "category": "structure",
+    "members": [
+      {"name": "reset gate activation", "type": "operator", "optional": true},
+      {"name": "new gate activation", "type": "operator", "optional": true}
+    ]
+  },
   "clamp options": {
     "category": "structure",
     "members": [
@@ -267,13 +274,14 @@
   "gru options": {
     "category": "structure",
     "members": [
-      {"name": "bias", "type": "operand"},
-      {"name": "recurrent bias", "type": "operand"},
-      {"name": "initial hidden state", "type": "operand"},
+      {"name": "bias", "type": "operand", "optional": true},
+      {"name": "recurrent bias", "type": "operand", "optional": true},
+      {"name": "initial hidden state", "type": "operand", "optional": true},
       {"name": "reset after", "type": "bool", "default": "true"},
       {"name": "return sequence", "type": "bool", "default": "false"},
       {"name": "direction", "type": "recurrent network direction", "default": "forward"},
-      {"name": "layout", "type": "recurrent network weight layout", "default": "zrn"}
+      {"name": "layout", "type": "recurrent network weight layout", "default": "zrn"},
+      {"name": "activations", "type": "gru operators", "optional": true}
     ]
   },
   "pad options": {
@@ -674,6 +682,10 @@
         "args": [
           {"name": "input", "type": "operand"}
         ]
+      },
+      {
+        "name": "tanh operator",
+        "returns": "operator"
       },
       {
         "name": "transpose",

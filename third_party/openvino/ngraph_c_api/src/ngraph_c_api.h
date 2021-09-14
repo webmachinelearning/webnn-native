@@ -344,6 +344,7 @@ ngraph_gru_sequence(const ngraph_node_t* input,
                     const ngraph_node_t* bias,
                     const size_t hidden_size,
                     ngraph_recurrent_sequence_direction direction,
+                    const char* activations[2],
                     const bool linear_before_reset,
                     ngraph_node_t** node);
 

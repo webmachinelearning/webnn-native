@@ -60,7 +60,7 @@ namespace utils {
 
     uint32_t SizeOfShape(const std::vector<int32_t>& dims);
 
-    enum FusedActivation { NONE, RELU, RELU6, SIGMOID, LEAKYRELU };
+    enum FusedActivation { NONE, RELU, RELU6, SIGMOID, LEAKYRELU, TANH };
 
     ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
                                         const std::vector<int32_t>& minShape,

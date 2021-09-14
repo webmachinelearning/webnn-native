@@ -40,12 +40,10 @@ namespace webnn_native { namespace op {
             }
             if (options->initialHiddenState != nullptr) {
                 mInputs.push_back(options->initialHiddenState);
-            } else {
-                mOptions.bias = nullptr;
-                mOptions.recurrentBias = nullptr;
-                mOptions.initialHiddenState = nullptr;
             }
         }
+        mRestActivation = Ref<OperatorBase>(mOptions.activations.resetGateActivation);
+        mNewActivation = Ref<OperatorBase>(mOptions.activations.newGateActivation);
     }
 
     MaybeError Gru::Validate() {
@@ -64,6 +62,33 @@ namespace webnn_native { namespace op {
         // The recurrentWeight 3-D tensor
         if (mInputs[2]->Rank() != 3) {
             return DAWN_VALIDATION_ERROR("Argument recurrentWeight is not a 3D tensor.");
+        }
+        // The steps parameter
+        if (GetSteps() <= 0) {
+            return DAWN_VALIDATION_ERROR("Argument steps value must be greater than 0.");
+        }
+        // The hiddenSize parameter
+        if (GetHiddenSize() <= 0) {
+            return DAWN_VALIDATION_ERROR("Argument hiddenSize value must be a positive integer.");
+        }
+        int n = 3;
+        // The bias 2-D tensor
+        if (mOptions.bias != nullptr) {
+            if (mInputs[n++]->Rank() != 2) {
+                return DAWN_VALIDATION_ERROR("Argument bias is not a 2D tensor.");
+            }
+        }
+        // The recurrentBias 2-D tensor
+        if (mOptions.recurrentBias != nullptr) {
+            if (mInputs[n++]->Rank() != 2) {
+                return DAWN_VALIDATION_ERROR("Argument recurrentBias is not a 2D tensor.");
+            }
+        }
+        // The initialHiddenState 3-D tensor
+        if (mOptions.initialHiddenState != nullptr) {
+            if (mInputs[n++]->Rank() != 3) {
+                return DAWN_VALIDATION_ERROR("Argument initialHiddenState is not a 3D tensor.");
+            }
         }
 
         return {};

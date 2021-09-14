@@ -96,6 +96,9 @@ namespace utils {
             case FusedActivation::SIGMOID:
                 activationOperator = builder.SigmoidOperator();
                 break;
+            case FusedActivation::TANH:
+                activationOperator = builder.TanhOperator();
+                break;
             case FusedActivation::LEAKYRELU: {
                 auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);
                 activationOperator = builder.LeakyReluOperator(leakyReluOptions);
@@ -124,6 +127,9 @@ namespace utils {
             }
             case FusedActivation::SIGMOID:
                 activationOperand = builder.Sigmoid(input);
+                break;
+            case FusedActivation::TANH:
+                activationOperand = builder.Tanh(input);
                 break;
             case FusedActivation::LEAKYRELU: {
                 auto leakyReluOptions = reinterpret_cast<ml::LeakyReluOptions const*>(options);

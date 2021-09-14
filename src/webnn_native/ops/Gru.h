@@ -53,6 +53,8 @@ namespace webnn_native { namespace op {
         GruOptions mOptions;
         size_t mSteps;
         size_t mHiddenSize;
+        Ref<OperatorBase> mRestActivation;
+        Ref<OperatorBase> mNewActivation;
     };
 
 }}  // namespace webnn_native::op

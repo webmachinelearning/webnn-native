@@ -122,8 +122,8 @@ namespace webnn_native {
     OperandArrayBase* GraphBuilderBase::Gru(OperandBase* input,
                                             OperandBase* weight,
                                             OperandBase* recurrentWeight,
-                                            size_t steps,
-                                            size_t hiddenSize,
+                                            int32_t steps,
+                                            int32_t hiddenSize,
                                             GruOptions const* options) {
         VALIDATE_ARRAY_OPERAND(
             new op::Gru(this, input, weight, recurrentWeight, steps, hiddenSize, options));
@@ -218,6 +218,10 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kTanh, input));
+    }
+
+    OperatorBase* GraphBuilderBase::TanhOperator() {
+        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kTanh, FusedOperator::Tanh));
     }
 
     OperandBase* GraphBuilderBase::Transpose(OperandBase* input, TransposeOptions const* options) {
