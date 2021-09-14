@@ -102,7 +102,7 @@ inline ngraph::Shape get_tensor_shape(const tensor_desc_t* tensorDesc) {
 }
 
 inline ngraph::op::PadType GetAutoPad(ngraph_auto_pad autoPad) {
-  ngraph::op::PadType auto_pad;
+  ngraph::op::PadType auto_pad = ngraph::op::PadType::EXPLICIT;
   switch (autoPad) {
     case SameUpper:
       auto_pad = ngraph::op::PadType::SAME_UPPER;
