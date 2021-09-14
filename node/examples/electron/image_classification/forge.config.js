@@ -30,6 +30,8 @@ module.exports = {
          "to": 'test-data/models/resnet101v2_nhwc'},
         {"from": `${samples_path}test-data/models/resnet50v2_nchw`,
          "to": 'test-data/models/resnet50v2_nchw'},
+         {"from": `${samples_path}test-data/models/resnet50v2_nhwc`,
+         "to": 'test-data/models/resnet50v2_nhwc'},
         {"from": `${samples_path}test-data/models/squeezenet1.0_nhwc`,
          "to": 'test-data/models/squeezenet1.0_nhwc'},
         {"from": `${samples_path}test-data/models/squeezenet1.1_nchw`,
