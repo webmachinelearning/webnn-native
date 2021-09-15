@@ -234,6 +234,8 @@ source_set("webnn_native_sources") {
       "-Wno-logical-not-parentheses",
       "-Wno-macro-redefined",
     ]
+
+    data_deps += [ ":copy_dml_dll" ]
   }
 
   if (webnn_enable_onednn) {
