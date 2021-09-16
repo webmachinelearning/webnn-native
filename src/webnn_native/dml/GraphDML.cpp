@@ -1073,6 +1073,48 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+#define SLICE_ONE_AXIS(axis, index)                                                       \
+    inputWindowOffsets[axis] =                                                            \
+        starts[index] < 0 ? (starts[index] + inputDims[axis]) : starts[index];            \
+    inputWindowSizes[axis] =                                                              \
+        sizes[index] == -1 ? (inputDims[axis] - inputWindowOffsets[axis]) : sizes[index]; \
+    do {                                                                                  \
+    } while (0)
+
+    MaybeError Graph::AddSlice(const op::Slice* slice) {
+        DAWN_ASSERT(slice->Inputs().size() == 1);
+        const OperandBase* inputOperand = slice->Inputs()[0].Get();
+        DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputOperand);
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+
+        // dml::Span just holds the refernces, need a variable to hold the memory.
+        std::vector<uint32_t> inputWindowOffsets(inputDims.size(), 0);
+        std::vector<uint32_t> inputWindowSizes(inputDims);
+        auto starts = slice->GetStarts();
+        auto axes = slice->GetAxes();
+        auto sizes = slice->GetSizes();
+        if (axes.empty()) {
+            for (size_t i = 0; i < inputDims.size(); ++i) {
+                SLICE_ONE_AXIS(i, i);
+            }
+        } else {
+            for (size_t i = 0; i < axes.size(); ++i) {
+                if (axes[i] < 0) {
+                    axes[i] = inputDims.size() + axes[i];
+                }
+                SLICE_ONE_AXIS(axes[i], i);
+            }
+        }
+        std::vector<int32_t> inputWindwStrides(inputDims.size(), 1);
+        ::dml::Expression output =
+            ::dml::Slice(input, ::dml::Span<const uint32_t>(inputWindowOffsets),
+                         ::dml::Span<const uint32_t>(inputWindowSizes),
+                         ::dml::Span<const int32_t>(inputWindwStrides));
+        mExpression.insert(std::make_pair(slice->PrimaryOutput(), output));
+        return {};
+    }
+
     MaybeError Graph::AddSplit(const op::Split* split) {
         DAWN_ASSERT(split->Inputs().size() == 1);
         const OperandBase* inputOperand = split->Inputs()[0].Get();
