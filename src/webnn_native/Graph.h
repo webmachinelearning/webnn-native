@@ -37,6 +37,7 @@ namespace webnn_native {
         class Reduce;
         class Resample;
         class Reshape;
+        class Slice;
         class Split;
         class Squeeze;
         class Transpose;
@@ -65,6 +66,7 @@ namespace webnn_native {
         virtual MaybeError AddResample(const op::Resample* resample);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
         virtual MaybeError AddSqueeze(const op::Squeeze* squeeze);
+        virtual MaybeError AddSlice(const op::Slice* batchNorm);
         virtual MaybeError AddSplit(const op::Split* split);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);

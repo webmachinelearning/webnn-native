@@ -196,6 +196,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/ResampleTests.cpp",
     "end2end/ReshapeTests.cpp",
     "end2end/SigmoidTests.cpp",
+    "end2end/SliceTests.cpp",
     "end2end/SoftmaxTests.cpp",
     "end2end/SplitTests.cpp",
     "end2end/SqueezeTests.cpp",

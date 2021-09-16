@@ -426,6 +426,54 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
+#define SLICE_ONE_AXIS(axis, index)           \
+    begin[axis] = starts[index];              \
+    if (sizes[index] == -1) {                 \
+        continue;                             \
+    }                                         \
+    end[axis] = starts[index] + sizes[index]; \
+    if (begin[axis] < 0 && end[axis] >= 0) {  \
+        end[axis] = inputShape.dims[axis];    \
+    }                                         \
+    do {                                      \
+    } while (0)
+
+    MaybeError Graph::AddSlice(const op::Slice* slice) {
+        auto input = mGraphNodeMap[slice->Inputs()[0].Get()];
+        dimensions_t inputShape;
+        ngraph_get_shape(input, &inputShape);
+        std::vector<int32_t> starts = slice->GetStarts();
+        std::vector<int32_t> sizes = slice->GetSizes();
+        std::vector<int32_t> axes = slice->GetAxes();
+        std::vector<int32_t> begin;
+        std::vector<int32_t> end;
+        for (size_t i = 0; i < inputShape.ranks; i++) {
+            begin.push_back(0);
+            end.push_back(inputShape.dims[i]);
+        }
+
+        if (axes.empty()) {
+            for (size_t i = 0; i < inputShape.ranks; i++) {
+                SLICE_ONE_AXIS(i, i);
+            }
+        } else {
+            for (size_t i = 0; i < axes.size(); i++) {
+                if (axes[i] < 0) {
+                    axes[i] = inputShape.ranks + axes[i];
+                }
+                SLICE_ONE_AXIS(axes[i], i);
+            }
+        }
+        ngraph_node_t* beginNode =
+            AddConstantWithGraph<int32_t>(precision_e::I32, {begin.size()}, begin);
+        ngraph_node_t* endNode = AddConstantWithGraph<int32_t>(precision_e::I32, {end.size()}, end);
+        ngraph_node_t* sliceNode;
+        IEStatusCode status = ngraph_slice_inference(input, beginNode, endNode, &sliceNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph slice inference"));
+        mGraphNodeMap[slice->PrimaryOutput()] = sliceNode;
+        return {};
+    }
+
     MaybeError Graph::AddBinary(const op::Binary* binary) {
         auto inputs = binary->Inputs();
         auto primaryNode = mGraphNodeMap[inputs[0].Get()];

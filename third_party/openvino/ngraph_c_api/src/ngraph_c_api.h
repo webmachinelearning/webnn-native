@@ -323,4 +323,10 @@ ngraph_group_convolution_backprop_data(const ngraph_node_t* input,
                                        uint32_t output_padding_count,
                                        ngraph_node_t** node);
 
+NGRAPH_C_API(IEStatusCode)
+ngraph_slice_inference(const ngraph_node_t* input,
+                       const ngraph_node_t* begin,
+                       const ngraph_node_t* end,
+                       ngraph_node_t** node);
+
 #endif  // NGRAPH_C_API_H

@@ -242,6 +242,13 @@
       {"name": "activation", "type": "operator", "optional": true}
     ]
   },
+  "slice options": {
+    "category": "structure",
+    "members": [
+      {"name": "axes count", "type": "uint32_t", "default": 0},
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+    ]
+  },
   "pad options": {
     "category": "structure",
     "members": [
@@ -583,6 +590,19 @@
       {
         "name": "sigmoid operator",
         "returns": "operator"
+      },
+      {
+        "name": "slice",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "starts", "type": "int32_t", "annotation": "const*", "length": "starts count"},
+          {"name": "starts count", "type": "uint32_t"},
+          {"name": "sizes", "type": "int32_t", "annotation": "const*", "length": "sizes count"},
+          {"name": "sizes count", "type": "uint32_t"},
+          {"name": "options", "type": "slice options", "annotation": "const*", "optional": true}
+        ]
+
       },
       {
         "name": "split",
