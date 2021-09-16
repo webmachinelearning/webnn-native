@@ -45,6 +45,7 @@ namespace node {
         Napi::Value Concat(const Napi::CallbackInfo& info);
         Napi::Value Clamp(const Napi::CallbackInfo& info);
         Napi::Value Gemm(const Napi::CallbackInfo& info);
+        Napi::Value HardSwish(const Napi::CallbackInfo& info);
         Napi::Value MaxPool2d(const Napi::CallbackInfo& info);
         Napi::Value AveragePool2d(const Napi::CallbackInfo& info);
         Napi::Value ReduceL1(const Napi::CallbackInfo& info);

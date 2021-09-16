@@ -138,6 +138,14 @@ namespace node {
         return op::Gemm::Build(info, mImpl);
     }
 
+    Napi::Value GraphBuilder::HardSwish(const Napi::CallbackInfo& info) {
+        if (info.Length() == 0) {
+            BUILD_UNARY_OPERATOR(HardSwish);
+        } else {
+            BUILD_UNARY_OPERAND(HardSwish);
+        }
+    }
+
     Napi::Value GraphBuilder::Clamp(const Napi::CallbackInfo& info) {
         return op::Clamp::Build(info, mImpl);
     }
@@ -258,6 +266,7 @@ namespace node {
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
+             InstanceMethod("hardSwish", &GraphBuilder::HardSwish, napi_enumerable),
              InstanceMethod("maxPool2d", &GraphBuilder::MaxPool2d, napi_enumerable),
              InstanceMethod("averagePool2d", &GraphBuilder::AveragePool2d, napi_enumerable),
              InstanceMethod("reduceL1", &GraphBuilder::ReduceL1, napi_enumerable),
