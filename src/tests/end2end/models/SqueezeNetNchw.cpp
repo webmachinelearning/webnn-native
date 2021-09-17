@@ -15,6 +15,8 @@
 #include "examples/SqueezeNet/SqueezeNet.h"
 #include "src/tests/WebnnTest.h"
 
+static const std::string kModelPath = WEBNN_END2END_TEST_MODEL_PATH;
+
 class SqueezeNetNchwTests : public WebnnTest {
   public:
     void TestSqueezeNetNchw(const std::string& inputFile,
@@ -22,8 +24,7 @@ class SqueezeNetNchwTests : public WebnnTest {
                             bool fused = true) {
         SqueezeNet squeezenet;
         squeezenet.mFused = fused;
-        const std::string nchwPath =
-            "node/third_party/webnn-polyfill/test-data/models/squeezenet1.1_nchw/";
+        const std::string nchwPath = kModelPath + "/squeezenet1.1_nchw/";
         squeezenet.mWeightsPath = nchwPath + "weights/";
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
         ml::Operand output = squeezenet.LoadNCHW(builder, false);

@@ -15,6 +15,8 @@
 #include "examples/SqueezeNet/SqueezeNet.h"
 #include "src/tests/WebnnTest.h"
 
+static const std::string kModelPath = WEBNN_END2END_TEST_MODEL_PATH;
+
 class SqueezeNetNhwcTests : public WebnnTest {
   public:
     void TestSqueezeNetNhwc(const std::string& inputFile,
@@ -22,8 +24,7 @@ class SqueezeNetNhwcTests : public WebnnTest {
                             bool fused = true) {
         SqueezeNet squeezenet;
         squeezenet.mFused = fused;
-        const std::string nhwcPath =
-            "node/third_party/webnn-polyfill/test-data/models/squeezenet1.0_nhwc/";
+        const std::string nhwcPath = kModelPath + "/squeezenet1.0_nhwc/";
         squeezenet.mWeightsPath = nhwcPath + "weights/";
         squeezenet.mLayout = "nhwc";
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
