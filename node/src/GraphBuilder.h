@@ -62,6 +62,7 @@ namespace node {
         Napi::Value Reshape(const Napi::CallbackInfo& info);
         Napi::Value Softmax(const Napi::CallbackInfo& info);
         Napi::Value Sigmoid(const Napi::CallbackInfo& info);
+        Napi::Value Squeeze(const Napi::CallbackInfo& info);
         Napi::Value Tanh(const Napi::CallbackInfo& info);
         Napi::Value Transpose(const Napi::CallbackInfo& info);
         Napi::Value Build(const Napi::CallbackInfo& info);
