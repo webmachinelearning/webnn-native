@@ -134,6 +134,24 @@ namespace webnn_native { namespace ie {
             return status;
         }
 
+        const char* GetGruActivation(OperatorBase* gruOperator) {
+            const char* activation = nullptr;
+            switch (gruOperator->GetFusedOperator()) {
+                case FusedOperator::Relu:
+                    activation = "relu";
+                    break;
+                case FusedOperator::Sigmoid:
+                    activation = "sigmoid";
+                    break;
+                case FusedOperator::Tanh:
+                    activation = "tanh";
+                    break;
+                default:
+                    WEBNN_ASSERT(0, "The Gru OperatorType isn't supported.");
+            }
+            return activation;
+        }
+
         // Transpose NHWC <=> NCHW.
         ngraph_node_t* TransposeInputLayout(const ngraph_node_t* input, bool nhwc_to_nchw) {
             std::vector<int64_t> order =
@@ -619,6 +637,131 @@ namespace webnn_native { namespace ie {
             activationNode = TransposeInputLayout(activationNode, false);
         }
         mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
+        return {};
+    }
+
+    MaybeError Graph::AddGru(const op::Gru* gru) {
+        auto inputs = gru->Inputs();
+        auto options = gru->GetOptions();
+        // [steps, batch_size, input_size] => [batch_size, steps, input_size]
+        std::vector<int64_t> order3D = std::vector<int64_t>{1, 0, 2};
+        const ngraph_node_t* order3DNode =
+            AddConstantWithGraph<int64_t>(precision_e::I64, {order3D.size()}, order3D);
+        auto inputNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[0].Get()]);
+        ngraph_node_t* inputTransposeNode = nullptr;
+        IEStatusCode status = ngraph_transpose(inputNode, order3DNode, &inputTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "Transpose gru input layout"));
+
+        auto weightNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[1].Get()]);
+        auto recurrentWeightNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[2].Get()]);
+        dimensions_t shape;
+        auto steps = gru->GetSteps();
+        ngraph_get_shape(inputTransposeNode, &shape);
+        auto batchSize = shape.dims[0];
+        if (steps != shape.dims[1]) {
+            return DAWN_INTERNAL_ERROR(
+                "Argument steps must be equal to the value of the first dimension of the input "
+                "tensor shape");
+        }
+        auto hiddenSize = gru->GetHiddenSize();
+        ngraph_get_shape(recurrentWeightNode, &shape);
+        auto numDirections = shape.dims[0];
+        if (hiddenSize != shape.dims[2]) {
+            return DAWN_INTERNAL_ERROR(
+                "Argument hiddenSize must be equal to the value of the last dimension of the "
+                "recurrentWeight tensor shape");
+        }
+        std::vector<size_t> stepsShape{batchSize};
+        std::vector<size_t> stepsData(batchSize, steps);
+        const ngraph_node_t* stepsNode =
+            AddConstantWithGraph<size_t>(precision_e::U64, stepsShape, stepsData);
+        ngraph_node_t* biasNode = nullptr;
+        int n = 3;
+        if (options->bias != nullptr) {
+            biasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> biasShape{numDirections, 3 * hiddenSize};
+            std::vector<float> biasData(numDirections * 3 * hiddenSize, 0);
+            biasNode = AddConstantWithGraph<float>(precision_e::FP32, biasShape, biasData);
+        }
+        ngraph_node_t* recurrentBiasNode = nullptr;
+        if (options->recurrentBias != nullptr) {
+            recurrentBiasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> recurrentBiasShape{numDirections, 3 * hiddenSize};
+            std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
+            recurrentBiasNode = AddConstantWithGraph<float>(precision_e::FP32, recurrentBiasShape,
+                                                            recurrentBiasData);
+        }
+        ngraph_node_t* initialHiddenStateNode = nullptr;
+        if (options->initialHiddenState != nullptr) {
+            initialHiddenStateNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
+        } else {
+            std::vector<size_t> initialHiddenStateShape{numDirections, batchSize, hiddenSize};
+            std::vector<float> initialHiddenStateData(numDirections * batchSize * hiddenSize, 0);
+            initialHiddenStateNode = AddConstantWithGraph<float>(
+                precision_e::FP32, initialHiddenStateShape, initialHiddenStateData);
+        }
+        ngraph_node_t* initialHiddenStateTransposeNode = nullptr;
+        status =
+            ngraph_transpose(initialHiddenStateNode, order3DNode, &initialHiddenStateTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "Transpose gru initialHiddenState layout"));
+        bool linear_before_reset = options->resetAfter;
+        // If resetAfter is set to true, then the bias shape will be set to [num_directions, 4 *
+        // hidden_size] (not support).
+        if (linear_before_reset) {
+            return DAWN_INTERNAL_ERROR("Not support 'resetAfter = true' now.");
+        }
+        bool return_sequence = options->returnSequence;
+        auto direction = static_cast<ngraph_recurrent_sequence_direction>(options->direction);
+        if (direction == ngraph_recurrent_sequence_direction::Bidirectional) {
+            ngraph_get_shape(biasNode, &shape);
+            if (numDirections != 2 || shape.dims[0] != 2) {
+                return DAWN_INTERNAL_ERROR(
+                    "The size of the first dimension of the weight and the bias tensor shapes must "
+                    "be 2");
+            }
+        }
+        // TODO: layout
+        if (options->layout == ml::RecurrentNetworkWeightLayout::Rzn) {
+            return DAWN_INTERNAL_ERROR("Not support 'layout = rzn' now.");
+        }
+        const char* activations[2];
+        if (options->activations.resetGateActivation == nullptr) {
+            activations[0] = "sigmoid";
+        } else {
+            activations[0] = GetGruActivation(options->activations.resetGateActivation);
+        }
+        if (options->activations.newGateActivation == nullptr) {
+            activations[1] = "tanh";
+        } else {
+            activations[1] = GetGruActivation(options->activations.newGateActivation);
+        }
+        ngraph_node_t* gruNode0;
+        status = ngraph_gru_sequence(inputTransposeNode, initialHiddenStateTransposeNode, stepsNode,
+                                     weightNode, recurrentWeightNode, biasNode, hiddenSize,
+                                     direction, activations, linear_before_reset, &gruNode0);
+        DAWN_TRY(CheckStatusCode(status, "ngraph gru"));
+
+        ngraph_node_t* outputNode;
+        ngraph_node_t* outputTransposeNode;
+        status = ngraph_get_output(gruNode0, 1, &outputNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
+        status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
+        mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
+        if (return_sequence) {
+            // [steps, num_directions, batch_size, hidden_size] => [batch_size, num_directions,
+            // steps, hidden_size]
+            std::vector<int64_t> order4D = std::vector<int64_t>{2, 0, 1, 3};
+            const ngraph_node_t* order4DNode =
+                AddConstantWithGraph<int64_t>(precision_e::I64, {order4D.size()}, order4D);
+            status = ngraph_get_output(gruNode0, 0, &outputNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph get output 0"));
+            status = ngraph_transpose(outputNode, order4DNode, &outputTransposeNode);
+            DAWN_TRY(CheckStatusCode(status, "transpose gru output 0 layout"));
+            mGraphNodeMap[gru->Outputs()[1].Get()] = outputTransposeNode;
+        }
         return {};
     }
 

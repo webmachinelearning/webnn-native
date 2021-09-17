@@ -43,6 +43,12 @@ namespace webnn_native {
         OperandBase* Min(OperandBase*, OperandBase*);
         OperandBase* Pow(OperandBase*, OperandBase*);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
+        OperandArrayBase* Gru(OperandBase*,
+                              OperandBase*,
+                              OperandBase*,
+                              int32_t steps,
+                              int32_t hiddenSize,
+                              GruOptions const* options);
         OperandBase* AveragePool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
@@ -68,6 +74,7 @@ namespace webnn_native {
                                 uint32_t,
                                 SplitOptions const* options);
         OperandBase* Tanh(OperandBase*);
+        OperatorBase* TanhOperator();
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);
         OperatorBase* LeakyReluOperator(LeakyReluOptions const* options);

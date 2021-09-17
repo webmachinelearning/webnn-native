@@ -63,6 +63,12 @@ enum ngraph_auto_pad : uint32_t {
   SameLower = 0x00000002,
 };
 
+enum ngraph_recurrent_sequence_direction : uint32_t {
+  Forward = 0x00000000,
+  Reverse = 0x00000001,
+  Bidirectional = 0x00000002,
+};
+
 NGRAPH_C_API(IEStatusCode)
 ngraph_get_output_number(const ngraph_node_t* node, uint32_t* number);
 NGRAPH_C_API(IEStatusCode)
@@ -297,18 +303,6 @@ ngraph_group_convolution(const ngraph_node_t* input,
                          ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
-ngraph_split(const ngraph_node_t* input,
-             const ngraph_node_t* axis,
-             size_t num_splits,
-             ngraph_node_t** node);
-
-NGRAPH_C_API(IEStatusCode)
-ngraph_variadic_split(const ngraph_node_t* input,
-                      const ngraph_node_t* axis,
-                      const ngraph_node_t* splits,
-                      ngraph_node_t** node);
-
-NGRAPH_C_API(IEStatusCode)
 ngraph_group_convolution_backprop_data(const ngraph_node_t* input,
                                        const ngraph_node_t* filter,
                                        const ngraph_node_t* output_shape,
@@ -328,5 +322,30 @@ ngraph_slice_inference(const ngraph_node_t* input,
                        const ngraph_node_t* begin,
                        const ngraph_node_t* end,
                        ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_split(const ngraph_node_t* input,
+             const ngraph_node_t* axis,
+             size_t num_splits,
+             ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_variadic_split(const ngraph_node_t* input,
+                      const ngraph_node_t* axis,
+                      const ngraph_node_t* splits,
+                      ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
+ngraph_gru_sequence(const ngraph_node_t* input,
+                    const ngraph_node_t* initial_hidden_state,
+                    const ngraph_node_t* sequence_lengths,
+                    const ngraph_node_t* weight,
+                    const ngraph_node_t* recurrent_weight,
+                    const ngraph_node_t* bias,
+                    const size_t hidden_size,
+                    ngraph_recurrent_sequence_direction direction,
+                    const char* activations[2],
+                    const bool linear_before_reset,
+                    ngraph_node_t** node);
 
 #endif  // NGRAPH_C_API_H

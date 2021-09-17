@@ -53,6 +53,10 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddConv2d");
     }
 
+    MaybeError GraphBase::AddGru(const op::Gru* gru) {
+        return DAWN_UNIMPLEMENTED_ERROR("AddGru");
+    }
+
     MaybeError GraphBase::AddPool2d(const op::Pool2d* pool2d) {
         return DAWN_UNIMPLEMENTED_ERROR("AddPool2d");
     }

@@ -119,6 +119,25 @@ inline ngraph::op::PadType GetAutoPad(ngraph_auto_pad autoPad) {
   return auto_pad;
 }
 
+inline ngraph::op::RecurrentSequenceDirection get_recurrent_sequence_direction(
+    ngraph_recurrent_sequence_direction direction) {
+  ngraph::op::RecurrentSequenceDirection ngraph_direction;
+  switch (direction) {
+    case Forward:
+      ngraph_direction = ngraph::op::RecurrentSequenceDirection::FORWARD;
+      break;
+    case Reverse:
+      ngraph_direction = ngraph::op::RecurrentSequenceDirection::REVERSE;
+      break;
+    case Bidirectional:
+      ngraph_direction = ngraph::op::RecurrentSequenceDirection::BIDIRECTIONAL;
+      break;
+    default:
+      assert(0);
+  }
+  return ngraph_direction;
+}
+
 IEStatusCode ngraph_get_output_number(const ngraph_node_t* node,
                                       uint32_t* number) {
   TRY_IE_EXCEPTIONS
@@ -661,26 +680,6 @@ IEStatusCode ngraph_group_convolution(const ngraph_node_t* input,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
 
-IEStatusCode ngraph_split(const ngraph_node_t* input,
-                          const ngraph_node_t* axis,
-                          size_t num_splits,
-                          ngraph_node_t** node) {
-  TRY_IE_EXCEPTIONS
-  auto split = std::make_shared<ngraph::op::v1::Split>(
-      input->object, axis->object, num_splits);
-  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
-}
-
-IEStatusCode ngraph_variadic_split(const ngraph_node_t* input,
-                                   const ngraph_node_t* axis,
-                                   const ngraph_node_t* splits,
-                                   ngraph_node_t** node) {
-  TRY_IE_EXCEPTIONS
-  auto split = std::make_shared<ngraph::op::v1::VariadicSplit>(
-      input->object, axis->object, splits->object);
-  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
-}
-
 IEStatusCode ngraph_group_convolution_backprop_data(
     const ngraph_node_t* input,
     const ngraph_node_t* filter,
@@ -715,4 +714,49 @@ IEStatusCode ngraph_group_convolution_backprop_data(
   }
   CREATE_NODE_AND_CATCH_EXCEPTIONS(conv2d, node);
 }
+
+IEStatusCode ngraph_split(const ngraph_node_t* input,
+                          const ngraph_node_t* axis,
+                          size_t num_splits,
+                          ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto split = std::make_shared<ngraph::op::v1::Split>(
+      input->object, axis->object, num_splits);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
+}
+
+IEStatusCode ngraph_variadic_split(const ngraph_node_t* input,
+                                   const ngraph_node_t* axis,
+                                   const ngraph_node_t* splits,
+                                   ngraph_node_t** node) {
+  TRY_IE_EXCEPTIONS
+  auto split = std::make_shared<ngraph::op::v1::VariadicSplit>(
+      input->object, axis->object, splits->object);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(split, node);
+}
+
+IEStatusCode ngraph_gru_sequence(const ngraph_node_t* input,
+                                 const ngraph_node_t* initial_hidden_state,
+                                 const ngraph_node_t* sequence_lengths,
+                                 const ngraph_node_t* weight,
+                                 const ngraph_node_t* recurrent_weight,
+                                 const ngraph_node_t* bias,
+                                 const size_t hidden_size,
+                                 ngraph_recurrent_sequence_direction direction,
+                                 const char* activations[2],
+                                 const bool linear_before_reset,
+                                 ngraph_node_t** node) {
+  std::vector<std::string> activationsVector = {activations[0], activations[1]};
+  const std::vector<float> activations_alpha_vector, activations_beta_vector;
+  float clip = std::numeric_limits<float>::max();
+  TRY_IE_EXCEPTIONS
+  auto gru = std::make_shared<ngraph::op::v5::GRUSequence>(
+      input->object, initial_hidden_state->object, sequence_lengths->object,
+      weight->object, recurrent_weight->object, bias->object, hidden_size,
+      get_recurrent_sequence_direction(direction), activationsVector,
+      activations_alpha_vector, activations_beta_vector, clip,
+      linear_before_reset);
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(gru, node);
+}
+
 // namespace IE = InferenceEngine;
