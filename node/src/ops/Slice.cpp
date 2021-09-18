@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ops/Squeeze.h"
+#include "ops/Slice.h"
 
 #include "Operand.h"
 #include "Utils.h"
 
 namespace node { namespace op {
 
-    struct SqueezeOptions {
+    struct SliceOptions {
       public:
         std::vector<int32_t> axes;
 
-        const ml::SqueezeOptions* AsPtr() {
+        const ml::SliceOptions* AsPtr() {
             if (!axes.empty()) {
                 mOptions.axesCount = axes.size();
                 mOptions.axes = axes.data();
@@ -32,35 +32,45 @@ namespace node { namespace op {
         }
 
       private:
-        ml::SqueezeOptions mOptions;
+        ml::SliceOptions mOptions;
     };
 
-    Napi::Value Squeeze::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
-        // Operand squeeze(Operand input, MLSqueezeOptions options = {})
-        WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
+    Napi::Value Slice::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+        // Operand slice(MLOperand input, sequence<long> starts, sequence<long> sizes,
+        // MLSliceOptions options = {})
+        WEBNN_NODE_ASSERT(info.Length() == 3 || info.Length() == 4,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
         ml::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
-        // dictionary SqueezeOptions {
+        std::vector<int32_t> starts;
+        WEBNN_NODE_ASSERT(GetArray(info[1], starts), "The starts parameter is invalid.");
+        WEBNN_NODE_ASSERT(starts.empty() == false, "The starts is empty.");
+
+        std::vector<int32_t> sizes;
+        WEBNN_NODE_ASSERT(GetArray(info[2], sizes), "The sizes parameter is invalid.");
+        WEBNN_NODE_ASSERT(sizes.empty() == false, "The sizes is empty.");
+
+        // dictionary SliceOptions {
         //   sequence<long> axes;
         // };
-        SqueezeOptions options;
-        if (info.Length() == 2) {
-            WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
-            Napi::Object jsOptions = info[1].As<Napi::Object>();
+        SliceOptions options;
+        if (info.Length() == 4) {
+            WEBNN_NODE_ASSERT(info[3].IsObject(), "The options must be an object.");
+            Napi::Object jsOptions = info[3].As<Napi::Object>();
             if (HasOptionMember(jsOptions, "axes")) {
                 WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("axes"), options.axes),
                                   "The axes parameter is invalid.");
             }
         }
 
-        ml::Operand squeeze = builder.Squeeze(input, options.AsPtr());
+        ml::Operand slice = builder.Slice(input, starts.data(), starts.size(), sizes.data(),
+                                          sizes.size(), options.AsPtr());
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(squeeze);
+        operand->SetImpl(slice);
         return object;
     }
 

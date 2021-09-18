@@ -36,6 +36,7 @@
 #include "ops/Reduce.h"
 #include "ops/Resample.h"
 #include "ops/Reshape.h"
+#include "ops/Slice.h"
 #include "ops/Squeeze.h"
 #include "ops/Transpose.h"
 
@@ -211,6 +212,10 @@ namespace node {
         };
     }
 
+    Napi::Value GraphBuilder::Slice(const Napi::CallbackInfo& info) {
+        return op::Slice::Build(info, mImpl);
+    }
+
     Napi::Value GraphBuilder::Squeeze(const Napi::CallbackInfo& info) {
         return op::Squeeze::Build(info, mImpl);
     }
@@ -288,6 +293,7 @@ namespace node {
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
              InstanceMethod("softmax", &GraphBuilder::Softmax, napi_enumerable),
              InstanceMethod("sigmoid", &GraphBuilder::Sigmoid, napi_enumerable),
+             InstanceMethod("slice", &GraphBuilder::Slice, napi_enumerable),
              InstanceMethod("squeeze", &GraphBuilder::Squeeze, napi_enumerable),
              InstanceMethod("tanh", &GraphBuilder::Tanh, napi_enumerable),
              InstanceMethod("transpose", &GraphBuilder::Transpose, napi_enumerable),
