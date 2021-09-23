@@ -36,7 +36,7 @@ namespace node { namespace op {
     };
 
     Napi::Value Slice::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
-        // Operand slice(MLOperand input, sequence<long> starts, sequence<long> sizes,
+        // Operand slice(Operand input, sequence<long> starts, sequence<long> sizes,
         // MLSliceOptions options = {})
         WEBNN_NODE_ASSERT(info.Length() == 3 || info.Length() == 4,
                           "The number of arguments is invalid.");
