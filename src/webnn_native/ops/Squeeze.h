@@ -32,7 +32,13 @@ namespace webnn_native { namespace op {
         ~Squeeze() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
-            return graph->AddSqueeze(this);
+            std::vector<int32_t> outputDims;
+            MaybeError maybeError = graph->AddSqueeze(this, outputDims);
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+            mOutputs[0]->SetRank(outputDims.size());
+            return {};
         }
 
         std::vector<int32_t> GetAxes() const {

@@ -1102,7 +1102,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze, std::vector<int32_t>& outputDims) {
         DAWN_ASSERT(squeeze->Inputs().size() == 1);
         const OperandBase* inputOperand = squeeze->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
@@ -1132,6 +1132,7 @@ namespace webnn_native { namespace dml {
         ::dml::Expression output =
             ::dml::Identity(::dml::Reinterpret(input, squeezeDims, ::dml::NullOpt));
         mExpression.insert(std::make_pair(squeeze->PrimaryOutput(), output));
+        outputDims.assign(squeezeDims.data(), squeezeDims.data() + squeezeDims.size());
         return {};
     }
 

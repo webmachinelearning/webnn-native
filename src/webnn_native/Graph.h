@@ -67,7 +67,7 @@ namespace webnn_native {
         virtual MaybeError AddReduce(const op::Reduce* reduce);
         virtual MaybeError AddResample(const op::Resample* resample);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
-        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze);
+        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze, std::vector<int32_t>& outputDims);
         virtual MaybeError AddSlice(const op::Slice* batchNorm);
         virtual MaybeError AddSplit(const op::Split* split);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);

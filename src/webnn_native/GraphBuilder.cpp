@@ -49,22 +49,14 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-#define DAWN_VALIDATE(ptr, objectBase)                 \
-    Ref<OperatorBase> op = AcquireRef(ptr);            \
-    if (GetContext()->ConsumedError(op->Validate())) { \
-        return objectBase::MakeError(this);            \
-    }                                                  \
-    for (;;)                                           \
-    break
-
-#define VALIDATE_FOR_OPERAND(ptr)    \
-    DAWN_VALIDATE(ptr, OperandBase); \
+#define RETURN_OPERAND(ptr)                 \
+    Ref<OperatorBase> op = AcquireRef(ptr); \
     return op->PrimaryOutput()
-#define VALIDATE_FUSED_OPERATOR(ptr)  \
-    DAWN_VALIDATE(ptr, OperatorBase); \
+#define RETURN_FUSED_OPERATOR(ptr)          \
+    Ref<OperatorBase> op = AcquireRef(ptr); \
     return op.Detach()
-#define VALIDATE_ARRAY_OPERAND(ptr)       \
-    DAWN_VALIDATE(ptr, OperandArrayBase); \
+#define RETURN_ARRAY_OPERAND(ptr)           \
+    Ref<OperatorBase> op = AcquireRef(ptr); \
     return new OperandArrayBase(this, op->Outputs())
 
 namespace webnn_native {
@@ -74,49 +66,49 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::Constant(OperandDescriptor const* desc,
                                             ArrayBufferView const* arrayBuffer) {
-        VALIDATE_FOR_OPERAND(new op::Constant(this, desc, arrayBuffer));
+        RETURN_OPERAND(new op::Constant(this, desc, arrayBuffer));
     }
 
     OperandBase* GraphBuilderBase::Input(char const* name, OperandDescriptor const* desc) {
-        VALIDATE_FOR_OPERAND(new op::Input(this, std::string(name), desc));
+        RETURN_OPERAND(new op::Input(this, std::string(name), desc));
     }
 
     OperandBase* GraphBuilderBase::Matmul(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMatMul, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kMatMul, a, b));
     }
 
     OperandBase* GraphBuilderBase::Add(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kAdd, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kAdd, a, b));
     }
 
     OperandBase* GraphBuilderBase::Div(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kDiv, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kDiv, a, b));
     }
 
     OperandBase* GraphBuilderBase::Mul(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMul, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kMul, a, b));
     }
 
     OperandBase* GraphBuilderBase::Sub(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kSub, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kSub, a, b));
     }
 
     OperandBase* GraphBuilderBase::Max(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMax, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kMax, a, b));
     }
 
     OperandBase* GraphBuilderBase::Min(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMin, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kMin, a, b));
     }
 
     OperandBase* GraphBuilderBase::Pow(OperandBase* a, OperandBase* b) {
-        VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kPower, a, b));
+        RETURN_OPERAND(new op::Binary(this, op::BinaryOpType::kPower, a, b));
     }
 
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Conv2d(this, input, filter, options));
+        RETURN_OPERAND(new op::Conv2d(this, input, filter, options));
     }
 
     OperandArrayBase* GraphBuilderBase::Gru(OperandBase* input,
@@ -125,115 +117,115 @@ namespace webnn_native {
                                             int32_t steps,
                                             int32_t hiddenSize,
                                             GruOptions const* options) {
-        VALIDATE_ARRAY_OPERAND(
+        RETURN_ARRAY_OPERAND(
             new op::Gru(this, input, weight, recurrentWeight, steps, hiddenSize, options));
     }
 
     OperandBase* GraphBuilderBase::AveragePool2d(OperandBase* input, Pool2dOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kAveragePool2d, input, options));
+        RETURN_OPERAND(new op::Pool2d(this, op::Pool2dType::kAveragePool2d, input, options));
     }
 
     OperandBase* GraphBuilderBase::MaxPool2d(OperandBase* input, Pool2dOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
+        RETURN_OPERAND(new op::Pool2d(this, op::Pool2dType::kMaxPool2d, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceL2(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL2, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL2, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceL1(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL1, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceL1, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceMax(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMax, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMax, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceMean(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMean, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMean, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceMin(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMin, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceMin, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceProduct(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceProduct, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceProduct, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceSum(OperandBase* input, ReduceOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceSum, input, options));
+        RETURN_OPERAND(new op::Reduce(this, op::ReduceType::kReduceSum, input, options));
     }
 
     OperandBase* GraphBuilderBase::Relu(OperandBase* input) {
-        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kRelu, input));
+        RETURN_OPERAND(new op::Unary(this, op::UnaryOpType::kRelu, input));
     }
 
     OperatorBase* GraphBuilderBase::ReluOperator() {
-        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
+        RETURN_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
     }
 
     OperandBase* GraphBuilderBase::HardSwish(OperandBase* input) {
-        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kHardSwish, input));
+        RETURN_OPERAND(new op::Unary(this, op::UnaryOpType::kHardSwish, input));
     }
 
     OperatorBase* GraphBuilderBase::HardSwishOperator() {
-        VALIDATE_FUSED_OPERATOR(
+        RETURN_FUSED_OPERATOR(
             new op::Unary(this, op::UnaryOpType::kHardSwish, FusedOperator::HardSwish));
     }
 
     OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Resample(this, input, options));
+        RETURN_OPERAND(new op::Resample(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Reshape(OperandBase* input,
                                            int32_t const* new_shape,
                                            size_t new_shape_count) {
-        VALIDATE_FOR_OPERAND(new op::Reshape(this, input, new_shape, new_shape_count));
+        RETURN_OPERAND(new op::Reshape(this, input, new_shape, new_shape_count));
     }
 
     OperandBase* GraphBuilderBase::Sigmoid(OperandBase* input) {
-        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
+        RETURN_OPERAND(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
     }
 
     OperatorBase* GraphBuilderBase::SigmoidOperator() {
-        VALIDATE_FUSED_OPERATOR(
+        RETURN_FUSED_OPERATOR(
             new op::Unary(this, op::UnaryOpType::kSigmoid, FusedOperator::Sigmoid));
     }
 
     OperandBase* GraphBuilderBase::Softmax(OperandBase* input) {
-        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
+        RETURN_OPERAND(new op::Unary(this, op::UnaryOpType::kSoftmax, input));
     }
 
     OperandArrayBase* GraphBuilderBase::Split(OperandBase* input,
                                               uint32_t const* splits,
                                               uint32_t splitsCount,
                                               SplitOptions const* options) {
-        VALIDATE_ARRAY_OPERAND(new op::Split(this, input, splits, splitsCount, options));
+        RETURN_ARRAY_OPERAND(new op::Split(this, input, splits, splitsCount, options));
     }
 
     OperandBase* GraphBuilderBase::Squeeze(OperandBase* input, SqueezeOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Squeeze(this, input, options));
+        RETURN_OPERAND(new op::Squeeze(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Tanh(OperandBase* input) {
-        VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kTanh, input));
+        RETURN_OPERAND(new op::Unary(this, op::UnaryOpType::kTanh, input));
     }
 
     OperatorBase* GraphBuilderBase::TanhOperator() {
-        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kTanh, FusedOperator::Tanh));
+        RETURN_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kTanh, FusedOperator::Tanh));
     }
 
     OperandBase* GraphBuilderBase::Transpose(OperandBase* input, TransposeOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Transpose(this, input, options));
+        RETURN_OPERAND(new op::Transpose(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::LeakyRelu(OperandBase* input, LeakyReluOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::LeakyRelu(this, input, options));
+        RETURN_OPERAND(new op::LeakyRelu(this, input, options));
     }
 
     OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
-        VALIDATE_FUSED_OPERATOR(new op::LeakyRelu(this, options));
+        RETURN_FUSED_OPERATOR(new op::LeakyRelu(this, options));
     }
 
     OperandBase* GraphBuilderBase::Concat(uint32_t inputsCount,
@@ -244,28 +236,28 @@ namespace webnn_native {
         for (uint32_t i = 0; i < inputsCount; ++i) {
             operandInputs.push_back(inputs[i]);
         }
-        VALIDATE_FOR_OPERAND(new op::Concat(this, std::move(operandInputs), axis));
+        RETURN_OPERAND(new op::Concat(this, std::move(operandInputs), axis));
     }
 
     OperandBase* GraphBuilderBase::Gemm(OperandBase* a,
                                         OperandBase* b,
                                         GemmOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Gemm(this, a, b, options));
+        RETURN_OPERAND(new op::Gemm(this, a, b, options));
     }
 
     OperandBase* GraphBuilderBase::Clamp(OperandBase* input, ClampOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Clamp(this, input, options));
+        RETURN_OPERAND(new op::Clamp(this, input, options));
     }
 
     OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
-        VALIDATE_FUSED_OPERATOR(new op::Clamp(this, options));
+        RETURN_FUSED_OPERATOR(new op::Clamp(this, options));
     }
 
     OperandBase* GraphBuilderBase::BatchNorm(OperandBase* input,
                                              OperandBase* mean,
                                              OperandBase* variance,
                                              BatchNormOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::BatchNorm(this, input, mean, variance, options));
+        RETURN_OPERAND(new op::BatchNorm(this, input, mean, variance, options));
     }
 
     OperandBase* GraphBuilderBase::Slice(OperandBase* input,
@@ -274,19 +266,18 @@ namespace webnn_native {
                                          int32_t const* sizes,
                                          uint32_t sizesCount,
                                          SliceOptions const* options) {
-        VALIDATE_FOR_OPERAND(
-            new op::Slice(this, input, starts, startsCount, sizes, sizesCount, options));
+        RETURN_OPERAND(new op::Slice(this, input, starts, startsCount, sizes, sizesCount, options));
     }
 
     OperandBase* GraphBuilderBase::Pad(OperandBase* input,
                                        OperandBase* padding,
                                        PadOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, options));
+        RETURN_OPERAND(new op::Pad(this, input, padding, options));
     }
 
     OperandBase* GraphBuilderBase::InstanceNorm(OperandBase* input,
                                                 InstanceNormOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::InstanceNorm(this, input, options));
+        RETURN_OPERAND(new op::InstanceNorm(this, input, options));
     }
 
     GraphBase* GraphBuilderBase::Build(NamedOperandsBase const* namedOperands) {
@@ -306,7 +297,9 @@ namespace webnn_native {
         std::vector<const OperatorBase*> sorted_operands = TopologicalSort(outputs);
         Ref<GraphBase> graph = AcquireRef(GetContext()->CreateGraph());
         for (auto& op : sorted_operands) {
-            if (op->IsError() || GetContext()->ConsumedError(op->AddToGraph(graph.Get()))) {
+            if (op->IsError() ||
+                GetContext()->ConsumedError(const_cast<OperatorBase*>(op)->Validate()) ||
+                GetContext()->ConsumedError(op->AddToGraph(graph.Get()))) {
                 dawn::ErrorLog() << "Failed to add the operand when building graph.";
                 return nullptr;
             }

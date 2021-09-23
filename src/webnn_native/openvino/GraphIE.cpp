@@ -1038,7 +1038,7 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze, std::vector<int32_t>& outputDims) {
         auto input = mGraphNodeMap[squeeze->Inputs()[0].Get()];
         std::vector<int32_t> axes = squeeze->GetAxes();
         const ngraph_node_t* constantNode =
@@ -1047,6 +1047,9 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* squeezeNode;
         IEStatusCode status = ngraph_squeeze(input, constantNode, &squeezeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph squeeze"));
+        dimensions_t dimensions;
+        ngraph_get_shape(squeezeNode, &dimensions);
+        outputDims.assign(dimensions.dims, dimensions.dims + dimensions.ranks);
         mGraphNodeMap[squeeze->PrimaryOutput()] = squeezeNode;
         return {};
     }

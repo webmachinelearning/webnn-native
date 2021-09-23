@@ -67,7 +67,8 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddResample(const op::Resample* resample) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
         virtual MaybeError AddSplit(const op::Split* split) override;
-        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze) override;
+        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze,
+                                      std::vector<int32_t>& outputDims) override;
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError AddGemm(const op::Gemm* Gemm) override;

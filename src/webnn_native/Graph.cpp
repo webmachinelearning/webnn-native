@@ -73,7 +73,7 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddReshape");
     }
 
-    MaybeError GraphBase::AddSqueeze(const op::Squeeze* squeeze) {
+    MaybeError GraphBase::AddSqueeze(const op::Squeeze* squeeze, std::vector<int32_t>& outputDims) {
         return DAWN_UNIMPLEMENTED_ERROR("AddSqueeze");
     }
 
