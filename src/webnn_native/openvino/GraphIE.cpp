@@ -463,12 +463,8 @@ namespace webnn_native { namespace ie {
         std::vector<int32_t> starts = slice->GetStarts();
         std::vector<int32_t> sizes = slice->GetSizes();
         std::vector<int32_t> axes = slice->GetAxes();
-        std::vector<int32_t> begin;
-        std::vector<int32_t> end;
-        for (size_t i = 0; i < inputShape.ranks; i++) {
-            begin.push_back(0);
-            end.push_back(inputShape.dims[i]);
-        }
+        std::vector<int32_t> begin(inputShape.ranks, 0);
+        std::vector<int32_t> end(inputShape.dims, inputShape.dims + inputShape.ranks);
 
         if (axes.empty()) {
             for (size_t i = 0; i < inputShape.ranks; i++) {

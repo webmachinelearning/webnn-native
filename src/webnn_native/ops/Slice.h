@@ -32,7 +32,7 @@ namespace webnn_native { namespace op {
               uint32_t sizesCount,
               SliceOptions const* options)
             : OperatorBase(builder, {input}) {
-            if (options != nullptr and options->axes != nullptr) {
+            if (options != nullptr && options->axes != nullptr) {
                 mAxes.assign(options->axes, options->axes + options->axesCount);
             }
 
