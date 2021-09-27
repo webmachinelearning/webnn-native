@@ -356,12 +356,48 @@ IEStatusCode ngraph_divide(const ngraph_node_t* a,
   BUILD_BINARY(v1::Divide, a, b, node);
 }
 
-IEStatusCode ngraph_relu(const ngraph_node_t* a, ngraph_node_t** node) {
-  BUILD_UNARY(v0::Relu, a, node);
+IEStatusCode ngraph_abs(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Abs, a, node);
+}
+
+IEStatusCode ngraph_ceil(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Ceiling, a, node);
+}
+
+IEStatusCode ngraph_cos(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Cos, a, node);
+}
+
+IEStatusCode ngraph_exp(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Exp, a, node);
+}
+
+IEStatusCode ngraph_floor(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Floor, a, node);
 }
 
 IEStatusCode ngraph_hard_swish(const ngraph_node_t* a, ngraph_node_t** node) {
   BUILD_UNARY(v4::HSwish, a, node);
+}
+
+IEStatusCode ngraph_log(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Log, a, node);
+}
+
+IEStatusCode ngraph_neg(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Negative, a, node);
+}
+
+IEStatusCode ngraph_relu(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Relu, a, node);
+}
+
+IEStatusCode ngraph_sigmoid(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Sigmoid, a, node);
+}
+
+IEStatusCode ngraph_sin(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Sin, a, node);
 }
 
 IEStatusCode ngraph_softmax(const ngraph_node_t* a, ngraph_node_t** node) {
@@ -370,8 +406,8 @@ IEStatusCode ngraph_softmax(const ngraph_node_t* a, ngraph_node_t** node) {
   CREATE_NODE_AND_CATCH_EXCEPTIONS(softmax, node);
 }
 
-IEStatusCode ngraph_sigmoid(const ngraph_node_t* a, ngraph_node_t** node) {
-  BUILD_UNARY(v0::Sigmoid, a, node);
+IEStatusCode ngraph_tan(const ngraph_node_t* a, ngraph_node_t** node) {
+  BUILD_UNARY(v0::Tan, a, node);
 }
 
 IEStatusCode ngraph_tanh(const ngraph_node_t* a, ngraph_node_t** node) {

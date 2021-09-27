@@ -1308,26 +1308,59 @@ namespace webnn_native { namespace dml {
 
         ::dml::Expression output;
         switch (unary->GetType()) {
-            case op::UnaryOpType::kRelu:
-                output = ::dml::ActivationRelu(input);
+            case op::UnaryOpType::kAbs:
+                output = ::dml::Abs(input);
                 break;
-            case op::UnaryOpType::kLeakyRelu:
-                output = ::dml::ActivationLeakyRelu(
-                    input, reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha());
+            case op::UnaryOpType::kCeil:
+                output = ::dml::Ceil(input);
                 break;
-            case op::UnaryOpType::kSoftmax:
-                output = ::dml::ActivationSoftmax(input);
+            case op::UnaryOpType::kCos:
+                output = ::dml::Cos(input);
                 break;
-            case op::UnaryOpType::kSigmoid:
-                output = ::dml::ActivationSigmoid(input);
+            case op::UnaryOpType::kExp:
+                output = ::dml::Exp(input);
                 break;
-            case op::UnaryOpType::kTanh:
-                output = ::dml::ActivationTanh(input);
+            case op::UnaryOpType::kFloor:
+                output = ::dml::Floor(input);
                 break;
             case op::UnaryOpType::kHardSwish:
                 dawn::WarningLog() << "The hardSwish is emulated from other operations, maybe the "
                                       "performance isn't best";
                 output = HardSwish(input);
+                break;
+            case op::UnaryOpType::kLog:
+                output = ::dml::Log(input);
+                break;
+            case op::UnaryOpType::kLeakyRelu:
+                output = ::dml::ActivationLeakyRelu(
+                    input, reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha());
+                break;
+            // DML doesn't support element-wise negative, emulated it from multiplying input by -1.
+            case op::UnaryOpType::kNeg: {
+                uint32_t length = SizeOfShape(inputDims);
+                std::vector<float> constant(length, -1);
+                output = ::dml::Multiply(
+                    input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims, constant.data(),
+                                           sizeof(float) * length));
+                break;
+            }
+            case op::UnaryOpType::kRelu:
+                output = ::dml::ActivationRelu(input);
+                break;
+            case op::UnaryOpType::kSigmoid:
+                output = ::dml::ActivationSigmoid(input);
+                break;
+            case op::UnaryOpType::kSin:
+                output = ::dml::Sin(input);
+                break;
+            case op::UnaryOpType::kSoftmax:
+                output = ::dml::ActivationSoftmax(input);
+                break;
+            case op::UnaryOpType::kTan:
+                output = ::dml::Tan(input);
+                break;
+            case op::UnaryOpType::kTanh:
+                output = ::dml::ActivationTanh(input);
                 break;
             default:
                 return DAWN_UNIMPLEMENTED_ERROR(" Unary op " + OpTypeToString(unary->GetType()) +
