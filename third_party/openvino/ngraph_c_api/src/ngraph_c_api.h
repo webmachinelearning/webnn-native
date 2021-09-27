@@ -158,15 +158,33 @@ ngraph_divide(const ngraph_node_t* a,
               ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
-ngraph_relu(const ngraph_node_t* input, ngraph_node_t** node);
+ngraph_abs(const ngraph_node_t* input, ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
-ngraph_softmax(const ngraph_node_t* input, ngraph_node_t** node);
+ngraph_ceil(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_cos(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_exp(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_floor(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_hard_swish(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_log(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_neg(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_relu(const ngraph_node_t* input, ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
 ngraph_sigmoid(const ngraph_node_t* input, ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
-ngraph_tanh(const ngraph_node_t* input, ngraph_node_t** node);
+ngraph_sin(const ngraph_node_t* input, ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
-ngraph_hard_swish(const ngraph_node_t* input, ngraph_node_t** node);
+ngraph_softmax(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_tan(const ngraph_node_t* input, ngraph_node_t** node);
+NGRAPH_C_API(IEStatusCode)
+ngraph_tanh(const ngraph_node_t* input, ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
 ngraph_concat(ngraph_node_t** inputs,

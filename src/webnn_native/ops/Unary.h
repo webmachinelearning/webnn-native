@@ -23,12 +23,21 @@
 namespace webnn_native { namespace op {
 
     enum UnaryOpType {
-        kRelu = 0,
-        kLeakyRelu,
-        kSoftmax,
-        kSigmoid,
-        kTanh,
+        kAbs = 0,
+        kCeil,
+        kCos,
+        kExp,
+        kFloor,
         kHardSwish,
+        kLog,
+        kLeakyRelu,
+        kNeg,
+        kRelu,
+        kSigmoid,
+        kSin,
+        kSoftmax,
+        kTan,
+        kTanh,
     };
 
     class Unary : public OperatorBase {

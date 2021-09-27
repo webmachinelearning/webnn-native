@@ -851,21 +851,39 @@ namespace webnn_native { namespace ie {
         auto input = mGraphNodeMap[unary->Inputs()[0].Get()];
         ngraph_node_t* unaryNode = nullptr;
         IEStatusCode status = IEStatusCode::OK;
-        if (unary->GetType() == op::UnaryOpType::kRelu) {
-            status = ngraph_relu(input, &unaryNode);
+        if (unary->GetType() == op::UnaryOpType::kAbs) {
+            status = ngraph_abs(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kCeil) {
+            status = ngraph_ceil(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kCos) {
+            status = ngraph_cos(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kExp) {
+            status = ngraph_exp(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kFloor) {
+            status = ngraph_floor(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kHardSwish) {
+            status = ngraph_hard_swish(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kLog) {
+            status = ngraph_log(input, &unaryNode);
         } else if (unary->GetType() == op::UnaryOpType::kLeakyRelu) {
             const op::LeakyRelu* leakyRelu = reinterpret_cast<const op::LeakyRelu*>(unary);
             const ngraph_node_t* constantNode =
                 AddConstantWithGraph<float>(precision_e::FP32, {1}, {leakyRelu->GetAlpha()});
             status = ngraph_leaky_relu(input, constantNode, &unaryNode);
-        } else if (unary->GetType() == op::UnaryOpType::kSoftmax) {
-            status = ngraph_softmax(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kNeg) {
+            status = ngraph_neg(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kRelu) {
+            status = ngraph_relu(input, &unaryNode);
         } else if (unary->GetType() == op::UnaryOpType::kSigmoid) {
             status = ngraph_sigmoid(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kSin) {
+            status = ngraph_sin(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kSoftmax) {
+            status = ngraph_softmax(input, &unaryNode);
+        } else if (unary->GetType() == op::UnaryOpType::kTan) {
+            status = ngraph_tan(input, &unaryNode);
         } else if (unary->GetType() == op::UnaryOpType::kTanh) {
             status = ngraph_tanh(input, &unaryNode);
-        } else if (unary->GetType() == op::UnaryOpType::kHardSwish) {
-            status = ngraph_hard_swish(input, &unaryNode);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph unary"));
         mGraphNodeMap[unary->PrimaryOutput()] = unaryNode;
