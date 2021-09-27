@@ -42,8 +42,13 @@ namespace webnn_native { namespace op {
                 mInputs.push_back(options->initialHiddenState);
             }
         }
-        mRestActivation = Ref<OperatorBase>(mOptions.activations.resetGateActivation);
-        mNewActivation = Ref<OperatorBase>(mOptions.activations.newGateActivation);
+        if (options == nullptr || options->activations == nullptr) {
+            mActivations = AcquireRef(new OperatorArrayBase());
+            mActivations->Set(AcquireRef(new OperatorBase(builder, FusedOperator::Sigmoid)).Get());
+            mActivations->Set(AcquireRef(new OperatorBase(builder, FusedOperator::Tanh)).Get());
+        } else {
+            mActivations = Ref<OperatorArrayBase>(mOptions.activations);
+        }
     }
 
     MaybeError Gru::Validate() {
@@ -89,6 +94,10 @@ namespace webnn_native { namespace op {
             if (mInputs[n++]->Rank() != 3) {
                 return DAWN_VALIDATION_ERROR("Argument initialHiddenState is not a 3D tensor.");
             }
+        }
+        // The activations parameter
+        if (GetActivations().Get()->Size() != 2) {
+            return DAWN_VALIDATION_ERROR("Argument activations is not a sequence of length 2.");
         }
 
         return {};

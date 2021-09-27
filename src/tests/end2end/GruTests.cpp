@@ -109,6 +109,60 @@ TEST_F(GruTests, GruWith3BatchSize) {
     TestGru(input, weight, recurrentWeight, steps, hiddenSize, expected, &options);
 }
 
+TEST_F(GruTests, GruWithMultiActivitions) {
+    const int32_t steps = 2;
+    const int32_t batchSize = 3;
+    const int32_t inputSize = 3;
+    const int32_t hiddenSize = 5;
+    const int32_t numDirections = 1;
+
+    const std::vector<int32_t> inputShape = {steps, batchSize, inputSize};
+    const std::vector<float> inputData = {1,  2,  3,  4,  5,  6,  7,  8,  9,
+                                          10, 11, 12, 13, 14, 15, 16, 17, 18};
+    Tensor input = {inputShape, inputData};
+    const std::vector<int32_t> weightShape = {numDirections, 3 * hiddenSize, inputSize};
+    const std::vector<float> weightData(numDirections * 3 * hiddenSize * inputSize, 0.1);
+    Tensor weight = {weightShape, weightData};
+    const std::vector<int32_t> recurrentWeightShape = {numDirections, 3 * hiddenSize, hiddenSize};
+    const std::vector<float> recurrentWeightData(numDirections * 3 * hiddenSize * hiddenSize, 0.1);
+    Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
+    const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
+    const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
+    const ml::Operand bias =
+        utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
+    const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
+    const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
+    const ml::Operand recurrentBias =
+        utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
+                             recurrentBiasData.size() * sizeof(float));
+    const std::vector<int32_t> initialHiddenStateShape = {numDirections, batchSize, hiddenSize};
+    const std::vector<float> initialHiddenStateData(numDirections * batchSize * hiddenSize, 0);
+    const ml::Operand initialHiddenState =
+        utils::BuildConstant(builder, initialHiddenStateShape, initialHiddenStateData.data(),
+                             initialHiddenStateData.size() * sizeof(float));
+
+    ml::GruOptions options = {};
+    options.bias = bias;
+    options.recurrentBias = recurrentBias;
+    options.initialHiddenState = initialHiddenState;
+    options.resetAfter = false;
+    auto activations = ml::CreateOperatorArray();
+    auto activationSigmoid =
+        utils::CreateActivationOperator(builder, utils::FusedActivation::SIGMOID);
+    activations.Set(activationSigmoid);
+    auto activationTanh = utils::CreateActivationOperator(builder, utils::FusedActivation::TANH);
+    activations.Set(activationTanh);
+    options.activations = activations;
+
+    const std::vector<int32_t> expectedShape = {numDirections, batchSize, hiddenSize};
+    const std::vector<float> expectedValue = {
+        0.22391089, 0.22391089, 0.22391089, 0.22391089, 0.22391089, 0.1653014, 0.1653014, 0.1653014,
+        0.1653014,  0.1653014,  0.0797327,  0.0797327,  0.0797327,  0.0797327, 0.0797327};
+    Tensor expected = {expectedShape, expectedValue};
+
+    TestGru(input, weight, recurrentWeight, steps, hiddenSize, expected, &options);
+}
+
 TEST_F(GruTests, GruWithoutInitialHiddenState) {
     const int32_t steps = 2;
     const int32_t batchSize = 3;

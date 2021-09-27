@@ -146,4 +146,8 @@ namespace ml {
         return NamedOutputs::Acquire(webnnCreateNamedOutputs());
     }
 
+    OperatorArray CreateOperatorArray() {
+        return OperatorArray::Acquire(webnnCreateOperatorArray());
+    }
+
 }

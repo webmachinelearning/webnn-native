@@ -43,6 +43,10 @@ MLNamedOutputs webnnCreateNamedOutputs() {
     return procs.createNamedOutputs();
 }
 
+MLOperatorArray webnnCreateOperatorArray() {
+    return procs.createOperatorArray();
+}
+
 {% for type in by_category["object"] %}
     {% for method in c_methods(type) %}
         {{as_cType(method.return_type.name)}} {{as_cMethod(type.name, method.name)}}(

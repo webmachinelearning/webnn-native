@@ -43,6 +43,7 @@ namespace node {
         Napi::Value Exp(const Napi::CallbackInfo& info);
         Napi::Value Floor(const Napi::CallbackInfo& info);
         Napi::Value Gemm(const Napi::CallbackInfo& info);
+        Napi::Value Gru(const Napi::CallbackInfo& info);
         Napi::Value HardSwish(const Napi::CallbackInfo& info);
         Napi::Value Input(const Napi::CallbackInfo& info);
         Napi::Value InstanceNorm(const Napi::CallbackInfo& info);

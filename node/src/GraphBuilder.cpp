@@ -28,6 +28,7 @@
 #include "ops/Constant.h"
 #include "ops/Conv2d.h"
 #include "ops/Gemm.h"
+#include "ops/Gru.h"
 #include "ops/Input.h"
 #include "ops/InstanceNorm.h"
 #include "ops/LeakyRelu.h"
@@ -139,6 +140,10 @@ namespace node {
 
     Napi::Value GraphBuilder::Gemm(const Napi::CallbackInfo& info) {
         return op::Gemm::Build(info, mImpl);
+    }
+
+    Napi::Value GraphBuilder::Gru(const Napi::CallbackInfo& info) {
+        return op::Gru::Build(info, mImpl);
     }
 
     Napi::Value GraphBuilder::Abs(const Napi::CallbackInfo& info) {
@@ -262,7 +267,11 @@ namespace node {
     }
 
     Napi::Value GraphBuilder::Tanh(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Tanh);
+        if (info.Length() == 0) {
+            BUILD_UNARY_OPERATOR(Tanh);
+        } else {
+            BUILD_UNARY_OPERAND(Tanh);
+        };
     }
 
     Napi::Value GraphBuilder::LeakyRelu(const Napi::CallbackInfo& info) {
@@ -317,6 +326,7 @@ namespace node {
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
+             InstanceMethod("gru", &GraphBuilder::Gru, napi_enumerable),
              InstanceMethod("abs", &GraphBuilder::Abs, napi_enumerable),
              InstanceMethod("ceil", &GraphBuilder::Ceil, napi_enumerable),
              InstanceMethod("cos", &GraphBuilder::Cos, napi_enumerable),

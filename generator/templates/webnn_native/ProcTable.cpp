@@ -110,11 +110,16 @@ namespace webnn_native {
          return reinterpret_cast<MLNamedOutputs>(new NamedOutputsBase());
     }
 
+    MLOperatorArray NativeCreateOperatorArray() {
+         return reinterpret_cast<MLOperatorArray>(new OperatorArrayBase());
+    }
+
     static WebnnProcTable gProcTable = {
         NativeCreateGraphBuilder,
         NativeCreateNamedInputs,
         NativeCreateNamedOperands,
         NativeCreateNamedOutputs,
+        NativeCreateOperatorArray,
         {% for type in by_category["object"] %}
             {% for method in c_methods(type) %}
                 Native{{as_MethodSuffix(type.name, method.name)}},

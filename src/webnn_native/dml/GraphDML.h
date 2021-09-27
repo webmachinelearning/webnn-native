@@ -32,6 +32,7 @@
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
 #include "webnn_native/ops/Gemm.h"
+#include "webnn_native/ops/Gru.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/InstanceNorm.h"
 #include "webnn_native/ops/LeakyRelu.h"
@@ -73,6 +74,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddTranspose(const op::Transpose* transpose) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError AddGemm(const op::Gemm* Gemm) override;
+        virtual MaybeError AddGru(const op::Gru* Gru) override;
         virtual MaybeError AddConcat(const op::Concat* concat) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;

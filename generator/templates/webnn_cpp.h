@@ -222,6 +222,7 @@ namespace ml {
     NamedInputs CreateNamedInputs();
     NamedOperands CreateNamedOperands();
     NamedOutputs CreateNamedOutputs();
+    OperatorArray CreateOperatorArray();
 
 }  // namespace webnn
 
