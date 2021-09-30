@@ -15,6 +15,8 @@
 #include "examples/MobileNetV2/MobileNetV2.h"
 #include "src/tests/WebnnTest.h"
 
+static const std::string kModelPath = WEBNN_END2END_TEST_MODEL_PATH;
+
 class MobileNetV2NhwcTests : public WebnnTest {
   public:
     void TestMobileNetV2Nhwc(const std::string& inputFile,
@@ -22,8 +24,7 @@ class MobileNetV2NhwcTests : public WebnnTest {
                              bool fused = true) {
         MobileNetV2 mobilenetv2;
         mobilenetv2.mFused = fused;
-        const std::string nhwcPath =
-            "node/third_party/webnn-polyfill/test-data/models/mobilenetv2_nhwc/";
+        const std::string nhwcPath = kModelPath + "/mobilenetv2_nhwc/";
         mobilenetv2.mWeightsPath = nhwcPath + "weights/";
         mobilenetv2.mLayout = "nhwc";
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());

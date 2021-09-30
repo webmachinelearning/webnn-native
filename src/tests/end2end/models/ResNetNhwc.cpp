@@ -15,6 +15,8 @@
 #include "examples/ResNet/ResNet.h"
 #include "src/tests/WebnnTest.h"
 
+static const std::string kModelPath = WEBNN_END2END_TEST_MODEL_PATH;
+
 class ResNetNhwcTests : public WebnnTest {
   public:
     void TestResNetNhwc(const std::string& inputFile,
@@ -22,8 +24,7 @@ class ResNetNhwcTests : public WebnnTest {
                         bool fused = true) {
         ResNet resnet;
         resnet.mFused = fused;
-        const std::string nhwcPath =
-            "node/third_party/webnn-polyfill/test-data/models/resnet101v2_nhwc/";
+        const std::string nhwcPath = kModelPath + "/resnet101v2_nhwc/";
         resnet.mWeightsPath = nhwcPath + "weights/";
         const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
         ml::Operand output = resnet.LoadNHWC(builder, false);

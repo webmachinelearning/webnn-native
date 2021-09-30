@@ -156,6 +156,17 @@ source_set("webnn_end2end_tests_sources") {
   configs += [ "${webnn_root}/src/common:dawn_internal" ]
   testonly = true
 
+  _models_folder_relative_path =
+      "../../node/third_party/webnn-polyfill/test-data/models/"
+
+  _data_path = rebase_path(_models_folder_relative_path, webnn_root)
+  _webnn_root_data_path =
+      get_path_info("${webnn_root}" + "${_data_path}", "dir")
+  _models_folder_absolute_path = rebase_path(_webnn_root_data_path)
+
+  defines =
+      [ "WEBNN_END2END_TEST_MODEL_PATH=\"${_models_folder_absolute_path}\"" ]
+
   deps = [
     ":gmock_and_gtest",
     "${webnn_root}/examples:webnn_sample_utils",
