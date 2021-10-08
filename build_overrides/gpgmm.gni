@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-webnn_standalone = true
+# These are variables that are overridden by projects that include GPGMM.
+# The values in this file are the defaults for when we are building GPGMM
+# from WebNN-native's repository.
 
-# The paths to WebNN's dependencies
-webnn_dawn_root = "//third_party/dawn"
-webnn_googletest_dir = "//third_party/googletest"
-webnn_jinja2_dir = "//third_party/jinja2"
-webnn_gpgmm_dir = "//third_party/gpgmm"
+# The paths to GPGMM's dependencies
+#
+# This file is intentionally empty because WebNN-native uses non-standalone
+# GPGMM and non-standalone GPGMM has no dependencies to override but GN
+# must import a gpgmm.gni file to build without overrides.

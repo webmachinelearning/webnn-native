@@ -15,6 +15,7 @@ third_party/llvm-build
 third_party/markupsafe/
 third_party/dawn
 third_party/DirectML
+third_party/gpgmm
 third_party/microsoft.ai.directml*
 third_party/oneDNN
 third_party/XNNPACK
