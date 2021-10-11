@@ -71,7 +71,13 @@ namespace webnn_native {
 
     // Should put the default null backend at the end.
     MLContext CreateContext(MLContextOptions const* options) {
-#if defined(WEBNN_ENABLE_BACKEND_OPENVINO)
+#if defined(WEBNN_ENABLE_BACKEND_OPENVINO) && defined(WEBNN_ENABLE_BACKEND_DML)
+        if (options != nullptr && options->devicePreference == MLDevicePreference_Gpu) {
+            return reinterpret_cast<MLContext>(dml::Create(options));
+        } else {
+            return reinterpret_cast<MLContext>(ie::Create(options));
+        }
+#elif defined(WEBNN_ENABLE_BACKEND_OPENVINO)
         return reinterpret_cast<MLContext>(ie::Create(options));
 #elif defined(WEBNN_ENABLE_BACKEND_DML)
         return reinterpret_cast<MLContext>(dml::Create(options));

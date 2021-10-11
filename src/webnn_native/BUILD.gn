@@ -83,6 +83,9 @@ source_set("webnn_native_sources") {
   defines = []
   libs = []
   data_deps = []
+  include_dirs = []
+  lib_dirs = []
+  libs = []
 
   configs += [ ":webnn_native_internal" ]
 
@@ -164,7 +167,7 @@ source_set("webnn_native_sources") {
       "openvino/GraphIE.h",
     ]
 
-    include_dirs = [
+    include_dirs += [
       "${webnn_root}/third_party/openvino/ngraph_c_api/src",
       "$root_out_dir/inference_engine/include",
     ]
@@ -172,22 +175,22 @@ source_set("webnn_native_sources") {
     deps += [ ":build_ngraph_c_api" ]
 
     if (is_win) {
-      lib_dirs = [
+      lib_dirs += [
         "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/",
         "$root_out_dir/inference_engine/lib/intel64/Release",
       ]
-      libs = [
+      libs += [
         "ngraph_c_api.lib",
         "inference_engine_c_api.lib",
       ]
     }
 
     if (is_linux) {
-      lib_dirs = [
+      lib_dirs += [
         "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
         "$root_out_dir/inference_engine/lib/intel64/Release",
       ]
-      libs = [
+      libs += [
         "ngraph_c_api",
         "inference_engine_c_api",
       ]
@@ -216,15 +219,15 @@ source_set("webnn_native_sources") {
       "dml/GraphDML.h",
     ]
 
-    include_dirs = [
+    include_dirs += [
       "${webnn_root}/third_party/DirectML/Libraries",
       "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include",
     ]
 
-    lib_dirs =
+    lib_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
 
-    libs = [
+    libs += [
       "dxgi.lib",
       "d3d12.lib",
       "directml.lib",
@@ -248,23 +251,23 @@ source_set("webnn_native_sources") {
       "onednn/GraphDNNL.h",
     ]
 
-    include_dirs = [
+    include_dirs += [
       "${webnn_root}/third_party/oneDNN/include",
       "${webnn_root}/third_party/oneDNN/build/include",
     ]
 
     if (is_win) {
       if (is_debug) {
-        lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src/Debug" ]
+        lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src/Debug" ]
       } else {
-        lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src/Release" ]
+        lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src/Release" ]
       }
-      libs = [ "dnnl.lib" ]
+      libs += [ "dnnl.lib" ]
     }
 
     if (is_linux) {
-      lib_dirs = [ "${webnn_root}/third_party/oneDNN/build/src" ]
-      libs = [ "dnnl" ]
+      lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src" ]
+      libs += [ "dnnl" ]
     }
   }
 
@@ -276,7 +279,7 @@ source_set("webnn_native_sources") {
       "xnnpack/GraphXNN.h",
     ]
 
-    include_dirs = [
+    include_dirs += [
       "${webnn_root}/third_party/XNNPACK/include",
       "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool-source/include",
     ]
@@ -299,7 +302,7 @@ source_set("webnn_native_sources") {
       libext = "a"
     }
 
-    libs = [
+    libs += [
       "${webnn_root}/third_party/XNNPACK/build/local/${libfolder}/${libprefix}XNNPACK.${libext}",
       "${webnn_root}/third_party/XNNPACK/build/local/clog/${libfolder}/${libprefix}clog.${libext}",
       "${webnn_root}/third_party/XNNPACK/build/local/cpuinfo/${libfolder}/${libprefix}cpuinfo.${libext}",
