@@ -40,6 +40,7 @@
         '<(module_root_dir)/src',
         '<(WEBNN_NATIVE_DIR)/src/include',
         '<(WEBNN_NATIVE_LIB_PATH)/gen/src/include',
+        '<(WEBNN_NATIVE_LIB_PATH)/../../src/include',
       ],
       'library_dirs' : [
         '<(WEBNN_NATIVE_LIB_PATH)',
