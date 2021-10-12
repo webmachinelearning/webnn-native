@@ -492,69 +492,6 @@
         ]
       },
       {
-        "name": "abs",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "ceil",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "cos",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "exp",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "floor",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "log",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "neg",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "sin",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
-        "name": "tan",
-        "returns": "operand",
-        "args": [
-          {"name": "input", "type": "operand"}
-        ]
-      },
-      {
         "name": "hard swish",
         "returns": "operand",
         "args": [

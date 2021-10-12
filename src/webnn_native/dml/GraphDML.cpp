@@ -1125,11 +1125,6 @@ namespace webnn_native { namespace dml {
         // dml::Span just holds the refernces, need a variable to hold the memory.
         std::vector<uint32_t> splits = split->GetSplits();
         int32_t axis = split->GetAxis();
-        // This value must be in the range [0, InputTensor.DimensionCount - 1]. Negative values
-        // address dimensions from the end
-        if (axis < 0) {
-            axis = axis + inputDims.size();
-        }
         if (splits.size() == 1) {
             if (inputDims[axis] % splits[0] != 0) {
                 return DAWN_INTERNAL_ERROR("the axis " + std::to_string(axis) + " with size " +
@@ -1313,59 +1308,26 @@ namespace webnn_native { namespace dml {
 
         ::dml::Expression output;
         switch (unary->GetType()) {
-            case op::UnaryOpType::kAbs:
-                output = ::dml::Abs(input);
-                break;
-            case op::UnaryOpType::kCeil:
-                output = ::dml::Ceil(input);
-                break;
-            case op::UnaryOpType::kCos:
-                output = ::dml::Cos(input);
-                break;
-            case op::UnaryOpType::kExp:
-                output = ::dml::Exp(input);
-                break;
-            case op::UnaryOpType::kFloor:
-                output = ::dml::Floor(input);
-                break;
-            case op::UnaryOpType::kHardSwish:
-                dawn::WarningLog() << "The hardSwish is emulated from other operations, maybe the "
-                                      "performance isn't best";
-                output = HardSwish(input);
-                break;
-            case op::UnaryOpType::kLog:
-                output = ::dml::Log(input);
+            case op::UnaryOpType::kRelu:
+                output = ::dml::ActivationRelu(input);
                 break;
             case op::UnaryOpType::kLeakyRelu:
                 output = ::dml::ActivationLeakyRelu(
                     input, reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha());
                 break;
-            // DML doesn't support element-wise negative, emulated it from multiplying input by -1.
-            case op::UnaryOpType::kNeg: {
-                uint32_t length = SizeOfShape(inputDims);
-                std::vector<float> constant(length, -1);
-                output = ::dml::Multiply(
-                    input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims, constant.data(),
-                                           sizeof(float) * length));
-                break;
-            }
-            case op::UnaryOpType::kRelu:
-                output = ::dml::ActivationRelu(input);
+            case op::UnaryOpType::kSoftmax:
+                output = ::dml::ActivationSoftmax(input);
                 break;
             case op::UnaryOpType::kSigmoid:
                 output = ::dml::ActivationSigmoid(input);
                 break;
-            case op::UnaryOpType::kSin:
-                output = ::dml::Sin(input);
-                break;
-            case op::UnaryOpType::kSoftmax:
-                output = ::dml::ActivationSoftmax(input);
-                break;
-            case op::UnaryOpType::kTan:
-                output = ::dml::Tan(input);
-                break;
             case op::UnaryOpType::kTanh:
                 output = ::dml::ActivationTanh(input);
+                break;
+            case op::UnaryOpType::kHardSwish:
+                dawn::WarningLog() << "The hardSwish is emulated from other operations, maybe the "
+                                      "performance isn't best";
+                output = HardSwish(input);
                 break;
             default:
                 return DAWN_UNIMPLEMENTED_ERROR(" Unary op " + OpTypeToString(unary->GetType()) +

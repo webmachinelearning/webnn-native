@@ -191,7 +191,6 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/ConcatTests.cpp",
     "end2end/Conv2dTests.cpp",
     "end2end/DivTests.cpp",
-    "end2end/ElementWiseUnaryTests.cpp",
     "end2end/GemmTests.cpp",
     "end2end/GruTests.cpp",
     "end2end/HardSwishTests.cpp",
