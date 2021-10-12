@@ -141,42 +141,6 @@ namespace node {
         return op::Gemm::Build(info, mImpl);
     }
 
-    Napi::Value GraphBuilder::Abs(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Abs);
-    }
-
-    Napi::Value GraphBuilder::Ceil(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Ceil);
-    }
-
-    Napi::Value GraphBuilder::Cos(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Cos);
-    }
-
-    Napi::Value GraphBuilder::Exp(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Exp);
-    }
-
-    Napi::Value GraphBuilder::Floor(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Floor);
-    }
-
-    Napi::Value GraphBuilder::Log(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Log);
-    }
-
-    Napi::Value GraphBuilder::Neg(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Neg);
-    }
-
-    Napi::Value GraphBuilder::Sin(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Sin);
-    }
-
-    Napi::Value GraphBuilder::Tan(const Napi::CallbackInfo& info) {
-        BUILD_UNARY_OPERAND(Tan);
-    }
-
     Napi::Value GraphBuilder::HardSwish(const Napi::CallbackInfo& info) {
         if (info.Length() == 0) {
             BUILD_UNARY_OPERATOR(HardSwish);
@@ -317,15 +281,6 @@ namespace node {
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
-             InstanceMethod("abs", &GraphBuilder::Abs, napi_enumerable),
-             InstanceMethod("ceil", &GraphBuilder::Ceil, napi_enumerable),
-             InstanceMethod("cos", &GraphBuilder::Cos, napi_enumerable),
-             InstanceMethod("exp", &GraphBuilder::Exp, napi_enumerable),
-             InstanceMethod("floor", &GraphBuilder::Floor, napi_enumerable),
-             InstanceMethod("log", &GraphBuilder::Log, napi_enumerable),
-             InstanceMethod("neg", &GraphBuilder::Neg, napi_enumerable),
-             InstanceMethod("sin", &GraphBuilder::Sin, napi_enumerable),
-             InstanceMethod("tan", &GraphBuilder::Tan, napi_enumerable),
              InstanceMethod("hardSwish", &GraphBuilder::HardSwish, napi_enumerable),
              InstanceMethod("maxPool2d", &GraphBuilder::MaxPool2d, napi_enumerable),
              InstanceMethod("averagePool2d", &GraphBuilder::AveragePool2d, napi_enumerable),
