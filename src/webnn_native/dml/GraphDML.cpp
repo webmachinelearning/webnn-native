@@ -1125,6 +1125,11 @@ namespace webnn_native { namespace dml {
         // dml::Span just holds the refernces, need a variable to hold the memory.
         std::vector<uint32_t> splits = split->GetSplits();
         int32_t axis = split->GetAxis();
+        // This value must be in the range [0, InputTensor.DimensionCount - 1]. Negative values
+        // address dimensions from the end.
+        if (axis < 0) {
+            axis = axis + inputDims.size();
+        }
         if (splits.size() == 1) {
             if (inputDims[axis] % splits[0] != 0) {
                 return DAWN_INTERNAL_ERROR("the axis " + std::to_string(axis) + " with size " +
