@@ -1,6 +1,7 @@
 import json
 import pathlib
 import sys
+from os.path import exists
 from xml.dom import minidom
 
 def parseJson(filename, onlyFailure = False):
@@ -134,6 +135,17 @@ def getRegressionResultsList(baseline, target, suffix):
 if __name__ == '__main__':
   baselineFile = sys.argv[1]
   targetFile = sys.argv[2]
+
+  if not exists(baselineFile):
+      print("Failed to get baseline result file: %s, please have a check" % \
+            baselineFile)
+      sys.exit(1)
+
+  if not exists(targetFile):
+      print("Failed to get latest result file: %s, please have a check" % \
+            targetFile)
+      sys.exit(1)
+
   fileSuffix = pathlib.Path(baselineFile).suffix
 
   resultsList = getRegressionResultsList(baselineFile, targetFile, fileSuffix)
