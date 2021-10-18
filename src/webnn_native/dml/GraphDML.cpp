@@ -772,6 +772,10 @@ namespace webnn_native { namespace dml {
         std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
 
+        if (options->transpose == true) {
+            return DAWN_UNIMPLEMENTED_ERROR("Transpose Conv2D has not been supported.");
+        }
+
         ::dml::Optional<::dml::Expression> bias = ::dml::NullOpt;
         if (options->bias != nullptr) {
             DAWN_ASSERT(mExpression.find(inputsOperand[2].Get()) != mExpression.end());
