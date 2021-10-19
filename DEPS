@@ -38,6 +38,11 @@ deps = {
     'url': '{github_git}/microsoft/DirectML.git@af53ef743559079bd2ebb1aa83d9f98e87d774e1',
     'condition': 'checkout_win',
   },
+  # GPGMM support for fast DML allocation and residency management.
+  'third_party/gpgmm': {
+    'url': '{github_git}/intel/gpgmm.git@d370f29db790da924ecf341c2a30b0342f497d07',
+    'condition': 'checkout_win',
+  },
   'third_party/oneDNN': {
     'url': '{github_git}/oneapi-src/oneDNN.git@4a129541fd4e67e6897072186ea2817a3154eddd',
   },

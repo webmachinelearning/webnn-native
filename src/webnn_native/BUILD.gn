@@ -238,6 +238,8 @@ source_set("webnn_native_sources") {
     ]
 
     data_deps += [ ":copy_dml_dll" ]
+
+    deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
   }
 
   if (webnn_enable_onednn) {
