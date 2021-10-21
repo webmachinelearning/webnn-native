@@ -39,9 +39,60 @@ namespace webnn_native { namespace op {
             return graph->AddSplit(this);
         }
 
+        MaybeError CalculateShape() override {
+            auto inputShape =
+                mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+            auto outputShape = inputShape;
+            size_t outputSize;
+            auto axis = mAxis;
+            if (axis < 0) {
+                axis += inputShape.size();
+            }
+
+            if (mSplits.size() == 1) {
+                outputSize = mSplits[0];
+                outputShape[axis] /= outputSize;
+            } else {
+                outputSize = mSplits.size();
+            }
+
+            int32_t axisShapeSum = 0;
+            for (size_t i = 0; i < outputSize; ++i) {
+                if (mSplits.size() != 1) {
+                    outputShape[axis] = mSplits[i];
+                }
+                axisShapeSum += outputShape[axis];
+                mOutputs[i]->SetShape(outputShape);
+            }
+
+            if (axisShapeSum != inputShape[axis]) {
+                return DAWN_VALIDATION_ERROR(
+                    "The sum of sizes must equal to the dimension size of input along "
+                    "options.axis.");
+            }
+            return {};
+        }
+
         MaybeError Validate() override {
-            return mSplits.empty() ? DAWN_VALIDATION_ERROR("Argument splits is invalid.")
-                                   : MaybeError();
+            MaybeError maybeError = OperatorBase::Validate();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+
+            auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
+            if (mAxis > int32_t(inputRank - 1) || mAxis < int32_t(-inputRank)) {
+                return DAWN_VALIDATION_ERROR("Argument axis value is invalid.");
+            }
+
+            if (mSplits.empty()) {
+                return DAWN_VALIDATION_ERROR("Argument splits is invalid.");
+            }
+
+            maybeError = CalculateShape();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+            return {};
         }
 
         std::vector<uint32_t> GetSplits() const {

@@ -46,15 +46,45 @@ namespace webnn_native { namespace op {
             return graph->AddSlice(this);
         }
 
+        MaybeError CalculateShape() override {
+            auto inputShape =
+                mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+            auto outputShape = inputShape;
+            std::vector<int32_t> axes;
+            if (mAxes.empty()) {
+                for (size_t i = 0; i < mSizes.size(); ++i) {
+                    axes.push_back(i);
+                }
+            } else {
+                axes = mAxes;
+                if (axes.size() != mSizes.size()) {
+                    return DAWN_VALIDATION_ERROR("The size of axes is invalid.");
+                }
+            }
+
+            for (size_t i = 0; i < axes.size(); ++i) {
+                if (axes[i] < 0) {
+                    axes[i] += inputShape.size();
+                }
+                if (inputShape[axes[i]] < mSizes[i]) {
+                    return DAWN_VALIDATION_ERROR(
+                        "The target size should be smaller than the input size.");
+                }
+                outputShape[axes[i]] = mSizes[i] == -1 ? inputShape[axes[i]] : mSizes[i];
+            }
+            mOutputs[0]->SetShape(outputShape);
+            return {};
+        }
+
         MaybeError Validate() override {
             MaybeError maybeError = OperatorBase::Validate();
             if (maybeError.IsError()) {
                 return maybeError;
             }
 
-            int inputRank = mInputs[0]->Rank();
+            auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
             for (auto axis : mAxes) {
-                if (abs(axis) > inputRank) {
+                if (axis > int32_t(inputRank - 1) || axis < int32_t(-inputRank)) {
                     return DAWN_VALIDATION_ERROR("The axes is invalid.");
                 }
             }
@@ -63,6 +93,10 @@ namespace webnn_native { namespace op {
                 return DAWN_VALIDATION_ERROR("The size of starts are invalid.");
             }
 
+            maybeError = CalculateShape();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
             return {};
         }
 

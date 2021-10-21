@@ -25,7 +25,7 @@ namespace webnn_native { namespace op {
                    ReduceOptions const* options)
         : OperatorBase(builder, {input}), mOpType(opType) {
         if (options == nullptr || options->axes == nullptr) {
-            int32_t rank = input->Rank();
+            int32_t rank = input->Shape().size();
             mAxes.resize(rank);
             for (auto i = 0; i < rank; ++i) {
                 mAxes[i] = i;
@@ -40,6 +40,34 @@ namespace webnn_native { namespace op {
         }
     }
 
+    MaybeError Reduce::CalculateShape() {
+        auto inputShape =
+            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        std::vector<int32_t> tempShape(inputShape.size()), outputShape;
+        tempShape = inputShape;
+        for (size_t i = 0; i < mAxes.size(); ++i) {
+            if (mAxes[i] == -1) {
+                mAxes[i] = inputShape.size() - 1;
+            }
+            tempShape[mAxes[i]] = 1;
+        }
+        if (!mOptions.keepDimensions) {
+            std::vector<int32_t> reducedShape(inputShape.size() - mAxes.size());
+            for (size_t i = 0; i < inputShape.size(); ++i) {
+                if (!(inputShape[i] != 1 && tempShape[i] == 1)) {
+                    outputShape.push_back(inputShape[i]);
+                }
+            }
+            if (outputShape.size() == 0) {
+                outputShape = {1};
+            }
+        } else {
+            outputShape = tempShape;
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Reduce::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
@@ -47,9 +75,9 @@ namespace webnn_native { namespace op {
         }
 
         // The number of values in the sequence must be smaller than the rank of the input tensor.
-        size_t inputRank = mInputs[0]->Rank();
+        auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
         if (mOptions.axesCount > inputRank) {
-            return DAWN_VALIDATION_ERROR("axes size is invalid.");
+            return DAWN_VALIDATION_ERROR("Axes size is invalid.");
         }
 
         // The values in the sequence must be within the range from 0 to N-1,
@@ -58,15 +86,18 @@ namespace webnn_native { namespace op {
         std::map<int32_t, size_t> axesMap;
         for (size_t i = 0; i < mAxes.size(); ++i) {
             if (mAxes[i] > static_cast<int32_t>(inputRank - 1) || mAxes[i] < -1) {
-                return DAWN_VALIDATION_ERROR("axes value is invalid.");
+                return DAWN_VALIDATION_ERROR("Axes value is invalid.");
             }
 
             if (axesMap.find(mAxes[i]) != axesMap.end()) {
-                return DAWN_VALIDATION_ERROR("all axes must be unique");
+                return DAWN_VALIDATION_ERROR("All axes must be unique");
             }
             axesMap[mAxes[i]] = i;
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

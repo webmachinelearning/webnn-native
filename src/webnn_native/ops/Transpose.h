@@ -26,7 +26,7 @@ namespace webnn_native { namespace op {
         Transpose(GraphBuilderBase* builder, OperandBase* input, TransposeOptions const* options)
             : OperatorBase(builder, {input}) {
             if (options == nullptr || options->permutation == nullptr) {
-                int32_t rank = input->Rank();
+                int32_t rank = input->Shape().size();
                 mPermutation.resize(rank);
                 for (auto i = 0; i < rank - 1; i++) {
                     mPermutation[i] = rank - 1 - i;
@@ -41,6 +41,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddTranspose(this);
         }
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
 
         std::vector<int32_t> GetPermutation() const {

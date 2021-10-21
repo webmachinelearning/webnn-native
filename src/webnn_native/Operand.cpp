@@ -28,9 +28,8 @@ namespace webnn_native {
           mRank(0) {
         if (mOperator->Inputs().size() >= 1) {
             auto primaryInput = mOperator->Inputs()[0];
-            // The type and rank is the same as input[0] by default.
+            // The type is the same as input[0] by default.
             mType = primaryInput->Type();
-            mRank = primaryInput->Rank();
         }
     }
 

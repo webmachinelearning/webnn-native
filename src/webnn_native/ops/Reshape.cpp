@@ -19,25 +19,55 @@
 
 namespace webnn_native { namespace op {
 
+    MaybeError Reshape::CalculateShape() {
+        auto inputShape =
+            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        uint32_t inputSize = 1, capacity = 1;
+        for (auto dim : inputShape) {
+            inputSize *= dim;
+        }
+        int unkDimIdx = -1;
+        bool hasMinus1 = false;
+        std::vector<int32_t> outputShape(mNewShape.size());
+        for (size_t i = 0; i < mNewShape.size(); ++i) {
+            int32_t dim = mNewShape[i];
+            if (dim < -1) {
+                return DAWN_VALIDATION_ERROR(
+                    "The component of newShape should not be smaller than -1.");
+            }
+            if (dim == -1) {
+                if (hasMinus1) {
+                    return DAWN_VALIDATION_ERROR(
+                        "Only one component of newShape can be the special value of -1.");
+                }
+                unkDimIdx = i;
+                hasMinus1 = true;
+            } else {
+                capacity *= dim;
+                outputShape[i] = dim;
+            }
+        }
+
+        if (hasMinus1) {
+            outputShape[unkDimIdx] = inputSize / capacity;
+        } else {
+            if (inputSize != capacity) {
+                return DAWN_VALIDATION_ERROR("Total size should keep consistent.");
+            }
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Reshape::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
-
-        bool hasMinus1 = false;
-        // Only one component of newShape can be the special value of -1
-        for (auto i : mNewShape) {
-            if (i < -1 || i == 0) {
-                return DAWN_VALIDATION_ERROR("Argument newShape is invalid.");
-            } else if (i == -1) {
-                if (hasMinus1) {
-                    return DAWN_VALIDATION_ERROR("Argument newShape is invalid.");
-                }
-                hasMinus1 = true;
-            }
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
         }
-
         return {};
     }
 

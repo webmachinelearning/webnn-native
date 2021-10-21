@@ -57,21 +57,36 @@ namespace webnn_native { namespace op {
         }
     }
 
+    MaybeError Gru::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        auto weightShape = mInputs[1]->Shape();
+
+        std::vector<int32_t> outputShape1 = {weightShape[0], inputShape[1], int32_t(mHiddenSize)};
+        mOutputs[0]->SetShape(outputShape1);
+
+        if (mOptions.returnSequence) {
+            std::vector<int32_t> outputShape2 = {inputShape[0], weightShape[0], inputShape[1],
+                                                 int32_t(mHiddenSize)};
+            mOutputs[1]->SetShape(outputShape2);
+        }
+        return {};
+    }
+
     MaybeError Gru::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
         // The input 3-D tensor
-        if (mInputs[0]->Rank() != 3) {
+        if (mInputs[0]->Shape().size() != 3) {
             return DAWN_VALIDATION_ERROR("Argument input is not a 3D tensor.");
         }
         // The weight 3-D tensor
-        if (mInputs[1]->Rank() != 3) {
+        if (mInputs[1]->Shape().size() != 3) {
             return DAWN_VALIDATION_ERROR("Argument weight is not a 3D tensor.");
         }
         // The recurrentWeight 3-D tensor
-        if (mInputs[2]->Rank() != 3) {
+        if (mInputs[2]->Shape().size() != 3) {
             return DAWN_VALIDATION_ERROR("Argument recurrentWeight is not a 3D tensor.");
         }
         // The steps parameter
@@ -85,19 +100,19 @@ namespace webnn_native { namespace op {
         int n = 3;
         // The bias 2-D tensor
         if (mOptions.bias != nullptr) {
-            if (mInputs[n++]->Rank() != 2) {
+            if (mInputs[n++]->Shape().size() != 2) {
                 return DAWN_VALIDATION_ERROR("Argument bias is not a 2D tensor.");
             }
         }
         // The recurrentBias 2-D tensor
         if (mOptions.recurrentBias != nullptr) {
-            if (mInputs[n++]->Rank() != 2) {
+            if (mInputs[n++]->Shape().size() != 2) {
                 return DAWN_VALIDATION_ERROR("Argument recurrentBias is not a 2D tensor.");
             }
         }
         // The initialHiddenState 3-D tensor
         if (mOptions.initialHiddenState != nullptr) {
-            if (mInputs[n++]->Rank() != 3) {
+            if (mInputs[n++]->Shape().size() != 3) {
                 return DAWN_VALIDATION_ERROR("Argument initialHiddenState is not a 3D tensor.");
             }
         }
@@ -105,7 +120,10 @@ namespace webnn_native { namespace op {
         if (GetActivations().Get()->Size() != 2) {
             return DAWN_VALIDATION_ERROR("Argument activations is not a sequence of length 2.");
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

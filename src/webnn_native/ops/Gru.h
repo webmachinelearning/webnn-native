@@ -36,6 +36,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddGru(this);
         }
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
 
         GruOptions const* GetOptions() const {

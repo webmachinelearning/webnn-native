@@ -27,6 +27,8 @@ namespace webnn_native { namespace op {
         mOptions.mode = options == nullptr ? ml::InterpolationMode::NearestNeighbor : options->mode;
         if (options != nullptr && options->scales != nullptr) {
             mScales.assign(options->scales, options->scales + options->scalesCount);
+        } else {
+            mScales = {1.0, 1.0, 1.0, 1.0};
         }
         mOptions.scales = mScales.data();
         mOptions.scalesCount = mScales.size();
@@ -38,6 +40,21 @@ namespace webnn_native { namespace op {
         mOptions.sizesCount = mSizes.size();
     }
 
+    // TODO(mingming): Align with the update of resample2d definition.
+    MaybeError Resample::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        auto outputShape = inputShape;
+        if (!mSizes.empty()) {
+            outputShape[2] = mSizes[2];
+            outputShape[3] = mSizes[3];
+        } else {
+            outputShape[2] *= mScales[2];
+            outputShape[3] *= mScales[3];
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Resample::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
@@ -45,7 +62,7 @@ namespace webnn_native { namespace op {
         }
 
         // The input is 4-D tensor.
-        if (mInputs[0]->Rank() != 4) {
+        if (mInputs[0]->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Input is not a 4D tensor.");
         }
         if (mOptions.scales == nullptr && mOptions.sizes == nullptr) {
@@ -59,7 +76,10 @@ namespace webnn_native { namespace op {
         if (mOptions.sizes != nullptr && mOptions.sizesCount != 4) {
             return DAWN_VALIDATION_ERROR("Argument scales is not a 4D tensor.");
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

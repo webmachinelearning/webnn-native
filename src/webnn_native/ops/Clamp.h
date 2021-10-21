@@ -46,6 +46,7 @@ namespace webnn_native { namespace op {
       public:
         Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, {input}) {
+            mOutputs[0]->SetShape(input->Shape());
         }
         Clamp(GraphBuilderBase* builder, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, FusedOperator::Clamp) {

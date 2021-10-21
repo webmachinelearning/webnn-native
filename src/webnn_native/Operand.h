@@ -41,11 +41,13 @@ namespace webnn_native {
         void SetType(ml::OperandType type) {
             mType = type;
         }
-        uint32_t Rank() const {
-            return mRank;
+
+        std::vector<int32_t> Shape() const {
+            return mShape;
         }
-        void SetRank(uint32_t rank) {
-            mRank = rank;
+
+        void SetShape(std::vector<int32_t> shape) {
+            mShape = shape;
         }
 
         static OperandBase* MakeError(GraphBuilderBase* modelBuilder);
@@ -60,6 +62,8 @@ namespace webnn_native {
         ml::OperandType mType;
         // only set rank for dimensions
         uint32_t mRank;
+        // The operand dimensions
+        std::vector<int32_t> mShape;
     };
 }  // namespace webnn_native
 

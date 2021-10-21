@@ -84,8 +84,80 @@ namespace webnn_native { namespace op {
         return graph->AddConv2d(this);
     }
 
+    // Reorder filter shape to oihw.
+    void Conv2d::ReorderFilterShapeToOihw(ml::FilterOperandLayout layout,
+                                          std::vector<int32_t>& shape) {
+        switch (layout) {
+            case ml::FilterOperandLayout::Hwio:
+                shape = {shape[3], shape[2], shape[0], shape[1]};
+                break;
+            case ml::FilterOperandLayout::Ohwi:
+                shape = {shape[0], shape[3], shape[1], shape[2]};
+                break;
+            case ml::FilterOperandLayout::Ihwo:
+                shape = {shape[3], shape[0], shape[1], shape[2]};
+                break;
+            case ml::FilterOperandLayout::Oihw:
+                break;
+            default:
+                dawn::ErrorLog() << "The filter layout is unsupported";
+                DAWN_ASSERT(0);
+                break;
+        }
+    }
+
     Conv2dOptions const* Conv2d::GetOptions() const {
         return &mOptions;
+    }
+
+    MaybeError Conv2d::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        auto filterShape = mInputs[1]->Shape();
+        ReorderFilterShapeToOihw(mOptions.filterLayout, filterShape);
+        bool nchw = mOptions.inputLayout == ml::InputOperandLayout::Nchw;
+        int32_t inputH = nchw ? inputShape[2] : inputShape[1];
+        int32_t filterH = filterShape[2];
+        int32_t inputW = nchw ? inputShape[3] : inputShape[2];
+        int32_t filterW = filterShape[3];
+
+        std::vector<int32_t> inputPadding;
+        if (mOptions.autoPad == ml::AutoPad::Explicit) {
+            inputPadding = mPadding;
+        } else {
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0], inputH,
+                                             filterH, mOptions.strides[0], inputPadding);
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1], inputW,
+                                             filterW, mOptions.strides[1], inputPadding);
+        }
+
+        int32_t outputH, outputW;
+        auto dilatedFilterH = mDilations[0] * (filterH - 1) + 1;
+        auto dilatedFilterW = mDilations[1] * (filterW - 1) + 1;
+        if (mOptions.transpose) {
+            if (mOptions.outputSizes == nullptr) {
+                outputH = (inputH - 1) * mStride[0] + dilatedFilterH - inputPadding[0] -
+                          inputPadding[1] + mOutputPadding[0];
+                outputW = (inputW - 1) * mStride[1] + dilatedFilterW - inputPadding[2] -
+                          inputPadding[3] + mOutputPadding[1];
+            } else {
+                outputH = mOptions.outputSizes[0];
+                outputW = mOptions.outputSizes[1];
+            }
+        } else {
+            outputH =
+                1 + (inputH - dilatedFilterH + inputPadding[0] + inputPadding[1]) / mStride[0];
+            outputW =
+                1 + (inputW - dilatedFilterW + inputPadding[2] + inputPadding[3]) / mStride[1];
+        }
+
+        std::vector<int32_t> outputShape;
+        if (nchw) {
+            outputShape = {inputShape[0], filterShape[0], outputH, outputW};
+        } else {
+            outputShape = {inputShape[0], outputH, outputW, filterShape[0]};
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
     }
 
     MaybeError Conv2d::Validate() {
@@ -100,17 +172,17 @@ namespace webnn_native { namespace op {
             return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
         }
         // The input 4-D tensor
-        if (input->Rank() != 4) {
+        if (input->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument input is not a 4D tensor.");
         }
         // The filter 4-D tensor
-        if (filter->Rank() != 4) {
+        if (filter->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument filter is not a 4D tensor.");
         }
         // The bias is 1-D tensor.
         if (mOptions.bias != nullptr) {
             auto bias = mInputs[2];
-            if (bias->Rank() != 1) {
+            if (bias->Shape().size() != 1) {
                 return DAWN_VALIDATION_ERROR("Argument bias is not a 1D tensor.");
             }
         }
@@ -127,6 +199,10 @@ namespace webnn_native { namespace op {
             return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
 
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

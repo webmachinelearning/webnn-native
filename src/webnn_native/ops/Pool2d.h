@@ -35,6 +35,7 @@ namespace webnn_native { namespace op {
         ~Pool2d() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override;
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
 
         Pool2dOptions const* GetOptions() const;

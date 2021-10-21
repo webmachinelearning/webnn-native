@@ -49,24 +49,24 @@ namespace webnn_native { namespace op {
         }
 
         // The input is 4-D tensor.
-        if (mInputs[0]->Rank() != 4) {
+        if (mInputs[0]->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Input is not a 4D tensor.");
         }
 
         // The mean is 1-D tensor.
         auto mean = mInputs[1];
-        if (mean->Rank() != 1) {
+        if (mean->Shape().size() != 1) {
             return DAWN_VALIDATION_ERROR("Argument mean is not a 1D tensor.");
         }
         // The variance is 1-D tensor.
         auto variance = mInputs[2];
-        if (variance->Rank() != 1) {
+        if (variance->Shape().size() != 1) {
             return DAWN_VALIDATION_ERROR("Argument variance is not a 1D tensor.");
         }
         // The scale is 1-D tensor.
         if (mOptions.scale != nullptr) {
             auto scale = mInputs[3];
-            if (scale->Rank() != 1) {
+            if (scale->Shape().size() != 1) {
                 return DAWN_VALIDATION_ERROR("Argument scale is not a 1D tensor.");
             }
         }
@@ -74,7 +74,7 @@ namespace webnn_native { namespace op {
         if (mOptions.bias != nullptr) {
             size_t biasIndex = mOptions.scale != nullptr ? 4 : 3;
             auto bias = mInputs[biasIndex];
-            if (bias->Rank() != 1) {
+            if (bias->Shape().size() != 1) {
                 return DAWN_VALIDATION_ERROR("Argument bias is not a 1D tensor.");
             }
         }
@@ -83,7 +83,10 @@ namespace webnn_native { namespace op {
         if (mOptions.axis != 1 && mOptions.axis != 3) {
             return DAWN_VALIDATION_ERROR("Argument axis is not supported.");
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

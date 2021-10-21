@@ -35,23 +35,23 @@ namespace webnn_native { namespace op {
       public:
         Binary(GraphBuilderBase* builder, BinaryOpType opType, OperandBase* a, OperandBase* b)
             : OperatorBase(builder, {a, b}), mOpType(opType) {
-            // For element-wise binary ops, The rank of the output tensor
+            // For element-wise binary ops, The Shape().size() of the output tensor
             // is the maximum rank of the input tensors.
             // According to
             // [numpy-broadcasting-rule](https://webmachinelearning.github.io/webnn/#biblio-numpy-broadcasting-rule)
             // For matmul
-            // 1. if a->Rank() == 2 && b->Rank() == 2, rank_ = 2;
-            // 2. if a->Rank() > 2 || b->Rank() > 2, rank_ = std::max(a->Rank(), b->Rank());
-            // 3. if a->Rank() == 1 && b->Rank() == 1, rank_ = 0;
-            // 4. if a->Rank() == 1 && b->Rank() == 2, rank_ = 2;
-            // 5. if a->Rank() == 2 && b->Rank() == 1, rank_ = 2;
+            // 1. if a->Shape().size() == 2 && b->Shape().size() == 2, rank_ = 2;
+            // 2. if a->Shape().size() > 2 || b->Shape().size() > 2, rank_ =
+            // std::max(a->Shape().size(), b->Shape().size());
+            // 3. if a->Shape().size() == 1 && b->Shape().size() == 1, rank_ = 0;
+            // 4. if a->Shape().size() == 1 && b->Shape().size() == 2, rank_ = 2;
+            // 5. if a->Shape().size() == 2 && b->Shape().size() == 1, rank_ = 2;
             uint32_t rank = 0;
-            if (mOpType == kMatMul && a->Rank() == 1 && b->Rank() == 1) {
+            if (mOpType == kMatMul && a->Shape().size() == 1 && b->Shape().size() == 1) {
                 rank = 0;
             } else {
-                rank = std::max(a->Rank(), b->Rank());
+                rank = std::max(a->Shape().size(), b->Shape().size());
             }
-            mOutputs[0]->SetRank(rank);
         }
         ~Binary() override = default;
 
@@ -61,6 +61,7 @@ namespace webnn_native { namespace op {
         BinaryOpType GetType() const {
             return mOpType;
         }
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
 
       private:

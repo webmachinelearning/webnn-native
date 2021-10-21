@@ -29,17 +29,21 @@ namespace webnn_native { namespace op {
             : OperatorBase(builder), mName(name) {
             mDescriptor.type = desc->type;
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
+            if (mDimensions.data() == nullptr) {
+                mDimensions = {1};
+            }
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
 
-            mOutputs[0]->SetRank(desc->dimensionsCount);
             mOutputs[0]->SetType(desc->type);
+            mOutputs[0]->SetShape(mDimensions);
         }
         ~Input() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddInput(this);
         }
+
         MaybeError Validate() override {
             return {};
         }
@@ -47,6 +51,7 @@ namespace webnn_native { namespace op {
         const std::string& GetName() const {
             return mName;
         }
+
         const OperandDescriptor* GetOperandDescriptor() const {
             return &mDescriptor;
         }

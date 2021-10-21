@@ -29,8 +29,9 @@ namespace webnn_native { namespace op {
         ~Conv2d() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override;
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
-
+        void ReorderFilterShapeToOihw(ml::FilterOperandLayout layout, std::vector<int32_t>& shape);
         Conv2dOptions const* GetOptions() const;
 
       private:

@@ -29,14 +29,13 @@ namespace webnn_native { namespace op {
                 size_t newShapeCount)
             : OperatorBase(builder, {input}) {
             mNewShape.assign(newShape, newShape + newShapeCount);
-
-            mOutputs[0]->SetRank(mNewShape.size());
         }
         ~Reshape() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddReshape(this);
         }
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
         std::vector<int32_t> GetNewShape() const {
             return mNewShape;

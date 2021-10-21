@@ -34,25 +34,38 @@ namespace webnn_native { namespace op {
         }
     }
 
+    MaybeError Gemm::CalculateShape() {
+        auto inputAShape = mInputs[0]->Shape();
+        auto inputBShape = mInputs[1]->Shape();
+        std::vector<int32_t> outputShape(2);
+        outputShape[0] = mOptions.aTranspose ? inputAShape[1] : inputAShape[0];
+        outputShape[1] = mOptions.bTranspose ? inputBShape[0] : inputBShape[1];
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Gemm::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
             return maybeError;
         }
-        if (mInputs[0]->Rank() != 2) {
+        if (mInputs[0]->Shape().size() != 2) {
             return DAWN_VALIDATION_ERROR("The first input is not 2D.");
         }
-        if (mInputs[1]->Rank() != 2) {
+        if (mInputs[1]->Shape().size() != 2) {
             return DAWN_VALIDATION_ERROR("The second input is not 2D.");
         }
         if (mInputs.size() == 3) {
-            if (mInputs[2]->Rank() > 2) {
+            if (mInputs[2]->Shape().size() > 2) {
                 return DAWN_VALIDATION_ERROR(
                     "The specified third input is either a scalar, or of the shape that is "
                     "unidirectionally broadcastable.");
             }
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

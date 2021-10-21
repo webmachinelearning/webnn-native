@@ -27,11 +27,14 @@ namespace webnn_native { namespace op {
 
         if (mOpType == UnaryOpType::kSoftmax) {
             auto input = mInputs[0];
-            if (input->Rank() != 2) {
+            if (input->Shape().size() != 2) {
                 return DAWN_VALIDATION_ERROR("Input dimensions is incorrect.");
             }
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

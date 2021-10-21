@@ -36,8 +36,8 @@ namespace webnn_native { namespace op {
             mBuffer = static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset;
             mByteLength = arrayBuffer->byteLength;
 
-            mOutputs[0]->SetRank(desc->dimensionsCount);
             mOutputs[0]->SetType(desc->type);
+            mOutputs[0]->SetShape(mDimensions);
         }
         ~Constant() override = default;
 
@@ -55,9 +55,11 @@ namespace webnn_native { namespace op {
         const OperandDescriptor* GetOperandDescriptor() const {
             return &mDescriptor;
         }
+
         void const* GetBuffer() const {
             return mBuffer;
         }
+
         size_t GetByteLength() const {
             return mByteLength;
         }

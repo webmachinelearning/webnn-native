@@ -76,6 +76,38 @@ namespace webnn_native { namespace op {
         return mOpType;
     }
 
+    MaybeError Pool2d::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        bool nchw = mOptions.layout == ml::InputOperandLayout::Nchw;
+        int32_t inputH = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputW = nchw ? inputShape[3] : inputShape[2];
+        int32_t windowH = mOptions.windowDimensions == nullptr ? inputH : mWindowDimensions[0];
+        int32_t windowW = mOptions.windowDimensions == nullptr ? inputW : mWindowDimensions[1];
+
+        std::vector<int32_t> inputPadding;
+        if (mOptions.autoPad == ml::AutoPad::Explicit) {
+            inputPadding = mPadding;
+        } else {
+            // TODO(mingming): Support ceil and floor rounding types for pool2d.
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0], inputH,
+                                             windowH, mOptions.strides[0], inputPadding);
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1], inputW,
+                                             windowW, mOptions.strides[1], inputPadding);
+        }
+
+        int32_t outputH = 1 + (inputH - windowH + inputPadding[0] + inputPadding[1]) / mStride[0];
+        int32_t outputW = 1 + (inputW - windowW + inputPadding[2] + inputPadding[3]) / mStride[1];
+
+        std::vector<int32_t> outputShape;
+        if (nchw) {
+            outputShape = {inputShape[0], inputShape[1], outputH, outputW};
+        } else {
+            outputShape = {inputShape[0], outputH, outputW, inputShape[3]};
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Pool2d::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
@@ -84,7 +116,7 @@ namespace webnn_native { namespace op {
 
         auto input = mInputs[0];
         // The input 4-D tensor
-        if (input->Rank() != 4) {
+        if (input->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument input is not a 4D tensor.");
         }
         // windowDimensions: a sequence of long of length 2
@@ -103,7 +135,10 @@ namespace webnn_native { namespace op {
         if (mOptions.dilationsCount != 2) {
             return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

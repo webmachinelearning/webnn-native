@@ -21,6 +21,18 @@
 
 namespace webnn_native { namespace op {
 
+    MaybeError Transpose::CalculateShape() {
+        auto inputShape =
+            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        size_t rank = inputShape.size();
+        std::vector<int32_t> outputShape(rank);
+        for (size_t i = 0; i < rank; i++) {
+            outputShape[i] = inputShape[mPermutation[i]];
+        }
+        mOutputs[0]->SetShape(outputShape);
+        return {};
+    }
+
     MaybeError Transpose::Validate() {
         MaybeError maybeError = OperatorBase::Validate();
         if (maybeError.IsError()) {
@@ -28,7 +40,7 @@ namespace webnn_native { namespace op {
         }
 
         // the number of values in the sequence must be the same as the rank of the input tensor
-        size_t inputRank = mInputs[0]->Rank();
+        auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
         if (mPermutation.size() != size_t(inputRank)) {
             return DAWN_VALIDATION_ERROR("permutation size is invalid.");
         }
@@ -43,7 +55,10 @@ namespace webnn_native { namespace op {
                 return DAWN_VALIDATION_ERROR("permutation value is invalid.");
             }
         }
-
+        maybeError = CalculateShape();
+        if (maybeError.IsError()) {
+            return maybeError;
+        }
         return {};
     }
 

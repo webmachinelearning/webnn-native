@@ -28,6 +28,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddResample(this);
         }
+        MaybeError CalculateShape() override;
         MaybeError Validate() override;
 
         ResampleOptions const* GetOptions() const {
