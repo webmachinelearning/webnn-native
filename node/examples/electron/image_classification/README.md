@@ -19,10 +19,6 @@ npm start
 ```bash
 npm start numRuns=100
 ```
-- `device`: one of `["default", "gpu", "cpu"]`, used for setting preferred kind of device used, e.g.:
-```bash
-npm start device=gpu
-```
 
 ### Package
 
