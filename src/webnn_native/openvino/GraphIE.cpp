@@ -134,22 +134,27 @@ namespace webnn_native { namespace ie {
             return status;
         }
 
-        const char* GetGruActivation(OperatorBase* gruOperator) {
-            const char* activation = nullptr;
-            switch (gruOperator->GetFusedOperator()) {
-                case FusedOperator::Relu:
-                    activation = "relu";
-                    break;
-                case FusedOperator::Sigmoid:
-                    activation = "sigmoid";
-                    break;
-                case FusedOperator::Tanh:
-                    activation = "tanh";
-                    break;
-                default:
-                    WEBNN_ASSERT(0, "The Gru OperatorType isn't supported.");
+        std::vector<const char*> GetGruActivations(Ref<OperatorArrayBase> activationArray) {
+            std::vector<const char*> activations;
+            activations.reserve(activationArray->Size());
+            for (size_t i = 0; i < activationArray->Size(); i++) {
+                const char* operatorName = nullptr;
+                switch (activationArray->Get(i)->GetFusedOperator()) {
+                    case FusedOperator::Relu:
+                        operatorName = "relu";
+                        break;
+                    case FusedOperator::Sigmoid:
+                        operatorName = "sigmoid";
+                        break;
+                    case FusedOperator::Tanh:
+                        operatorName = "tanh";
+                        break;
+                    default:
+                        WEBNN_ASSERT(0, "The OperatorType is not supported.");
+                }
+                activations.push_back(operatorName);
             }
-            return activation;
+            return activations;
         }
 
         // Transpose NHWC <=> NCHW.
@@ -722,21 +727,12 @@ namespace webnn_native { namespace ie {
         if (options->layout == ml::RecurrentNetworkWeightLayout::Rzn) {
             return DAWN_INTERNAL_ERROR("Not support 'layout = rzn' now.");
         }
-        const char* activations[2];
-        if (options->activations.resetGateActivation == nullptr) {
-            activations[0] = "sigmoid";
-        } else {
-            activations[0] = GetGruActivation(options->activations.resetGateActivation);
-        }
-        if (options->activations.newGateActivation == nullptr) {
-            activations[1] = "tanh";
-        } else {
-            activations[1] = GetGruActivation(options->activations.newGateActivation);
-        }
+        std::vector<const char*> activations = GetGruActivations(gru->GetActivations());
+
         ngraph_node_t* gruNode0;
         status = ngraph_gru_sequence(inputTransposeNode, initialHiddenStateTransposeNode, stepsNode,
                                      weightNode, recurrentWeightNode, biasNode, hiddenSize,
-                                     direction, activations, linear_before_reset, &gruNode0);
+                                     direction, activations.data(), linear_before_reset, &gruNode0);
         DAWN_TRY(CheckStatusCode(status, "ngraph gru"));
 
         ngraph_node_t* outputNode;

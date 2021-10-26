@@ -23,6 +23,7 @@ typedef struct WebnnProcTable {
     WebnnProcCreateNamedInputs createNamedInputs;
     WebnnProcCreateNamedOperands createNamedOperands;
     WebnnProcCreateNamedOutputs createNamedOutputs;
+    WebnnProcCreateOperatorArray createOperatorArray;
 
     {% for type in by_category["object"] %}
         {% for method in c_methods(type) %}

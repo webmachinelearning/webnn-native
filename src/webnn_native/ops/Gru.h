@@ -18,6 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/GraphBuilder.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/OperatorArray.h"
 
 namespace webnn_native { namespace op {
 
@@ -49,12 +50,15 @@ namespace webnn_native { namespace op {
             return mHiddenSize;
         }
 
+        Ref<OperatorArrayBase> GetActivations() const {
+            return mActivations;
+        }
+
       private:
         GruOptions mOptions;
         size_t mSteps;
         size_t mHiddenSize;
-        Ref<OperatorBase> mRestActivation;
-        Ref<OperatorBase> mNewActivation;
+        Ref<OperatorArrayBase> mActivations;
     };
 
 }}  // namespace webnn_native::op

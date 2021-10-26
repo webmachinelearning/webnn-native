@@ -135,6 +135,35 @@ namespace node {
         return GetMappedValue(interpolationModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
+    inline bool GetRecurrentNetworkWeightLayout(const Napi::Value& jsValue,
+                                                ml::RecurrentNetworkWeightLayout& value) {
+        const std::unordered_map<std::string, ml::RecurrentNetworkWeightLayout>
+            recurrentNetworkWeightLayoutMap = {
+                {"zrn", ml::RecurrentNetworkWeightLayout::Zrn},
+                {"rzn", ml::RecurrentNetworkWeightLayout::Rzn},
+            };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(recurrentNetworkWeightLayoutMap,
+                              jsValue.As<Napi::String>().Utf8Value(), value);
+    };
+
+    inline bool GetRecurrentNetworkDirection(const Napi::Value& jsValue,
+                                             ml::RecurrentNetworkDirection& value) {
+        const std::unordered_map<std::string, ml::RecurrentNetworkDirection>
+            recurrentNetworkDirectionMap = {
+                {"forward", ml::RecurrentNetworkDirection::Forward},
+                {"backward", ml::RecurrentNetworkDirection::Backward},
+                {"both", ml::RecurrentNetworkDirection::Both},
+            };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(recurrentNetworkDirectionMap, jsValue.As<Napi::String>().Utf8Value(),
+                              value);
+    };
+
     inline bool GetValue(const Napi::Value& jsValue, int32_t& value) {
         if (!jsValue.IsNumber()) {
             return false;
@@ -301,6 +330,29 @@ namespace node {
             Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
             array.push_back(operand->GetImpl());
             args.push_back(object.As<Napi::Value>());
+        }
+        return true;
+    }
+
+    inline bool GetOperatorArray(const Napi::Value& jsValue,
+                                 ml::OperatorArray& operatorArray,
+                                 std::vector<napi_value>& args) {
+        if (!jsValue.IsArray()) {
+            return false;
+        }
+        Napi::Array jsArray = jsValue.As<Napi::Array>();
+        operatorArray = ml::CreateOperatorArray();
+        for (size_t i = 0; i < jsArray.Length(); i++) {
+            if (!jsArray.Get(i).IsObject()) {
+                return false;
+            } else {
+                ml::Operator mlOperator;
+                if (GetOperator(jsArray.Get(i), mlOperator, args)) {
+                    operatorArray.Set(mlOperator);
+                } else {
+                    return false;
+                }
+            }
         }
         return true;
     }

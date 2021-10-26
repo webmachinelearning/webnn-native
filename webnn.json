@@ -173,6 +173,29 @@
       }
     ]
   },
+  "operator array": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "size",
+        "returns": "size_t"
+      },
+      {
+        "name": "set",
+        "returns": "void",
+        "args": [
+          {"name": "operator", "type": "operator"}
+        ]
+      },
+      {
+        "name": "get",
+        "returns": "operator",
+        "args": [
+          {"name": "index", "type": "size_t"}
+        ]
+      }
+    ]
+  },
   "input operand layout": {
     "category": "enum",
     "values": [
@@ -228,13 +251,6 @@
       {"value": 2, "name": "both"}
     ]
   },
-  "gru operators": {
-    "category": "structure",
-    "members": [
-      {"name": "reset gate activation", "type": "operator", "optional": true},
-      {"name": "new gate activation", "type": "operator", "optional": true}
-    ]
-  },
   "clamp options": {
     "category": "structure",
     "members": [
@@ -281,7 +297,7 @@
       {"name": "return sequence", "type": "bool", "default": "false"},
       {"name": "direction", "type": "recurrent network direction", "default": "forward"},
       {"name": "layout", "type": "recurrent network weight layout", "default": "zrn"},
-      {"name": "activations", "type": "gru operators", "optional": true}
+      {"name": "activations", "type": "operator array", "optional": true}
     ]
   },
   "pad options": {

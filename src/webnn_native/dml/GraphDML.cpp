@@ -804,6 +804,10 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    MaybeError Graph::AddGru(const op::Gru* gru) {
+        return DAWN_UNIMPLEMENTED_ERROR("Gru hasn't been supported on DirectML.");
+    }
+
     MaybeError Graph::AddPad(const op::Pad* pad) {
         auto inputsOperand = pad->Inputs();
         DAWN_ASSERT(inputsOperand.size() == 2);

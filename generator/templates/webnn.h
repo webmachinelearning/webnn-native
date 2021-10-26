@@ -105,6 +105,7 @@ typedef MLGraphBuilder (*WebnnProcCreateGraphBuilder)(MLContext context);
 typedef MLNamedInputs (*WebnnProcCreateNamedInputs)();
 typedef MLNamedOperands (*WebnnProcCreateNamedOperands)();
 typedef MLNamedOutputs (*WebnnProcCreateNamedOutputs)();
+typedef MLOperatorArray (*WebnnProcCreateOperatorArray)();
 
 {% for type in by_category["object"] if len(c_methods(type)) > 0 %}
     // Procs of {{type.name.CamelCase()}}
@@ -126,6 +127,7 @@ WEBNN_EXPORT MLGraphBuilder webnnCreateGraphBuilder(MLContext context);
 WEBNN_EXPORT MLNamedInputs webnnCreateNamedInputs();
 WEBNN_EXPORT MLNamedOperands webnnCreateNamedOperands();
 WEBNN_EXPORT MLNamedOutputs webnnCreateNamedOutputs();
+WEBNN_EXPORT MLOperatorArray webnnCreateOperatorArray();
 
 {% for type in by_category["object"] if len(c_methods(type)) > 0 %}
     // Methods of {{type.name.CamelCase()}}

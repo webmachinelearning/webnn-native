@@ -1,4 +1,3 @@
-// Copyright 2017 The Dawn Authors
 // Copyright 2021 The WebNN-native Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,29 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_FORWARD_H_
-#define WEBNN_NATIVE_FORWARD_H_
+#ifndef NODE_OPS_GRU_H_
+#define NODE_OPS_GRU_H_
 
-#include <cstdint>
+#include <napi.h>
+#include <webnn/webnn_cpp.h>
 
-template <typename T>
-class Ref;
+namespace node { namespace op {
 
-namespace webnn_native {
+    struct Gru {
+        static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
+    };
 
-    class CompilationBase;
-    class GraphBase;
-    class GraphBuilderBase;
-    class NamedInputsBase;
-    class NamedOperandsBase;
-    class NamedOutputsBase;
-    class NamedResultsBase;
-    class OperandArrayBase;
-    class OperatorArrayBase;
-    class OperandBase;
-    class OperatorBase;
-    class ResultBase;
+}}  // namespace node::op
 
-}  // namespace webnn_native
-
-#endif  // WEBNN_NATIVE_FORWARD_H_
+#endif  // NODE_OPS_GRU_H_
