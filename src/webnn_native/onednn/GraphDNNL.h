@@ -79,13 +79,13 @@ namespace webnn_native { namespace onednn {
         std::map<std::string, dnnl_memory_t> mInputMemoryMap;
         std::map<std::string, dnnl_memory_t> mOutputMemoryMap;
 
-        enum OperandType { BINARY, CLAMP, CONV2D, POOL2D, UNARY };
-        struct OperandInfo {
-            OperandType opType;
-            const OperandBase* op;
+        enum OperatorType { BINARY, CLAMP, CONV2D, POOL2D, UNARY };
+        struct OperatorInfo {
+            OperatorType opType;
+            const OperatorBase* op;
         };
         // For op fusion
-        std::vector<OperandInfo> mOperandsToBuild;
+        std::vector<OperatorInfo> mOperandsToBuild;
 
         typedef struct {
             dnnl_primitive_t primitive;
