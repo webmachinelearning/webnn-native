@@ -1,0 +1,109 @@
+name: oneDNN backend (Linux)
+
+on: [push, pull_request]
+
+jobs:
+
+  job:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Git config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Install depot_tools
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git ../depot_tools
+        export PATH=$PWD/../depot_tools:$PATH
+        gclient
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - uses: actions/checkout@v2
+      with:
+        ref: main
+        path: baseline
+        fetch-depth: 0
+
+    - name: Sync code for main branch
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd baseline
+        cp scripts/standalone.gclient .gclient
+        gclient sync
+
+    - name: Build libdnnl.so library
+      run: |
+        cd baseline/third_party/oneDNN
+        mkdir build
+        cd build
+        cmake ..
+        make -j2
+
+    - name: Generate project for main branch
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd baseline
+        gn gen out/Release --args="webnn_enable_onednn=true is_debug=false"
+
+    - name: Build for main branch
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd baseline
+        ninja -C out/Release
+
+    - name: Test for main branch
+      run: |
+        cd baseline
+        echo "Run End2End Tests..."
+        ./out/Release/webnn_end2end_tests --gtest_output=json:${{ github.workspace }}/../baseline_end2endtests.json  || true
+        cd ..
+        rm -rf baseline
+
+    - uses: actions/checkout@v2
+      with:
+        path: update
+        fetch-depth: 0
+
+    - name: Sync latest code
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd update
+        cp scripts/standalone.gclient .gclient
+        gclient sync
+
+    - name: Build libdnnl.so library
+      run: |
+        cd update/third_party/oneDNN
+        mkdir build
+        cd build
+        cmake ..
+        make -j2
+
+    - name: Generate project for update branch
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd update
+        gn gen out/Release --args="webnn_enable_onednn=true is_debug=false"
+
+    - name: Build for update branch
+      run: |
+        export PATH=$PWD/../depot_tools:$PATH
+        cd update
+        ninja -C out/Release
+
+    - name: Test for update branch
+      run: |
+        cd update
+        echo "Run End2End Tests..."
+        ./out/Release/webnn_end2end_tests --gtest_output=json:${{ github.workspace }}/../update_end2endtests.json || true
+
+    - name: Regression check
+      run: |
+        echo "Regression checking..."
+        python update/workflow_scripts/regression_check.py ${{ github.workspace }}/../baseline_end2endtests.json ${{ github.workspace }}/../update_end2endtests.json

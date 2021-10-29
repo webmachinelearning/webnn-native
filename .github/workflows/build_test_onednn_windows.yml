@@ -1,0 +1,124 @@
+name: oneDNN backend (Windows)
+
+on: [push, pull_request]
+
+jobs:
+
+  job:
+    runs-on: windows-latest
+
+    steps:
+    - name: Git config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+
+    - name: Install depot_tools
+      shell: cmd
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git ..\depot_tools
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        gclient
+
+    - name: Set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+
+    - uses: actions/checkout@v2
+      with:
+        ref: main
+        path: baseline
+        fetch-depth: 0
+
+    - name: Sync code for main branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd baseline
+        copy scripts\standalone.gclient .gclient
+        gclient sync
+
+    - name: Build dnnl.dll library
+      run: |
+        cd baseline\third_party\oneDNN
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+
+    - name: Generate project for main branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd baseline
+        gn gen out\Release --args="webnn_enable_onednn=true is_debug=false"
+
+    - name: Build for main branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd baseline
+        ninja -C out\Release
+
+    - name: Test for main branch
+      shell: cmd
+      run: |
+        cd baseline
+        echo "Run End2End Tests..."
+        out\Release\webnn_end2end_tests.exe --gtest_output=json:${{ github.workspace }}\..\baseline_end2endtests.json
+        cd ..
+        rmdir /s /q baseline
+
+    - uses: actions/checkout@v2
+      with:
+        path: update
+        fetch-depth: 0
+
+    - name: Sync latest code
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        copy scripts\standalone.gclient .gclient
+        gclient sync
+
+    - name: Build dnnl.dll library
+      run: |
+        cd update\third_party\oneDNN
+        mkdir build
+        cd build
+        cmake ..
+        cmake --build . --config Release
+
+    - name: Generate project for update branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        gn gen out\Release --args="webnn_enable_onednn=true is_debug=false"
+
+    - name: Build for update branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        ninja -C out\Release
+
+    - name: Test for update branch
+      shell: cmd
+      run: |
+        cd update
+        echo "Run End2End Tests..."
+        out\Release\webnn_end2end_tests.exe --gtest_output=json:${{ github.workspace }}\..\update_end2endtests.json || true
+
+    - name: Regression check
+      run: |
+        echo "Regression checking..."
+        python update\workflow_scripts\regression_check.py ${{ github.workspace }}\..\baseline_end2endtests.json ${{ github.workspace }}\..\update_end2endtests.json
