@@ -15,7 +15,6 @@
 #ifndef WEBNN_NATIVE_OPS_UNARY_H_
 #define WEBNN_NATIVE_OPS_UNARY_H_
 
-#include "common/Log.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
@@ -53,7 +52,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddUnary(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
         UnaryOpType GetType() const {
             return mOpType;
         }

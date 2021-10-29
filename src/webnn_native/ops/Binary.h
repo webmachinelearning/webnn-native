@@ -35,23 +35,6 @@ namespace webnn_native { namespace op {
       public:
         Binary(GraphBuilderBase* builder, BinaryOpType opType, OperandBase* a, OperandBase* b)
             : OperatorBase(builder, {a, b}), mOpType(opType) {
-            // For element-wise binary ops, The Shape().size() of the output tensor
-            // is the maximum rank of the input tensors.
-            // According to
-            // [numpy-broadcasting-rule](https://webmachinelearning.github.io/webnn/#biblio-numpy-broadcasting-rule)
-            // For matmul
-            // 1. if a->Shape().size() == 2 && b->Shape().size() == 2, rank_ = 2;
-            // 2. if a->Shape().size() > 2 || b->Shape().size() > 2, rank_ =
-            // std::max(a->Shape().size(), b->Shape().size());
-            // 3. if a->Shape().size() == 1 && b->Shape().size() == 1, rank_ = 0;
-            // 4. if a->Shape().size() == 1 && b->Shape().size() == 2, rank_ = 2;
-            // 5. if a->Shape().size() == 2 && b->Shape().size() == 1, rank_ = 2;
-            uint32_t rank = 0;
-            if (mOpType == kMatMul && a->Shape().size() == 1 && b->Shape().size() == 1) {
-                rank = 0;
-            } else {
-                rank = std::max(a->Shape().size(), b->Shape().size());
-            }
         }
         ~Binary() override = default;
 
@@ -61,10 +44,11 @@ namespace webnn_native { namespace op {
         BinaryOpType GetType() const {
             return mOpType;
         }
-        MaybeError CalculateShape() override;
-        MaybeError Validate() override;
+
+        MaybeError ValidateAndInferOutputInfo() override;
 
       private:
+        MaybeError CalculateShape();
         BinaryOpType mOpType;
     };
 

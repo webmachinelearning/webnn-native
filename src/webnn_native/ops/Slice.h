@@ -16,6 +16,7 @@
 #define WEBNN_NATIVE_OPS_SLICE_H_
 
 #include <vector>
+
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
@@ -46,9 +47,8 @@ namespace webnn_native { namespace op {
             return graph->AddSlice(this);
         }
 
-        MaybeError CalculateShape() override {
-            auto inputShape =
-                mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        MaybeError CalculateShape() {
+            auto inputShape = mInputs[0]->Shape();
             auto outputShape = inputShape;
             std::vector<int32_t> axes;
             if (mAxes.empty()) {
@@ -70,21 +70,44 @@ namespace webnn_native { namespace op {
                     return DAWN_VALIDATION_ERROR(
                         "The target size should be smaller than the input size.");
                 }
-                outputShape[axes[i]] = mSizes[i] == -1 ? inputShape[axes[i]] : mSizes[i];
+
+                // The values in the starts sequence are either within the [0, r-1] range where r is
+                // the dimension size of input shape along the axis, or the [-r, -1] range where
+                // negative values mean counting back from the end of that dimension along the axis.
+                if (mStarts[i] >= inputShape[axes[i]] || mStarts[i] < -inputShape[axes[i]]) {
+                    return DAWN_VALIDATION_ERROR("The values of starts are out of range.");
+                }
+
+                // The length value of -1 from size selects all the remaining elements from the
+                // starting index of the given axis.
+                auto remainingSize =
+                    mStarts[i] < 0 ? -mStarts[i] : inputShape[axes[i]] - mStarts[i];
+                if (mSizes[i] == -1) {
+                    // A negative index value from starts is interpreted as counting back from the
+                    // end.
+                    outputShape[axes[i]] = remainingSize;
+                } else {
+                    if (remainingSize < mSizes[i]) {
+                        return DAWN_VALIDATION_ERROR(
+                            "The target size should be smaller than the number of remaining "
+                            "elements from the starting index of the given axis.");
+                    }
+                    outputShape[axes[i]] = mSizes[i];
+                }
             }
-            mOutputs[0]->SetShape(outputShape);
+            mOutputs[0]->SetShape(std::move(outputShape));
             return {};
         }
 
-        MaybeError Validate() override {
-            MaybeError maybeError = OperatorBase::Validate();
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
             if (maybeError.IsError()) {
                 return maybeError;
             }
 
-            auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
+            int32_t inputRank = mInputs[0]->Shape().size();
             for (auto axis : mAxes) {
-                if (axis > int32_t(inputRank - 1) || axis < int32_t(-inputRank)) {
+                if (axis >= inputRank || axis < (-inputRank)) {
                     return DAWN_VALIDATION_ERROR("The axes is invalid.");
                 }
             }
@@ -93,11 +116,7 @@ namespace webnn_native { namespace op {
                 return DAWN_VALIDATION_ERROR("The size of starts are invalid.");
             }
 
-            maybeError = CalculateShape();
-            if (maybeError.IsError()) {
-                return maybeError;
-            }
-            return {};
+            return CalculateShape();
         }
 
         std::vector<int32_t> GetStarts() const {

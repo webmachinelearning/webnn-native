@@ -16,7 +16,6 @@
 
 #include <algorithm>
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
@@ -42,8 +41,8 @@ namespace webnn_native { namespace op {
         mActivation = Ref<OperatorBase>(mOptions.activation);
     }
 
-    MaybeError BatchNorm::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError BatchNorm::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -83,10 +82,9 @@ namespace webnn_native { namespace op {
         if (mOptions.axis != 1 && mOptions.axis != 3) {
             return DAWN_VALIDATION_ERROR("Argument axis is not supported.");
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
+
+        mOutputs[0]->SetShape(mInputs[0]->Shape());
+
         return {};
     }
 

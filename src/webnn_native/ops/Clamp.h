@@ -46,7 +46,6 @@ namespace webnn_native { namespace op {
       public:
         Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, {input}) {
-            mOutputs[0]->SetShape(input->Shape());
         }
         Clamp(GraphBuilderBase* builder, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, FusedOperator::Clamp) {
@@ -55,6 +54,18 @@ namespace webnn_native { namespace op {
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddClamp(this);
+        }
+
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+            if (!mInputs.empty()) {
+                mOutputs[0]->SetShape(mInputs[0]->Shape());
+            }
+
+            return {};
         }
     };
 

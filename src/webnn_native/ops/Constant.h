@@ -35,9 +35,6 @@ namespace webnn_native { namespace op {
             mDescriptor.type = desc->type;
             mBuffer = static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset;
             mByteLength = arrayBuffer->byteLength;
-
-            mOutputs[0]->SetType(desc->type);
-            mOutputs[0]->SetShape(mDimensions);
         }
         ~Constant() override = default;
 
@@ -45,10 +42,12 @@ namespace webnn_native { namespace op {
             return graph->AddConstant(this);
         }
 
-        MaybeError Validate() override {
+        MaybeError ValidateAndInferOutputInfo() override {
             if (mBuffer == nullptr || mByteLength == 0) {
                 return DAWN_VALIDATION_ERROR("Constant array buffer is invalid.");
             }
+            mOutputs[0]->SetType(mDescriptor.type);
+            mOutputs[0]->SetShape(mDimensions);
             return {};
         }
 

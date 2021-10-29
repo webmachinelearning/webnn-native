@@ -29,14 +29,8 @@ namespace webnn_native { namespace op {
             : OperatorBase(builder), mName(name) {
             mDescriptor.type = desc->type;
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
-            if (mDimensions.data() == nullptr) {
-                mDimensions = {1};
-            }
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
-
-            mOutputs[0]->SetType(desc->type);
-            mOutputs[0]->SetShape(mDimensions);
         }
         ~Input() override = default;
 
@@ -44,7 +38,9 @@ namespace webnn_native { namespace op {
             return graph->AddInput(this);
         }
 
-        MaybeError Validate() override {
+        MaybeError ValidateAndInferOutputInfo() override {
+            mOutputs[0]->SetType(mDescriptor.type);
+            mOutputs[0]->SetShape(mDimensions);
             return {};
         }
 

@@ -21,6 +21,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
+#include "webnn_native/NativeUtils.h"
 #include "webnn_native/Operand.h"
 
 #define FAILED(status) (((dnnl_status_t)(status)) != dnnl_success)
@@ -281,31 +282,6 @@ namespace webnn_native { namespace onednn {
             bDims = bNewDims;
             cDims = cNewDims;
             return dnnl_success;
-        }
-
-        dnnl_status_t ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
-                                                       uint32_t& paddingBegin,
-                                                       uint32_t& paddingEnd,
-                                                       uint32_t dilation,
-                                                       uint32_t inputSize,
-                                                       uint32_t filterSize,
-                                                       uint32_t stride) {
-            uint32_t outSize = (inputSize + stride - 1) / stride;
-            uint32_t effectiveFilter = (filterSize - 1) * dilation + 1;
-            uint32_t neededInput = (outSize - 1) * stride + effectiveFilter;
-            uint32_t totalPadding = neededInput - inputSize > 0 ? neededInput - inputSize : 0;
-            switch (autoPad) {
-                case ml::AutoPad::SameUpper:
-                    paddingBegin = totalPadding / 2;
-                    paddingEnd = (totalPadding + 1) / 2;
-                    return dnnl_success;
-                case ml::AutoPad::SameLower:
-                    paddingBegin = (totalPadding + 1) / 2;
-                    paddingEnd = totalPadding / 2;
-                    return dnnl_success;
-                default:
-                    return dnnl_invalid_arguments;
-            }
         }
     }  // anonymous namespace
 
@@ -690,18 +666,16 @@ namespace webnn_native { namespace onednn {
         std::vector<dnnl_dim_t> dilates = {options->dilations[0] == 1 ? 0 : options->dilations[0],
                                            options->dilations[1] == 1 ? 0 : options->dilations[1]};
 
-        uint32_t paddingTop = static_cast<uint32_t>(options->padding[0]);
-        uint32_t paddingBottom = static_cast<uint32_t>(options->padding[1]);
-        uint32_t paddingLeft = static_cast<uint32_t>(options->padding[2]);
-        uint32_t paddingRight = static_cast<uint32_t>(options->padding[3]);
+        int32_t paddingTop = options->padding[0];
+        int32_t paddingBottom = options->padding[1];
+        int32_t paddingLeft = options->padding[2];
+        int32_t paddingRight = options->padding[3];
 
         if (options->autoPad != ml::AutoPad::Explicit) {
-            DNNL_TRY(ComputeImplicitPaddingForAutoPad(options->autoPad, paddingTop, paddingBottom,
-                                                      options->dilations[0], inputDims[2],
-                                                      filterDims[2], strides[0]));
-            DNNL_TRY(ComputeImplicitPaddingForAutoPad(options->autoPad, paddingLeft, paddingRight,
-                                                      options->dilations[1], inputDims[3],
-                                                      filterDims[3], strides[1]));
+            ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0], inputDims[2],
+                                             filterDims[2], strides[0], paddingTop, paddingBottom);
+            ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1], inputDims[3],
+                                             filterDims[3], strides[1], paddingLeft, paddingRight);
         }
 
         std::vector<dnnl_dim_t> padding_l = {paddingTop, paddingLeft};

@@ -44,8 +44,7 @@ namespace webnn_native {
 
         // Add the operand to model for specific backend.
         virtual MaybeError AddToGraph(GraphBase* graph) const;
-        virtual MaybeError Validate();
-        virtual MaybeError CalculateShape();
+        virtual MaybeError ValidateAndInferOutputInfo();
         FusedOperator GetFusedOperator() const;
 
         static OperatorBase* MakeError(GraphBuilderBase* graphBuilder);
@@ -60,14 +59,6 @@ namespace webnn_native {
         // The output operands of operator.
         std::vector<Ref<OperandBase>> mOutputs;
     };
-
-    void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
-                                          int32_t dilation,
-                                          int32_t inputSize,
-                                          int32_t filterSize,
-                                          int32_t stride,
-                                          std::vector<int32_t>& padding);
-
 }  // namespace webnn_native
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

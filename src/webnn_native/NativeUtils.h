@@ -9,30 +9,22 @@
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/Operand.h"
+#ifndef WEBNN_NATIVE_NATIVEUTILS_H_
+#define WEBNN_NATIVE_NATIVEUTILS_H_
 
-#include "common/Assert.h"
-#include "webnn_native/GraphBuilder.h"
+#include <webnn/webnn_cpp.h>
 
 namespace webnn_native {
-
-    OperandBase::OperandBase(GraphBuilderBase* graphBuilder, OperatorBase* operatorBase)
-        : ObjectBase(graphBuilder->GetContext()),
-          mOperator(operatorBase),
-          mType(ml::OperandType::Float32) {
-    }
-
-    OperandBase::OperandBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)
-        : ObjectBase(graphBuilder->GetContext(), tag) {
-    }
-
-    // static
-    OperandBase* OperandBase::MakeError(GraphBuilderBase* GraphBuilder) {
-        return new OperandBase(GraphBuilder, ObjectBase::kError);
-    }
-
+    void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
+                                          int32_t dilation,
+                                          int32_t inputSize,
+                                          int32_t filterSize,
+                                          int32_t stride,
+                                          int32_t& paddingBegin,
+                                          int32_t& paddingEnd);
 }  // namespace webnn_native
+
+#endif  // WEBNN_NATIVE_OPERATOR_H_

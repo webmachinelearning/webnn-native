@@ -28,14 +28,14 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddResample(this);
         }
-        MaybeError CalculateShape() override;
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         ResampleOptions const* GetOptions() const {
             return &mOptions;
         }
 
       private:
+        MaybeError CalculateShape();
         ResampleOptions mOptions;
         std::vector<float> mScales;
         std::vector<int32_t> mSizes;

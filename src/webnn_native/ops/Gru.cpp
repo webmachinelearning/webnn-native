@@ -16,7 +16,6 @@
 
 #include <algorithm>
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
@@ -41,12 +40,6 @@ namespace webnn_native { namespace op {
             if (options->initialHiddenState != nullptr) {
                 mInputs.push_back(options->initialHiddenState);
             }
-            // The first element of the output sequence is a 3-D tensor. If returnSequence is set to
-            // true, the second element is the 4-D output tensor.
-            if (options->returnSequence) {
-                // The rank of the mOutputs[0] is set to 3 by default.
-                mOutputs[1]->SetRank(4);
-            }
         }
         if (options == nullptr || options->activations == nullptr) {
             mActivations = AcquireRef(new OperatorArrayBase());
@@ -60,20 +53,16 @@ namespace webnn_native { namespace op {
     MaybeError Gru::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto weightShape = mInputs[1]->Shape();
-
-        std::vector<int32_t> outputShape1 = {weightShape[0], inputShape[1], int32_t(mHiddenSize)};
-        mOutputs[0]->SetShape(outputShape1);
-
+        mOutputs[0]->SetShape({weightShape[0], inputShape[1], static_cast<int32_t>(mHiddenSize)});
         if (mOptions.returnSequence) {
-            std::vector<int32_t> outputShape2 = {inputShape[0], weightShape[0], inputShape[1],
-                                                 int32_t(mHiddenSize)};
-            mOutputs[1]->SetShape(outputShape2);
+            mOutputs[1]->SetShape(
+                {inputShape[0], weightShape[0], inputShape[1], static_cast<int32_t>(mHiddenSize)});
         }
         return {};
     }
 
-    MaybeError Gru::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Gru::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -120,11 +109,8 @@ namespace webnn_native { namespace op {
         if (GetActivations().Get()->Size() != 2) {
             return DAWN_VALIDATION_ERROR("Argument activations is not a sequence of length 2.");
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

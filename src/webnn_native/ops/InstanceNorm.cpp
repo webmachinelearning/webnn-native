@@ -16,7 +16,6 @@
 
 #include <algorithm>
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
@@ -38,8 +37,8 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError InstanceNorm::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError InstanceNorm::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -64,10 +63,9 @@ namespace webnn_native { namespace op {
                 return DAWN_VALIDATION_ERROR("Argument bias is not a 1D tensor.");
             }
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
+
+        mOutputs[0]->SetShape(mInputs[0]->Shape());
+
         return {};
     }
 

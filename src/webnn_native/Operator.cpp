@@ -16,7 +16,6 @@
 #include "webnn_native/Operator.h"
 
 #include "common/Assert.h"
-#include "common/Log.h"
 #include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native {
@@ -54,21 +53,16 @@ namespace webnn_native {
         DAWN_UNREACHABLE();
     }
 
-    MaybeError OperatorBase::Validate() {
+    MaybeError OperatorBase::ValidateAndInferOutputInfo() {
         for (auto& input : mInputs) {
             if (input->IsError()) {
                 return DAWN_VALIDATION_ERROR("Argument inputs are invalid.");
             }
         }
-        return {};
-    }
 
-    MaybeError OperatorBase::CalculateShape() {
-        if (mInputs.empty()) {
-            return {};
-        }
-        for (auto& output : mOutputs) {
-            output->SetShape(mInputs[0]->Shape());
+        // The type is the same as input[0] by default.
+        if (!mInputs.empty()) {
+            mOutputs[0]->SetType(mInputs[0]->Type());
         }
         return {};
     }
@@ -80,34 +74,5 @@ namespace webnn_native {
     // static
     OperatorBase* OperatorBase::MakeError(GraphBuilderBase* graphBuilder) {
         return new OperatorBase(graphBuilder, ObjectBase::kError);
-    }
-
-    void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
-                                          int32_t dilation,
-                                          int32_t inputSize,
-                                          int32_t filterSize,
-                                          int32_t stride,
-                                          std::vector<int32_t>& padding) {
-        int32_t outSize = (inputSize + stride - 1) / stride;
-        int32_t dilatedFilter = (filterSize - 1) * dilation + 1;
-        int32_t neededInput = (outSize - 1) * stride + dilatedFilter;
-        int32_t totalPadding = neededInput > inputSize ? neededInput - inputSize : 0;
-        int32_t paddingBegin = 0;
-        int32_t paddingEnd = 0;
-        switch (autoPad) {
-            case ml::AutoPad::SameUpper:
-                paddingBegin = totalPadding / 2;
-                paddingEnd = (totalPadding + 1) / 2;
-                break;
-            case ml::AutoPad::SameLower:
-                paddingBegin = (totalPadding + 1) / 2;
-                paddingEnd = totalPadding / 2;
-                break;
-            default:
-                DAWN_ASSERT(0);
-                break;
-        }
-        padding.push_back(paddingBegin);
-        padding.push_back(paddingEnd);
     }
 }  // namespace webnn_native

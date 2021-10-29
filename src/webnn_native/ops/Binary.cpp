@@ -14,83 +14,83 @@
 
 #include "webnn_native/ops/Binary.h"
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
 
-    MaybeError Binary::CalculateShape() {
-        auto inputShape1 =
-            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
-        auto inputShape2 =
-            mInputs[1]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[1]->Shape();
+    MaybeError BroadcastShape(std::vector<int32_t> shapeA,
+                              std::vector<int32_t> shapeB,
+                              std::vector<int32_t>& newShape,
+                              size_t skipAxes = 0) {
+        // The rank of the output tensor is the maximum rank of the input tensors.
+        auto rankA = shapeA.size(), rankB = shapeB.size();
+        auto rankOutput = rankA >= rankB ? rankA : rankB;
+        newShape.resize(rankOutput);
+        DAWN_ASSERT(rankA >= skipAxes && rankB >= skipAxes);
+        // For each dimension of the output tensor, its size is the maximum size along that
+        // dimension of the input tensors.
+        for (size_t i = 0; i < rankOutput; ++i) {
+            // Skip some axes from the right side when broadcasting.
+            if (i >= skipAxes) {
+                auto dimA = i < rankA ? shapeA[rankA - i - 1] : 1;
+                auto dimB = i < rankB ? shapeB[rankB - i - 1] : 1;
+                if (dimA != dimB && dimA != 1 && dimB != 1) {
+                    return DAWN_VALIDATION_ERROR("Shapes are incompatible, broadcasting failed.");
+                }
+                newShape[rankOutput - i - 1] = dimA > dimB ? dimA : dimB;
+            }
+        }
+        return {};
+    }
 
-        auto l1 = inputShape1.size(), l2 = inputShape2.size();
-        bool shape1IsBigger = l1 >= l2;
-        auto maxShape = shape1IsBigger ? inputShape1 : inputShape2;
-        auto minShape = shape1IsBigger ? inputShape2 : inputShape1;
+    MaybeError Binary::CalculateShape() {
+        auto inputShapeA = mInputs[0]->Shape(), inputShapeB = mInputs[1]->Shape();
+        auto rankA = inputShapeA.size(), rankB = inputShapeB.size();
         std::vector<int32_t> outputShape;
+        MaybeError maybeError;
         if (mOpType == kMatMul) {
-            if (l1 == 1 && l2 == 1) {
-                if (inputShape1 != inputShape2) {
+            if (rankA == 1 && rankB == 1) {
+                if (inputShapeA != inputShapeB) {
                     return DAWN_VALIDATION_ERROR(
                         "The two 1D inputs of Matmul should have the same shape.");
                 }
                 outputShape = {1};
             }
-            if (l1 == 2 && l2 == 1) {
-                if (inputShape1[1] != inputShape2[0]) {
+            if (rankA == 2 && rankB == 1) {
+                if (inputShapeA[1] != inputShapeB[0]) {
                     return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
                 }
-                outputShape = {inputShape1[0], 1};
+                outputShape = {inputShapeA[0], 1};
             }
-            if (l1 == 1 && l2 == 2) {
-                if (inputShape1[0] != inputShape2[0]) {
+            if (rankA == 1 && rankB == 2) {
+                if (inputShapeA[0] != inputShapeB[0]) {
                     return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
                 }
-                outputShape = {1, inputShape2[1]};
+                outputShape = {1, inputShapeB[1]};
             }
-            if (l1 >= 2 && l2 >= 2) {
-                if (inputShape1[l1 - 1] != inputShape2[l2 - 2]) {
+            if (rankA >= 2 && rankB >= 2) {
+                if (inputShapeA[rankA - 1] != inputShapeB[rankB - 2]) {
                     return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
                 }
-                // broadcasting support
-                for (int32_t i = (int32_t)maxShape.size() - 3, j = (int32_t)minShape.size() - 3;
-                     i >= 0 && j >= 0; --i, --j) {
-                    auto maxDim = maxShape[i], minDim = minShape[j];
-                    if (maxDim != minDim && maxDim != 1 && minDim != 1) {
-                        return DAWN_VALIDATION_ERROR(
-                            "Shapes are not compatible for Matmul, broadcasting failed.");
-                    }
-                    if (maxDim < minDim) {
-                        maxShape[i] = minDim;
-                    }
+                maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape, 2);
+                if (maybeError.IsError()) {
+                    return maybeError;
                 }
-                outputShape = maxShape;
-                outputShape[outputShape.size() - 1] = inputShape2[l2 - 1];
-                outputShape[outputShape.size() - 2] = inputShape1[l1 - 2];
+                outputShape[outputShape.size() - 1] = inputShapeB[rankB - 1];
+                outputShape[outputShape.size() - 2] = inputShapeA[rankA - 2];
             }
         } else {
-            // broadcasting support
-            for (int32_t i = (int32_t)maxShape.size() - 1, j = (int32_t)minShape.size() - 1;
-                 i >= 0 && j >= 0; --i, --j) {
-                auto maxDim = maxShape[i], minDim = minShape[j];
-                if (maxDim != minDim && maxDim != 1 && minDim != 1) {
-                    return DAWN_VALIDATION_ERROR(
-                        "Shapes are incompatible for Matmul, broadcasting failed.");
-                }
-                if (maxDim < minDim) {
-                    maxShape[i] = minDim;
-                }
+            maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape);
+            if (maybeError.IsError()) {
+                return maybeError;
             }
-            outputShape = maxShape;
         }
-        mOutputs[0]->SetShape(outputShape);
+        mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Binary::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Binary::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -100,11 +100,8 @@ namespace webnn_native { namespace op {
         if (a->Type() != b->Type()) {
             return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

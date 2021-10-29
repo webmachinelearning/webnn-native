@@ -14,7 +14,8 @@
 
 #include "webnn_native/ops/Reduce.h"
 
-#include "common/Log.h"
+#include <algorithm>
+
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
@@ -24,6 +25,7 @@ namespace webnn_native { namespace op {
                    OperandBase* input,
                    ReduceOptions const* options)
         : OperatorBase(builder, {input}), mOpType(opType) {
+        // If axes are not present, all dimensions are reduced.
         if (options == nullptr || options->axes == nullptr) {
             int32_t rank = input->Shape().size();
             mAxes.resize(rank);
@@ -41,20 +43,22 @@ namespace webnn_native { namespace op {
     }
 
     MaybeError Reduce::CalculateShape() {
-        auto inputShape =
-            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
-        std::vector<int32_t> tempShape(inputShape.size()), outputShape;
-        tempShape = inputShape;
-        for (size_t i = 0; i < mAxes.size(); ++i) {
-            if (mAxes[i] == -1) {
-                mAxes[i] = inputShape.size() - 1;
+        auto inputShape = mInputs[0]->Shape();
+        std::vector<int32_t> reducedShape = inputShape, outputShape;
+        std::vector<int32_t> axes = mAxes;
+        for (size_t i = 0; i < axes.size(); ++i) {
+            // The dimensions to reduce where -1 means the last dimension.
+            if (axes[i] == -1) {
+                axes[i] = inputShape.size() - 1;
             }
-            tempShape[mAxes[i]] = 1;
+            reducedShape[axes[i]] = 1;
         }
+
         if (!mOptions.keepDimensions) {
-            std::vector<int32_t> reducedShape(inputShape.size() - mAxes.size());
             for (size_t i = 0; i < inputShape.size(); ++i) {
-                if (!(inputShape[i] != 1 && tempShape[i] == 1)) {
+                // The axes may be in unexpected order, use push_back to keep dimensions which
+                // haven't been reduced.
+                if (std::find(axes.begin(), axes.end(), i) == axes.end()) {
                     outputShape.push_back(inputShape[i]);
                 }
             }
@@ -62,21 +66,21 @@ namespace webnn_native { namespace op {
                 outputShape = {1};
             }
         } else {
-            outputShape = tempShape;
+            outputShape = std::move(reducedShape);
         }
-        mOutputs[0]->SetShape(outputShape);
+        mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Reduce::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Reduce::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
+        auto inputShape = mInputs[0]->Shape();
         // The number of values in the sequence must be smaller than the rank of the input tensor.
-        auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
-        if (mOptions.axesCount > inputRank) {
+        if (mAxes.size() > inputShape.size()) {
             return DAWN_VALIDATION_ERROR("Axes size is invalid.");
         }
 
@@ -85,20 +89,17 @@ namespace webnn_native { namespace op {
         // Besides, axis can also be -1 to represent the last dimension.
         std::map<int32_t, size_t> axesMap;
         for (size_t i = 0; i < mAxes.size(); ++i) {
-            if (mAxes[i] > static_cast<int32_t>(inputRank - 1) || mAxes[i] < -1) {
-                return DAWN_VALIDATION_ERROR("Axes value is invalid.");
+            if (mAxes[i] > static_cast<int32_t>(inputShape.size() - 1) || mAxes[i] < -1) {
+                return DAWN_VALIDATION_ERROR("axes value is invalid.");
             }
 
             if (axesMap.find(mAxes[i]) != axesMap.end()) {
-                return DAWN_VALIDATION_ERROR("All axes must be unique");
+                return DAWN_VALIDATION_ERROR("all axes must be unique");
             }
             axesMap[mAxes[i]] = i;
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

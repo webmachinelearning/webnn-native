@@ -41,14 +41,14 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddTranspose(this);
         }
-        MaybeError CalculateShape() override;
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         std::vector<int32_t> GetPermutation() const {
             return mPermutation;
         }
 
       private:
+        MaybeError CalculateShape();
         std::vector<int32_t> mPermutation;
     };
 

@@ -33,7 +33,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddBatchNorm(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         BatchNormOptions const* GetOptions() const {
             return &mOptions;

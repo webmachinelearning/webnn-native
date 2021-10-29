@@ -39,9 +39,8 @@ namespace webnn_native { namespace op {
             return graph->AddSplit(this);
         }
 
-        MaybeError CalculateShape() override {
-            auto inputShape =
-                mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        MaybeError CalculateShape() {
+            auto inputShape = mInputs[0]->Shape();
             auto outputShape = inputShape;
             size_t outputSize;
             auto axis = mAxis;
@@ -56,16 +55,18 @@ namespace webnn_native { namespace op {
                 outputSize = mSplits.size();
             }
 
-            int32_t axisShapeSum = 0;
+            int32_t dimSumAlongAxis = 0;
             for (size_t i = 0; i < outputSize; ++i) {
                 if (mSplits.size() != 1) {
                     outputShape[axis] = mSplits[i];
                 }
-                axisShapeSum += outputShape[axis];
+                dimSumAlongAxis += outputShape[axis];
                 mOutputs[i]->SetShape(outputShape);
             }
 
-            if (axisShapeSum != inputShape[axis]) {
+            // The number of output must evenly divide the dimension size of input along
+            // options.axis.
+            if (dimSumAlongAxis != inputShape[axis]) {
                 return DAWN_VALIDATION_ERROR(
                     "The sum of sizes must equal to the dimension size of input along "
                     "options.axis.");
@@ -73,14 +74,14 @@ namespace webnn_native { namespace op {
             return {};
         }
 
-        MaybeError Validate() override {
-            MaybeError maybeError = OperatorBase::Validate();
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
             if (maybeError.IsError()) {
                 return maybeError;
             }
 
-            auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
-            if (mAxis > int32_t(inputRank - 1) || mAxis < int32_t(-inputRank)) {
+            int32_t inputRank = mInputs[0]->Shape().size();
+            if (mAxis >= inputRank || mAxis < (-inputRank)) {
                 return DAWN_VALIDATION_ERROR("Argument axis value is invalid.");
             }
 
@@ -88,11 +89,7 @@ namespace webnn_native { namespace op {
                 return DAWN_VALIDATION_ERROR("Argument splits is invalid.");
             }
 
-            maybeError = CalculateShape();
-            if (maybeError.IsError()) {
-                return maybeError;
-            }
-            return {};
+            return CalculateShape();
         }
 
         std::vector<uint32_t> GetSplits() const {

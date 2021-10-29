@@ -34,9 +34,7 @@
 namespace webnn_native { namespace ie {
 
     namespace {
-        bool CheckShape(const ngraph_node_t* node, std::vector<int32_t> expectedShape) {
-            dimensions_t ieShape;
-            ngraph_get_shape(node, &ieShape);
+        bool CheckShape(dimensions_t ieShape, std::vector<int32_t> expectedShape) {
             // Shape {1} equals to shape {} for a scalar.
             if (expectedShape == std::vector<int32_t>{1} && ieShape.ranks == 0) {
                 return true;
@@ -51,6 +49,30 @@ namespace webnn_native { namespace ie {
                     static_cast<size_t>(expectedShape[i]) != ieShape.dims[i]) {
                     dawn::ErrorLog() << "The output shape at index " << i << " is expected as "
                                      << expectedShape[i] << ", but got " << ieShape.dims[i];
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool CheckShape(const ngraph_node_t* outputNodes, const OperatorBase* operatorBase) {
+            uint32_t number;
+            auto status = ngraph_get_output_number(outputNodes, &number);
+            if (status != IEStatusCode::OK) {
+                WEBNN_ASSERT(0, "Ngraph failed to get output number.");
+            }
+            DAWN_ASSERT(number == operatorBase->Outputs().size());
+
+            for (uint32_t i = 0; i < number; ++i) {
+                ngraph_node_t* outputNode;
+                status = ngraph_get_output(outputNodes, i, &outputNode);
+                if (status != IEStatusCode::OK) {
+                    WEBNN_ASSERT(0, "Ngraph failed to get output with index.");
+                }
+                dimensions_t ieShape;
+                ngraph_get_shape(outputNode, &ieShape);
+                auto expectedShape = operatorBase->Outputs()[i]->Shape();
+                if (!CheckShape(ieShape, expectedShape)) {
                     return false;
                 }
             }
@@ -307,10 +329,9 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* ngraphConstant;
         status = ngraph_constant(&tensorDesc, blob, &ngraphConstant);
         DAWN_TRY(CheckStatusCode(status, "ngraph add constant"));
-        auto outputShape = constant->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(ngraphConstant, outputShape));
         mGraphNodeMap[constant->PrimaryOutput()] = ngraphConstant;
         mConstantSet.insert(constant->PrimaryOutput());
+        DAWN_ASSERT(CheckShape(ngraphConstant, constant));
         return {};
     }
 
@@ -321,10 +342,9 @@ namespace webnn_native { namespace ie {
         IEStatusCode status = ngraph_input(&tensorDesc, &graphInput);
         DAWN_TRY(CheckStatusCode(status, "ngraph add input"));
         mGraphInputs.push_back(graphInput);
-        auto outputShape = input->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(graphInput, outputShape));
         mGraphNodeMap[input->PrimaryOutput()] = graphInput;
         mInputIdMap[input->GetName()] = mGraphInputs.size() - 1;
+        DAWN_ASSERT(CheckShape(graphInput, input));
         return {};
     }
 
@@ -425,9 +445,8 @@ namespace webnn_native { namespace ie {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             instanceNormNode = TransposeInputLayout(instanceNormNode, false);
         }
-        auto outputShape = instanceNorm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(instanceNormNode, outputShape));
         mGraphNodeMap[instanceNorm->PrimaryOutput()] = instanceNormNode;
+        DAWN_ASSERT(CheckShape(instanceNormNode, instanceNorm));
         return {};
     }
 
@@ -473,9 +492,8 @@ namespace webnn_native { namespace ie {
         if (nhwc) {
             activationNode = TransposeInputLayout(activationNode, false);
         }
-        auto outputShape = batchNorm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(activationNode, outputShape));
         mGraphNodeMap[batchNorm->PrimaryOutput()] = activationNode;
+        DAWN_ASSERT(CheckShape(activationNode, batchNorm));
         return {};
     }
 
@@ -519,9 +537,8 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* sliceNode;
         IEStatusCode status = ngraph_slice_inference(input, beginNode, endNode, &sliceNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph slice inference"));
-        auto outputShape = slice->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(sliceNode, outputShape));
         mGraphNodeMap[slice->PrimaryOutput()] = sliceNode;
+        DAWN_ASSERT(CheckShape(sliceNode, slice));
         return {};
     }
 
@@ -560,9 +577,8 @@ namespace webnn_native { namespace ie {
                 DAWN_ASSERT(0);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph add binary"));
-        auto outputShape = binary->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(binaryNode, outputShape));
         mGraphNodeMap[binary->PrimaryOutput()] = binaryNode;
+        DAWN_ASSERT(CheckShape(binaryNode, binary));
         return {};
     }
 
@@ -573,9 +589,8 @@ namespace webnn_native { namespace ie {
         auto inputNode = mGraphNodeMap[inputs[0].Get()];
         status = ngraph_clamp(inputNode, clamp->GetMinValue(), clamp->GetMaxValue(), &clampNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph clamp"));
-        auto outputShape = clamp->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(clampNode, outputShape));
         mGraphNodeMap[clamp->PrimaryOutput()] = clampNode;
+        DAWN_ASSERT(CheckShape(clampNode, clamp));
         return {};
     }
 
@@ -673,13 +688,12 @@ namespace webnn_native { namespace ie {
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             activationNode = TransposeInputLayout(activationNode, false);
         }
+        mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
         // TODO(mingming): Need to check output shape for transpose Conv2d, disable it due to some
         // known issues.
         if (!transpose) {
-            auto outputShape = conv2d->PrimaryOutput()->Shape();
-            DAWN_ASSERT(CheckShape(activationNode, outputShape));
+            DAWN_ASSERT(CheckShape(activationNode, conv2d));
         }
-        mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
         return {};
     }
 
@@ -779,15 +793,7 @@ namespace webnn_native { namespace ie {
 
         ngraph_node_t* outputNode;
         ngraph_node_t* outputTransposeNode;
-        status = ngraph_get_output(gruNode0, 1, &outputNode);
-        DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
-        status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
-        DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
-
-        auto outputShape = gru->Outputs()[0]->Shape();
-        DAWN_ASSERT(CheckShape(outputTransposeNode, outputShape));
-        mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
-
+        dimensions_t ieShape;
         if (return_sequence) {
             // [batch_size, num_directions, steps, hidden_size] => [steps, num_directions,
             // batch_size, hidden_size]
@@ -798,16 +804,22 @@ namespace webnn_native { namespace ie {
             DAWN_TRY(CheckStatusCode(status, "ngraph get output 0"));
             status = ngraph_transpose(outputNode, order4DNode, &outputTransposeNode);
             DAWN_TRY(CheckStatusCode(status, "transpose gru output 0 layout"));
-            auto outputShape = gru->Outputs()[1]->Shape();
-            DAWN_ASSERT(CheckShape(outputTransposeNode, outputShape));
             mGraphNodeMap[gru->Outputs()[1].Get()] = outputTransposeNode;
+
+            ngraph_get_shape(outputTransposeNode, &ieShape);
+            auto outputShape = gru->Outputs()[1]->Shape();
+            DAWN_ASSERT(CheckShape(ieShape, outputShape));
         }
         status = ngraph_get_output(gruNode, 1, &outputNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
-        
         status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
         DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
         mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
+
+        ngraph_get_shape(outputTransposeNode, &ieShape);
+        auto outputShape = gru->Outputs()[0]->Shape();
+        DAWN_ASSERT(CheckShape(ieShape, outputShape));
+
         ngraph_node_free(&gruNode);
 
         return {};
@@ -819,16 +831,10 @@ namespace webnn_native { namespace ie {
             return DAWN_INTERNAL_ERROR("The padding is not a constant");
         }
         const op::Constant* padding = reinterpret_cast<const op::Constant*>(inputs[1]->Operator());
-        int32_t const* paddingDimensions = padding->GetOperandDescriptor()->dimensions;
         uint32_t inputRank = inputs[0]->Shape().size();
-        uint32_t padCount = padding->GetByteLength() / sizeof(int32_t);
-        if (paddingDimensions[1] != 2 || paddingDimensions[0] != static_cast<int32_t>(inputRank)) {
-            return DAWN_INTERNAL_ERROR(
-                "The padding should has shape [n, 2], where n is the rank of the input tensor");
-        }
         const uint32_t* padBuffer = static_cast<const uint32_t*>(padding->GetBuffer());
         std::vector<int32_t> padBegin, padEnd;
-        for (size_t i = 0; i < padCount / 2; ++i) {
+        for (size_t i = 0; i < inputRank; ++i) {
             padBegin.push_back(padBuffer[2 * i]);
             padEnd.push_back(padBuffer[2 * i + 1]);
         }
@@ -844,9 +850,8 @@ namespace webnn_native { namespace ie {
         IEStatusCode status = ngraph_pad(input, padBeginNode, padEndNode, padValueNode,
                                          static_cast<ngraph_padding_mode>(options->mode), &padNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph pad"));
-        auto outputShape = pad->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(padNode, outputShape));
         mGraphNodeMap[pad->PrimaryOutput()] = padNode;
+        DAWN_ASSERT(CheckShape(padNode, pad));
         return {};
     }
 
@@ -896,10 +901,8 @@ namespace webnn_native { namespace ie {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             poolNode = TransposeInputLayout(poolNode, false);
         }
-        auto outputShape = pool2d->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(poolNode, outputShape));
         mGraphNodeMap[pool2d->PrimaryOutput()] = poolNode;
-
+        DAWN_ASSERT(CheckShape(poolNode, pool2d));
         return {};
     }
 
@@ -942,10 +945,8 @@ namespace webnn_native { namespace ie {
             status = ngraph_tanh(input, &unaryNode);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph unary"));
-        auto outputShape = unary->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(unaryNode, outputShape));
         mGraphNodeMap[unary->PrimaryOutput()] = unaryNode;
-
+        DAWN_ASSERT(CheckShape(unaryNode, unary));
         return {};
     }
 
@@ -985,9 +986,8 @@ namespace webnn_native { namespace ie {
                 break;
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph reduce"));
-        auto outputShape = reduce->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(reduceNode, outputShape));
         mGraphNodeMap[reduce->PrimaryOutput()] = reduceNode;
+        DAWN_ASSERT(CheckShape(reduceNode, reduce));
         return {};
     }
 
@@ -1065,9 +1065,8 @@ namespace webnn_native { namespace ie {
         if (transpose) {
             resampleNode = TransposeInputLayout(resampleNode, false);
         }
-        auto outputShape = resample->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(resampleNode, outputShape));
         mGraphNodeMap[resample->PrimaryOutput()] = resampleNode;
+        DAWN_ASSERT(CheckShape(resampleNode, resample));
         return {};
     }
 
@@ -1079,9 +1078,8 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* reshapeNode;
         IEStatusCode status = ngraph_reshape(input, constantNode, &reshapeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
-        auto outputShape = reshape->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(reshapeNode, outputShape));
         mGraphNodeMap[reshape->PrimaryOutput()] = reshapeNode;
+        DAWN_ASSERT(CheckShape(reshapeNode, reshape));
         return {};
     }
 
@@ -1110,10 +1108,9 @@ namespace webnn_native { namespace ie {
             ngraph_node_t* outputNode;
             status = ngraph_get_output(outputNodes, i, &outputNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph get output with index"));
-            auto outputShape = split->Outputs()[i]->Shape();
-            DAWN_ASSERT(CheckShape(outputNode, outputShape));
             mGraphNodeMap[split->Outputs()[i].Get()] = outputNode;
         }
+        DAWN_ASSERT(CheckShape(outputNodes, split));
         ngraph_node_free(&outputNodes);
         return {};
     }
@@ -1127,9 +1124,8 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* squeezeNode;
         IEStatusCode status = ngraph_squeeze(input, constantNode, &squeezeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph squeeze"));
-        auto outputShape = squeeze->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(squeezeNode, outputShape));
         mGraphNodeMap[squeeze->PrimaryOutput()] = squeezeNode;
+        DAWN_ASSERT(CheckShape(squeezeNode, squeeze));
         return {};
     }
 
@@ -1141,9 +1137,8 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* transposeNode;
         IEStatusCode status = ngraph_transpose(input, constantNode, &transposeNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph transpose"));
-        auto outputShape = transpose->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(transposeNode, outputShape));
         mGraphNodeMap[transpose->PrimaryOutput()] = transposeNode;
+        DAWN_ASSERT(CheckShape(transposeNode, transpose));
         return {};
     }
 
@@ -1158,9 +1153,8 @@ namespace webnn_native { namespace ie {
         IEStatusCode status =
             ngraph_concat(inputNodes.data(), inputNodes.size(), concat->GetAxis(), &concatNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph concat"));
-        auto outputShape = concat->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(concatNode, outputShape));
         mGraphNodeMap[concat->PrimaryOutput()] = concatNode;
+        DAWN_ASSERT(CheckShape(concatNode, concat));
         return {};
     }
 
@@ -1204,9 +1198,8 @@ namespace webnn_native { namespace ie {
             status = ngraph_add(gemmNode, betaNode, &gemmNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph add"));
         }
-        auto outputShape = gemm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(gemmNode, outputShape));
         mGraphNodeMap[gemm->PrimaryOutput()] = gemmNode;
+        DAWN_ASSERT(CheckShape(gemmNode, gemm));
         return {};
     }
 

@@ -18,51 +18,55 @@
 
 namespace webnn_native { namespace op {
     MaybeError Concat::CalculateShape() {
-        auto inputShape =
-            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
-        int32_t axisShape = 0;
+        auto outputShape = mInputs[0]->Shape();
+        // The size of the dimension along axis is computed as the sum of all the input sizes of
+        // the same dimension.
+        outputShape[mAxis] = 0;
         for (auto& input : mInputs) {
-            auto shape = input->Shape();
-            if (shape.size() != inputShape.size()) {
-                return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
-            }
-            axisShape += shape[mAxis];
-
-            for (size_t i = 0; i < inputShape.size(); ++i) {
-                if (uint32_t(i) != mAxis && shape[i] != inputShape[i]) {
-                    return DAWN_VALIDATION_ERROR(
-                        "All input tensors must have the same shape, except for the size of the "
-                        "dimension to concatenate on.");
-                }
-            }
+            outputShape[mAxis] += input->Shape()[mAxis];
         }
-        auto outputShape = inputShape;
-        outputShape[mAxis] = axisShape;
-        mOutputs[0]->SetShape(outputShape);
+        mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Concat::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Concat::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
+        if (mInputs.empty()) {
+            return DAWN_VALIDATION_ERROR("Empty inputs is not supported.");
+        }
+
         auto inputType = mInputs[0]->Type();
+        auto inputShape = mInputs[0]->Shape();
+        auto inputRank = inputShape.size();
         for (auto& input : mInputs) {
             if (input->Type() != inputType) {
                 return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
             }
+
+            auto shape = input->Shape();
+            if (shape.size() != inputShape.size()) {
+                return DAWN_VALIDATION_ERROR("The input tensors must have the same rank.");
+            }
+
+            for (size_t i = 0; i < inputShape.size(); ++i) {
+                if (uint32_t(i) != mAxis && shape[i] != inputShape[i]) {
+                    return DAWN_VALIDATION_ERROR(
+                        "Argument inputs must have same shape except for the size of the dimension "
+                        "to "
+                        "concatenate on.");
+                }
+            }
         }
-        auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
+
         if (mAxis >= inputRank) {
             return DAWN_VALIDATION_ERROR("The axis is out of rank range.");
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

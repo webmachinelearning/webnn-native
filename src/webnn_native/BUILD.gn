@@ -107,6 +107,8 @@ source_set("webnn_native_sources") {
     "NamedInputs.h",
     "NamedOutputs.h",
     "NamedRecords.h",
+    "NativeUtils.cpp",
+    "NativeUtils.h",
     "ObjectBase.cpp",
     "ObjectBase.h",
     "Operand.cpp",

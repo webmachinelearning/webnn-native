@@ -47,7 +47,7 @@ namespace webnn_native {
         }
 
         void SetShape(std::vector<int32_t> shape) {
-            mShape = shape;
+            mShape = std::move(shape);
         }
 
         static OperandBase* MakeError(GraphBuilderBase* modelBuilder);
@@ -60,8 +60,6 @@ namespace webnn_native {
         Ref<OperatorBase> mOperator;
         // The operand type.
         ml::OperandType mType;
-        // only set rank for dimensions
-        uint32_t mRank;
         // The operand dimensions
         std::vector<int32_t> mShape;
     };

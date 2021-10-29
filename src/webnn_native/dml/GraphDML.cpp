@@ -21,6 +21,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
+#include "webnn_native/NativeUtils.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 
@@ -36,7 +37,11 @@ namespace webnn_native { namespace dml {
             return prod;
         }
 
-        bool CheckShape(const ::dml::Expression& expression, std::vector<int32_t> expectedShape) {
+        bool CheckShape(const ::dml::Expression& expression,
+                        const OperatorBase* operatorBase,
+                        size_t index = 0) {
+            DAWN_ASSERT(index < operatorBase->Outputs().size());
+            auto expectedShape = operatorBase->Outputs()[index]->Shape();
             ::dml::TensorDimensions dmlShape = expression.GetOutputDesc().sizes;
             if (expectedShape.size() != dmlShape.size()) {
                 dawn::ErrorLog() << "The size of output shape is expected as "
@@ -47,6 +52,17 @@ namespace webnn_native { namespace dml {
                 if (expectedShape[i] < 0 || static_cast<size_t>(expectedShape[i]) != dmlShape[i]) {
                     dawn::ErrorLog() << "The output shape at index " << i << " is expected as "
                                      << expectedShape[i] << ", but got " << dmlShape[i];
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        bool CheckShape(const std::vector<::dml::Expression>& expressions,
+                        const OperatorBase* operatorBase) {
+            DAWN_ASSERT(expressions.size() == operatorBase->Outputs().size());
+            for (size_t i = 0; i < expressions.size(); ++i) {
+                if (!CheckShape(expressions[i], operatorBase, i)) {
                     return false;
                 }
             }
@@ -115,8 +131,8 @@ namespace webnn_native { namespace dml {
         }
 
         // Strides are used to express broadcasting (by specifying a stride of 0) as well as
-        // padding. If Strides is not specified, each dimension in the tensor is considered to be
-        // contiguously packed, with no additional padding. The calculated strides refer to
+        // padding. If Strides is not specified, each dimension in the tensor is considered to
+        // be contiguously packed, with no additional padding. The calculated strides refer to
         // https://docs.microsoft.com/en-us/windows/win32/direct3d12/dml-helper-functions#calculatestrides
         ::dml::TensorDimensions CalculateBroadcastStrides(::dml::TensorDimensions dims,
                                                           std::vector<bool> broadcast = {}) {
@@ -338,35 +354,6 @@ namespace webnn_native { namespace dml {
             return std::to_string(type);
         }
 
-        void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
-                                              uint32_t dilation,
-                                              uint32_t inputSize,
-                                              uint32_t filterSize,
-                                              uint32_t stride,
-                                              std::vector<uint32_t>& padding) {
-            uint32_t outSize = (inputSize + stride - 1) / stride;
-            uint32_t effectiveFilter = (filterSize - 1) * dilation + 1;
-            uint32_t neededInput = (outSize - 1) * stride + effectiveFilter;
-            uint32_t totalPadding = neededInput > inputSize ? neededInput - inputSize : 0;
-            uint32_t paddingBegin = 0;
-            uint32_t paddingEnd = 0;
-            switch (autoPad) {
-                case ml::AutoPad::SameUpper:
-                    paddingBegin = totalPadding / 2;
-                    paddingEnd = (totalPadding + 1) / 2;
-                    break;
-                case ml::AutoPad::SameLower:
-                    paddingBegin = (totalPadding + 1) / 2;
-                    paddingEnd = totalPadding / 2;
-                    break;
-                default:
-                    DAWN_ASSERT(0);
-                    break;
-            }
-            padding.push_back(paddingBegin);
-            padding.push_back(paddingEnd);
-        }
-
         template <typename T>
         std::vector<const uint32_t> ImplicitPadding(const T* options,
                                                     ::dml::Expression input,
@@ -376,16 +363,16 @@ namespace webnn_native { namespace dml {
             ::dml::Span<const uint32_t> dilations(
                 reinterpret_cast<const uint32_t*>(options->dilations), options->dilationsCount);
             ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
-            // {paddingTop, paddingBottom, paddingLeft, paddingRight,}
-            std::vector<uint32_t> padding;
-            padding.reserve(options->paddingCount);
+            // {paddingTop, paddingBottom, paddingLeft, paddingRight}
+            int32_t paddingTop, paddingBottom, paddingLeft, paddingRight;
             ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
-                                             filterSize[0], strides[0], padding);
+                                             filterSize[0], strides[0], paddingTop, paddingBottom);
             ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
-                                             filterSize[1], strides[1], padding);
-            return {
-                static_cast<const uint32_t>(padding[0]), static_cast<const uint32_t>(padding[1]),
-                static_cast<const uint32_t>(padding[2]), static_cast<const uint32_t>(padding[3])};
+                                             filterSize[1], strides[1], paddingLeft, paddingRight);
+            return {static_cast<const uint32_t>(paddingTop),
+                    static_cast<const uint32_t>(paddingBottom),
+                    static_cast<const uint32_t>(paddingLeft),
+                    static_cast<const uint32_t>(paddingRight)};
         }
 
         template <typename T>
@@ -508,10 +495,9 @@ namespace webnn_native { namespace dml {
 
         auto dmlConstant = BindingConstant(dmlTensorType, dmlTensorDims, constant->GetBuffer(),
                                            constant->GetByteLength());
-        auto outputShape = constant->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(dmlConstant, outputShape));
         mExpression.insert(std::make_pair(constant->PrimaryOutput(), dmlConstant));
         mConstantSet.insert(constant->PrimaryOutput());
+        DAWN_ASSERT(CheckShape(dmlConstant, constant));
         return {};
     }
 
@@ -571,12 +557,11 @@ namespace webnn_native { namespace dml {
         ::dml::TensorDesc dmlTensorDesc(dmlTensorType, dmlTensorDims,
                                         ::dml::TensorPolicy::Default());
         ::dml::Expression dmlInput = ::dml::InputTensor(*mGraph, mBindings.size(), dmlTensorDesc);
-        auto outputShape = input->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(dmlInput, outputShape));
         mExpression.insert(std::make_pair(input->PrimaryOutput(), dmlInput));
         std::unique_ptr<::pydml::Binding> binding(new ::pydml::Binding(dmlInput, nullptr, 0));
         mBindings.push_back(std::move(binding));
         mInputs.insert(std::make_pair(input->GetName(), mBindings.back().get()));
+        DAWN_ASSERT(CheckShape(dmlInput, input));
         return {};
     }
 
@@ -641,9 +626,8 @@ namespace webnn_native { namespace dml {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
         output = EmulateFusedActivation(options->activation, output);
-        auto outputShape = batchNorm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(batchNorm->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, batchNorm));
         return {};
     }
 
@@ -758,9 +742,8 @@ namespace webnn_native { namespace dml {
             ::dml::TensorDimensions cNewDims = ShrinkDimensions(cDims, cRank);
             c = ::dml::Reinterpret(c, cNewDims, ::dml::NullOpt);
         }
-        auto outputShape = binary->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(c, outputShape));
         mExpression.insert(std::make_pair(binary->PrimaryOutput(), c));
+        DAWN_ASSERT(CheckShape(c, binary));
         return {};
     }
 
@@ -825,9 +808,8 @@ namespace webnn_native { namespace dml {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
         output = EmulateFusedActivation(options->activation, output);
-        auto outputShape = conv2d->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(conv2d->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, conv2d));
         return {};
     }
 
@@ -895,9 +877,8 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output =
             ::dml::Padding(input, paddingMode, paddingValue, startPadding, endPadding);
-        auto outputShape = pad->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(pad->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, pad));
         return {};
     }
 
@@ -952,9 +933,8 @@ namespace webnn_native { namespace dml {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
-        auto outputShape = pool2d->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, pool2d));
         return {};
     }
 
@@ -967,9 +947,8 @@ namespace webnn_native { namespace dml {
             return DAWN_INTERNAL_ERROR("The size of input dimensions is greater than max");
         }
         auto output = ::dml::Clip(input, clamp->GetMinValue(), clamp->GetMaxValue());
-        auto outputShape = clamp->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(clamp->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, clamp));
         return {};
     }
 
@@ -1030,9 +1009,8 @@ namespace webnn_native { namespace dml {
             }
             output = ::dml::Reinterpret(output, newDims, ::dml::NullOpt);
         }
-        auto outputShape = reduce->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(reduce->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, reduce));
         return {};
     }
 
@@ -1070,9 +1048,8 @@ namespace webnn_native { namespace dml {
         // InputPixelOffsets = 0.5f for each dimension
         // OutputPixelOffsets = -0.5f for each dimension
         ::dml::Expression output = ::dml::Resample(input, outputSizes, mode, {}, {}, {});
-        auto outputShape = resample->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(resample->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, resample));
         return {};
     }
 
@@ -1113,9 +1090,8 @@ namespace webnn_native { namespace dml {
         }
 
         ::dml::Expression output = ::dml::Reinterpret(input, newSizes, ::dml::NullOpt);
-        auto outputShape = reshape->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(reshape->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, reshape));
         return {};
     }
 
@@ -1157,9 +1133,8 @@ namespace webnn_native { namespace dml {
             ::dml::Slice(input, ::dml::Span<const uint32_t>(inputWindowOffsets),
                          ::dml::Span<const uint32_t>(inputWindowSizes),
                          ::dml::Span<const int32_t>(inputWindwStrides));
-        auto outputShape = slice->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(slice->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, slice));
         return {};
     }
 
@@ -1192,10 +1167,9 @@ namespace webnn_native { namespace dml {
         size_t outputSize = split->Outputs().size();
         DAWN_ASSERT(outputSize == output.size());
         for (size_t i = 0; i < outputSize; ++i) {
-            auto outputShape = split->Outputs()[i]->Shape();
-            DAWN_ASSERT(CheckShape(output[i], outputShape));
             mExpression.insert(std::make_pair(split->Outputs()[i].Get(), output[i]));
         }
+        DAWN_ASSERT(CheckShape(output, split));
         return {};
     }
 
@@ -1228,9 +1202,8 @@ namespace webnn_native { namespace dml {
         }
         ::dml::Expression output =
             ::dml::Identity(::dml::Reinterpret(input, squeezeDims, ::dml::NullOpt));
-        auto outputShape = squeeze->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(squeeze->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, squeeze));
         return {};
     }
 
@@ -1269,9 +1242,8 @@ namespace webnn_native { namespace dml {
 
         ::dml::Expression output =
             ::dml::Identity(::dml::Reinterpret(input, transposedSizes, transposedStrides));
-        auto outputShape = transpose->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(transpose->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, transpose));
         return {};
     }
 
@@ -1327,9 +1299,8 @@ namespace webnn_native { namespace dml {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
-        auto outputShape = instanceNorm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(instanceNorm->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, instanceNorm));
         return {};
     }
 
@@ -1439,9 +1410,8 @@ namespace webnn_native { namespace dml {
                 return DAWN_UNIMPLEMENTED_ERROR(" Unary op " + OpTypeToString(unary->GetType()) +
                                                 " is not implemented.");
         }
-        auto outputShape = unary->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(unary->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, unary));
         return {};
     }
 
@@ -1487,9 +1457,8 @@ namespace webnn_native { namespace dml {
             auto dims = ShrinkDimensions(outputDims, primaryDims.size());
             output = ::dml::Reinterpret(output, dims, ::dml::NullOpt);
         }
-        auto outputShape = concat->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(concat->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, concat));
         return {};
     }
 
@@ -1559,9 +1528,8 @@ namespace webnn_native { namespace dml {
         // Reshape back according to output rank.
         auto shrinkDims = ShrinkDimensions(output.GetOutputDesc().sizes, 2);
         output = ::dml::Reinterpret(output, shrinkDims, ::dml::NullOpt);
-        auto outputShape = gemm->PrimaryOutput()->Shape();
-        DAWN_ASSERT(CheckShape(output, outputShape));
         mExpression.insert(std::make_pair(gemm->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, gemm));
         return {};
     }
 

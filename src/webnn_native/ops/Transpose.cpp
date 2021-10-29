@@ -16,32 +16,31 @@
 
 #include <algorithm>
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
 
     MaybeError Transpose::CalculateShape() {
-        auto inputShape =
-            mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        auto inputShape = mInputs[0]->Shape();
         size_t rank = inputShape.size();
         std::vector<int32_t> outputShape(rank);
-        for (size_t i = 0; i < rank; i++) {
+        for (size_t i = 0; i < rank; ++i) {
             outputShape[i] = inputShape[mPermutation[i]];
         }
-        mOutputs[0]->SetShape(outputShape);
+        mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Transpose::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Transpose::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
-        // the number of values in the sequence must be the same as the rank of the input tensor
-        auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
-        if (mPermutation.size() != size_t(inputRank)) {
+        auto inputShape = mInputs[0]->Shape();
+        // the number of values in the sequence must be the same as the rank of the input
+        // tensor
+        if (mPermutation.size() != inputShape.size()) {
             return DAWN_VALIDATION_ERROR("permutation size is invalid.");
         }
 
@@ -50,16 +49,13 @@ namespace webnn_native { namespace op {
         std::vector<uint32_t> newPermutation;
         newPermutation.assign(mPermutation.begin(), mPermutation.end());
         std::sort(newPermutation.begin(), newPermutation.end());
-        for (uint32_t i = 0; i < inputRank - 1; i++) {
+        for (uint32_t i = 0; i < inputShape.size(); ++i) {
             if (newPermutation[i] != i) {
                 return DAWN_VALIDATION_ERROR("permutation value is invalid.");
             }
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

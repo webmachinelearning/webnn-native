@@ -49,22 +49,22 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-#define DAWN_VALIDATE(ptr, objectBase)                 \
-    Ref<OperatorBase> op = AcquireRef(ptr);            \
-    if (GetContext()->ConsumedError(op->Validate())) { \
-        return objectBase::MakeError(this);            \
-    }                                                  \
-    for (;;)                                           \
+#define WEBNN_VALIDATE(ptr, objectBase)                                  \
+    Ref<OperatorBase> op = AcquireRef(ptr);                              \
+    if (GetContext()->ConsumedError(op->ValidateAndInferOutputInfo())) { \
+        return objectBase::MakeError(this);                              \
+    }                                                                    \
+    for (;;)                                                             \
     break
 
-#define VALIDATE_FOR_OPERAND(ptr)    \
-    DAWN_VALIDATE(ptr, OperandBase); \
+#define VALIDATE_FOR_OPERAND(ptr)     \
+    WEBNN_VALIDATE(ptr, OperandBase); \
     return op->PrimaryOutput()
-#define VALIDATE_FUSED_OPERATOR(ptr)  \
-    DAWN_VALIDATE(ptr, OperatorBase); \
+#define VALIDATE_FUSED_OPERATOR(ptr)   \
+    WEBNN_VALIDATE(ptr, OperatorBase); \
     return op.Detach()
-#define VALIDATE_ARRAY_OPERAND(ptr)       \
-    DAWN_VALIDATE(ptr, OperandArrayBase); \
+#define VALIDATE_ARRAY_OPERAND(ptr)        \
+    WEBNN_VALIDATE(ptr, OperandArrayBase); \
     return new OperandArrayBase(this, op->Outputs())
 
 namespace webnn_native {

@@ -14,8 +14,8 @@
 
 #include "webnn_native/ops/Pool2d.h"
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
+#include "webnn_native/NativeUtils.h"
 
 namespace webnn_native { namespace op {
 
@@ -79,37 +79,45 @@ namespace webnn_native { namespace op {
     MaybeError Pool2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         bool nchw = mOptions.layout == ml::InputOperandLayout::Nchw;
-        int32_t inputH = nchw ? inputShape[2] : inputShape[1];
-        int32_t inputW = nchw ? inputShape[3] : inputShape[2];
-        int32_t windowH = mOptions.windowDimensions == nullptr ? inputH : mWindowDimensions[0];
-        int32_t windowW = mOptions.windowDimensions == nullptr ? inputW : mWindowDimensions[1];
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
+        int32_t windowHeight =
+            mOptions.windowDimensions == nullptr ? inputHeight : mWindowDimensions[0];
+        int32_t windowWidth =
+            mOptions.windowDimensions == nullptr ? inputWidth : mWindowDimensions[1];
 
-        std::vector<int32_t> inputPadding;
-        if (mOptions.autoPad == ml::AutoPad::Explicit) {
-            inputPadding = mPadding;
-        } else {
-            // TODO(mingming): Support ceil and floor rounding types for pool2d.
-            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0], inputH,
-                                             windowH, mOptions.strides[0], inputPadding);
-            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1], inputW,
-                                             windowW, mOptions.strides[1], inputPadding);
+        int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
+                paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
+        if (mOptions.autoPad != ml::AutoPad::Explicit) {
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0], inputHeight,
+                                             windowHeight, mOptions.strides[0],
+                                             paddingBeginningHeight, paddingEndingHeight);
+            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1], inputWidth,
+                                             windowWidth, mOptions.strides[1],
+                                             paddingBeginningWidth, paddingEndingWidth);
         }
-
-        int32_t outputH = 1 + (inputH - windowH + inputPadding[0] + inputPadding[1]) / mStride[0];
-        int32_t outputW = 1 + (inputW - windowW + inputPadding[2] + inputPadding[3]) / mStride[1];
+        // TODO(mingming): Support ceil and floor rounding types for pool2d.
+        int32_t outputHeight =
+            1 + (inputHeight - windowHeight + paddingBeginningHeight + paddingEndingHeight) /
+                    mStride[0];
+        int32_t outputWidth =
+            1 +
+            (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) / mStride[1];
 
         std::vector<int32_t> outputShape;
+        int32_t batches = inputShape[0];
+        int32_t channels = nchw ? inputShape[1] : inputShape[3];
         if (nchw) {
-            outputShape = {inputShape[0], inputShape[1], outputH, outputW};
+            outputShape = {batches, channels, outputHeight, outputWidth};
         } else {
-            outputShape = {inputShape[0], outputH, outputW, inputShape[3]};
+            outputShape = {batches, outputHeight, outputWidth, channels};
         }
-        mOutputs[0]->SetShape(outputShape);
+        mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Pool2d::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Pool2d::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -135,11 +143,8 @@ namespace webnn_native { namespace op {
         if (mOptions.dilationsCount != 2) {
             return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
-        maybeError = CalculateShape();
-        if (maybeError.IsError()) {
-            return maybeError;
-        }
-        return {};
+
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

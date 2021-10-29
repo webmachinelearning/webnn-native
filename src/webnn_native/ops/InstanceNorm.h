@@ -30,7 +30,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddInstanceNorm(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         InstanceNormOptions const* GetOptions() const {
             return &mOptions;

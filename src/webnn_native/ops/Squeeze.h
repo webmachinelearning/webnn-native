@@ -37,55 +37,56 @@ namespace webnn_native { namespace op {
             return graph->AddSqueeze(this);
         }
 
-        MaybeError CalculateShape() override {
-            auto inputShape =
-                mInputs[0]->Shape().empty() ? std::vector<int32_t>{1} : mInputs[0]->Shape();
+        MaybeError CalculateShape() {
+            auto inputShape = mInputs[0]->Shape();
             auto inputRank = inputShape.size();
+            std::vector<int32_t> outputShape;
 
-            std::unordered_set<int32_t> axesSqueezed;
+            //  Axes are indices to the shape dimensions of size 1 to eliminate. When not
+            //  specified, every shape dimensions of size 1 in the tensor are eliminated.
             if (mAxes.empty()) {
                 for (size_t i = 0; i < inputRank; ++i) {
-                    if (inputShape[i] == 1) {
-                        axesSqueezed.insert(i);
+                    if (inputShape[i] != 1) {
+                        outputShape.push_back(inputShape[i]);
                     }
                 }
             } else {
+                std::unordered_set<int32_t> axesToSqueeze;
                 for (const auto& axis : mAxes) {
-                    axesSqueezed.insert(axis);
+                    axesToSqueeze.insert(axis);
+                }
+
+                for (size_t i = 0; i < inputRank; ++i) {
+                    if (axesToSqueeze.find(i) == axesToSqueeze.end()) {
+                        outputShape.push_back(inputShape[i]);
+                    } else if (inputShape[i] != 1) {
+                        return DAWN_VALIDATION_ERROR(
+                            "Only shape dimensions of size 1 in the tensor can be eliminated.");
+                    }
                 }
             }
 
-            std::vector<int32_t> outputShape;
-            for (size_t i = 0; i < inputRank; ++i) {
-                if (axesSqueezed.find(i) == axesSqueezed.end()) {
-                    outputShape.push_back(inputShape[i]);
-                }
-            }
             if (outputShape.empty()) {
                 outputShape = {1};
             }
-            mOutputs[0]->SetShape(outputShape);
+            mOutputs[0]->SetShape(std::move(outputShape));
             return {};
         }
 
-        MaybeError Validate() override {
-            MaybeError maybeError = OperatorBase::Validate();
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
             if (maybeError.IsError()) {
                 return maybeError;
             }
 
-            auto inputRank = mInputs[0]->Shape().empty() ? 1 : mInputs[0]->Shape().size();
-            for (const auto& axis : mAxes) {
-                if (axis > int32_t(inputRank - 1) || axis < 0) {
+            auto inputShape = mInputs[0]->Shape();
+            for (size_t i = 0; i < mAxes.size(); ++i) {
+                if (mAxes[i] >= int32_t(inputShape.size()) || mAxes[i] < 0) {
                     return DAWN_VALIDATION_ERROR("Axes value is invalid.");
                 }
             }
 
-            maybeError = CalculateShape();
-            if (maybeError.IsError()) {
-                return maybeError;
-            }
-            return {};
+            return CalculateShape();
         }
 
         std::vector<int32_t> GetAxes() const {
