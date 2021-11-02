@@ -729,31 +729,33 @@ namespace webnn_native { namespace ie {
         }
         std::vector<const char*> activations = GetGruActivations(gru->GetActivations());
 
-        ngraph_node_t* gruNode0;
+        ngraph_node_t* gruNode;
         status = ngraph_gru_sequence(inputTransposeNode, initialHiddenStateTransposeNode, stepsNode,
                                      weightNode, recurrentWeightNode, biasNode, hiddenSize,
-                                     direction, activations.data(), linear_before_reset, &gruNode0);
+                                     direction, activations.data(), linear_before_reset, &gruNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph gru"));
 
         ngraph_node_t* outputNode;
         ngraph_node_t* outputTransposeNode;
-        status = ngraph_get_output(gruNode0, 1, &outputNode);
-        DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
-        status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
-        DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
-        mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
         if (return_sequence) {
-            // [steps, num_directions, batch_size, hidden_size] => [batch_size, num_directions,
-            // steps, hidden_size]
-            std::vector<int64_t> order4D = std::vector<int64_t>{2, 0, 1, 3};
+            // [batch_size, num_directions, steps, hidden_size] => [steps, num_directions,
+            // batch_size, hidden_size]
+            std::vector<int64_t> order4D = std::vector<int64_t>{2, 1, 0, 3};
             const ngraph_node_t* order4DNode =
                 AddConstantWithGraph<int64_t>(precision_e::I64, {order4D.size()}, order4D);
-            status = ngraph_get_output(gruNode0, 0, &outputNode);
+            status = ngraph_get_output(gruNode, 0, &outputNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph get output 0"));
             status = ngraph_transpose(outputNode, order4DNode, &outputTransposeNode);
             DAWN_TRY(CheckStatusCode(status, "transpose gru output 0 layout"));
             mGraphNodeMap[gru->Outputs()[1].Get()] = outputTransposeNode;
         }
+        status = ngraph_get_output(gruNode, 1, &outputNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph get output 1"));
+        status = ngraph_transpose(outputNode, order3DNode, &outputTransposeNode);
+        DAWN_TRY(CheckStatusCode(status, "transpose gru output 1 layout"));
+        mGraphNodeMap[gru->Outputs()[0].Get()] = outputTransposeNode;
+        ngraph_node_free(&gruNode);
+
         return {};
     }
 

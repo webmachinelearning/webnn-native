@@ -19,7 +19,7 @@ deps = {
     'url': '{github_git}/webmachinelearning/test-data.git@b6f1565fefc103705a6ff580067eae7bb9d3b351'
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@b0a91b7d34dd0d60d7f4af8a708f2041332d2448'
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@d987c797f78c5cc6d665e61bd224db5e2605b145'
   },
   'node/third_party/webnn-samples/test-data': {
     'url': '{github_git}/webmachinelearning/test-data.git@b6f1565fefc103705a6ff580067eae7bb9d3b351'
