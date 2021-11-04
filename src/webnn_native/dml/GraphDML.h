@@ -39,7 +39,7 @@
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reduce.h"
-#include "webnn_native/ops/Resample.h"
+#include "webnn_native/ops/Resample2d.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Slice.h"
 #include "webnn_native/ops/Split.h"
@@ -66,7 +66,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReduce(const op::Reduce* reduce) override;
-        virtual MaybeError AddResample(const op::Resample* resample) override;
+        virtual MaybeError AddResample2d(const op::Resample2d* resample2d) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
         virtual MaybeError AddSlice(const op::Slice* slice) override;
         virtual MaybeError AddSplit(const op::Split* split) override;

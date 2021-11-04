@@ -65,7 +65,7 @@ namespace node {
         Napi::Value ReduceProduct(const Napi::CallbackInfo& info);
         Napi::Value ReduceSum(const Napi::CallbackInfo& info);
         Napi::Value Relu(const Napi::CallbackInfo& info);
-        Napi::Value Resample(const Napi::CallbackInfo& info);
+        Napi::Value Resample2d(const Napi::CallbackInfo& info);
         Napi::Value Reshape(const Napi::CallbackInfo& info);
         Napi::Value Sigmoid(const Napi::CallbackInfo& info);
         Napi::Value Sin(const Napi::CallbackInfo& info);

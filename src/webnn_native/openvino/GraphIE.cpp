@@ -34,6 +34,8 @@
 namespace webnn_native { namespace ie {
 
     namespace {
+        enum TransposeType { None, NhwcToNchw, HwncToNchw, NchwToNhwc, NchwToHwnc };
+
         bool CheckShape(dimensions_t ieShape, std::vector<int32_t> expectedShape) {
             // Shape {1} equals to shape {} for a scalar.
             if (expectedShape == std::vector<int32_t>{1} && ieShape.ranks == 0) {
@@ -202,10 +204,24 @@ namespace webnn_native { namespace ie {
             return activations;
         }
 
-        // Transpose NHWC <=> NCHW.
-        ngraph_node_t* TransposeInputLayout(const ngraph_node_t* input, bool nhwc_to_nchw) {
-            std::vector<int64_t> order =
-                nhwc_to_nchw ? std::vector<int64_t>{0, 3, 1, 2} : std::vector<int64_t>{0, 2, 3, 1};
+        // Transpose InputLayout(NHWC/HWNC) <=> NCHW.
+        ngraph_node_t* TransposeInputLayout(const ngraph_node_t* input,
+                                            TransposeType transposeType) {
+            std::vector<int64_t> order;
+            switch (transposeType) {
+                case TransposeType::NhwcToNchw:
+                    order = std::vector<int64_t>{0, 3, 1, 2};
+                    break;
+                case TransposeType::NchwToNhwc:
+                    order = std::vector<int64_t>{0, 2, 3, 1};
+                    break;
+                case TransposeType::HwncToNchw:
+                case TransposeType::NchwToHwnc:
+                    order = std::vector<int64_t>{2, 3, 0, 1};
+                    break;
+                default:
+                    WEBNN_ASSERT(0, "The TransposeType is not supported.");
+            }
             const ngraph_node_t* orderNode =
                 AddConstantWithGraph<int64_t>(precision_e::I64, {order.size()}, order);
             ngraph_node_t* transposeNode = nullptr;
@@ -374,7 +390,7 @@ namespace webnn_native { namespace ie {
         auto options = instanceNorm->GetOptions();
         auto input = mGraphNodeMap[inputs[0].Get()];
         if (options->layout == ml::InputOperandLayout::Nhwc) {
-            input = TransposeInputLayout(input, true);
+            input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         ngraph_node_t* meanNode = nullptr;
         IEStatusCode status = ngraph_reduce_mean(input, axesNode, true, &meanNode);
@@ -443,7 +459,7 @@ namespace webnn_native { namespace ie {
         DAWN_TRY(CheckStatusCode(status, "ngraph add"));
 
         if (options->layout == ml::InputOperandLayout::Nhwc) {
-            instanceNormNode = TransposeInputLayout(instanceNormNode, false);
+            instanceNormNode = TransposeInputLayout(instanceNormNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[instanceNorm->PrimaryOutput()] = instanceNormNode;
         DAWN_ASSERT(CheckShape(instanceNormNode, instanceNorm));
@@ -459,7 +475,7 @@ namespace webnn_native { namespace ie {
         auto options = batchNorm->GetOptions();
         bool nhwc = options->axis == 3;
         if (nhwc) {
-            inputNode = TransposeInputLayout(inputNode, true);
+            inputNode = TransposeInputLayout(inputNode, TransposeType::NhwcToNchw);
         }
         dimensions_t dimensions;
         ngraph_get_shape(inputNode, &dimensions);
@@ -490,7 +506,7 @@ namespace webnn_native { namespace ie {
         status = AddActivationNode(batchNormNode, options->activation, &activationNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
         if (nhwc) {
-            activationNode = TransposeInputLayout(activationNode, false);
+            activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[batchNorm->PrimaryOutput()] = activationNode;
         DAWN_ASSERT(CheckShape(activationNode, batchNorm));
@@ -619,7 +635,7 @@ namespace webnn_native { namespace ie {
 
         auto input = mGraphNodeMap[conv2d->Inputs()[0].Get()];
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
-            input = TransposeInputLayout(input, true);
+            input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         auto filterNode = const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[1].Get()]);
         filterNode = TransposeFilterLayout(filterNode, options->filterLayout, transpose);
@@ -686,7 +702,7 @@ namespace webnn_native { namespace ie {
         status = AddActivationNode(conv2dNode, options->activation, &activationNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
-            activationNode = TransposeInputLayout(activationNode, false);
+            activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
         // TODO(mingming): Need to check output shape for transpose Conv2d, disable it due to some
@@ -859,7 +875,7 @@ namespace webnn_native { namespace ie {
         auto options = pool2d->GetOptions();
         auto input = mGraphNodeMap[pool2d->Inputs()[0].Get()];
         if (options->layout == ml::InputOperandLayout::Nhwc) {
-            input = TransposeInputLayout(input, true);
+            input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         std::vector<size_t> strides(options->strides, options->strides + options->stridesCount);
         DAWN_ASSERT(strides.size() == 2);
@@ -899,7 +915,7 @@ namespace webnn_native { namespace ie {
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph pool"));
         if (options->layout == ml::InputOperandLayout::Nhwc) {
-            poolNode = TransposeInputLayout(poolNode, false);
+            poolNode = TransposeInputLayout(poolNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[pool2d->PrimaryOutput()] = poolNode;
         DAWN_ASSERT(CheckShape(poolNode, pool2d));
@@ -991,60 +1007,35 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MaybeError Graph::AddResample(const op::Resample* resample) {
-        auto input = mGraphNodeMap[resample->Inputs()[0].Get()];
+    MaybeError Graph::AddResample2d(const op::Resample2d* resample2d) {
+        auto input = mGraphNodeMap[resample2d->Inputs()[0].Get()];
         dimensions_t inputShape;
         ngraph_get_shape(input, &inputShape);
-        // scales.
-        std::vector<float> scales;
-        auto options = resample->GetOptions();
-        if (options->scalesCount == 0) {
-            scales.reserve(4);
-            for (uint32_t i = 0; i < 4; ++i) {
-                scales.push_back(static_cast<float>(options->sizes[i]) /
-                                 static_cast<float>(inputShape.dims[i]));
-            }
-        } else {
-            for (uint32_t i = 0; i < options->scalesCount; ++i) {
-                scales.push_back(options->scales[i]);
-            }
-        }
-        // Interpolate layer only supports resize on spatial dimensions(height and width) according
-        // https://github.com/openvinotoolkit/openvino/blob/master/inference-engine/src/mkldnn_plugin/nodes/mkldnn_interpolate_node.cpp#L2047.
-        // "scales[0] * scales[3] == 1" means N and C aren't supported resize.
-        // "scales[1] * scales[2] != 1" means H and W need to be resized for NHWC.
-        bool transpose = scales[0] * scales[3] == 1 && scales[1] * scales[2] != 1 ? true : false;
-        if (transpose) {
-            std::vector<float> nchwScales = scales;
-            nchwScales[0] = scales[0];
-            nchwScales[1] = scales[3];
-            nchwScales[2] = scales[1];
-            nchwScales[3] = scales[2];
-            scales = std::move(nchwScales);
-        }
-        const ngraph_node_t* scalesNode =
-            AddConstantWithGraph<float>(precision_e::FP32, {scales.size()}, scales);
-
+        // WebNN axes.
+        auto axes = resample2d->GetAxes();
         // sizes.
+        auto outputShape = resample2d->GetOutputShape();
         std::vector<int32_t> sizes;
-        if (options->sizesCount == 0) {
-            sizes.reserve(4);
-            for (uint32_t i = 0; i < 4; ++i) {
-                sizes.push_back(int32_t(inputShape.dims[i] * options->scales[i]));
-            }
-        } else {
-            sizes.assign(options->sizes, options->sizes + options->sizesCount);
-        }
-        if (transpose) {
-            std::vector<int32_t> nchwSizes = sizes;
-            nchwSizes[0] = sizes[0];
-            nchwSizes[1] = sizes[3];
-            nchwSizes[2] = sizes[1];
-            nchwSizes[3] = sizes[2];
-            sizes = std::move(nchwSizes);
+        sizes.reserve(2);
+        for (size_t i = 0; i < 2; i++) {
+            sizes.push_back(outputShape[axes[i]]);
         }
         const ngraph_node_t* sizesNode =
             AddConstantWithGraph<int32_t>(precision_e::I32, {sizes.size()}, sizes);
+        // scales.
+        std::vector<float> scales;
+        auto options = resample2d->GetOptions();
+        if (options->scalesCount == 0) {
+            scales.reserve(2);
+            for (uint32_t i = 0; i < 2; ++i) {
+                scales.push_back(static_cast<float>(sizes.data()[i]) /
+                                 static_cast<float>(inputShape.dims[axes[i]]));
+            }
+        } else {
+            scales = resample2d->GetScales();
+        }
+        const ngraph_node_t* scalesNode =
+            AddConstantWithGraph<float>(precision_e::FP32, {scales.size()}, scales);
         // attrs.
         interpolate_attrs_t attrs;
         attrs.mode = static_cast<ngraph_interpolation_mode>(options->mode);
@@ -1053,20 +1044,30 @@ namespace webnn_native { namespace ie {
         } else {
             attrs.shape_calculation_mode = ngraph_shape_calc_mode::Scales;
         }
-        const ngraph_node_t* axes =
-            AddConstantWithGraph<int64_t>(precision_e::I64, {4}, {0, 1, 2, 3});
+        // axes: Interpolate layer only supports resize on spatial dimensions(depth, height and
+        // width)
+        // https://github.com/openvinotoolkit/openvino/blob/master/inference-engine/src/mkldnn_plugin/nodes/mkldnn_interpolate_node.cpp#L2515
+        const ngraph_node_t* axesNode =
+            AddConstantWithGraph<int32_t>(precision_e::I32, {2}, {2, 3});
+        // Transpose Input Layout => NCHW
+        TransposeType transposeBackType = None;
+        if (axes[0] == 0 && axes[1] == 1) {
+            input = TransposeInputLayout(input, TransposeType::HwncToNchw);
+            transposeBackType = NchwToHwnc;
+        } else if (axes[0] == 1 && axes[1] == 2) {
+            input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
+            transposeBackType = NchwToNhwc;
+        }
         ngraph_node_t* resampleNode;
-        if (transpose) {
-            input = TransposeInputLayout(input, true);
-        }
         IEStatusCode status =
-            ngraph_interpolate(input, sizesNode, scalesNode, axes, &attrs, &resampleNode);
+            ngraph_interpolate(input, sizesNode, scalesNode, axesNode, &attrs, &resampleNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph resample"));
-        if (transpose) {
-            resampleNode = TransposeInputLayout(resampleNode, false);
+        // Transpose NCHW => Original Layout
+        if (transposeBackType != None) {
+            resampleNode = TransposeInputLayout(resampleNode, transposeBackType);
         }
-        mGraphNodeMap[resample->PrimaryOutput()] = resampleNode;
-        DAWN_ASSERT(CheckShape(resampleNode, resample));
+        mGraphNodeMap[resample2d->PrimaryOutput()] = resampleNode;
+        DAWN_ASSERT(CheckShape(resampleNode, resample2d));
         return {};
     }
 

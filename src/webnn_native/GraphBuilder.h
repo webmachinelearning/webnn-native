@@ -80,7 +80,7 @@ namespace webnn_native {
         OperandBase* ReduceSum(OperandBase*, ReduceOptions const* options);
         OperandBase* Relu(OperandBase*);
         OperatorBase* ReluOperator();
-        OperandBase* Resample(OperandBase*, ResampleOptions const* options);
+        OperandBase* Resample2d(OperandBase*, Resample2dOptions const* options);
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Sigmoid(OperandBase*);
         OperatorBase* SigmoidOperator();

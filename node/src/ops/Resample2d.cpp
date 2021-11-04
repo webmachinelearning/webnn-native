@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "ops/Resample.h"
+#include "ops/Resample2d.h"
 
 #include "Utils.h"
 
 namespace node { namespace op {
 
-    Napi::Value Resample::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
-        // Operand reduceMean(Operand input, optional ResampleOptions options = {});
+    Napi::Value Resample2d::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+        // Operand Resample2d(Operand input, optional Resample2dOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
@@ -27,14 +27,16 @@ namespace node { namespace op {
         ml::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
-        // dictionary ResampleOptions {
+        // dictionary Resample2dOptions {
         //   InterpolationMode mode = "nearest neighbor"
         //   sequence<float> scales;
         //   sequence<long> sizes;
+        //   sequence<long> axes;
         // };
-        ml::ResampleOptions options;
+        ml::Resample2dOptions options;
         std::vector<float> scales;
         std::vector<int32_t> sizes;
+        std::vector<int32_t> axes;
         if (info.Length() == 2 && !info[1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[1].As<Napi::Object>();
@@ -56,11 +58,18 @@ namespace node { namespace op {
                 options.sizes = sizes.data();
                 options.sizesCount = sizes.size();
             }
+            if (HasOptionMember(jsOptions, "axes")) {
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("axes"), axes),
+                                  "The axes parameter is invalid.");
+                WEBNN_NODE_ASSERT(axes.empty() == false, "The axes is empty.");
+                options.axes = axes.data();
+                options.axesCount = axes.size();
+            }
         }
 
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
-        operand->SetImpl(builder.Resample(input, &options));
+        operand->SetImpl(builder.Resample2d(input, &options));
         return object;
     }
 
