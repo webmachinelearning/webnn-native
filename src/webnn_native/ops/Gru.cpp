@@ -41,6 +41,12 @@ namespace webnn_native { namespace op {
             if (options->initialHiddenState != nullptr) {
                 mInputs.push_back(options->initialHiddenState);
             }
+            // The first element of the output sequence is a 3-D tensor. If returnSequence is set to
+            // true, the second element is the 4-D output tensor.
+            if (options->returnSequence) {
+                // The rank of the mOutputs[0] is set to 3 by default.
+                mOutputs[1]->SetRank(4);
+            }
         }
         if (options == nullptr || options->activations == nullptr) {
             mActivations = AcquireRef(new OperatorArrayBase());

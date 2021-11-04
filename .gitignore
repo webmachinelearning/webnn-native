@@ -98,8 +98,5 @@ node/PATH_TO_DAWN
 node/third_party/webnn-polyfill
 node/node_modules
 node/third_party
-node/examples/electron/lenet/node_modules
-node/examples/electron/image_classification/node_modules
-node/examples/electron/object_detection/node_modules
-node/examples/electron/semantic_segmentation/node_modules
-node/examples/console/lenet/node_modules
+node/examples/electron/*/node_modules
+node/examples/console/*/node_modules

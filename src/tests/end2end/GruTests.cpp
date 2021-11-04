@@ -31,7 +31,7 @@ class GruTests : public WebnnTest {
                  const Tensor& recurrentWeight,
                  const int32_t steps,
                  const int32_t hiddenSize,
-                 const Tensor& expected,
+                 const std::vector<Tensor> expected,
                  const ml::GruOptions* options = nullptr) {
         const ml::Operand W = utils::BuildConstant(builder, weight.shape, weight.value.data(),
                                                    weight.value.size() * sizeof(float));
@@ -52,12 +52,14 @@ class GruTests : public WebnnTest {
         std::vector<std::vector<float>> results;
         results.reserve(outputSize);
         for (size_t i = 0; i < outputSize; ++i) {
-            results.push_back(std::vector<float>(utils::SizeOfShape(expected.shape)));
-            namedOutputs.push_back({"gru" + std::to_string(i), results.back()});
+            results.push_back(std::vector<float>(utils::SizeOfShape(expected[i].shape)));
+            namedOutputs.push_back({"gru" + std::to_string(i), results[i]});
         }
         utils::Compute(graph, {{"a", input.value}}, namedOutputs);
 
-        EXPECT_TRUE(utils::CheckValue(namedOutputs[0].resource, expected.value));
+        for (size_t i = 0; i < outputSize; ++i) {
+            EXPECT_TRUE(utils::CheckValue(namedOutputs[i].resource, expected[i].value));
+        }
     }
     ml::GraphBuilder builder;
 };
@@ -106,7 +108,7 @@ TEST_F(GruTests, GruWith3BatchSize) {
         0.1653014,  0.1653014,  0.0797327,  0.0797327,  0.0797327,  0.0797327, 0.0797327};
     Tensor expected = {expectedShape, expectedValue};
 
-    TestGru(input, weight, recurrentWeight, steps, hiddenSize, expected, &options);
+    TestGru(input, weight, recurrentWeight, steps, hiddenSize, {expected}, &options);
 }
 
 TEST_F(GruTests, GruWithMultiActivitions) {
@@ -160,7 +162,7 @@ TEST_F(GruTests, GruWithMultiActivitions) {
         0.1653014,  0.1653014,  0.0797327,  0.0797327,  0.0797327,  0.0797327, 0.0797327};
     Tensor expected = {expectedShape, expectedValue};
 
-    TestGru(input, weight, recurrentWeight, steps, hiddenSize, expected, &options);
+    TestGru(input, weight, recurrentWeight, steps, hiddenSize, {expected}, &options);
 }
 
 TEST_F(GruTests, GruWithoutInitialHiddenState) {
@@ -201,5 +203,53 @@ TEST_F(GruTests, GruWithoutInitialHiddenState) {
         0.1653014,  0.1653014,  0.0797327,  0.0797327,  0.0797327,  0.0797327, 0.0797327};
     Tensor expected = {expectedShape, expectedValue};
 
-    TestGru(input, weight, recurrentWeight, steps, hiddenSize, expected, &options);
+    TestGru(input, weight, recurrentWeight, steps, hiddenSize, {expected}, &options);
+}
+
+TEST_F(GruTests, GruWithReturnSequenceTrue) {
+    const int32_t steps = 2;
+    const int32_t batchSize = 3;
+    const int32_t inputSize = 3;
+    const int32_t hiddenSize = 5;
+    const int32_t numDirections = 1;
+
+    const std::vector<int32_t> inputShape = {steps, batchSize, inputSize};
+    const std::vector<float> inputData = {1,  2,  3,  4,  5,  6,  7,  8,  9,
+                                          10, 11, 12, 13, 14, 15, 16, 17, 18};
+    Tensor input = {inputShape, inputData};
+    const std::vector<int32_t> weightShape = {numDirections, 3 * hiddenSize, inputSize};
+    const std::vector<float> weightData(numDirections * 3 * hiddenSize * inputSize, 0.1);
+    Tensor weight = {weightShape, weightData};
+    const std::vector<int32_t> recurrentWeightShape = {numDirections, 3 * hiddenSize, hiddenSize};
+    const std::vector<float> recurrentWeightData(numDirections * 3 * hiddenSize * hiddenSize, 0.1);
+    Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
+    const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
+    const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
+    const ml::Operand bias =
+        utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
+    const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
+    const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
+    const ml::Operand recurrentBias =
+        utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
+                             recurrentBiasData.size() * sizeof(float));
+
+    ml::GruOptions options = {};
+    options.bias = bias;
+    options.recurrentBias = recurrentBias;
+    options.resetAfter = false;
+    options.returnSequence = true;
+
+    Tensor expected0 = {
+        {numDirections, batchSize, hiddenSize},
+        {0.22391089, 0.22391089, 0.22391089, 0.22391089, 0.22391089, 0.1653014, 0.1653014,
+         0.1653014, 0.1653014, 0.1653014, 0.0797327, 0.0797327, 0.0797327, 0.0797327, 0.0797327}};
+    Tensor expected1 = {{steps, numDirections, batchSize, hiddenSize},
+                        {0.20053661, 0.20053661, 0.20053661, 0.20053661, 0.20053661, 0.15482338,
+                         0.15482338, 0.15482338, 0.15482338, 0.15482338, 0.07484276, 0.07484276,
+                         0.07484276, 0.07484276, 0.07484276, 0.22391089, 0.22391089, 0.22391089,
+                         0.22391089, 0.22391089, 0.1653014,  0.1653014,  0.1653014,  0.1653014,
+                         0.1653014,  0.0797327,  0.0797327,  0.0797327,  0.0797327,  0.0797327}};
+    std::vector<Tensor> expected = {expected0, expected1};
+
+    TestGru(input, weight, recurrentWeight, steps, hiddenSize, std::move(expected), &options);
 }
