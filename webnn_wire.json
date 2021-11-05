@@ -16,16 +16,22 @@
     "limitations under the License."
   ],
   "commands": {
-    "destroy object": [
-      { "name": "object type", "type": "ObjectType" },
-      { "name": "object id", "type": "ObjectId" }
+    "context pop error scope": [
+      { "name": "context id", "type": "ObjectId" },
+      { "name": "request serial", "type": "uint64_t" }
     ],
     "graph builder constant internal": [
       {"name": "graph builder id", "type": "ObjectId" },
       {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
       {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
       {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0}
+      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "result", "type": "ObjectHandle", "handle_type": "operand" }
+    ],
+    "graph compute": [
+      {"name": "graph id", "type": "ObjectId" },
+      {"name": "inputs id", "type": "ObjectId" },
+      {"name": "outputs id", "type": "ObjectId" }
     ],
     "named inputs set": [
       {"name": "named inputs id", "type": "ObjectId" },
@@ -42,9 +48,19 @@
       {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0}
+    ],
+    "destroy object": [
+      { "name": "object type", "type": "ObjectType" },
+      { "name": "object id", "type": "ObjectId" }
     ]
   },
   "return commands": {
+    "context pop error scope callback": [
+      { "name": "context", "type": "ObjectHandle", "handle_type": "context" },
+      { "name": "request serial", "type": "uint64_t" },
+      { "name": "type", "type": "error type" },
+      { "name": "message", "type": "char", "annotation": "const*", "length": "strlen" }
+    ]
   },
   "special items": {
     "client_side_structures": [
@@ -52,14 +68,15 @@
       "Input"
     ],
     "client_side_commands": [
+      "ContextPopErrorScope",
       "ContextSetUncapturedErrorCallback",
       "GraphBuilderConstant",
       "NamedInputsSet",
       "NamedOutputsSet"
     ],
     "client_handwritten_commands": [
-      "ContextPopErrorScope",
-      "GraphCompute"
+      "GraphCompute",
+      "ContextPushErrorScope"
     ],
     "client_special_objects": [
       "Context",

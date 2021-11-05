@@ -60,6 +60,30 @@ dawn_component("webnn_wire") {
   configs = [ "${webnn_root}/src/common:dawn_internal" ]
   sources = get_target_outputs(":webnn_wire_gen")
   sources += [
+    "ChunkedCommandHandler.cpp",
+    "ChunkedCommandHandler.h",
+    "ChunkedCommandSerializer.cpp",
+    "ChunkedCommandSerializer.h",
+    "WireDeserializeAllocator.cpp",
+    "WireDeserializeAllocator.h",
+    "client/ApiObjects.h",
+    "client/Client.cpp",
+    "client/Client.h",
+    "client/Context.cpp",
+    "client/Context.h",
+    "client/Graph.cpp",
+    "client/Graph.h",
+    "client/GraphBuilder.cpp",
+    "client/GraphBuilder.h",
+    "client/NamedInputs.cpp",
+    "client/NamedInputs.h",
+    "client/NamedOutputs.cpp",
+    "client/NamedOutputs.h",
+    "client/ObjectAllocator.h",
+    "client/ObjectBase.h",
+    "server/ObjectStorage.h",
+    "server/Server.cpp",
+    "server/Server.h",
   ]
 
   # Make headers publicly visible

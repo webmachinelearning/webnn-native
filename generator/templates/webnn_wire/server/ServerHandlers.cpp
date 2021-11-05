@@ -58,14 +58,14 @@ namespace webnn_wire { namespace server {
                 //* it can destroy them if the device is destroyed first.
                 {% if command.derived_object %}
                     {% set type = command.derived_object %}
-                    {% if type.name.get() == "device" %}
-                        {{name}}Data->deviceInfo = DeviceObjects().Get(cmd.selfId)->info.get();
+                    {% if type.name.get() == "context" %}
+                        {{name}}Data->contextInfo = DeviceObjects().Get(cmd.selfId)->info.get();
                     {% else %}
                         auto* selfData = {{type.name.CamelCase()}}Objects().Get(cmd.selfId);
-                        {{name}}Data->deviceInfo = selfData->deviceInfo;
+                        {{name}}Data->contextInfo = selfData->contextInfo;
                     {% endif %}
-                    if ({{name}}Data->deviceInfo != nullptr) {
-                        if (!TrackDeviceChild({{name}}Data->deviceInfo, ObjectType::{{Type}}, cmd.{{name}}.id)) {
+                    if ({{name}}Data->contextInfo != nullptr) {
+                        if (!TrackDeviceChild({{name}}Data->contextInfo, ObjectType::{{Type}}, cmd.{{name}}.id)) {
                             return false;
                         }
                     }

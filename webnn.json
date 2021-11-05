@@ -79,6 +79,9 @@
   "uint32_t": {
     "category": "native"
   },
+  "uint64_t": {
+    "category": "native"
+  },
   "const uint32_t*": {
     "category": "native"
   },

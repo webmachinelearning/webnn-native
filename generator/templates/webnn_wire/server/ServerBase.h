@@ -31,7 +31,7 @@ namespace webnn_wire { namespace server {
         virtual ~ServerBase() = default;
 
       protected:
-        void DestroyAllObjects(const DawnProcTable& procs) {
+        void DestroyAllObjects(const WebnnProcTable& procs) {
             //* Free all objects when the server is destroyed
             {% for type in by_category["object"] if type.name.get() != "device" %}
                 {
@@ -43,9 +43,9 @@ namespace webnn_wire { namespace server {
             {% endfor %}
             //* Release devices last because webnn_native requires this.
             {
-                std::vector<WGPUDevice> handles = mKnownDevice.AcquireAllHandles();
-                for (WGPUDevice handle : handles) {
-                    procs.deviceRelease(handle);
+                std::vector<MLContext> handles = mKnownContext.AcquireAllHandles();
+                for (MLContext handle : handles) {
+                    procs.contextRelease(handle);
                 }
             }
         }

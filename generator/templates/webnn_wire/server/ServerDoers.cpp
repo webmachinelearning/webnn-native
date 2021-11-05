@@ -78,17 +78,17 @@ namespace webnn_wire { namespace server {
                     if (data == nullptr) {
                         return false;
                     }
-                    if (data->deviceInfo != nullptr) {
-                        if (!UntrackDeviceChild(data->deviceInfo, objectType, objectId)) {
+                    if (data->contextInfo != nullptr) {
+                        if (!UntrackDeviceChild(data->contextInfo, objectType, objectId)) {
                             return false;
                         }
                     }
                     {% if type.name.CamelCase() in server_reverse_lookup_objects %}
                         {{type.name.CamelCase()}}ObjectIdTable().Remove(data->handle);
                     {% endif %}
-                    {% if type.name.get() == "device" %}
+                    {% if type.name.get() == "context" %}
                         //* TODO(crbug.com/webnn/384): This is a hack to make sure that all child objects
-                        //* are destroyed before their device. We should have a solution in
+                        //* are destroyed before their context. We should have a solution in
                         //* Dawn native that makes all child objects internally null if their
                         //* Device is destroyed.
                         while (data->info->childObjectTypesAndIds.size() > 0) {
@@ -99,9 +99,9 @@ namespace webnn_wire { namespace server {
                             DoDestroyObject(childObjectType, childObjectId);
                         }
                         if (data->handle != nullptr) {
-                            //* Deregisters uncaptured error and device lost callbacks since
-                            //* they should not be forwarded if the device no longer exists on the wire.
-                            ClearDeviceCallbacks(data->handle);
+                            //* Deregisters uncaptured error and context lost callbacks since
+                            //* they should not be forwarded if the context no longer exists on the wire.
+                            ClearContextCallbacks(data->handle);
                         }
                     {% endif %}
                     if (data->handle != nullptr) {
