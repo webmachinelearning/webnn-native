@@ -43,47 +43,50 @@ namespace webnn_native { namespace op {
         return {};
     }
 
-    MaybeError Binary::CalculateShape() {
+    MaybeError Binary::CaculateMatMulShape() {
         auto inputShapeA = mInputs[0]->Shape(), inputShapeB = mInputs[1]->Shape();
         auto rankA = inputShapeA.size(), rankB = inputShapeB.size();
         std::vector<int32_t> outputShape;
-        MaybeError maybeError;
-        if (mOpType == kMatMul) {
-            if (rankA == 1 && rankB == 1) {
-                if (inputShapeA != inputShapeB) {
-                    return DAWN_VALIDATION_ERROR(
-                        "The two 1D inputs of Matmul should have the same shape.");
-                }
-                outputShape = {1};
+        if (rankA == 1 && rankB == 1) {
+            if (inputShapeA != inputShapeB) {
+                return DAWN_VALIDATION_ERROR(
+                    "The two 1D inputs of Matmul should have the same shape.");
             }
-            if (rankA == 2 && rankB == 1) {
-                if (inputShapeA[1] != inputShapeB[0]) {
-                    return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
-                }
-                outputShape = {inputShapeA[0], 1};
+            outputShape = {1};
+        }
+        if (rankA == 2 && rankB == 1) {
+            if (inputShapeA[1] != inputShapeB[0]) {
+                return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
             }
-            if (rankA == 1 && rankB == 2) {
-                if (inputShapeA[0] != inputShapeB[0]) {
-                    return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
-                }
-                outputShape = {1, inputShapeB[1]};
+            outputShape = {inputShapeA[0], 1};
+        }
+        if (rankA == 1 && rankB == 2) {
+            if (inputShapeA[0] != inputShapeB[0]) {
+                return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
             }
-            if (rankA >= 2 && rankB >= 2) {
-                if (inputShapeA[rankA - 1] != inputShapeB[rankB - 2]) {
-                    return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
-                }
-                maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape, 2);
-                if (maybeError.IsError()) {
-                    return maybeError;
-                }
-                outputShape[outputShape.size() - 1] = inputShapeB[rankB - 1];
-                outputShape[outputShape.size() - 2] = inputShapeA[rankA - 2];
+            outputShape = {1, inputShapeB[1]};
+        }
+        if (rankA >= 2 && rankB >= 2) {
+            if (inputShapeA[rankA - 1] != inputShapeB[rankB - 2]) {
+                return DAWN_VALIDATION_ERROR("The input shapes are incompatible.");
             }
-        } else {
-            maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape);
+            auto maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape, 2);
             if (maybeError.IsError()) {
                 return maybeError;
             }
+            outputShape[outputShape.size() - 1] = inputShapeB[rankB - 1];
+            outputShape[outputShape.size() - 2] = inputShapeA[rankA - 2];
+        }
+        mOutputs[0]->SetShape(std::move(outputShape));
+        return {};
+    }
+
+    MaybeError Binary::CaculateElementWiseBinaryShape() {
+        auto inputShapeA = mInputs[0]->Shape(), inputShapeB = mInputs[1]->Shape();
+        std::vector<int32_t> outputShape;
+        auto maybeError = BroadcastShape(inputShapeA, inputShapeB, outputShape);
+        if (maybeError.IsError()) {
+            return maybeError;
         }
         mOutputs[0]->SetShape(std::move(outputShape));
         return {};
@@ -100,8 +103,11 @@ namespace webnn_native { namespace op {
         if (a->Type() != b->Type()) {
             return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
         }
-
-        return CalculateShape();
+        if (mOpType == kMatMul) {
+            return CaculateMatMulShape();
+        } else {
+            return CaculateElementWiseBinaryShape();
+        }
     }
 
 }}  // namespace webnn_native::op

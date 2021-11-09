@@ -48,7 +48,8 @@ namespace webnn_native { namespace op {
         MaybeError ValidateAndInferOutputInfo() override;
 
       private:
-        MaybeError CalculateShape();
+        MaybeError CaculateMatMulShape();
+        MaybeError CaculateElementWiseBinaryShape();
         BinaryOpType mOpType;
     };
 

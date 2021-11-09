@@ -21,7 +21,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NativeUtils.h"
+#include "webnn_native/Utils.h"
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 
@@ -365,10 +365,12 @@ namespace webnn_native { namespace dml {
             ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
             // {paddingTop, paddingBottom, paddingLeft, paddingRight}
             int32_t paddingTop, paddingBottom, paddingLeft, paddingRight;
-            ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
-                                             filterSize[0], strides[0], paddingTop, paddingBottom);
-            ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
-                                             filterSize[1], strides[1], paddingLeft, paddingRight);
+            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
+                                                    filterSize[0], strides[0], paddingTop,
+                                                    paddingBottom);
+            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
+                                                    filterSize[1], strides[1], paddingLeft,
+                                                    paddingRight);
             return {static_cast<const uint32_t>(paddingTop),
                     static_cast<const uint32_t>(paddingBottom),
                     static_cast<const uint32_t>(paddingLeft),

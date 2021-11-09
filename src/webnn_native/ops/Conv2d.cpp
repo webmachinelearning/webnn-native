@@ -15,8 +15,8 @@
 #include "webnn_native/ops/Conv2d.h"
 
 #include "webnn_native/Error.h"
-#include "webnn_native/NativeUtils.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/Utils.h"
 
 namespace webnn_native { namespace op {
 
@@ -135,12 +135,12 @@ namespace webnn_native { namespace op {
         int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
                 paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
         if (mOptions.autoPad != ml::AutoPad::Explicit) {
-            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0], inputHeight,
-                                             filterHeight, mOptions.strides[0],
-                                             paddingBeginningHeight, paddingEndingHeight);
-            ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1], inputWidth,
-                                             filterWidth, mOptions.strides[1],
-                                             paddingBeginningWidth, paddingEndingWidth);
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0],
+                                                    inputHeight, filterHeight, mOptions.strides[0],
+                                                    paddingBeginningHeight, paddingEndingHeight);
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1],
+                                                    inputWidth, filterWidth, mOptions.strides[1],
+                                                    paddingBeginningWidth, paddingEndingWidth);
         }
 
         int32_t outputHeight, outputWidth;

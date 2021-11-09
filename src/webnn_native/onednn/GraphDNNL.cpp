@@ -21,8 +21,8 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
-#include "webnn_native/NativeUtils.h"
 #include "webnn_native/Operand.h"
+#include "webnn_native/Utils.h"
 
 #define FAILED(status) (((dnnl_status_t)(status)) != dnnl_success)
 
@@ -672,10 +672,12 @@ namespace webnn_native { namespace onednn {
         int32_t paddingRight = options->padding[3];
 
         if (options->autoPad != ml::AutoPad::Explicit) {
-            ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0], inputDims[2],
-                                             filterDims[2], strides[0], paddingTop, paddingBottom);
-            ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1], inputDims[3],
-                                             filterDims[3], strides[1], paddingLeft, paddingRight);
+            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0],
+                                                    inputDims[2], filterDims[2], strides[0],
+                                                    paddingTop, paddingBottom);
+            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1],
+                                                    inputDims[3], filterDims[3], strides[1],
+                                                    paddingLeft, paddingRight);
         }
 
         std::vector<dnnl_dim_t> padding_l = {paddingTop, paddingLeft};
