@@ -113,6 +113,8 @@ source_set("webnn_native_sources") {
     "Operand.h",
     "Operator.cpp",
     "Operator.h",
+    "Utils.cpp",
+    "Utils.h",
   ]
 
   sources += [

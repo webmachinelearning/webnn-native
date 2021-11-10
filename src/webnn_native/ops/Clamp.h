@@ -55,6 +55,18 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddClamp(this);
         }
+
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+            if (!mInputs.empty()) {
+                mOutputs[0]->SetShape(mInputs[0]->Shape());
+            }
+
+            return {};
+        }
     };
 
 }}  // namespace webnn_native::op

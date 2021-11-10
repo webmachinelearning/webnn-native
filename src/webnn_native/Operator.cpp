@@ -16,7 +16,6 @@
 #include "webnn_native/Operator.h"
 
 #include "common/Assert.h"
-#include "common/Log.h"
 #include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native {
@@ -54,11 +53,16 @@ namespace webnn_native {
         DAWN_UNREACHABLE();
     }
 
-    MaybeError OperatorBase::Validate() {
+    MaybeError OperatorBase::ValidateAndInferOutputInfo() {
         for (auto& input : mInputs) {
             if (input->IsError()) {
                 return DAWN_VALIDATION_ERROR("Argument inputs are invalid.");
             }
+        }
+
+        // The type is the same as input[0] by default.
+        if (!mInputs.empty()) {
+            mOutputs[0]->SetType(mInputs[0]->Type());
         }
         return {};
     }

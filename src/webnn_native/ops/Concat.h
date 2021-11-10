@@ -35,9 +35,10 @@ namespace webnn_native { namespace op {
         uint32_t GetAxis() const {
             return mAxis;
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
       private:
+        MaybeError CalculateShape();
         uint32_t mAxis;
     };
 

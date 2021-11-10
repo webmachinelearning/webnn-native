@@ -32,13 +32,14 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddPad(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         PadOptions const* GetOptions() const {
             return &mOptions;
         }
 
       private:
+        MaybeError CalculateShape();
         PadOptions mOptions;
     };
 

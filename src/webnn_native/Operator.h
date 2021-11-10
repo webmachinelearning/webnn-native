@@ -44,7 +44,7 @@ namespace webnn_native {
 
         // Add the operand to model for specific backend.
         virtual MaybeError AddToGraph(GraphBase* graph) const;
-        virtual MaybeError Validate();
+        virtual MaybeError ValidateAndInferOutputInfo();
         FusedOperator GetFusedOperator() const;
 
         static OperatorBase* MakeError(GraphBuilderBase* graphBuilder);
@@ -59,7 +59,6 @@ namespace webnn_native {
         // The output operands of operator.
         std::vector<Ref<OperandBase>> mOutputs;
     };
-
 }  // namespace webnn_native
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

@@ -15,7 +15,6 @@
 #ifndef WEBNN_NATIVE_OPS_REDUCE_H_
 #define WEBNN_NATIVE_OPS_REDUCE_H_
 
-#include "common/Log.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
@@ -44,7 +43,7 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddReduce(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         ReduceType GetType() const {
             return mOpType;
@@ -55,6 +54,7 @@ namespace webnn_native { namespace op {
         }
 
       private:
+        MaybeError CalculateShape();
         ReduceType mOpType;
         ReduceOptions mOptions;
         std::vector<int32_t> mAxes;

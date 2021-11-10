@@ -31,22 +31,23 @@ namespace webnn_native { namespace op {
             mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
-
-            mOutputs[0]->SetRank(desc->dimensionsCount);
-            mOutputs[0]->SetType(desc->type);
         }
         ~Input() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddInput(this);
         }
-        MaybeError Validate() override {
+
+        MaybeError ValidateAndInferOutputInfo() override {
+            mOutputs[0]->SetType(mDescriptor.type);
+            mOutputs[0]->SetShape(mDimensions);
             return {};
         }
 
         const std::string& GetName() const {
             return mName;
         }
+
         const OperandDescriptor* GetOperandDescriptor() const {
             return &mDescriptor;
         }

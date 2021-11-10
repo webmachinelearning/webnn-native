@@ -14,7 +14,8 @@
 
 #include "webnn_native/ops/Reduce.h"
 
-#include "common/Log.h"
+#include <algorithm>
+
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
@@ -24,8 +25,9 @@ namespace webnn_native { namespace op {
                    OperandBase* input,
                    ReduceOptions const* options)
         : OperatorBase(builder, {input}), mOpType(opType) {
+        // If axes are not present, all dimensions are reduced.
         if (options == nullptr || options->axes == nullptr) {
-            int32_t rank = input->Rank();
+            int32_t rank = input->Shape().size();
             mAxes.resize(rank);
             for (auto i = 0; i < rank; ++i) {
                 mAxes[i] = i;
@@ -40,16 +42,46 @@ namespace webnn_native { namespace op {
         }
     }
 
-    MaybeError Reduce::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Reduce::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        std::vector<int32_t> reducedShape = inputShape, outputShape;
+        std::vector<int32_t> axes = mAxes;
+        for (size_t i = 0; i < axes.size(); ++i) {
+            // The dimensions to reduce where -1 means the last dimension.
+            if (axes[i] == -1) {
+                axes[i] = inputShape.size() - 1;
+            }
+            reducedShape[axes[i]] = 1;
+        }
+
+        if (!mOptions.keepDimensions) {
+            for (size_t i = 0; i < inputShape.size(); ++i) {
+                // The axes may be in unexpected order, use push_back to keep dimensions which
+                // haven't been reduced.
+                if (std::find(axes.begin(), axes.end(), i) == axes.end()) {
+                    outputShape.push_back(inputShape[i]);
+                }
+            }
+            if (outputShape.size() == 0) {
+                outputShape = {1};
+            }
+        } else {
+            outputShape = std::move(reducedShape);
+        }
+        mOutputs[0]->SetShape(std::move(outputShape));
+        return {};
+    }
+
+    MaybeError Reduce::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
+        auto inputShape = mInputs[0]->Shape();
         // The number of values in the sequence must be smaller than the rank of the input tensor.
-        size_t inputRank = mInputs[0]->Rank();
-        if (mOptions.axesCount > inputRank) {
-            return DAWN_VALIDATION_ERROR("axes size is invalid.");
+        if (mAxes.size() > inputShape.size()) {
+            return DAWN_VALIDATION_ERROR("Axes size is invalid.");
         }
 
         // The values in the sequence must be within the range from 0 to N-1,
@@ -57,7 +89,7 @@ namespace webnn_native { namespace op {
         // Besides, axis can also be -1 to represent the last dimension.
         std::map<int32_t, size_t> axesMap;
         for (size_t i = 0; i < mAxes.size(); ++i) {
-            if (mAxes[i] > static_cast<int32_t>(inputRank - 1) || mAxes[i] < -1) {
+            if (mAxes[i] > static_cast<int32_t>(inputShape.size() - 1) || mAxes[i] < -1) {
                 return DAWN_VALIDATION_ERROR("axes value is invalid.");
             }
 
@@ -67,7 +99,7 @@ namespace webnn_native { namespace op {
             axesMap[mAxes[i]] = i;
         }
 
-        return {};
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

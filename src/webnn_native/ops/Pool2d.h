@@ -35,12 +35,13 @@ namespace webnn_native { namespace op {
         ~Pool2d() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override;
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         Pool2dOptions const* GetOptions() const;
         Pool2dType GetType() const;
 
       private:
+        MaybeError CalculateShape();
         Pool2dOptions mOptions;
         std::vector<int32_t> mWindowDimensions;
         std::vector<int32_t> mPadding;

@@ -14,8 +14,8 @@
 
 #include "webnn_native/ops/Pool2d.h"
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
+#include "webnn_native/Utils.h"
 
 namespace webnn_native { namespace op {
 
@@ -76,15 +76,55 @@ namespace webnn_native { namespace op {
         return mOpType;
     }
 
-    MaybeError Pool2d::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Pool2d::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        bool nchw = mOptions.layout == ml::InputOperandLayout::Nchw;
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
+        int32_t windowHeight =
+            mOptions.windowDimensions == nullptr ? inputHeight : mWindowDimensions[0];
+        int32_t windowWidth =
+            mOptions.windowDimensions == nullptr ? inputWidth : mWindowDimensions[1];
+
+        int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
+                paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
+        if (mOptions.autoPad != ml::AutoPad::Explicit) {
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0],
+                                                    inputHeight, windowHeight, mOptions.strides[0],
+                                                    paddingBeginningHeight, paddingEndingHeight);
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1],
+                                                    inputWidth, windowWidth, mOptions.strides[1],
+                                                    paddingBeginningWidth, paddingEndingWidth);
+        }
+        // TODO(mingming): Support ceil and floor rounding types for pool2d.
+        int32_t outputHeight =
+            1 + (inputHeight - windowHeight + paddingBeginningHeight + paddingEndingHeight) /
+                    mStride[0];
+        int32_t outputWidth =
+            1 +
+            (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) / mStride[1];
+
+        std::vector<int32_t> outputShape;
+        int32_t batches = inputShape[0];
+        int32_t channels = nchw ? inputShape[1] : inputShape[3];
+        if (nchw) {
+            outputShape = {batches, channels, outputHeight, outputWidth};
+        } else {
+            outputShape = {batches, outputHeight, outputWidth, channels};
+        }
+        mOutputs[0]->SetShape(std::move(outputShape));
+        return {};
+    }
+
+    MaybeError Pool2d::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
 
         auto input = mInputs[0];
         // The input 4-D tensor
-        if (input->Rank() != 4) {
+        if (input->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument input is not a 4D tensor.");
         }
         // windowDimensions: a sequence of long of length 2
@@ -104,7 +144,7 @@ namespace webnn_native { namespace op {
             return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
 
-        return {};
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

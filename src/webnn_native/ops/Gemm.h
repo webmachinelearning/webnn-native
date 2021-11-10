@@ -28,13 +28,14 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddGemm(this);
         }
-        MaybeError Validate() override;
+        MaybeError ValidateAndInferOutputInfo() override;
 
         GemmOptions const* GetOptions() const {
             return &mOptions;
         }
 
       private:
+        MaybeError CalculateShape();
         GemmOptions mOptions;
     };
 

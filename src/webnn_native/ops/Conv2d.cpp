@@ -14,9 +14,9 @@
 
 #include "webnn_native/ops/Conv2d.h"
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/Utils.h"
 
 namespace webnn_native { namespace op {
 
@@ -88,8 +88,96 @@ namespace webnn_native { namespace op {
         return &mOptions;
     }
 
-    MaybeError Conv2d::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Conv2d::CalculateShape() {
+        auto inputShape = mInputs[0]->Shape();
+        auto filterShape = mInputs[1]->Shape();
+
+        bool nchw = mOptions.inputLayout == ml::InputOperandLayout::Nchw;
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
+        int32_t inputChannels = nchw ? inputShape[1] : inputShape[3];
+
+        int32_t filterHeight = 0, filterWidth = 0, outputChannels = 0, filterDepthIn = 0;
+        switch (mOptions.filterLayout) {
+            case ml::FilterOperandLayout::Hwio:
+                filterHeight = filterShape[0];
+                filterWidth = filterShape[1];
+                outputChannels = filterShape[3];
+                filterDepthIn = filterShape[2];
+                break;
+            case ml::FilterOperandLayout::Ohwi:
+                filterHeight = filterShape[1];
+                filterWidth = filterShape[2];
+                outputChannels = filterShape[0];
+                filterDepthIn = filterShape[3];
+                break;
+            case ml::FilterOperandLayout::Ihwo:
+                filterHeight = filterShape[1];
+                filterWidth = filterShape[2];
+                outputChannels = filterShape[3];
+                filterDepthIn = filterShape[0];
+                break;
+            case ml::FilterOperandLayout::Oihw:
+                filterHeight = filterShape[2];
+                filterWidth = filterShape[3];
+                outputChannels = filterShape[0];
+                filterDepthIn = filterShape[1];
+                break;
+            default:
+                return DAWN_VALIDATION_ERROR("The filter layout is unsupported");
+        }
+
+        if (filterDepthIn != inputChannels / mOptions.groups) {
+            return DAWN_VALIDATION_ERROR(
+                "The groups is invalid, it must evenly divides the input channels.");
+        }
+
+        int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
+                paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
+        if (mOptions.autoPad != ml::AutoPad::Explicit) {
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0],
+                                                    inputHeight, filterHeight, mOptions.strides[0],
+                                                    paddingBeginningHeight, paddingEndingHeight);
+            utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[1],
+                                                    inputWidth, filterWidth, mOptions.strides[1],
+                                                    paddingBeginningWidth, paddingEndingWidth);
+        }
+
+        int32_t outputHeight, outputWidth;
+        auto dilatedFilterHeight = mDilations[0] * (filterHeight - 1) + 1;
+        auto dilatedFilterWidth = mDilations[1] * (filterWidth - 1) + 1;
+        if (mOptions.transpose) {
+            if (mOptions.outputSizes == nullptr) {
+                outputHeight = (inputHeight - 1) * mStride[0] + dilatedFilterHeight -
+                               paddingBeginningHeight - paddingEndingHeight + mOutputPadding[0];
+                outputWidth = (inputWidth - 1) * mStride[1] + dilatedFilterWidth -
+                              paddingBeginningWidth - paddingEndingWidth + mOutputPadding[1];
+            } else {
+                outputHeight = mOptions.outputSizes[0];
+                outputWidth = mOptions.outputSizes[1];
+            }
+        } else {
+            outputHeight = 1 + (inputHeight - dilatedFilterHeight + paddingBeginningHeight +
+                                paddingEndingHeight) /
+                                   mStride[0];
+            outputWidth =
+                1 + (inputWidth - dilatedFilterWidth + paddingBeginningWidth + paddingEndingWidth) /
+                        mStride[1];
+        }
+
+        std::vector<int32_t> outputShape;
+        auto batches = inputShape[0];
+        if (nchw) {
+            outputShape = {batches, outputChannels, outputHeight, outputWidth};
+        } else {
+            outputShape = {batches, outputHeight, outputWidth, outputChannels};
+        }
+        mOutputs[0]->SetShape(std::move(outputShape));
+        return {};
+    }
+
+    MaybeError Conv2d::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
@@ -100,17 +188,17 @@ namespace webnn_native { namespace op {
             return DAWN_VALIDATION_ERROR("Argument types are inconsistent.");
         }
         // The input 4-D tensor
-        if (input->Rank() != 4) {
+        if (input->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument input is not a 4D tensor.");
         }
         // The filter 4-D tensor
-        if (filter->Rank() != 4) {
+        if (filter->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Argument filter is not a 4D tensor.");
         }
         // The bias is 1-D tensor.
         if (mOptions.bias != nullptr) {
             auto bias = mInputs[2];
-            if (bias->Rank() != 1) {
+            if (bias->Shape().size() != 1) {
                 return DAWN_VALIDATION_ERROR("Argument bias is not a 1D tensor.");
             }
         }
@@ -127,7 +215,7 @@ namespace webnn_native { namespace op {
             return DAWN_VALIDATION_ERROR("dilationsCount is incorrect.");
         }
 
-        return {};
+        return CalculateShape();
     }
 
 }}  // namespace webnn_native::op

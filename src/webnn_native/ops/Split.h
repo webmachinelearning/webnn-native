@@ -39,9 +39,57 @@ namespace webnn_native { namespace op {
             return graph->AddSplit(this);
         }
 
-        MaybeError Validate() override {
-            return mSplits.empty() ? DAWN_VALIDATION_ERROR("Argument splits is invalid.")
-                                   : MaybeError();
+        MaybeError CalculateShape() {
+            auto inputShape = mInputs[0]->Shape();
+            auto outputShape = inputShape;
+            size_t outputSize;
+            auto axis = mAxis;
+            if (axis < 0) {
+                axis += inputShape.size();
+            }
+
+            if (mSplits.size() == 1) {
+                outputSize = mSplits[0];
+                outputShape[axis] /= outputSize;
+            } else {
+                outputSize = mSplits.size();
+            }
+
+            int32_t dimSumAlongAxis = 0;
+            for (size_t i = 0; i < outputSize; ++i) {
+                if (mSplits.size() != 1) {
+                    outputShape[axis] = mSplits[i];
+                }
+                dimSumAlongAxis += outputShape[axis];
+                mOutputs[i]->SetShape(outputShape);
+            }
+
+            // The number of output must evenly divide the dimension size of input along
+            // options.axis.
+            if (dimSumAlongAxis != inputShape[axis]) {
+                return DAWN_VALIDATION_ERROR(
+                    "The sum of sizes must equal to the dimension size of input along "
+                    "options.axis.");
+            }
+            return {};
+        }
+
+        MaybeError ValidateAndInferOutputInfo() override {
+            MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
+            if (maybeError.IsError()) {
+                return maybeError;
+            }
+
+            int32_t inputRank = mInputs[0]->Shape().size();
+            if (mAxis >= inputRank || mAxis < (-inputRank)) {
+                return DAWN_VALIDATION_ERROR("Argument axis value is invalid.");
+            }
+
+            if (mSplits.empty()) {
+                return DAWN_VALIDATION_ERROR("Argument splits is invalid.");
+            }
+
+            return CalculateShape();
         }
 
         std::vector<uint32_t> GetSplits() const {

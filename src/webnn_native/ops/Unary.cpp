@@ -14,22 +14,24 @@
 
 #include "webnn_native/ops/Unary.h"
 
-#include "common/Log.h"
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
 
-    MaybeError Unary::Validate() {
-        MaybeError maybeError = OperatorBase::Validate();
+    MaybeError Unary::ValidateAndInferOutputInfo() {
+        MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
         }
-
         if (mOpType == UnaryOpType::kSoftmax) {
             auto input = mInputs[0];
-            if (input->Rank() != 2) {
+            if (input->Shape().size() != 2) {
                 return DAWN_VALIDATION_ERROR("Input dimensions is incorrect.");
             }
+        }
+
+        if (!mInputs.empty()) {
+            mOutputs[0]->SetShape(mInputs[0]->Shape());
         }
 
         return {};

@@ -16,7 +16,6 @@
 #include "webnn_native/Operand.h"
 
 #include "common/Assert.h"
-#include "common/Log.h"
 #include "webnn_native/GraphBuilder.h"
 
 namespace webnn_native {
@@ -24,14 +23,7 @@ namespace webnn_native {
     OperandBase::OperandBase(GraphBuilderBase* graphBuilder, OperatorBase* operatorBase)
         : ObjectBase(graphBuilder->GetContext()),
           mOperator(operatorBase),
-          mType(ml::OperandType::Float32),
-          mRank(0) {
-        if (mOperator->Inputs().size() >= 1) {
-            auto primaryInput = mOperator->Inputs()[0];
-            // The type and rank is the same as input[0] by default.
-            mType = primaryInput->Type();
-            mRank = primaryInput->Rank();
-        }
+          mType(ml::OperandType::Float32) {
     }
 
     OperandBase::OperandBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)

@@ -36,7 +36,8 @@ namespace webnn_native { namespace op {
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddGru(this);
         }
-        MaybeError Validate() override;
+
+        MaybeError ValidateAndInferOutputInfo() override;
 
         GruOptions const* GetOptions() const {
             return &mOptions;
@@ -55,6 +56,7 @@ namespace webnn_native { namespace op {
         }
 
       private:
+        MaybeError CalculateShape();
         GruOptions mOptions;
         size_t mSteps;
         size_t mHiddenSize;
