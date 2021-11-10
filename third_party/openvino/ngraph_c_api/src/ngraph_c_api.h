@@ -271,6 +271,17 @@ ngraph_average_pool(const ngraph_node_t* input,
                     ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
+ngraph_l2_pool(const ngraph_node_t* input,
+               size_t const* strides,
+               uint32_t strides_count,
+               size_t const* padding,
+               uint32_t padding_count,
+               size_t const* windowDimensions,
+               uint32_t windowDimensionsCount,
+               ngraph_auto_pad mode,
+               ngraph_node_t** node);
+
+NGRAPH_C_API(IEStatusCode)
 ngraph_max_pool(const ngraph_node_t* input,
                 size_t const* strides,
                 uint32_t strides_count,

@@ -619,6 +619,32 @@ IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
   CREATE_NODE_AND_CATCH_EXCEPTIONS(pool2d, node);
 }
 
+IEStatusCode ngraph_l2_pool(const ngraph_node_t* input,
+                            size_t const* strides,
+                            uint32_t strides_count,
+                            size_t const* padding,
+                            uint32_t padding_count,
+                            size_t const* dimensions,
+                            uint32_t dimensions_count,
+                            ngraph_auto_pad mode,
+                            ngraph_node_t** node) {
+  std::vector<float> constantBuffer = {2};
+  auto constant = std::make_shared<ngraph::op::v0::Constant>(
+      ngraph::element::f32, ngraph::Shape{}, constantBuffer);
+  auto pow = std::make_shared<ngraph::op::v1::Power>(input->object,
+                                                     constant->output(0));
+  ngraph::Strides strides_vector(strides, strides + strides_count);
+  ngraph::Shape pad_begin = {padding[0], padding[2]};
+  ngraph::Shape pad_end = {padding[1], padding[3]};
+  ngraph::Shape window_dimensions(dimensions, dimensions + dimensions_count);
+  TRY_IE_EXCEPTIONS
+  auto avgPool2d = std::make_shared<ngraph::op::v1::AvgPool>(
+      pow->output(0), strides_vector, pad_begin, pad_end, window_dimensions,
+      true, ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
+  auto l2Pool2d = std::make_shared<ngraph::op::v0::Sqrt>(avgPool2d->output(0));
+  CREATE_NODE_AND_CATCH_EXCEPTIONS(l2Pool2d, node);
+}
+
 IEStatusCode ngraph_max_pool(const ngraph_node_t* input,
                              size_t const* strides,
                              uint32_t strides_count,

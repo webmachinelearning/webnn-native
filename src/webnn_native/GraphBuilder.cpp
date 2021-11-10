@@ -187,6 +187,10 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kLog, input));
     }
 
+    OperandBase* GraphBuilderBase::L2Pool2d(OperandBase* input, Pool2dOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Pool2d(this, op::Pool2dType::kL2Pool2d, input, options));
+    }
+
     OperandBase* GraphBuilderBase::Matmul(OperandBase* a, OperandBase* b) {
         VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kMatMul, a, b));
     }

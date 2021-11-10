@@ -63,6 +63,7 @@ namespace webnn_native {
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);
         OperatorBase* LeakyReluOperator(LeakyReluOptions const* options);
         OperandBase* Log(OperandBase*);
+        OperandBase* L2Pool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Matmul(OperandBase* a, OperandBase* b);
         OperandBase* Max(OperandBase*, OperandBase*);
         OperandBase* MaxPool2d(OperandBase*, Pool2dOptions const* options);

@@ -881,6 +881,7 @@ namespace webnn_native { namespace dml {
         if (options->layout == ml::InputOperandLayout::Nhwc) {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
 
         ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
                                             options->stridesCount);
@@ -891,8 +892,7 @@ namespace webnn_native { namespace dml {
             windowSizesVector.assign(windowDimensions,
                                      windowDimensions + options->windowDimensionsCount);
         } else {
-            const ::dml::TensorDimensions& inputSizes = input.GetOutputDesc().sizes;
-            windowSizesVector = {inputSizes[2], inputSizes[3]};
+            windowSizesVector = {inputDims[2], inputDims[3]};
         }
         ::dml::Span<const uint32_t> windowSizes(windowSizesVector);
         ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
@@ -912,6 +912,14 @@ namespace webnn_native { namespace dml {
             }
             output =
                 ::dml::AveragePooling(input, strides, windowSizes, startPadding, endPadding, false);
+        } else if (pool2d->GetType() == op::Pool2dType::kL2Pool2d) {
+            uint32_t length = SizeOfShape(inputDims);
+            std::vector<float> constant(length, 2);
+            auto pow = ::dml::Pow(input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
+                                                         constant.data(), sizeof(float) * length));
+            auto avgPool2d =
+                ::dml::AveragePooling(pow, strides, windowSizes, startPadding, endPadding, false);
+            output = ::dml::Sqrt(avgPool2d);
         } else if (pool2d->GetType() == op::Pool2dType::kMaxPool2d) {
             output = ::dml::MaxPooling(input, windowSizes, strides, startPadding, endPadding,
                                        dilations, false)

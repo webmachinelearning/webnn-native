@@ -827,6 +827,12 @@ namespace webnn_native { namespace ie {
                     windowDimensions.data(), windowDimensions.size(),
                     static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
                 break;
+            case op::Pool2dType::kL2Pool2d:
+                status =
+                    ngraph_l2_pool(input, strides.data(), strides.size(), padding.data(),
+                                   padding.size(), windowDimensions.data(), windowDimensions.size(),
+                                   static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
+                break;
             case op::Pool2dType::kMaxPool2d:
                 status = ngraph_max_pool(input, strides.data(), strides.size(), padding.data(),
                                          padding.size(), windowDimensions.data(),
