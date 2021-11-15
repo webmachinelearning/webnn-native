@@ -1592,7 +1592,7 @@ namespace webnn_native { namespace dml {
             }
 
             ::pydml::Binding* inputBinding = input.second;
-            auto& resource = namedInputs[input.first]->resource;
+            auto& resource = namedInputs[input.first].resource;
             inputBinding->data.buffer = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
             inputBinding->data.size = resource.byteLength;
         }
@@ -1621,9 +1621,9 @@ namespace webnn_native { namespace dml {
             size_t bufferLength = tensor->Size();
             auto namedOutputs = outputs->GetRecords();
             if (namedOutputs.find(outputName) != namedOutputs.end()) {
-                const ArrayBufferView* output = namedOutputs[outputName];
-                if (output->byteLength >= bufferLength) {
-                    memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset, outputBuffer,
+                ArrayBufferView output = namedOutputs[outputName];
+                if (output.byteLength >= bufferLength) {
+                    memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset, outputBuffer,
                            bufferLength);
                 }
             }

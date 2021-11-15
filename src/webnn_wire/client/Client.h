@@ -37,6 +37,11 @@ namespace webnn_wire { namespace client {
         const volatile char* HandleCommandsImpl(const volatile char* commands,
                                                 size_t size) override;
 
+        ReservedContext ReserveContext();
+        ReservedNamedInputs ReserveNamedInputs(MLContext context);
+        ReservedNamedOperands ReserveNamedOperands();
+        ReservedNamedOutputs ReserveNamedOutputs();
+
         template <typename Cmd>
         void SerializeCommand(const Cmd& cmd) {
             mSerializer.SerializeCommand(cmd, *this);

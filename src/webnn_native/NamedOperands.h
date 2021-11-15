@@ -18,11 +18,32 @@
 #include <map>
 #include <string>
 
-#include "webnn_native/NamedRecords.h"
+#include "common/RefCounted.h"
 
 namespace webnn_native {
 
-    class NamedOperandsBase : public NamedRecords<OperandBase> {};
+    class NamedOperandsBase : public RefCounted {
+      public:
+        // WebNN API
+        void Set(char const* name, const OperandBase* operand) {
+            mNamedOperands[std::string(name)] = operand;
+        }
+
+        const OperandBase* Get(char const* name) const {
+            if (mNamedOperands.find(std::string(name)) == mNamedOperands.end()) {
+                return nullptr;
+            }
+            return mNamedOperands.at(std::string(name));
+        }
+
+        // Other methods
+        const std::map<std::string, const OperandBase*>& GetRecords() const {
+            return mNamedOperands;
+        }
+
+      private:
+        std::map<std::string, const OperandBase*> mNamedOperands;
+    };
 
 }  // namespace webnn_native
 

@@ -66,11 +66,14 @@ dawn_component("webnn_wire") {
     "ChunkedCommandSerializer.h",
     "WireDeserializeAllocator.cpp",
     "WireDeserializeAllocator.h",
+    "WireClient.cpp",
+    "WireServer.cpp",
     "client/ApiObjects.h",
     "client/Client.cpp",
     "client/Client.h",
     "client/Context.cpp",
     "client/Context.h",
+    "client/ClientDoers.cpp",
     "client/Graph.cpp",
     "client/Graph.h",
     "client/GraphBuilder.cpp",
@@ -84,6 +87,11 @@ dawn_component("webnn_wire") {
     "server/ObjectStorage.h",
     "server/Server.cpp",
     "server/Server.h",
+    "server/ServerContext.cpp",
+    "server/ServerGraph.cpp",
+    "server/ServerGraphBuilder.cpp",
+    "server/ServerNamedInputs.cpp",
+    "server/ServerNamedOutputs.cpp",
   ]
 
   # Make headers publicly visible

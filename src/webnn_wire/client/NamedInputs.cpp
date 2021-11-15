@@ -14,8 +14,22 @@
 
 #include "webnn_wire/client/NamedInputs.h"
 
+#include "webnn_wire/client/Client.h"
+#include "webnn_wire/WireCmd_autogen.h"
+
 namespace webnn_wire { namespace client {
 
-    void NamedInputs::Set(char const * name, MLInput const * input) {}
+    void NamedInputs::Set(char const * name, MLInput const * input) {
+        NamedInputsSetCmd cmd;
+        cmd.namedInputsId = this->id;
+        cmd.name = name;
+        cmd.buffer = static_cast<const uint8_t*>(input->resource.buffer);
+        cmd.byteLength = input->resource.byteLength;
+        cmd.byteOffset = input->resource.byteOffset;
+        cmd.dimensions = input->dimensions;
+        cmd.dimensionsCount = input->dimensionsCount;
+
+        client->SerializeCommand(cmd);
+    }
 
 }}  // namespace webnn_wire::client

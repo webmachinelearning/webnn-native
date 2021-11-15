@@ -34,6 +34,32 @@ namespace webnn_wire {
         CommandSerializer* serializer;
     };
 
+    struct ReservedContext {
+        MLContext context;
+        uint32_t id;
+        uint32_t generation;
+    };
+
+    struct ReservedNamedInputs {
+        MLNamedInputs namedInputs;
+        uint32_t id;
+        uint32_t generation;
+        uint32_t contextId;
+        uint32_t contextGeneration;
+    };
+
+    struct ReservedNamedOperands {
+        MLNamedOperands namedOperands;
+        uint32_t id;
+        uint32_t generation;
+    };
+
+    struct ReservedNamedOutputs {
+        MLNamedOutputs namedOutputs;
+        uint32_t id;
+        uint32_t generation;
+    };
+
     class WEBNN_WIRE_EXPORT WireClient : public CommandHandler {
       public:
         WireClient(const WireClientDescriptor& descriptor);
@@ -41,6 +67,11 @@ namespace webnn_wire {
 
         const volatile char* HandleCommands(const volatile char* commands,
                                             size_t size) override final;
+
+        ReservedContext ReserveContext();
+        ReservedNamedInputs ReserveNamedInputs(MLContext context);
+        ReservedNamedOperands ReserveNamedOperands();
+        ReservedNamedOutputs ReserveNamedOutputs();
 
         // Disconnects the client.
         // Commands allocated after this point will not be sent.

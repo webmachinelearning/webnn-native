@@ -66,6 +66,48 @@ namespace webnn_wire { namespace client {
         }
     }
 
+    ReservedContext Client::ReserveContext() {
+        auto* allocation = ContextAllocator().New(this);
+
+        ReservedContext result;
+        result.context = ToAPI(allocation->object.get());
+        result.id = allocation->object->id;
+        result.generation = allocation->generation;
+        return result;
+    }
+
+    ReservedNamedInputs Client::ReserveNamedInputs(MLContext context) {
+        auto* allocation = NamedInputsAllocator().New(this);
+
+        ReservedNamedInputs result;
+        result.namedInputs = ToAPI(allocation->object.get());
+        result.id = allocation->object->id;
+        result.generation = allocation->generation;
+        // result.contextId = FromAPI(context)->id;
+        // result.contextGeneration = ContextAllocator().GetGeneration(FromAPI(context)->id);
+        return result;
+    }
+
+    ReservedNamedOperands Client::ReserveNamedOperands() {
+        auto* allocation = NamedOperandsAllocator().New(this);
+
+        ReservedNamedOperands result;
+        result.namedOperands = ToAPI(allocation->object.get());
+        result.id = allocation->object->id;
+        result.generation = allocation->generation;
+        return result;
+    }
+
+    ReservedNamedOutputs Client::ReserveNamedOutputs() {
+        auto* allocation = NamedOutputsAllocator().New(this);
+
+        ReservedNamedOutputs result;
+        result.namedOutputs = ToAPI(allocation->object.get());
+        result.id = allocation->object->id;
+        result.generation = allocation->generation;
+        return result;
+    }
+
     void Client::Disconnect() {
         mDisconnected = true;
         mSerializer = ChunkedCommandSerializer(NoopCommandSerializer::GetInstance());

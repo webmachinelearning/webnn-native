@@ -225,8 +225,17 @@ namespace webnn_wire { namespace client {
     }
 
     MLGraphBuilder ClientCreateGraphBuilder(MLContext context) {
-        UNREACHABLE();
-        return nullptr;
+        auto self = reinterpret_cast<Context*>(context);
+        CreateGraphBuilderCmd cmd;
+
+        auto* allocation = self->client->GraphBuilderAllocator().New(self->client);
+        cmd.result = ObjectHandle{allocation->object->id, allocation->generation};
+
+        cmd.context = self->id;
+
+        self->client->SerializeCommand(cmd);
+
+        return reinterpret_cast<MLGraphBuilder>(allocation->object.get());
     }
 
     MLNamedInputs ClientCreateNamedInputs() {

@@ -54,6 +54,32 @@ namespace webnn_wire { namespace client {
         return true;
     }
 
+    bool Context::OnPopErrorScopeCallback(uint64_t requestSerial,
+                                         MLErrorType type,
+                                         const char* message) {
+        switch (type) {
+            case MLErrorType_NoError:
+            case MLErrorType_Validation:
+            case MLErrorType_OutOfMemory:
+            case MLErrorType_Unknown:
+            case MLErrorType_DeviceLost:
+                break;
+            default:
+                return false;
+        }
+
+        auto requestIt = mErrorScopes.find(requestSerial);
+        if (requestIt == mErrorScopes.end()) {
+            return false;
+        }
+
+        ErrorScopeData request = std::move(requestIt->second);
+
+        mErrorScopes.erase(requestIt);
+        request.callback(type, message, request.userdata);
+        return true;
+    }
+
     void Context::SetUncapturedErrorCallback(MLErrorCallback callback, void* userdata) {
     }
 

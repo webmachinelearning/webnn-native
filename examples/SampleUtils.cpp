@@ -14,10 +14,19 @@
 
 #include "SampleUtils.h"
 
+#include "common/Assert.h"
+#include "common/Log.h"
+#include "utils/TerribleCommandBuffer.h"
+#include "webnn_native/NamedInputs.h"
+#include "webnn_native/NamedOperands.h"
+#include "webnn_native/NamedOutputs.h"
+
 #include <webnn/webnn.h>
 #include <webnn/webnn_cpp.h>
 #include <webnn/webnn_proc.h>
 #include <webnn_native/WebnnNative.h>
+#include <webnn_wire/WireClient.h>
+#include <webnn_wire/WireServer.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -25,19 +34,109 @@
 #include <iostream>
 #include <numeric>
 
-#include "common/Assert.h"
-#include "common/Log.h"
+enum class CmdBufType {
+    None,
+    Terrible,
+    // TODO(cwallez@chromium.org): double terrible cmdbuf
+};
+
+static CmdBufType cmdBufType = CmdBufType::Terrible;
+static webnn_wire::WireServer* wireServer = nullptr;
+static webnn_wire::WireClient* wireClient = nullptr;
+static utils::TerribleCommandBuffer* c2sBuf = nullptr;
+static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 
 static std::unique_ptr<webnn_native::Instance> instance;
 ml::Context CreateCppContext(ml::ContextOptions const* options) {
     instance = std::make_unique<webnn_native::Instance>();
     WebnnProcTable backendProcs = webnn_native::GetProcs();
-    webnnProcSetProcs(&backendProcs);
-    MLContext context = instance->CreateContext(options);
-    if (context) {
-        return ml::Context::Acquire(context);
+    MLContext backendContext = instance->CreateContext(options);
+    if (backendContext == nullptr) {
+        return ml::Context();
     }
-    return ml::Context();
+    // Choose whether to use the backend procs and context directly, or set up the wire.
+    MLContext context = nullptr;
+    WebnnProcTable procs;
+
+    switch (cmdBufType) {
+        case CmdBufType::None:
+            procs = backendProcs;
+            context = backendContext;
+            break;
+
+        case CmdBufType::Terrible: {
+            c2sBuf = new utils::TerribleCommandBuffer();
+            s2cBuf = new utils::TerribleCommandBuffer();
+
+            webnn_wire::WireServerDescriptor serverDesc = {};
+            serverDesc.procs = &backendProcs;
+            serverDesc.serializer = s2cBuf;
+
+            wireServer = new webnn_wire::WireServer(serverDesc);
+            c2sBuf->SetHandler(wireServer);
+
+            webnn_wire::WireClientDescriptor clientDesc = {};
+            clientDesc.serializer = c2sBuf;
+
+            wireClient = new webnn_wire::WireClient(clientDesc);
+            procs = webnn_wire::client::GetProcs();
+            s2cBuf->SetHandler(wireClient);
+
+            auto contextReservation = wireClient->ReserveContext();
+            wireServer->InjectContext(backendContext, contextReservation.id,
+                                      contextReservation.generation);
+
+            context = contextReservation.context;
+        } break;
+    }
+    webnnProcSetProcs(&procs);
+
+    return ml::Context::Acquire(context);
+}
+
+void DoFlush() {
+    if (cmdBufType == CmdBufType::Terrible) {
+        bool c2sSuccess = c2sBuf->Flush();
+        bool s2cSuccess = s2cBuf->Flush();
+
+        ASSERT(c2sSuccess && s2cSuccess);
+    }
+}
+
+ml::NamedInputs CreateCppNamedInputs() {
+    MLNamedInputs namedInputs =
+        reinterpret_cast<MLNamedInputs>(new webnn_native::NamedInputsBase());
+    auto namedInputsReservation = wireClient->ReserveNamedInputs(nullptr);
+    wireServer->InjectNamedInputs(namedInputs, namedInputsReservation.id,
+                                  namedInputsReservation.generation,
+                                  namedInputsReservation.contextId,
+                                  namedInputsReservation.contextGeneration);
+
+    namedInputs = namedInputsReservation.namedInputs;
+
+    return ml::NamedInputs::Acquire(namedInputs);
+}
+
+ml::NamedOperands CreateCppNamedOperands() {
+    MLNamedOperands namedOperands =
+        reinterpret_cast<MLNamedOperands>(new webnn_native::NamedOperandsBase());
+    auto namedOperandsReservation = wireClient->ReserveNamedOperands();
+    wireServer->InjectNamedOperands(namedOperands, namedOperandsReservation.id,
+                                  namedOperandsReservation.generation);
+
+    namedOperands = namedOperandsReservation.namedOperands;
+    return ml::NamedOperands::Acquire(namedOperands);
+}
+
+ml::NamedOutputs CreateCppNamedOutputs() {
+    MLNamedOutputs namedOutputs =
+        reinterpret_cast<MLNamedOutputs>(new webnn_native::NamedOutputsBase());
+    auto namedOutputsReservation = wireClient->ReserveNamedOutputs();
+    wireServer->InjectNamedOutputs(namedOutputs, namedOutputsReservation.id,
+                                  namedOutputsReservation.generation);
+
+    namedOutputs = namedOutputsReservation.namedOutputs;
+    return ml::NamedOutputs::Acquire(namedOutputs);
 }
 
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
@@ -163,7 +262,7 @@ namespace utils {
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
-        ml::NamedOperands namedOperands = ml::CreateNamedOperands();
+        ml::NamedOperands namedOperands = CreateCppNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

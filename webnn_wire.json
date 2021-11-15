@@ -50,8 +50,12 @@
       {"name": "byte offset", "type": "size_t", "default": 0}
     ],
     "destroy object": [
-      { "name": "object type", "type": "ObjectType" },
-      { "name": "object id", "type": "ObjectId" }
+      {"name": "object type", "type": "ObjectType" },
+      {"name": "object id", "type": "ObjectId" }
+    ],
+    "create graph builder": [
+      {"name": "context", "type": "ObjectId" },
+      {"name": "result", "type": "ObjectHandle", "handle_type": "graph builder" }
     ]
   },
   "return commands": {

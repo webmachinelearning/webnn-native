@@ -117,6 +117,7 @@ test("webnn_unittests") {
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_native:webnn_native_sources",
+    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   # Add internal webnn_native config for internal unittests.
@@ -175,6 +176,7 @@ source_set("webnn_end2end_tests_sources") {
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_wire",
+    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   sources = [
@@ -248,6 +250,7 @@ test("webnn_end2end_tests") {
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_wire",
+    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   libs = []

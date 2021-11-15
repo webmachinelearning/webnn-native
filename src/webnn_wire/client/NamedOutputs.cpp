@@ -14,10 +14,20 @@
 
 #include "webnn_wire/client/NamedOutputs.h"
 
+#include "webnn_wire/client/Client.h"
+#include "webnn_wire/WireCmd_autogen.h"
+
 namespace webnn_wire { namespace client {
 
     void NamedOutputs::Set(char const * name, MLArrayBufferView const * resource) {
+        NamedOutputsSetCmd cmd;
+        cmd.namedOutputsId = this->id;
+        cmd.name = name;
+        cmd.buffer = static_cast<const uint8_t*>(resource->buffer);
+        cmd.byteLength = resource->byteLength;
+        cmd.byteOffset = resource->byteOffset;
 
+        client->SerializeCommand(cmd);
     }
 
 }}  // namespace webnn_wire::client

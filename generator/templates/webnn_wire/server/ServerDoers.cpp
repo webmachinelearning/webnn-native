@@ -79,7 +79,7 @@ namespace webnn_wire { namespace server {
                         return false;
                     }
                     if (data->contextInfo != nullptr) {
-                        if (!UntrackDeviceChild(data->contextInfo, objectType, objectId)) {
+                        if (!UntrackContextChild(data->contextInfo, objectType, objectId)) {
                             return false;
                         }
                     }

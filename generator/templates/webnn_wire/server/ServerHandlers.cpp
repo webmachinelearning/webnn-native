@@ -65,7 +65,7 @@ namespace webnn_wire { namespace server {
                         {{name}}Data->contextInfo = selfData->contextInfo;
                     {% endif %}
                     if ({{name}}Data->contextInfo != nullptr) {
-                        if (!TrackDeviceChild({{name}}Data->contextInfo, ObjectType::{{Type}}, cmd.{{name}}.id)) {
+                        if (!TrackContextChild({{name}}Data->contextInfo, ObjectType::{{Type}}, cmd.{{name}}.id)) {
                             return false;
                         }
                     }

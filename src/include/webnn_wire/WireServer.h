@@ -20,7 +20,7 @@
 
 #include "webnn_wire/Wire.h"
 
-struct DawnProcTable;
+struct WebnnProcTable;
 
 namespace webnn_wire {
 
@@ -30,7 +30,7 @@ namespace webnn_wire {
     }  // namespace server
 
     struct WEBNN_WIRE_EXPORT WireServerDescriptor {
-        const DawnProcTable* procs;
+        const WebnnProcTable* procs;
         CommandSerializer* serializer;
     };
 
@@ -41,6 +41,15 @@ namespace webnn_wire {
 
         const volatile char* HandleCommands(const volatile char* commands,
                                             size_t size) override final;
+
+        bool InjectContext(MLContext context, uint32_t id, uint32_t generation);
+        bool InjectNamedInputs(MLNamedInputs namedInputs,
+                               uint32_t id,
+                               uint32_t generation,
+                               uint32_t contextId,
+                               uint32_t contextGeneration);
+        bool InjectNamedOperands(MLNamedOperands namedOperands, uint32_t id, uint32_t generation);
+        bool InjectNamedOutputs(MLNamedOutputs namedOutputs, uint32_t id, uint32_t generation);
 
       private:
         std::unique_ptr<server::Server> mImpl;
