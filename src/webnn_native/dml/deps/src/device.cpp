@@ -82,10 +82,7 @@ HRESULT Device::Init()
     allocatorDesc.Device = m_d3d12Device;
     allocatorDesc.IsUMA = arch.UMA;
     allocatorDesc.ResourceHeapTier = options.ResourceHeapTier;
-
-    gpgmm::d3d12::ResourceAllocator* resourceAllocator = nullptr;
-    ReturnIfFailed(gpgmm::d3d12::ResourceAllocator::CreateAllocator(allocatorDesc, &resourceAllocator));
-    m_resourceAllocator.reset(resourceAllocator);
+    ReturnIfFailed(gpgmm::d3d12::ResourceAllocator::CreateAllocator(allocatorDesc, &m_resourceAllocator));
 
     m_residencyManager = m_resourceAllocator->GetResidencyManager();
 
@@ -564,7 +561,7 @@ HRESULT Device::EnsureUploadHeapSize(uint64_t requestedSizeInBytes)
     {
         m_uploadHeap = nullptr;
         ReturnIfFailed(CreateResource(
-            m_resourceAllocator.get(),
+            m_resourceAllocator.Get(),
             CD3DX12_RESOURCE_DESC::Buffer(newSize),
             CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             D3D12_RESOURCE_STATE_GENERIC_READ,
@@ -596,7 +593,7 @@ HRESULT Device::EnsureCpuBufferSize(uint64_t requestedSizeInBytes, _Inout_ ComPt
     if (newSize != existingSize)
     {
         buffer = nullptr;
-        ReturnIfFailed(CreateCpuCustomBuffer(m_resourceAllocator.get(), newSize, buffer));
+        ReturnIfFailed(CreateCpuCustomBuffer(m_resourceAllocator.Get(), newSize, buffer));
     }
 
     UpdateResidencyIfNeeded(buffer.Get(), &m_residencySet);
@@ -613,7 +610,7 @@ HRESULT Device::EnsureDefaultBufferSize(uint64_t requestedSizeInBytes, _Inout_ C
     if (newSize != existingSize)
     {
         buffer = nullptr;
-        ReturnIfFailed(CreateDefaultBuffer(m_resourceAllocator.get(), newSize, buffer));
+        ReturnIfFailed(CreateDefaultBuffer(m_resourceAllocator.Get(), newSize, buffer));
     }
 
     UpdateResidencyIfNeeded(buffer.Get(), &m_residencySet);
@@ -665,7 +662,7 @@ HRESULT Device::EnsureReadBackHeapSize(uint64_t requestedSizeInBytes)
     if (newSize != existingSize)
     {
         m_readbackHeap = nullptr;
-        ReturnIfFailed(CreateReadBackBuffer(m_resourceAllocator.get(), newSize, m_readbackHeap));
+        ReturnIfFailed(CreateReadBackBuffer(m_resourceAllocator.Get(), newSize, m_readbackHeap));
     }
 
     UpdateResidencyIfNeeded(m_readbackHeap.Get(), &m_residencySet);
