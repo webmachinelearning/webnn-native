@@ -9,17 +9,39 @@ let mainWindow = {}
 function createWindow() {
   // Create the browser window.
   mainWindow = new BrowserWindow({
-    width: 1220,
+    width: 1320,
     height: 840,
     webPreferences: {
-      nodeIntegrationInWorker: true,
+      nodeIntegration: true,
       contextIsolation: false,
-      enableBlinkFeatures: "WebAssemblySimd,WebAssemblyThreads",
+      enableBlinkFeatures: 'SharedArrayBuffer',
       preload: path.join(__dirname, 'node_setup.js')
     }
   })
 
-  let url = `file://${__dirname}/semantic_segmentation/index.html`
+
+  let url = `file://${__dirname}/webnn-samples/index.html`
+
+  const sampleNames = [
+    "code",
+    "image_classification",
+    "lenet",
+    "nsnet2",
+    "object_detection",
+    "rnnoise",
+    "semantic_segmentation",
+    "style_transfer",
+  ]
+
+  for (let argv of process.argv) {
+    const argvName = argv.split('=')[0];
+    const argvValue = argv.split('=')[1];
+    if (argvName === "sample" && sampleNames.includes(argvValue)) {
+      // Directly enter the entry of specified sample via '--sample' option.
+      url = url.replace('index.html', `${argvValue}/index.html`);
+      break
+    }
+  }
 
   for (let argv of process.argv) {
     if (argv.startsWith("numRuns=")) {
