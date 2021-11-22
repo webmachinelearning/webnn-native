@@ -912,7 +912,10 @@ namespace webnn_native { namespace dml {
             }
             output =
                 ::dml::AveragePooling(input, strides, windowSizes, startPadding, endPadding, false);
-        } else if (pool2d->GetType() == op::Pool2dType::kL2Pool2d) {
+        }
+        // L2Pool2d is not supported, emulate it by referring to
+        // https://github.com/tensorflow/tfjs/issues/5539.
+        else if (pool2d->GetType() == op::Pool2dType::kL2Pool2d) {
             uint32_t length = SizeOfShape(inputDims);
             std::vector<float> constant(length, 2);
             auto pow = ::dml::Pow(input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
@@ -925,7 +928,7 @@ namespace webnn_native { namespace dml {
                                        dilations, false)
                          .values;
         } else {
-            return DAWN_INTERNAL_ERROR("l2Pool2d is not supported.");
+            return DAWN_INTERNAL_ERROR("This pool2d type is not supported.");
         }
 
         if (options->layout == ml::InputOperandLayout::Nhwc) {

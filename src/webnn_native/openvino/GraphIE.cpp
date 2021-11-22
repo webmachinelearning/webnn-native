@@ -827,6 +827,8 @@ namespace webnn_native { namespace ie {
                     windowDimensions.data(), windowDimensions.size(),
                     static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
                 break;
+            // L2Pool2d is not supported, emulate it by referring to
+            // https://github.com/tensorflow/tfjs/issues/5539.
             case op::Pool2dType::kL2Pool2d:
                 status =
                     ngraph_l2_pool(input, strides.data(), strides.size(), padding.data(),
