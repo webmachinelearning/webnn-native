@@ -606,6 +606,14 @@
         ]
       },
       {
+        "name": "l2 pool2d",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "options", "type": "pool2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
         "name": "max pool2d",
         "returns": "operand",
         "args": [
