@@ -72,7 +72,7 @@ namespace pydml
         Microsoft::WRL::ComPtr<ID3D12CommandQueue> m_commandQueue;
         Microsoft::WRL::ComPtr<ID3D12CommandAllocator> m_commandAllocator;
         Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> m_commandList;
-        std::unique_ptr<gpgmm::d3d12::ResourceAllocator> m_resourceAllocator;
+        Microsoft::WRL::ComPtr<gpgmm::d3d12::ResourceAllocator> m_resourceAllocator;
             
         gpgmm::d3d12::ResidencyManager* m_residencyManager = nullptr; // WeakPtr since it is owned by m_resourceAllocator
 
