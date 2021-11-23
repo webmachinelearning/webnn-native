@@ -1,7 +1,7 @@
 {
-  "name": "semantic_segmentation",
+  "name": "webnn_samples",
   "version": "0.0.1",
-  "description": "An Electon.js example of semantic segmentation using webnn-native",
+  "description": "Electon.js examples of WebNN using webnn-native",
   "main": "main.js",
   "author": "WebNN-native Authors",
   "license": "Apache-2.0",
@@ -19,7 +19,7 @@
     "@electron-forge/maker-rpm": "^6.0.0-beta.59",
     "@electron-forge/maker-squirrel": "^6.0.0-beta.59",
     "@electron-forge/maker-zip": "^6.0.0-beta.59",
-    "electron": "^13.2.1"
+    "electron": "15.1.2"
   },
   "dependencies": {
     "electron-squirrel-startup": "^1.0.0",
