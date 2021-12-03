@@ -15,16 +15,16 @@
 #ifndef WEBNN_NATIVE_DML_MODEL_DML_H_
 #define WEBNN_NATIVE_DML_MODEL_DML_H_
 
-#include <map>
-#include <mutex>
-#include <set>
-#include <unordered_set>
+#define DML_TARGET_VERSION_USE_LATEST 1
 
+#include <dxgi1_4.h>
+#include <wrl\client.h>
+
+#include "DirectML.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 #include "webnn_native/dml/ContextDML.h"
-#include "webnn_native/dml/deps/src/precomp.h"
 #include "webnn_native/ops/BatchNorm.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"
@@ -46,11 +46,37 @@
 #include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
-
 namespace webnn_native { namespace dml {
 
-    std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
-    std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
+    using namespace Microsoft::WRL;
+
+    enum class NodeType {
+        Invalid,
+        Input,
+        Operator,
+    };
+
+    struct TensorDesc {
+        std::vector<UINT> dimensions;
+        DML_BUFFER_TENSOR_DESC bufferDesc = {};
+    };
+
+    struct InputInfo {
+        size_t inputIndex = 0;
+        void const* buffer = nullptr;
+        size_t byteLength = 0;
+        bool isConstant = false;
+        UINT guaranteedBaseOffsetAlignment = 0;
+    };
+
+    struct OperatorNode {
+        NodeType nodeType = NodeType::Invalid;
+        uint32_t nodeIndex;
+        uint32_t outputNodeIndex = 0;
+        DML_TENSOR_DESC outputDESC = {};
+        std::string name = "";
+        InputInfo inputInfo = {};
+    };
 
     class Graph : public GraphBase {
       public:
@@ -81,30 +107,57 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
+        DML_GRAPH_DESC CreateGraphDesc(std::vector<DML_GRAPH_NODE_DESC>& nodes,
+                                       std::vector<DML_GRAPH_EDGE_DESC>& inputEdges,
+                                       std::vector<DML_GRAPH_EDGE_DESC>& outputEdges,
+                                       std::vector<DML_GRAPH_EDGE_DESC>& intermediateEdges);
+        void CloseExecuteResetWait();
+        MaybeError AddToGraph(std::vector<OperatorNode> inputNodes);
+        bool GetDMLTensorDesc(OperandDescriptor const* desc,
+                              TensorDesc& dmlBufferTensorDesc,
+                              DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAGS::DML_TENSOR_FLAG_NONE);
+        void InitializeDirect3D12();
+
       private:
         MaybeError CompileImpl() override;
         WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
                                           NamedOutputsBase* outputs) override;
 
-        ::dml::Expression BindingConstant(DML_TENSOR_DATA_TYPE dmlTensorType,
-                                          ::dml::TensorDimensions dmlTensorDims,
-                                          void const* value,
-                                          size_t size);
-        ::dml::Expression HardSwish(::dml::Expression& input);
-        ::dml::Expression EmulateFusedActivation(FusionOperatorBase* activation,
-                                                 ::dml::Expression& input);
+        Microsoft::WRL::ComPtr<IDMLOperatorInitializer> mOperatorInitializer;
+        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
 
-        std::shared_ptr<::pydml::Device> mDevice;
-        // The mutex is used to lock mDevice.
-        std::mutex mMutex;
-        std::unique_ptr<::dml::Graph> mGraph;
-        std::map<const OperandBase*, ::dml::Expression> mExpression;
-        std::vector<std::unique_ptr<::pydml::Binding>> mBindings;
-        std::vector<std::unique_ptr<char>> mConstantBuffers;
-        std::unordered_set<const OperandBase*> mConstantSet;
-        std::map<std::string, ::pydml::Binding*> mInputs;
-        std::map<std::string, ::dml::Expression> mOutputs;
-        std::unique_ptr<pydml::CompiledModel> mCompiledModel;
+        Microsoft::WRL::ComPtr<IDMLDevice> mDevice;
+        Microsoft::WRL::ComPtr<IDMLDevice1> mDevice1;
+        Microsoft::WRL::ComPtr<ID3D12Device> mD3D12Device;
+
+        Microsoft::WRL::ComPtr<IDMLCommandRecorder> mCommandRecorder;
+        Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
+        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mCommandAllocator;
+        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+
+        DML_BINDING_TABLE_DESC mBindingTableDesc{};
+        Microsoft::WRL::ComPtr<ID3D12Resource> mOutputBuffer;
+        Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
+        Microsoft::WRL::ComPtr<ID3D12Resource> mInputBuffer;
+        Microsoft::WRL::ComPtr<IDMLBindingTable> mBindingTable;
+
+        std::vector<OperatorNode> mInputs;
+        std::vector<OperatorNode> mOutputs;
+        std::vector<DML_OPERATOR_GRAPH_NODE_DESC> mNodes;
+        std::vector<DML_INPUT_GRAPH_EDGE_DESC> mInputEdges;
+        std::vector<DML_OUTPUT_GRAPH_EDGE_DESC> mOutputEdges;
+        std::vector<DML_INTERMEDIATE_GRAPH_EDGE_DESC> mIntermediateEdges;
+
+        // The graph's output
+        Microsoft::WRL::ComPtr<IDMLCompiledOperator> mCompiledOperator;
+
+        // Intermediate nodes
+        uint32_t mNodeIndex = 0;
+        std::map<const OperandBase*, OperatorNode> mOperatorMap;
+        std::map<uint32_t, Microsoft::WRL::ComPtr<IDMLOperator>> mCompiledOperatorMap;
+
+        // Map for the description of input tensors
+        std::map<uint32_t, TensorDesc> mTensorDescMap;
     };
 
 }}  // namespace webnn_native::dml
