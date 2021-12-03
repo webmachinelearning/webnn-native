@@ -17,7 +17,6 @@
 
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
-#include "webnn_native/dml/deps/src/precomp.h"
 
 namespace webnn_native { namespace dml {
 

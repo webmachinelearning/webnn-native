@@ -205,26 +205,15 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_dml) {
     sources += [
-      "dml/deps/src/device.cpp",
-      "dml/deps/src/device.h",
-      "dml/deps/src/model.h",
-      "dml/deps/src/precomp.h",
-      "dml/deps/src/typeconvert.h",
-      "dml/deps/src/util.cpp",
-      "dml/deps/src/util.h",
-    ]
-
-    sources += [
       "dml/ContextDML.cpp",
       "dml/ContextDML.h",
       "dml/GraphDML.cpp",
       "dml/GraphDML.h",
+      "dml/DMLUtils.h",
     ]
 
     include_dirs += [
-      "${webnn_root}/third_party/DirectML/Libraries",
-      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include",
-    ]
+      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include"]
 
     lib_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
