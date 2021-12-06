@@ -12,50 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_native/ops/Resample.h"
+#include "webnn_native/ops/Resample2d.h"
 
 #include <algorithm>
 
 #include "webnn_native/Error.h"
 
 namespace webnn_native { namespace op {
-    Resample::Resample(GraphBuilderBase* builder,
-                       OperandBase* input,
-                       ResampleOptions const* options)
-        : OperatorBase(builder, {input}), mScales({1.0, 1.0, 1.0, 1.0}), mSizes({}) {
+    Resample2d::Resample2d(GraphBuilderBase* builder,
+                           OperandBase* input,
+                           Resample2dOptions const* options)
+        : OperatorBase(builder, {input}), mScales({1.0, 1.0}), mSizes({}), mAxes({2, 3}) {
         mOptions.mode = options == nullptr ? ml::InterpolationMode::NearestNeighbor : options->mode;
         if (options != nullptr && options->scales != nullptr) {
             mScales.assign(options->scales, options->scales + options->scalesCount);
         }
-        mOptions.scales = mScales.data();
-        mOptions.scalesCount = mScales.size();
-
         if (options != nullptr && options->sizes != nullptr) {
             mSizes.assign(options->sizes, options->sizes + options->sizesCount);
         }
-        mOptions.sizes = mSizes.data();
-        mOptions.sizesCount = mSizes.size();
+        if (options != nullptr && options->axes != nullptr) {
+            mAxes.assign(options->axes, options->axes + options->axesCount);
+        }
     }
 
-    // TODO(mingming): Align with the update of resample2d definition.
-    MaybeError Resample::CalculateShape() {
+    MaybeError Resample2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto outputShape = inputShape;
         // When the target sizes are specified, the options.scales argument is ignored as the
         // scaling factor values are derived from the target sizes of each spatial dimension of
         // input.
-        if (!mSizes.empty()) {
-            outputShape[2] = mSizes[2];
-            outputShape[3] = mSizes[3];
-        } else {
-            outputShape[2] *= mScales[2];
-            outputShape[3] *= mScales[3];
+        for (size_t i = 0; i < mAxes.size(); i++) {
+            if (!mSizes.empty()) {
+                outputShape[mAxes[i]] = mSizes[i];
+            } else {
+                outputShape[mAxes[i]] *= mScales[i];
+            }
         }
         mOutputs[0]->SetShape(std::move(outputShape));
         return {};
     }
 
-    MaybeError Resample::ValidateAndInferOutputInfo() {
+    MaybeError Resample2d::ValidateAndInferOutputInfo() {
         MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
         if (maybeError.IsError()) {
             return maybeError;
@@ -65,16 +62,23 @@ namespace webnn_native { namespace op {
         if (mInputs[0]->Shape().size() != 4) {
             return DAWN_VALIDATION_ERROR("Input is not a 4D tensor.");
         }
-        if (mOptions.scales == nullptr && mOptions.sizes == nullptr) {
-            return DAWN_VALIDATION_ERROR("scales and sizes can't be both empty.");
+        // The scales is 2-D tensor.
+        if (mOptions.scales != nullptr && mOptions.scalesCount != 2) {
+            return DAWN_VALIDATION_ERROR("Argument scales is not a 2D tensor.");
         }
-        // The scales is 4-D tensor.
-        if (mOptions.scales != nullptr && mOptions.scalesCount != 4) {
-            return DAWN_VALIDATION_ERROR("Argument scales is not a 4D tensor.");
+        // The sizes is 2-D tensor.
+        if (mOptions.sizes != nullptr && mOptions.sizesCount != 2) {
+            return DAWN_VALIDATION_ERROR("Argument scales is not a 2D tensor.");
         }
-        // The sizes is 4-D tensor.
-        if (mOptions.sizes != nullptr && mOptions.sizesCount != 4) {
-            return DAWN_VALIDATION_ERROR("Argument scales is not a 4D tensor.");
+        // The axes is 2-D tensor and the valid values of axes in the sequence are [0, 1], [1, 2] or
+        // [2, 3].
+        if (mOptions.axes != nullptr) {
+            if (mOptions.axesCount != 2) {
+                return DAWN_VALIDATION_ERROR("Argument axes is not a 2D tensor.");
+            }
+            if (mOptions.axes[0] > 2 || mOptions.axes[1] != mOptions.axes[0] + 1) {
+                return DAWN_VALIDATION_ERROR("The values of axes is invalid.");
+            }
         }
 
         return CalculateShape();

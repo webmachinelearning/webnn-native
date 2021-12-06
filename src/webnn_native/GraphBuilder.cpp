@@ -41,7 +41,7 @@
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reduce.h"
-#include "webnn_native/ops/Resample.h"
+#include "webnn_native/ops/Resample2d.h"
 #include "webnn_native/ops/Reshape.h"
 #include "webnn_native/ops/Slice.h"
 #include "webnn_native/ops/Split.h"
@@ -261,8 +261,9 @@ namespace webnn_native {
         VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
     }
 
-    OperandBase* GraphBuilderBase::Resample(OperandBase* input, ResampleOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Resample(this, input, options));
+    OperandBase* GraphBuilderBase::Resample2d(OperandBase* input,
+                                              Resample2dOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Resample2d(this, input, options));
     }
 
     OperandBase* GraphBuilderBase::Reshape(OperandBase* input,

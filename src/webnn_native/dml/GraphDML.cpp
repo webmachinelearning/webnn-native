@@ -1027,21 +1027,18 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Graph::AddResample(const op::Resample* resample) {
-        DAWN_ASSERT(resample->Inputs().size() == 1);
-        const OperandBase* inputOperand = resample->Inputs()[0].Get();
+    MaybeError Graph::AddResample2d(const op::Resample2d* resample2d) {
+        DAWN_ASSERT(resample2d->Inputs().size() == 1);
+        const OperandBase* inputOperand = resample2d->Inputs()[0].Get();
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
-        const ResampleOptions* options = resample->GetOptions();
-        ::dml::TensorDimensions outputSizes;
-        if (options->sizesCount == 0) {
-            for (size_t i = 0; i < 4; i++) {
-                outputSizes.push_back(static_cast<uint32_t>(inputDims[i] * options->scales[i]));
-            }
-        } else {
-            outputSizes.assign(options->sizes, options->sizes + options->sizesCount);
-        }
+        const Resample2dOptions* options = resample2d->GetOptions();
+        // axes.
+        auto axes = resample2d->GetAxes();
+        // size.
+        auto outputShape = resample2d->GetOutputShape();
+        ::dml::TensorDimensions outputSizes(outputShape.begin(), outputShape.end());
 
         DML_INTERPOLATION_MODE mode;
         switch (options->mode) {
@@ -1061,8 +1058,8 @@ namespace webnn_native { namespace dml {
         // InputPixelOffsets = 0.5f for each dimension
         // OutputPixelOffsets = -0.5f for each dimension
         ::dml::Expression output = ::dml::Resample(input, outputSizes, mode, {}, {}, {});
-        mExpression.insert(std::make_pair(resample->PrimaryOutput(), output));
-        DAWN_ASSERT(CheckShape(output, resample));
+        mExpression.insert(std::make_pair(resample2d->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, resample2d));
         return {};
     }
 

@@ -36,7 +36,7 @@ namespace webnn_native {
         class Pad;
         class Pool2d;
         class Reduce;
-        class Resample;
+        class Resample2d;
         class Reshape;
         class Slice;
         class Split;
@@ -65,7 +65,7 @@ namespace webnn_native {
         virtual MaybeError AddPad(const op::Pad* pad);
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d);
         virtual MaybeError AddReduce(const op::Reduce* reduce);
-        virtual MaybeError AddResample(const op::Resample* resample);
+        virtual MaybeError AddResample2d(const op::Resample2d* resample2d);
         virtual MaybeError AddReshape(const op::Reshape* reshape);
         virtual MaybeError AddSqueeze(const op::Squeeze* squeeze);
         virtual MaybeError AddSlice(const op::Slice* batchNorm);

@@ -35,7 +35,7 @@
 #include "ops/Pad.h"
 #include "ops/Pool2d.h"
 #include "ops/Reduce.h"
-#include "ops/Resample.h"
+#include "ops/Resample2d.h"
 #include "ops/Reshape.h"
 #include "ops/Slice.h"
 #include "ops/Split.h"
@@ -230,8 +230,8 @@ namespace node {
         return op::Reduce::Build(op::ReduceType::kReduceSum, info, mImpl);
     }
 
-    Napi::Value GraphBuilder::Resample(const Napi::CallbackInfo& info) {
-        return op::Resample::Build(info, mImpl);
+    Napi::Value GraphBuilder::Resample2d(const Napi::CallbackInfo& info) {
+        return op::Resample2d::Build(info, mImpl);
     }
 
     Napi::Value GraphBuilder::Relu(const Napi::CallbackInfo& info) {
@@ -347,7 +347,7 @@ namespace node {
              InstanceMethod("reduceProduct", &GraphBuilder::ReduceProduct, napi_enumerable),
              InstanceMethod("reduceSum", &GraphBuilder::ReduceSum, napi_enumerable),
              InstanceMethod("relu", &GraphBuilder::Relu, napi_enumerable),
-             InstanceMethod("resample", &GraphBuilder::Resample, napi_enumerable),
+             InstanceMethod("resample2d", &GraphBuilder::Resample2d, napi_enumerable),
              InstanceMethod("leakyRelu", &GraphBuilder::LeakyRelu, napi_enumerable),
              InstanceMethod("pad", &GraphBuilder::Pad, napi_enumerable),
              InstanceMethod("reshape", &GraphBuilder::Reshape, napi_enumerable),
