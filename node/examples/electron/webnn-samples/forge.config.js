@@ -4,7 +4,7 @@ module.exports = {
   packagerConfig: {
     asar: {
       unpack: "node_setup.js",
-      unpackDir: "{lib, build}"
+      unpackDir: "{lib,build}"
    },
   },
   makers: [
