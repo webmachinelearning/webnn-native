@@ -207,13 +207,13 @@ source_set("webnn_native_sources") {
     sources += [
       "dml/ContextDML.cpp",
       "dml/ContextDML.h",
+      "dml/DMLUtils.h",
       "dml/GraphDML.cpp",
       "dml/GraphDML.h",
-      "dml/DMLUtils.h",
     ]
 
-    include_dirs += [
-      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include"]
+    include_dirs +=
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include" ]
 
     lib_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]

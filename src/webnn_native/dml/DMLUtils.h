@@ -19,12 +19,14 @@
 
 namespace webnn_native { namespace dml { namespace utils {
 
-    D3D12_HEAP_PROPERTIES CreateHeapProperties(D3D12_HEAP_TYPE type = D3D12_HEAP_TYPE_DEFAULT) {
+    inline D3D12_HEAP_PROPERTIES CreateHeapProperties(
+        D3D12_HEAP_TYPE type = D3D12_HEAP_TYPE_DEFAULT) {
         return {type, D3D12_CPU_PAGE_PROPERTY_UNKNOWN, D3D12_MEMORY_POOL_UNKNOWN, 1, 1};
     };
 
-    D3D12_RESOURCE_DESC CreateResourceDesc(UINT64 width,
-                                           D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE) {
+    inline D3D12_RESOURCE_DESC CreateResourceDesc(
+        UINT64 width,
+        D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE) {
         return {D3D12_RESOURCE_DIMENSION_BUFFER, 0,    width, 1, 1, 1, DXGI_FORMAT_UNKNOWN, {1, 0},
                 D3D12_TEXTURE_LAYOUT_ROW_MAJOR,  flags};
     };

@@ -25,36 +25,122 @@
 #include "webnn_native/Utils.h"
 #include "webnn_native/dml/ContextDML.h"
 
-#define CHECK_ERROR(hr)                             \
+#define WEBNN_CHECK(hr)                             \
     if (((HRESULT)(hr)) < 0) {                      \
         dawn::ErrorLog() << "Failed to do " << #hr; \
+        DAWN_ASSERT(0);                             \
     }
 
 namespace webnn_native { namespace dml {
 
-    MaybeError Graph::AddToGraph(std::vector<OperatorNode> inputNodes) {
+    void Graph::InitializeDirect3D12() {
+#if defined(_DEBUG)
+        Microsoft::WRL::ComPtr<ID3D12Debug> d3D12Debug;
+        if (FAILED(D3D12GetDebugInterface(IID_PPV_ARGS(&d3D12Debug)))) {
+            // The D3D12 debug layer is missing - you must install the Graphics Tools optional
+            // feature
+            DAWN_ASSERT(0);
+        }
+        d3D12Debug->EnableDebugLayer();
+#endif
+        Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
+        WEBNN_CHECK(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)));
+        Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
+        UINT adapterIndex{};
+        HRESULT hr{};
+        do {
+            dxgiAdapter = nullptr;
+            IDXGIAdapter* dxgiAdapterPtr = dxgiAdapter.Get();
+            WEBNN_CHECK(dxgiFactory->EnumAdapters(adapterIndex, &dxgiAdapterPtr));
+            ++adapterIndex;
+
+            hr = ::D3D12CreateDevice(dxgiAdapter.Get(), D3D_FEATURE_LEVEL_11_0,
+                                     IID_PPV_ARGS(&mD3D12Device));
+            if (hr < 0) {
+                dawn::ErrorLog() << "Failed to do ::D3D12CreateDevice.";
+            }
+
+            if (hr == DXGI_ERROR_UNSUPPORTED)
+                continue;
+        } while (hr != S_OK);
+
+        D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
+        commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+        commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+        WEBNN_CHECK(
+            mD3D12Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&mCommandQueue)));
+        WEBNN_CHECK(mD3D12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                         IID_PPV_ARGS(&mCommandAllocator)));
+        WEBNN_CHECK(mD3D12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
+                                                    mCommandAllocator.Get(), nullptr,
+                                                    IID_PPV_ARGS(&mCommandList)));
+    }
+
+    void Graph::CloseExecuteResetWait() {
+        mCommandList->Close();
+        ID3D12CommandList* commandLists[] = {mCommandList.Get()};
+        mCommandQueue->ExecuteCommandLists(ARRAYSIZE(commandLists), commandLists);
+        mCommandQueue.Get()->GetDevice(IID_PPV_ARGS(mD3D12Device.GetAddressOf()));
+        Microsoft::WRL::ComPtr<ID3D12Fence> fence;
+        mD3D12Device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
+        mCommandQueue.Get()->Signal(fence.Get(), 1);
+        fence->SetEventOnCompletion(1, nullptr);
+        mCommandAllocator->Reset();
+        mCommandList->Reset(mCommandAllocator.Get(), nullptr);
+    }
+
+    MaybeError Graph::AddToGraph(std::vector<NodeInfo> inputNodes) {
+        std::unique_ptr<DML_OPERATOR_GRAPH_NODE_DESC> nodeDesc(new DML_OPERATOR_GRAPH_NODE_DESC);
+        nodeDesc->Operator = mIntermediateNodesMap[mNodeIndex].Get();
+        mIntermediateNodes.push_back({DML_GRAPH_NODE_TYPE_OPERATOR, nodeDesc.get()});
+        mIntermediateNodesDesc.push_back(std::move(nodeDesc));
+
         for (size_t i = 0; i < inputNodes.size(); ++i) {
-            OperatorNode inputNode = inputNodes[i];
+            NodeInfo inputNode = inputNodes[i];
             if (inputNode.nodeType == NodeType::Input) {
-                DML_INPUT_GRAPH_EDGE_DESC inputEdge = {};
-                inputEdge.GraphInputIndex = inputNode.inputInfo.inputIndex;
-                inputEdge.ToNodeIndex = mNodeIndex;
-                inputEdge.ToNodeInputIndex = i;
-                inputEdge.Name = "";
-                mInputEdges.push_back(inputEdge);
-            } else if (inputNode.nodeType == NodeType::Operator) {
-                DML_INTERMEDIATE_GRAPH_EDGE_DESC intermediateEdge = {};
-                intermediateEdge.FromNodeIndex = inputNode.nodeIndex;
-                intermediateEdge.FromNodeOutputIndex = inputNode.outputNodeIndex;
-                intermediateEdge.ToNodeIndex = mNodeIndex;
-                intermediateEdge.ToNodeInputIndex = i;
-                mIntermediateEdges.push_back(intermediateEdge);
+                std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC> inputEdgeDesc(
+                    new DML_INPUT_GRAPH_EDGE_DESC);
+                inputEdgeDesc->GraphInputIndex = inputNode.inputInfo.inputIndex;
+                inputEdgeDesc->ToNodeIndex = mNodeIndex;
+                inputEdgeDesc->ToNodeInputIndex = i;
+                mInputEdges.push_back({DML_GRAPH_EDGE_TYPE_INPUT, inputEdgeDesc.get()});
+                mInputEdgesDesc.push_back(std::move(inputEdgeDesc));
+            } else if (inputNode.nodeType == NodeType::IntermediateNode) {
+                std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC> intermediateEdgeDesc(
+                    new DML_INTERMEDIATE_GRAPH_EDGE_DESC);
+                intermediateEdgeDesc->FromNodeIndex = inputNode.nodeIndex;
+                intermediateEdgeDesc->FromNodeOutputIndex = inputNode.outputNodeIndex;
+                intermediateEdgeDesc->ToNodeIndex = mNodeIndex;
+                intermediateEdgeDesc->ToNodeInputIndex = i;
+                mIntermediateEdges.push_back(
+                    {DML_GRAPH_EDGE_TYPE_INTERMEDIATE, intermediateEdgeDesc.get()});
+                mIntermediateEdgesDesc.push_back(std::move(intermediateEdgeDesc));
             } else {
                 return DAWN_INTERNAL_ERROR("Invalid node type.");
             }
         }
         mNodeIndex++;
         return {};
+    }
+
+    DML_GRAPH_DESC Graph::CreateGraphDesc() {
+        DML_GRAPH_DESC graphDesc = {};
+        graphDesc.InputCount = static_cast<UINT>(mInputNodes.size());
+        graphDesc.OutputCount = static_cast<UINT>(mOutputNodes.size());
+
+        graphDesc.NodeCount = static_cast<UINT>(mIntermediateNodes.size());
+        graphDesc.Nodes = mIntermediateNodes.data();
+
+        graphDesc.InputEdgeCount = static_cast<UINT>(mInputEdges.size());
+        graphDesc.InputEdges = mInputEdges.data();
+
+        graphDesc.OutputEdgeCount = static_cast<UINT>(mOutputEdges.size());
+        graphDesc.OutputEdges = mOutputEdges.data();
+
+        graphDesc.IntermediateEdgeCount = static_cast<UINT>(mIntermediateEdges.size());
+        graphDesc.IntermediateEdges = mIntermediateEdges.data();
+
+        return graphDesc;
     }
 
     bool Graph::GetDMLTensorDesc(OperandDescriptor const* desc,
@@ -107,105 +193,60 @@ namespace webnn_native { namespace dml {
         return true;
     }
 
-    void Graph::InitializeDirect3D12() {
-#if defined(_DEBUG)
-        Microsoft::WRL::ComPtr<ID3D12Debug> d3D12Debug;
-        if (D3D12GetDebugInterface(IID_PPV_ARGS(&d3D12Debug)) < 0) {
-            // The D3D12 debug layer is missing - you must install the Graphics Tools optional
-            // feature
-            DAWN_ASSERT(0);
-        }
-        d3D12Debug->EnableDebugLayer();
-#endif
-        Microsoft::WRL::ComPtr<IDXGIFactory4> dxgiFactory;
-        CHECK_ERROR(CreateDXGIFactory1(IID_PPV_ARGS(&dxgiFactory)));
-        Microsoft::WRL::ComPtr<IDXGIAdapter> dxgiAdapter;
-        UINT adapterIndex{};
-        HRESULT hr{};
-        do {
-            dxgiAdapter = nullptr;
-            IDXGIAdapter* dxgiAdapterPtr = dxgiAdapter.Get();
-            CHECK_ERROR(dxgiFactory->EnumAdapters(adapterIndex, &dxgiAdapterPtr));
-            ++adapterIndex;
-
-            hr = ::D3D12CreateDevice(dxgiAdapter.Get(), D3D_FEATURE_LEVEL_11_0,
-                                     IID_PPV_ARGS(&mD3D12Device));
-            if (hr < 0) {
-                dawn::ErrorLog() << "Failed to do ::D3D12CreateDevice.";
-            }
-
-            if (hr == DXGI_ERROR_UNSUPPORTED)
-                continue;
-        } while (hr != S_OK);
-
-        D3D12_COMMAND_QUEUE_DESC commandQueueDesc{};
-        commandQueueDesc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        commandQueueDesc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        CHECK_ERROR(
-            mD3D12Device->CreateCommandQueue(&commandQueueDesc, IID_PPV_ARGS(&mCommandQueue)));
-
-        CHECK_ERROR(mD3D12Device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                         IID_PPV_ARGS(&mCommandAllocator)));
-
-        CHECK_ERROR(mD3D12Device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT,
-                                                    mCommandAllocator.Get(), nullptr,
-                                                    IID_PPV_ARGS(&mCommandList)));
-    }
-
     Graph::Graph(Context* context) : GraphBase(context) {
         // Set up Direct3D 12.
         InitializeDirect3D12();
 
         // Create the DirectML device.
         DML_CREATE_DEVICE_FLAGS dmlCreateDeviceFlags = DML_CREATE_DEVICE_FLAG_NONE;
-        CHECK_ERROR(
+        WEBNN_CHECK(
             DMLCreateDevice(mD3D12Device.Get(), dmlCreateDeviceFlags, IID_PPV_ARGS(&mDevice)));
     }
 
     MaybeError Graph::AddConstant(const op::Constant* constant) {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
-        mTensorDescMap.insert(std::make_pair(mInputs.size(), TensorDesc{}));
-        if (!GetDMLTensorDesc(desc, mTensorDescMap[mInputs.size()], DML_TENSOR_FLAG_OWNED_BY_DML)) {
-            return DAWN_INTERNAL_ERROR("Failed to get DML Buffer tensor.");
+        mTensorDescMap.insert(std::make_pair(mInputNodes.size(), TensorDesc{}));
+        if (!GetDMLTensorDesc(desc, mTensorDescMap[mInputNodes.size()],
+                              DML_TENSOR_FLAG_OWNED_BY_DML)) {
+            return DAWN_INTERNAL_ERROR("Failed to get DML buffer tensor description.");
         }
-        const void* ptr = &mTensorDescMap[mInputs.size()].bufferDesc;
-        DML_TENSOR_DESC dmlTensorDesc = {DML_TENSOR_TYPE_BUFFER, ptr};
-        InputInfo constantInfo = {mInputs.size(), constant->GetBuffer(), constant->GetByteLength(),
-                                  true, 0};
-        OperatorNode operatorNode = {NodeType::Input,
-                                     mNodeIndex,
-                                     0,
-                                     dmlTensorDesc,
-                                     "Input_Constant_" + std::to_string(mInputs.size()),
-                                     constantInfo};
-        mOperatorMap[constant->PrimaryOutput()] = operatorNode;
-        mInputs.push_back(operatorNode);
+        DML_TENSOR_DESC dmlTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                         &mTensorDescMap[mInputNodes.size()].bufferDesc};
+        InputInfo constantInfo = {mInputNodes.size(), constant->GetBuffer(),
+                                  constant->GetByteLength(), true};
+        NodeInfo node = {NodeType::Input,
+                         0,
+                         dmlTensorDesc,
+                         0,
+                         "Input_Constant_" + std::to_string(mInputNodes.size()),
+                         constantInfo};
+        mGraphNodesMap[constant->PrimaryOutput()] = node;
+        mInputNodes.push_back(node);
         return {};
     }
 
     MaybeError Graph::AddInput(const op::Input* input) {
         const OperandDescriptor* desc = input->GetOperandDescriptor();
-        mTensorDescMap.insert(std::make_pair(mInputs.size(), TensorDesc{}));
-        if (!GetDMLTensorDesc(desc, mTensorDescMap[mInputs.size()])) {
-            return DAWN_INTERNAL_ERROR("Failed to get DML Buffer tensor.");
+        mTensorDescMap.insert(std::make_pair(mInputNodes.size(), TensorDesc{}));
+        if (!GetDMLTensorDesc(desc, mTensorDescMap[mInputNodes.size()])) {
+            return DAWN_INTERNAL_ERROR("Failed to get DML buffer tensor description.");
         }
-        const void* ptr = &mTensorDescMap[mInputs.size()].bufferDesc;
-        DML_TENSOR_DESC dmlTensorDesc = {DML_TENSOR_TYPE_BUFFER, ptr};
-        InputInfo constantInfo = {mInputs.size(), nullptr, 0, false, 0};
-        OperatorNode operatorNode = {NodeType::Input, mNodeIndex,       0,
-                                     dmlTensorDesc,   input->GetName(), constantInfo};
-        mOperatorMap[input->PrimaryOutput()] = operatorNode;
-        mInputs.push_back(operatorNode);
+        DML_TENSOR_DESC dmlTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                         &mTensorDescMap[mInputNodes.size()].bufferDesc};
+        InputInfo constantInfo = {mInputNodes.size(), nullptr, 0, false};
+        NodeInfo node = {NodeType::Input, 0, dmlTensorDesc, 0, input->GetName(), constantInfo};
+        mGraphNodesMap[input->PrimaryOutput()] = node;
+        mInputNodes.push_back(node);
         return {};
     }
 
     MaybeError Graph::AddBinary(const op::Binary* binary) {
         switch (binary->GetType()) {
             case op::BinaryOpType::kAdd: {
-                DAWN_ASSERT(mOperatorMap.find(binary->Inputs()[0].Get()) != mOperatorMap.end());
-                DAWN_ASSERT(mOperatorMap.find(binary->Inputs()[1].Get()) != mOperatorMap.end());
-                OperatorNode inputNodeA = mOperatorMap[binary->Inputs()[0].Get()];
-                OperatorNode inputNodeB = mOperatorMap[binary->Inputs()[1].Get()];
+                DAWN_ASSERT(mGraphNodesMap.find(binary->Inputs()[0].Get()) != mGraphNodesMap.end());
+                DAWN_ASSERT(mGraphNodesMap.find(binary->Inputs()[1].Get()) != mGraphNodesMap.end());
+                NodeInfo inputNodeA = mGraphNodesMap[binary->Inputs()[0].Get()];
+                NodeInfo inputNodeB = mGraphNodesMap[binary->Inputs()[1].Get()];
                 DML_ELEMENT_WISE_ADD_OPERATOR_DESC dmlAddOperatorDesc{};
                 dmlAddOperatorDesc.ATensor = &inputNodeA.outputDESC;
                 dmlAddOperatorDesc.BTensor = &inputNodeB.outputDESC;
@@ -218,13 +259,12 @@ namespace webnn_native { namespace dml {
                 dmlOperatorDesc.Desc = &dmlAddOperatorDesc;
 
                 Microsoft::WRL::ComPtr<IDMLOperator> dmlOperator;
-                CHECK_ERROR(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
-                mCompiledOperatorMap[mNodes.size()] = dmlOperator;
-                mNodes.push_back(
-                    DML_OPERATOR_GRAPH_NODE_DESC{mCompiledOperatorMap[mNodes.size()].Get()});
+                WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+                mIntermediateNodesMap[mNodeIndex] = dmlOperator;
 
-                OperatorNode operatorNode = {NodeType::Operator, mNodeIndex, 0, outputTensorDesc};
-                mOperatorMap[binary->PrimaryOutput()] = operatorNode;
+                NodeInfo node = {NodeType::IntermediateNode, 0, outputTensorDesc, mNodeIndex};
+                mGraphNodesMap[binary->PrimaryOutput()] = node;
+
                 return AddToGraph({inputNodeA, inputNodeB});
             }
             default:
@@ -236,8 +276,8 @@ namespace webnn_native { namespace dml {
         switch (unary->GetType()) {
             case op::UnaryOpType::kSigmoid: {
                 Microsoft::WRL::ComPtr<IDMLOperator> dmlOperator;
-                DAWN_ASSERT(mOperatorMap.find(unary->Inputs()[0].Get()) != mOperatorMap.end());
-                OperatorNode inputNode = mOperatorMap[unary->Inputs()[0].Get()];
+                DAWN_ASSERT(mGraphNodesMap.find(unary->Inputs()[0].Get()) != mGraphNodesMap.end());
+                NodeInfo inputNode = mGraphNodesMap[unary->Inputs()[0].Get()];
                 DML_TENSOR_DESC inputTensorDesc = inputNode.outputDESC;
                 DML_ACTIVATION_SIGMOID_OPERATOR_DESC dmlSigmoidOperatorDesc{};
                 dmlSigmoidOperatorDesc.InputTensor = &inputTensorDesc;
@@ -247,13 +287,12 @@ namespace webnn_native { namespace dml {
                 dmlOperatorDesc.Type = DML_OPERATOR_ACTIVATION_SIGMOID;
                 dmlOperatorDesc.Desc = &dmlSigmoidOperatorDesc;
 
-                CHECK_ERROR(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
-                mCompiledOperatorMap[mNodes.size()] = dmlOperator;
-                mNodes.push_back(
-                    DML_OPERATOR_GRAPH_NODE_DESC{mCompiledOperatorMap[mNodes.size()].Get()});
+                WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+                mIntermediateNodesMap[mNodeIndex] = dmlOperator;
 
-                OperatorNode operatorNode = {NodeType::Operator, mNodeIndex, 0, inputTensorDesc};
-                mOperatorMap[unary->PrimaryOutput()] = operatorNode;
+                NodeInfo node = {NodeType::IntermediateNode, 0, inputTensorDesc, mNodeIndex};
+                mGraphNodesMap[unary->PrimaryOutput()] = node;
+
                 return AddToGraph({inputNode});
                 break;
             }
@@ -264,26 +303,27 @@ namespace webnn_native { namespace dml {
     }
 
     MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
-        auto operatorNode = mOperatorMap[output];
-        if (operatorNode.nodeType == NodeType::Input) {
+        auto node = mGraphNodesMap[output];
+        if (node.nodeType == NodeType::Input) {
             return DAWN_INTERNAL_ERROR("Graph for input = output is invalid.");
         }
-        operatorNode.name = name;
-        DML_OUTPUT_GRAPH_EDGE_DESC outputEdge = {};
-        outputEdge.FromNodeIndex = operatorNode.nodeIndex;
-        outputEdge.FromNodeOutputIndex = operatorNode.outputNodeIndex;
-        outputEdge.GraphOutputIndex = mOutputs.size();
-        mOutputEdges.push_back(outputEdge);
-        mOutputs.push_back(operatorNode);
+        node.name = name;
+        std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC> outputEdgeDesc(new DML_OUTPUT_GRAPH_EDGE_DESC);
+        outputEdgeDesc->FromNodeIndex = node.nodeIndex;
+        outputEdgeDesc->FromNodeOutputIndex = node.outputNodeIndex;
+        outputEdgeDesc->GraphOutputIndex = mOutputNodes.size();
+        mOutputEdges.push_back({DML_GRAPH_EDGE_TYPE_OUTPUT, outputEdgeDesc.get()});
+        mOutputEdgesDesc.push_back(std::move(outputEdgeDesc));
+        mOutputNodes.push_back(node);
         return {};
     }
 
     MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("BatchNorm hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Conv2d hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddGru(const op::Gru* gru) {
@@ -291,141 +331,77 @@ namespace webnn_native { namespace dml {
     }
 
     MaybeError Graph::AddPad(const op::Pad* pad) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Pad hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Pool2d hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddClamp(const op::Clamp* clamp) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Clamp hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddReduce(const op::Reduce* reduce) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Reduce hasn't been supported on DirectML.");
     }
 
-    MaybeError Graph::AddResample(const op::Resample* resample) {
-        return {};
+    MaybeError Graph::AddResample2d(const op::Resample2d* resample) {
+        return DAWN_UNIMPLEMENTED_ERROR("Resample2d hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddReshape(const op::Reshape* reshape) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Reshape hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddSlice(const op::Slice* slice) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Slice hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddSplit(const op::Split* split) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Split hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Squeeze hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Transpose hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("InstanceNorm hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddConcat(const op::Concat* concat) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Concat hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddGemm(const op::Gemm* gemm) {
-        return {};
+        return DAWN_UNIMPLEMENTED_ERROR("Gemm hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::Finish() {
-        if (mInputs.empty()) {
+        if (mInputNodes.empty()) {
             return DAWN_VALIDATION_ERROR("Model inputs must be set.");
         }
+
+        WEBNN_CHECK(mDevice.Get()->QueryInterface(IID_PPV_ARGS(&mDevice1)));
+        // Compiles a graph of DirectML operators into an object that can be dispatched to the GPU.
+        WEBNN_CHECK(mDevice1->CompileGraph(&CreateGraphDesc(), DML_EXECUTION_FLAG_NONE,
+                                           IID_PPV_ARGS(&mCompiledOperator)));
         return {};
     }
 
-    DML_GRAPH_DESC Graph::CreateGraphDesc(std::vector<DML_GRAPH_NODE_DESC>& nodes,
-                                          std::vector<DML_GRAPH_EDGE_DESC>& inputEdges,
-                                          std::vector<DML_GRAPH_EDGE_DESC>& outputEdges,
-                                          std::vector<DML_GRAPH_EDGE_DESC>& intermediateEdges) {
-        DML_GRAPH_DESC graphDesc = {};
-        graphDesc.InputCount = static_cast<UINT>(mInputs.size());
-        graphDesc.OutputCount = static_cast<UINT>(mOutputs.size());
-
-        nodes.resize(mNodes.size());
-        for (size_t i = 0; i < mNodes.size(); ++i) {
-            nodes[i] = {DML_GRAPH_NODE_TYPE_OPERATOR, &mNodes[i]};
-        }
-        graphDesc.NodeCount = static_cast<UINT>(mNodes.size());
-        graphDesc.Nodes = nodes.data();
-
-        inputEdges.resize(mInputEdges.size());
-        for (size_t i = 0; i < mInputEdges.size(); ++i) {
-            inputEdges[i] = {DML_GRAPH_EDGE_TYPE_INPUT, &mInputEdges[i]};
-        }
-        graphDesc.InputEdgeCount = static_cast<UINT>(mInputEdges.size());
-        graphDesc.InputEdges = inputEdges.data();
-
-        outputEdges.resize(mOutputEdges.size());
-        for (size_t i = 0; i < mOutputEdges.size(); ++i) {
-            outputEdges[i] = {DML_GRAPH_EDGE_TYPE_OUTPUT, &mOutputEdges[i]};
-        }
-        graphDesc.OutputEdgeCount = static_cast<UINT>(mOutputEdges.size());
-        graphDesc.OutputEdges = outputEdges.data();
-
-        intermediateEdges.resize(mIntermediateEdges.size());
-        for (size_t i = 0; i < mIntermediateEdges.size(); ++i) {
-            intermediateEdges[i] = {DML_GRAPH_EDGE_TYPE_INTERMEDIATE, &mIntermediateEdges[i]};
-        }
-        graphDesc.IntermediateEdgeCount = static_cast<UINT>(mIntermediateEdges.size());
-        graphDesc.IntermediateEdges = intermediateEdges.data();
-
-        return graphDesc;
-    }
-
-    void Graph::CloseExecuteResetWait() {
-        mCommandList->Close();
-
-        ID3D12CommandList* commandLists[] = {mCommandList.Get()};
-        mCommandQueue->ExecuteCommandLists(ARRAYSIZE(commandLists), commandLists);
-
-        ComPtr<ID3D12Device> device;
-        mCommandQueue.Get()->GetDevice(IID_PPV_ARGS(device.GetAddressOf()));
-        ComPtr<ID3D12Fence> fence;
-        device->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(fence.GetAddressOf()));
-        mCommandQueue.Get()->Signal(fence.Get(), 1);
-        fence->SetEventOnCompletion(1, nullptr);
-        mCommandAllocator->Reset();
-        mCommandList->Reset(mCommandAllocator.Get(), nullptr);
-        // CHECK_ERROR(m_residencySet.Reset());
-    }
-
     MaybeError Graph::CompileImpl() {
-        CHECK_ERROR(mDevice.Get()->QueryInterface(IID_PPV_ARGS(&mDevice1)));
-
-        std::vector<DML_GRAPH_NODE_DESC> nodes;
-        std::vector<DML_GRAPH_EDGE_DESC> inputEdges;
-        std::vector<DML_GRAPH_EDGE_DESC> outputEdges;
-        std::vector<DML_GRAPH_EDGE_DESC> intermediateEdges;
-
-        DML_GRAPH_DESC graphDesc =
-            CreateGraphDesc(nodes, inputEdges, outputEdges, intermediateEdges);
-
-        CHECK_ERROR(mDevice1->CompileGraph(&graphDesc, DML_EXECUTION_FLAG_NONE,
-                                           IID_PPV_ARGS(&mCompiledOperator)));
-
         IDMLCompiledOperator* dmlCompiledOperators[] = {mCompiledOperator.Get()};
-        CHECK_ERROR(mDevice->CreateOperatorInitializer(ARRAYSIZE(dmlCompiledOperators),
-                                                       dmlCompiledOperators,
-                                                       IID_PPV_ARGS(&mOperatorInitializer)));
+        WEBNN_CHECK(mDevice->CreateOperatorInitializer(
+            ARRAYSIZE(dmlCompiledOperators), dmlCompiledOperators,
+            IID_PPV_ARGS(&mCompiledOperatorInitializer)));
 
         DML_BINDING_PROPERTIES initializeBindingProperties =
-            mOperatorInitializer->GetBindingProperties();
+            mCompiledOperatorInitializer->GetBindingProperties();
         DML_BINDING_PROPERTIES executeBindingProperties = mCompiledOperator->GetBindingProperties();
         UINT descriptorCount = std::max(initializeBindingProperties.RequiredDescriptorCount,
                                         executeBindingProperties.RequiredDescriptorCount);
@@ -435,7 +411,7 @@ namespace webnn_native { namespace dml {
         descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
         descriptorHeapDesc.NumDescriptors = descriptorCount;
         descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-        CHECK_ERROR(mD3D12Device->CreateDescriptorHeap(&descriptorHeapDesc,
+        WEBNN_CHECK(mD3D12Device->CreateDescriptorHeap(&descriptorHeapDesc,
                                                        IID_PPV_ARGS(&mDescriptorHeap)));
 
         // Set the descriptor heap(s).
@@ -443,32 +419,30 @@ namespace webnn_native { namespace dml {
         mCommandList->SetDescriptorHeaps(ARRAYSIZE(d3D12DescriptorHeaps), d3D12DescriptorHeaps);
 
         // Create a binding table over the descriptor heap we just created.
-        mBindingTableDesc.Dispatchable = mOperatorInitializer.Get();
+        mBindingTableDesc.Dispatchable = mCompiledOperatorInitializer.Get();
         mBindingTableDesc.CPUDescriptorHandle =
             mDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
         mBindingTableDesc.GPUDescriptorHandle =
             mDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
         mBindingTableDesc.SizeInDescriptors = descriptorCount;
 
-        CHECK_ERROR(mDevice->CreateBindingTable(&mBindingTableDesc, IID_PPV_ARGS(&mBindingTable)));
+        WEBNN_CHECK(mDevice->CreateBindingTable(&mBindingTableDesc, IID_PPV_ARGS(&mBindingTable)));
 
         UINT64 temporaryResourceSize = std::max(initializeBindingProperties.TemporaryResourceSize,
                                                 executeBindingProperties.TemporaryResourceSize);
         UINT64 persistentResourceSize = executeBindingProperties.PersistentResourceSize;
 
         // Bind and initialize the operator on the GPU.
-        Microsoft::WRL::ComPtr<ID3D12Resource> temporaryBuffer;
-        Microsoft::WRL::ComPtr<ID3D12Resource> persistentBuffer;
 
         if (temporaryResourceSize != 0) {
             mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
                 &utils::CreateResourceDesc(temporaryResourceSize,
                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
-                D3D12_RESOURCE_STATE_COMMON, nullptr, IID_PPV_ARGS(&temporaryBuffer));
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mTemporaryBuffer));
 
             if (initializeBindingProperties.TemporaryResourceSize != 0) {
-                DML_BUFFER_BINDING bufferBinding{temporaryBuffer.Get(), 0, temporaryResourceSize};
+                DML_BUFFER_BINDING bufferBinding{mTemporaryBuffer.Get(), 0, temporaryResourceSize};
                 DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
                 mBindingTable->BindTemporaryResource(&bindingDesc);
             }
@@ -477,54 +451,51 @@ namespace webnn_native { namespace dml {
         if (persistentResourceSize != 0) {
             mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
-                &utils::CreateResourceDesc(persistentResourceSize), D3D12_RESOURCE_STATE_COMMON,
-                nullptr, IID_PPV_ARGS(&persistentBuffer));
+                &utils::CreateResourceDesc(persistentResourceSize,
+                                           D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mPersistentBuffer));
 
             // The persistent resource should be bound as the output to the
             // IDMLOperatorInitializer.
-            DML_BUFFER_BINDING bufferBinding{persistentBuffer.Get(), 0, persistentResourceSize};
+            DML_BUFFER_BINDING bufferBinding{mPersistentBuffer.Get(), 0, persistentResourceSize};
             DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
             mBindingTable->BindOutputs(1, &bindingDesc);
         }
 
-        // Initialize constant input
-        uint64_t inputsResourceSize = 0;
-        for (auto& input : mInputs) {
+        // Initialize constant inputs.
+        uint64_t constantInputsResourceSize = 0;
+        for (auto& input : mInputNodes) {
             if (input.inputInfo.isConstant) {
-                uint32_t requiredAlignment = std::max(input.inputInfo.guaranteedBaseOffsetAlignment,
-                                                      DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
-                uint64_t offset =
-                    utils::RoundUpToMultiple(inputsResourceSize, (uint64_t)requiredAlignment);
-                inputsResourceSize = offset + input.inputInfo.byteLength;
+                uint64_t offset = utils::RoundUpToMultiple(
+                    constantInputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
+                constantInputsResourceSize = offset + input.inputInfo.byteLength;
             }
         }
 
-        if (inputsResourceSize) {
-            std::vector<DML_BUFFER_BINDING> bufferBinding(mInputs.size());
+        if (constantInputsResourceSize) {
+            std::vector<DML_BUFFER_BINDING> bufferBinding(mInputNodes.size());
             DML_BUFFER_ARRAY_BINDING dmlBufferArrayBinding = {};
 
-            CHECK_ERROR(mD3D12Device->CreateCommittedResource(
+            WEBNN_CHECK(mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                &utils::CreateResourceDesc(inputsResourceSize), D3D12_RESOURCE_STATE_GENERIC_READ,
-                nullptr, IID_PPV_ARGS(&mUploadBuffer)));
+                &utils::CreateResourceDesc(constantInputsResourceSize),
+                D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&mUploadBuffer)));
 
-            CHECK_ERROR(mD3D12Device->CreateCommittedResource(
+            WEBNN_CHECK(mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
-                &utils::CreateResourceDesc(inputsResourceSize,
+                &utils::CreateResourceDesc(constantInputsResourceSize,
                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mInputBuffer)));
 
-            D3D12_RANGE constantBufferRange{0, inputsResourceSize};
+            D3D12_RANGE constantBufferRange{0, constantInputsResourceSize};
             int8_t* constantBuffer;
-            CHECK_ERROR(mUploadBuffer->Map(0, &constantBufferRange,
+            WEBNN_CHECK(mUploadBuffer->Map(0, &constantBufferRange,
                                            reinterpret_cast<void**>(&constantBuffer)));
             uint64_t offset = 0;
-            for (size_t i = 0; i < mInputs.size(); ++i) {
-                OperatorNode input = mInputs[i];
+            for (size_t i = 0; i < mInputNodes.size(); ++i) {
+                NodeInfo input = mInputNodes[i];
                 if (input.inputInfo.isConstant) {
-                    uint32_t requiredAlignment =
-                        std::max(input.inputInfo.guaranteedBaseOffsetAlignment,
-                                 DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
+                    uint32_t requiredAlignment = DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT;
                     offset = utils::RoundUpToMultiple(offset, (uint64_t)requiredAlignment);
                     bufferBinding[i].Buffer = mInputBuffer.Get();
                     bufferBinding[i].Offset = offset;
@@ -548,7 +519,7 @@ namespace webnn_native { namespace dml {
             inputResourceBarrier.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
             mCommandList->ResourceBarrier(1, &inputResourceBarrier);
             mCommandList->CopyBufferRegion(mInputBuffer.Get(), 0, mUploadBuffer.Get(), 0,
-                                           inputsResourceSize);
+                                           constantInputsResourceSize);
             inputResourceBarrier.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             inputResourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
             mCommandList->ResourceBarrier(1, &inputResourceBarrier);
@@ -561,8 +532,8 @@ namespace webnn_native { namespace dml {
         // Record execution of the operator initializer.
         // The command recorder is a stateless object that records Dispatches into an existing
         // Direct3D 12 command list.
-        CHECK_ERROR(mDevice->CreateCommandRecorder(IID_PPV_ARGS(&mCommandRecorder)));
-        mCommandRecorder->RecordDispatch(mCommandList.Get(), mOperatorInitializer.Get(),
+        WEBNN_CHECK(mDevice->CreateCommandRecorder(IID_PPV_ARGS(&mCommandRecorder)));
+        mCommandRecorder->RecordDispatch(mCommandList.Get(), mCompiledOperatorInitializer.Get(),
                                          mBindingTable.Get());
         CloseExecuteResetWait();
 
@@ -574,13 +545,13 @@ namespace webnn_native { namespace dml {
         mBindingTable->Reset(&mBindingTableDesc);
 
         if (temporaryResourceSize != 0) {
-            DML_BUFFER_BINDING bufferBinding{temporaryBuffer.Get(), 0, temporaryResourceSize};
+            DML_BUFFER_BINDING bufferBinding{mTemporaryBuffer.Get(), 0, temporaryResourceSize};
             DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
             mBindingTable->BindTemporaryResource(&bindingDesc);
         }
 
         if (persistentResourceSize != 0) {
-            DML_BUFFER_BINDING bufferBinding{persistentBuffer.Get(), 0, persistentResourceSize};
+            DML_BUFFER_BINDING bufferBinding{mPersistentBuffer.Get(), 0, persistentResourceSize};
             DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
             mBindingTable->BindPersistentResource(&bindingDesc);
         }
@@ -590,52 +561,49 @@ namespace webnn_native { namespace dml {
     MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
 
-        // Initialize common inputs
+        // Initialize common inputs.
         uint64_t inputsResourceSize = 0;
-        for (auto& input : mInputs) {
+        for (auto& input : mInputNodes) {
             // All the inputs must be set.
-            if (namedInputs.find(input.name) == namedInputs.end()) {
+
+            if (!input.inputInfo.isConstant && namedInputs.find(input.name) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input must be set.";
                 return MLComputeGraphStatus_Error;
             }
 
             if (!input.inputInfo.isConstant) {
                 auto& resource = namedInputs[input.name]->resource;
-                uint32_t requiredAlignment = std::max(input.inputInfo.guaranteedBaseOffsetAlignment,
-                                                      DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
-                uint64_t offset =
-                    utils::RoundUpToMultiple(inputsResourceSize, (uint64_t)requiredAlignment);
+                uint64_t offset = utils::RoundUpToMultiple(
+                    inputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
                 inputsResourceSize = offset + resource.byteLength;
             }
         }
 
         if (inputsResourceSize) {
-            CHECK_ERROR(mD3D12Device->CreateCommittedResource(
+            WEBNN_CHECK(mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
                 &utils::CreateResourceDesc(inputsResourceSize), D3D12_RESOURCE_STATE_GENERIC_READ,
                 nullptr, IID_PPV_ARGS(&mUploadBuffer)));
 
-            CHECK_ERROR(mD3D12Device->CreateCommittedResource(
+            WEBNN_CHECK(mD3D12Device->CreateCommittedResource(
                 &utils::CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
                 &utils::CreateResourceDesc(inputsResourceSize,
                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
                 D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr, IID_PPV_ARGS(&mInputBuffer)));
 
-            std::vector<DML_BINDING_DESC> bindingDesc(mInputs.size());
-            std::vector<DML_BUFFER_BINDING> bufferBinding(mInputs.size());
+            std::vector<DML_BINDING_DESC> bindingDesc(mInputNodes.size());
+            std::vector<DML_BUFFER_BINDING> bufferBinding(mInputNodes.size());
 
             D3D12_RANGE inputBufferRange{0, inputsResourceSize};
             int8_t* inputBuffer;
-            CHECK_ERROR(
+            WEBNN_CHECK(
                 mUploadBuffer->Map(0, &inputBufferRange, reinterpret_cast<void**>(&inputBuffer)));
 
             uint64_t offset = 0;
-            for (size_t i = 0; i < mInputs.size(); ++i) {
-                OperatorNode input = mInputs[i];
+            for (size_t i = 0; i < mInputNodes.size(); ++i) {
+                NodeInfo input = mInputNodes[i];
                 if (!input.inputInfo.isConstant) {
-                    uint32_t requiredAlignment =
-                        std::max(input.inputInfo.guaranteedBaseOffsetAlignment,
-                                 DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
+                    uint32_t requiredAlignment = DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT;
                     offset = utils::RoundUpToMultiple(offset, (uint64_t)requiredAlignment);
                     auto& resource = namedInputs[input.name]->resource;
                     bufferBinding[i].Buffer = mInputBuffer.Get();
@@ -666,7 +634,7 @@ namespace webnn_native { namespace dml {
             mBindingTable->BindInputs(bindingDesc.size(), bindingDesc.data());
         }
 
-        // Prepare for outputs and read back buffer from Gpu
+        // Prepare for outputs and read back buffer from Gpu.
         uint64_t outputsResourceSize = 0;
         auto namedOutputs = outputs->GetRecords();
         for (auto namedOutput : outputs->GetRecords()) {
@@ -675,7 +643,7 @@ namespace webnn_native { namespace dml {
             outputsResourceSize += output->byteLength;
         }
 
-        CHECK_ERROR(mD3D12Device->CreateCommittedResource(
+        WEBNN_CHECK(mD3D12Device->CreateCommittedResource(
             &utils::CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
             &utils::CreateResourceDesc(outputsResourceSize,
                                        D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
@@ -710,11 +678,11 @@ namespace webnn_native { namespace dml {
 
         D3D12_RANGE tensorBufferRange{0, outputsResourceSize};
         int8_t* outputBuffer;
-        CHECK_ERROR(
+        WEBNN_CHECK(
             readbackBuffer->Map(0, &tensorBufferRange, reinterpret_cast<void**>(&outputBuffer)));
 
         std::vector<std::string> outputNames;
-        for (auto& output : mOutputs) {
+        for (auto& output : mOutputNodes) {
             outputNames.push_back(output.name);
         }
 
