@@ -18,6 +18,7 @@
 #define DML_TARGET_VERSION_USE_LATEST 1
 
 #include <dxgi1_4.h>
+#include <dxgi1_6.h>
 #include <wrl\client.h>
 
 #include "DirectML.h"
@@ -50,32 +51,40 @@ namespace webnn_native { namespace dml {
 
     using namespace Microsoft::WRL;
 
-    enum class NodeType {
-        Invalid,
-        Input,
-        Operator,
-    };
-
-    struct TensorDesc {
-        std::vector<UINT> dimensions;
+    //  Represent the DirectML tensor description.
+    struct DmlTensorDesc {
+        std::vector<UINT> dimensions = {};
+        std::vector<UINT> strides = {};
         DML_BUFFER_TENSOR_DESC bufferDesc = {};
     };
 
-    struct InputInfo {
+    //  Represent the information of the graph's edges.
+    struct EdgeInfoBase {
+        virtual ~EdgeInfoBase() = default;
+        DML_TENSOR_DESC outputTensorDESC = {};
+        std::string name = "";
+        bool isInputEdge = false;
+    };
+
+    //  Only represent the information of the input edges.
+    struct InputEdgeInfo final : public EdgeInfoBase {
+        ~InputEdgeInfo() override = default;
+        // Indicate the index of the graph's input.
         size_t inputIndex = 0;
         void const* buffer = nullptr;
         size_t byteLength = 0;
-        bool isConstant = false;
-        UINT guaranteedBaseOffsetAlignment = 0;
+        // Indicate if the input is from constant buffer which need to be
+        // uploaded in the stage of initialization.
+        bool isConstantInput = false;
     };
 
-    struct OperatorNode {
-        NodeType nodeType = NodeType::Invalid;
-        uint32_t nodeIndex;
+    //  Represent the information of the intermediate edges and output edges.
+    struct EdgeInfo final : public EdgeInfoBase {
+        ~EdgeInfo() override = default;
+        // Indicate the index of the intermediate node from which this edge was produced.
+        uint32_t nodeIndex = 0;
+        // Indicate the index of the intermediate node' output from which this edge was produced.
         uint32_t outputNodeIndex = 0;
-        DML_TENSOR_DESC outputDESC = {};
-        std::string name = "";
-        InputInfo inputInfo = {};
     };
 
     class Graph : public GraphBase {
@@ -107,57 +116,58 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
-        DML_GRAPH_DESC CreateGraphDesc(std::vector<DML_GRAPH_NODE_DESC>& nodes,
-                                       std::vector<DML_GRAPH_EDGE_DESC>& inputEdges,
-                                       std::vector<DML_GRAPH_EDGE_DESC>& outputEdges,
-                                       std::vector<DML_GRAPH_EDGE_DESC>& intermediateEdges);
-        void CloseExecuteResetWait();
-        MaybeError AddToGraph(std::vector<OperatorNode> inputNodes);
-        bool GetDMLTensorDesc(OperandDescriptor const* desc,
-                              TensorDesc& dmlBufferTensorDesc,
-                              DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAGS::DML_TENSOR_FLAG_NONE);
-        void InitializeDirect3D12();
+        MaybeError AddEdgesToThisNode(std::vector<std::shared_ptr<EdgeInfoBase>> inputNodes);
 
       private:
         MaybeError CompileImpl() override;
         WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
                                           NamedOutputsBase* outputs) override;
 
-        Microsoft::WRL::ComPtr<IDMLOperatorInitializer> mOperatorInitializer;
-        Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
+        // Represents a DirectML device, which is used to create operators, binding tables, command
+        // recorders, and other objects.
+        ComPtr<IDMLDevice> mDevice;
+        // The IDMLDevice1 interface inherits from IDMLDevice.
+        ComPtr<IDMLDevice1> mDevice1;
+        // Represents a virtual adapter; it is used to create command allocators, command lists,
+        // command queues, fences, resources, pipeline state objects, heaps, root signatures,
+        // samplers, and many resource views.
+        ComPtr<ID3D12Device> mD3D12Device;
 
-        Microsoft::WRL::ComPtr<IDMLDevice> mDevice;
-        Microsoft::WRL::ComPtr<IDMLDevice1> mDevice1;
-        Microsoft::WRL::ComPtr<ID3D12Device> mD3D12Device;
+        ComPtr<IDMLCommandRecorder> mCommandRecorder;
+        ComPtr<ID3D12CommandQueue> mCommandQueue;
+        ComPtr<ID3D12CommandAllocator> mCommandAllocator;
+        ComPtr<ID3D12GraphicsCommandList> mCommandList;
+        ComPtr<IDMLBindingTable> mBindingTable;
+        ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
 
-        Microsoft::WRL::ComPtr<IDMLCommandRecorder> mCommandRecorder;
-        Microsoft::WRL::ComPtr<ID3D12CommandQueue> mCommandQueue;
-        Microsoft::WRL::ComPtr<ID3D12CommandAllocator> mCommandAllocator;
-        Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> mCommandList;
+        ComPtr<ID3D12Resource> mUploadResource;
+        ComPtr<ID3D12Resource> mInputResource;
+        ComPtr<ID3D12Resource> mTemporaryResource;
+        ComPtr<ID3D12Resource> mPersistentResource;
 
-        DML_BINDING_TABLE_DESC mBindingTableDesc{};
-        Microsoft::WRL::ComPtr<ID3D12Resource> mOutputBuffer;
-        Microsoft::WRL::ComPtr<ID3D12Resource> mUploadBuffer;
-        Microsoft::WRL::ComPtr<ID3D12Resource> mInputBuffer;
-        Microsoft::WRL::ComPtr<IDMLBindingTable> mBindingTable;
+        // Describe a graph of DirectML operators used to compile a combined, optimized operator.
+        std::vector<InputEdgeInfo> mInputs;
+        std::vector<EdgeInfo> mOutputs;
+        std::vector<DML_GRAPH_NODE_DESC> mIntermediateNodes;
+        std::vector<DML_GRAPH_EDGE_DESC> mInputEdges;
+        std::vector<DML_GRAPH_EDGE_DESC> mOutputEdges;
+        std::vector<DML_GRAPH_EDGE_DESC> mIntermediateEdges;
 
-        std::vector<OperatorNode> mInputs;
-        std::vector<OperatorNode> mOutputs;
-        std::vector<DML_OPERATOR_GRAPH_NODE_DESC> mNodes;
-        std::vector<DML_INPUT_GRAPH_EDGE_DESC> mInputEdges;
-        std::vector<DML_OUTPUT_GRAPH_EDGE_DESC> mOutputEdges;
-        std::vector<DML_INTERMEDIATE_GRAPH_EDGE_DESC> mIntermediateEdges;
+        // IDMLCompiledOperator represents the DirectML graph's output which need to be initialized
+        // by IDMLOperatorInitializer.
+        ComPtr<IDMLCompiledOperator> mCompiledOperator;
 
-        // The graph's output
-        Microsoft::WRL::ComPtr<IDMLCompiledOperator> mCompiledOperator;
+        std::map<const OperandBase*, std::shared_ptr<EdgeInfoBase>> mGraphNodesMap;
 
-        // Intermediate nodes
-        uint32_t mNodeIndex = 0;
-        std::map<const OperandBase*, OperatorNode> mOperatorMap;
-        std::map<uint32_t, Microsoft::WRL::ComPtr<IDMLOperator>> mCompiledOperatorMap;
-
-        // Map for the description of input tensors
-        std::map<uint32_t, TensorDesc> mTensorDescMap;
+        // Keep intermediate nodes here to avoid releasing too early.
+        std::map<uint32_t, ComPtr<IDMLOperator>> mIntermediateNodesMap;
+        // Keep the input tensors description here to avoid releasing too early.
+        std::vector<std::unique_ptr<DmlTensorDesc>> mDmlTensorsDesc;
+        // Keep the descriptions of nodes and edges here to avoid releasing too early.
+        std::vector<std::unique_ptr<DML_OPERATOR_GRAPH_NODE_DESC>> mIntermediateNodesDesc;
+        std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;
+        std::vector<std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC>> mOutputEdgesDesc;
+        std::vector<std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC>> mIntermediateEdgesDesc;
     };
 
 }}  // namespace webnn_native::dml
