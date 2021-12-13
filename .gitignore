@@ -19,6 +19,7 @@ third_party/gpgmm
 third_party/microsoft.ai.directml*
 third_party/oneDNN
 third_party/XNNPACK
+third_party/onnxruntime
 third_party/stb
 tools
 out
