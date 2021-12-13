@@ -40,7 +40,9 @@ namespace webnn_native { namespace mlas {
 #elif defined(_LIBCPP_SGX_CONFIG)
         p = memalign(alignment, size);
 #else
-        posix_memalign(&p, alignment, size);
+        if (posix_memalign(&p, alignment, size) != 0) {
+            return nullptr;
+        }
 #endif
         return p;
     }
