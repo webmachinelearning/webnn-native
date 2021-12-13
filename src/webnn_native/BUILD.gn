@@ -343,6 +343,7 @@ source_set("webnn_native_sources") {
     libprefix = ""
     libext = ""
     libfolder = ""
+    libsubfolder = ""
     libos = ""
 
     if (is_debug) {
@@ -354,6 +355,11 @@ source_set("webnn_native_sources") {
     if (is_win) {
       libext = "lib"
       libos = "Windows"
+      if (is_debug) {
+        libsubfolder = "Debug"
+      } else {
+        libsubfolder = "Release"
+      }
     }
 
     if (is_linux) {
@@ -363,11 +369,18 @@ source_set("webnn_native_sources") {
     }
 
     libs += [
-      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libfolder}/${libprefix}onnxruntime_mlas.${libext}",
-      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libfolder}/${libprefix}onnxruntime_common.${libext}",
-      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/${libfolder}/${libprefix}cpuinfo.${libext}",
-      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/deps/clog/${libfolder}/${libprefix}clog.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_mlas.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_common.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/${libsubfolder}/${libprefix}cpuinfo.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/deps/clog/${libsubfolder}/${libprefix}clog.${libext}",
     ]
+
+    if (is_linux) {
+      libs += [
+        "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/nsync/${libsubfolder}/${libprefix}nsync_cpp.${libext}",
+        "stdc++",
+      ]
+    }
   }
 }
 
