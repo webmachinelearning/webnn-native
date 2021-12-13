@@ -72,6 +72,9 @@ namespace webnn_native {
     MLInstance Instance::Get() const {
         return reinterpret_cast<MLInstanceImpl*>(mImpl);
     }
+    namespace mlas {
+        ContextBase* Create();
+    }
 
     const WebnnProcTable& GetProcsAutogen();
 
