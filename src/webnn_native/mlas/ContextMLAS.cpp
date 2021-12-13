@@ -37,8 +37,14 @@ namespace webnn_native { namespace mlas {
     }
 
     void Context::CreateThreadPool() {
+        std::vector<size_t> cpuList = onnxruntime::Env::Default().GetThreadAffinityMasks();
+        if (cpuList.empty() || cpuList.size() == 1)
+            return;
+        int threadPoolSize = static_cast<int>(cpuList.size());
+        onnxruntime::ThreadOptions options;
+        options.affinity = cpuList;
         mThreadPool = new onnxruntime::concurrency::ThreadPool(
-            &onnxruntime::Env::Default(), onnxruntime::ThreadOptions(), nullptr, 4, false);
+            &onnxruntime::Env::Default(), options, nullptr, threadPoolSize, false);
     }
 
     MLAS_THREADPOOL* Context::GetThreadPool() {
