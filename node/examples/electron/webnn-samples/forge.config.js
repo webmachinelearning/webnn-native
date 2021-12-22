@@ -21,6 +21,7 @@ module.exports = {
         {"from": `${node_path}lib`, "to": 'lib'},
         {"from": `${node_path}build`, "to": 'build'},
         {"from": `${node_path}third_party/webnn-samples`, "to": 'webnn-samples'},
+        {"from": `${node_path}third_party/webnn-samples/rnnoise/process/process.wasm`, "to": 'webnn-samples/rnnoise/process.wasm'},
       ];
      for (let copy of copy_list) {
       await fse.copy(copy.from, copy.to, {overwrite: true});
