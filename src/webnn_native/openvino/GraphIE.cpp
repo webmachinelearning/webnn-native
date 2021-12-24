@@ -154,7 +154,7 @@ namespace webnn_native { namespace ie {
             switch (activation->GetFusionType()) {
                 // Currently we implement Relu6 operator by Clamp.
                 case FusionType::Clamp: {
-                    auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+                    auto clamp = reinterpret_cast<const op::FusionClamp*>(activation);
                     status = ngraph_clamp(inputNode, clamp->GetMinValue(), clamp->GetMaxValue(),
                                           activationNode);
                     break;
