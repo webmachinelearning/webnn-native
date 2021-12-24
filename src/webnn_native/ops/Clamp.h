@@ -18,6 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/FusionOperator.h"
 
 namespace webnn_native { namespace op {
 
@@ -47,9 +48,6 @@ namespace webnn_native { namespace op {
         Clamp(GraphBuilderBase* builder, OperandBase* input, ClampOptions const* options)
             : ClampBase(options), OperatorBase(builder, {input}) {
         }
-        Clamp(GraphBuilderBase* builder, ClampOptions const* options)
-            : ClampBase(options), OperatorBase(builder, FusedOperator::Clamp) {
-        }
         ~Clamp() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
@@ -66,6 +64,13 @@ namespace webnn_native { namespace op {
             }
 
             return {};
+        }
+    };
+
+    class FusionClamp final : public ClampBase, public FusionOperatorBase {
+      public:
+        FusionClamp(GraphBuilderBase* builder, ClampOptions const* options)
+            : ClampBase(options), FusionOperatorBase(builder, FusionType::Clamp) {
         }
     };
 

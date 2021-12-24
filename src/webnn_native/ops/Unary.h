@@ -18,6 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/FusionOperator.h"
 
 namespace webnn_native { namespace op {
 
@@ -44,9 +45,6 @@ namespace webnn_native { namespace op {
         Unary(GraphBuilderBase* builder, UnaryOpType opType, OperandBase* input)
             : OperatorBase(builder, {input}), mOpType(opType) {
         }
-        Unary(GraphBuilderBase* builder, UnaryOpType opType, FusedOperator fusedType)
-            : OperatorBase(builder, fusedType), mOpType(opType) {
-        }
         ~Unary() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {
@@ -59,6 +57,12 @@ namespace webnn_native { namespace op {
 
       private:
         UnaryOpType mOpType;
+    };
+
+    class FusionUnary : public FusionOperatorBase {
+      public:
+        FusionUnary(GraphBuilderBase* builder, FusionType type) : FusionOperatorBase(builder, type) {
+        }
     };
 
 }}  // namespace webnn_native::op

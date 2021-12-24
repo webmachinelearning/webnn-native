@@ -18,6 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/FusionOperator.h"
 
 namespace webnn_native { namespace op {
 
@@ -41,7 +42,7 @@ namespace webnn_native { namespace op {
 
       private:
         BatchNormOptions mOptions;
-        Ref<OperatorBase> mActivation;
+        Ref<FusionOperatorBase> mActivation;
     };
 
 }}  // namespace webnn_native::op

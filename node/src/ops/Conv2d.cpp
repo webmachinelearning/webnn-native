@@ -33,7 +33,7 @@ namespace node { namespace op {
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
         ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
         ml::Operand bias;
-        ml::Operator activation;
+        ml::FusionOperator activation;
 
         const ml::Conv2dOptions* AsPtr() {
             if (!padding.empty()) {
