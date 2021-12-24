@@ -354,7 +354,7 @@ namespace webnn_native { namespace onednn {
                         op::BinaryOpType::kAdd) {
                     add = reinterpret_cast<const op::Binary*>(postOp.op);
                 } else if (postOp.opType == OperatorType::CLAMP) {
-                    clamp = reinterpret_cast<const op::Clamp*>(postOp.op);
+                    clamp = reinterpret_cast<const op::FusionClamp*>(postOp.op);
                 }
             }
             if ((mOperandsToBuild.size() == 2 && !add && !clamp) ||

@@ -275,7 +275,7 @@ namespace webnn_native { namespace xnnpack {
                         op::BinaryOpType::kAdd) {
                     add = reinterpret_cast<const op::Binary*>(operand);
                 } else if (operandInfo->opType == OperandType::CLAMP) {
-                    clamp = reinterpret_cast<const op::Clamp*>(operand);
+                    clamp = reinterpret_cast<const op::FusionClamp*>(operand);
                 }
             }
             if ((mOperandsToBuild.size() == 2 && !add && !clamp) ||

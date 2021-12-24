@@ -540,7 +540,7 @@ namespace webnn_native { namespace dml {
         if (type == FusionType::HardSwish) {
             return HardSwish(input);
         } else if (type == FusionType::Clamp) {
-            auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+            auto clamp = reinterpret_cast<const op::FusionClamp*>(activation);
             return ::dml::Clip(input, clamp->GetMinValue(), clamp->GetMaxValue());
         }
         return input;
