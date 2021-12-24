@@ -521,7 +521,7 @@ namespace webnn_native { namespace dml {
                 break;
             case FusionType::LeakyRelu:
                 dmlActivation = ::dml::FusedActivation::LeakyRelu(
-                    reinterpret_cast<op::LeakyRelu*>(activation)->GetAlpha());
+                    reinterpret_cast<op::FusionLeakyRelu*>(activation)->GetAlpha());
                 break;
             default:
                 DAWN_ASSERT(0);

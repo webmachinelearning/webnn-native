@@ -777,7 +777,7 @@ namespace webnn_native { namespace mlas {
                 case FusionType::LeakyRelu:
                     activation.ActivationKind = MlasLeakyReluActivation;
                     activation.Parameters.LeakyRelu.alpha =
-                        reinterpret_cast<op::LeakyRelu*>(options->activation)->GetAlpha();
+                        reinterpret_cast<op::FusionLeakyRelu*>(options->activation)->GetAlpha();
                     break;
                 default:
                     return DAWN_INTERNAL_ERROR("Unsupported fused activation");

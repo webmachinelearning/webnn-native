@@ -166,7 +166,7 @@ namespace webnn_native { namespace ie {
                     status = ngraph_sigmoid(inputNode, activationNode);
                     break;
                 case FusionType::LeakyRelu: {
-                    auto leakyRelu = reinterpret_cast<const op::LeakyRelu*>(activation);
+                    auto leakyRelu = reinterpret_cast<const op::FusionLeakyRelu*>(activation);
                     const ngraph_node_t* constantNode = AddConstantWithGraph<float>(
                         precision_e::FP32, {1}, {leakyRelu->GetAlpha()});
                     status = ngraph_leaky_relu(inputNode, constantNode, activationNode);
