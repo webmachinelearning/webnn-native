@@ -119,6 +119,22 @@ inline ngraph::op::PadType GetAutoPad(ngraph_auto_pad autoPad) {
   return auto_pad;
 }
 
+inline ngraph::op::RoundingType GetRoundingType(
+    ngraph_rounding_type roundingType) {
+  ngraph::op::RoundingType rounding_type = ngraph::op::RoundingType::FLOOR;
+  switch (roundingType) {
+    case Floor:
+      rounding_type = ngraph::op::RoundingType::FLOOR;
+      break;
+    case Ceil:
+      rounding_type = ngraph::op::RoundingType::CEIL;
+      break;
+    default:
+      assert(0);
+  }
+  return rounding_type;
+}
+
 inline ngraph::op::RecurrentSequenceDirection get_recurrent_sequence_direction(
     ngraph_recurrent_sequence_direction direction) {
   ngraph::op::RecurrentSequenceDirection ngraph_direction;
@@ -607,6 +623,7 @@ IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
                                  size_t const* dimensions,
                                  uint32_t dimensions_count,
                                  ngraph_auto_pad mode,
+                                 ngraph_rounding_type roundingType,
                                  ngraph_node_t** node) {
   ngraph::Strides strides_vector(strides, strides + strides_count);
   ngraph::Shape pad_begin = {padding[0], padding[2]};
@@ -615,7 +632,7 @@ IEStatusCode ngraph_average_pool(const ngraph_node_t* input,
   TRY_IE_EXCEPTIONS
   auto pool2d = std::make_shared<ngraph::op::v1::AvgPool>(
       input->object, strides_vector, pad_begin, pad_end, window_dimensions,
-      true, ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
+      true, GetRoundingType(roundingType), GetAutoPad(mode));
   CREATE_NODE_AND_CATCH_EXCEPTIONS(pool2d, node);
 }
 
@@ -627,6 +644,7 @@ IEStatusCode ngraph_l2_pool(const ngraph_node_t* input,
                             size_t const* dimensions,
                             uint32_t dimensions_count,
                             ngraph_auto_pad mode,
+                            ngraph_rounding_type roundingType,
                             ngraph_node_t** node) {
   std::vector<float> constantBuffer = {2};
   auto constant = std::make_shared<ngraph::op::v0::Constant>(
@@ -640,7 +658,7 @@ IEStatusCode ngraph_l2_pool(const ngraph_node_t* input,
   TRY_IE_EXCEPTIONS
   auto avgPool2d = std::make_shared<ngraph::op::v1::AvgPool>(
       pow->output(0), strides_vector, pad_begin, pad_end, window_dimensions,
-      true, ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
+      true, GetRoundingType(roundingType), GetAutoPad(mode));
   auto l2Pool2d = std::make_shared<ngraph::op::v0::Sqrt>(avgPool2d->output(0));
   CREATE_NODE_AND_CATCH_EXCEPTIONS(l2Pool2d, node);
 }
@@ -653,6 +671,7 @@ IEStatusCode ngraph_max_pool(const ngraph_node_t* input,
                              size_t const* dimensions,
                              uint32_t dimensions_count,
                              ngraph_auto_pad mode,
+                             ngraph_rounding_type roundingType,
                              ngraph_node_t** node) {
   ngraph::Strides strides_vector(strides, strides + strides_count);
   ngraph::Shape pad_begin = {padding[0], padding[2]};
@@ -661,7 +680,7 @@ IEStatusCode ngraph_max_pool(const ngraph_node_t* input,
   TRY_IE_EXCEPTIONS
   auto pool2d = std::make_shared<ngraph::op::v1::MaxPool>(
       input->object, strides_vector, pad_begin, pad_end, window_dimensions,
-      ngraph::op::RoundingType::FLOOR, GetAutoPad(mode));
+      GetRoundingType(roundingType), GetAutoPad(mode));
   CREATE_NODE_AND_CATCH_EXCEPTIONS(pool2d, node);
 }
 

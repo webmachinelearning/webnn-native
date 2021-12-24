@@ -47,6 +47,7 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mPadding;
         std::vector<int32_t> mStride;
         std::vector<int32_t> mDilations;
+        std::vector<int32_t> mOutputSizes;
         Pool2dType mOpType;
     };
 

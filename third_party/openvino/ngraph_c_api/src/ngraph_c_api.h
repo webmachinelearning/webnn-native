@@ -63,6 +63,11 @@ enum ngraph_auto_pad : uint32_t {
   SameLower = 0x00000002,
 };
 
+enum ngraph_rounding_type : uint32_t {
+  Floor = 0x00000000,
+  Ceil = 0x00000001,
+};
+
 enum ngraph_recurrent_sequence_direction : uint32_t {
   Forward = 0x00000000,
   Reverse = 0x00000001,
@@ -268,6 +273,7 @@ ngraph_average_pool(const ngraph_node_t* input,
                     size_t const* windowDimensions,
                     uint32_t windowDimensionsCount,
                     ngraph_auto_pad mode,
+                    ngraph_rounding_type roundingType,
                     ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
@@ -279,6 +285,7 @@ ngraph_l2_pool(const ngraph_node_t* input,
                size_t const* windowDimensions,
                uint32_t windowDimensionsCount,
                ngraph_auto_pad mode,
+               ngraph_rounding_type roundingType,
                ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)
@@ -290,6 +297,7 @@ ngraph_max_pool(const ngraph_node_t* input,
                 size_t const* windowDimensions,
                 uint32_t windowDimensionsCount,
                 ngraph_auto_pad mode,
+                ngraph_rounding_type roundingType,
                 ngraph_node_t** node);
 
 NGRAPH_C_API(IEStatusCode)

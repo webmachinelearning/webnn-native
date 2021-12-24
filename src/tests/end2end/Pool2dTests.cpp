@@ -135,6 +135,145 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
+TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {2, 1, 2, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {9, 11, 13, 14, 23, 25, 27, 28, 37, 39, 41, 42, 44, 46, 48, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.outputSizes = {3, 3};
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue({17, 19, 21, 31, 33, 35, 45, 47, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.outputSizes = {4, 4};
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {17, 19, 21, 21, 31, 33, 35, 35, 45, 47, 49, 49, 45, 47, 49, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.roundinyType = ml::RoundingType::Floor;
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue({17, 19, 21, 31, 33, 35, 45, 47, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.roundinyType = ml::RoundingType::Ceil;
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {17, 19, 21, 21, 31, 33, 35, 35, 45, 47, 49, 49, 45, 47, 49, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::SameLower;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {9, 11, 13, 14, 23, 25, 27, 28, 37, 39, 41, 42, 44, 46, 48, 49});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
     const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
@@ -298,6 +437,145 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
+TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {2, 1, 2, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {5, 6, 8, 9.5, 12, 13, 15, 16.5, 26, 27, 29, 30.5, 36.5, 37.5, 39.5, 41});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.outputSizes = {3, 3};
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue({9, 10.5, 12.5, 19.5, 21, 23, 33.5, 35, 37});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.outputSizes = {4, 4};
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {9, 10.5, 12.5, 13.5, 19.5, 21, 23, 24, 33.5, 35, 37, 38, 40.5, 42, 44, 45});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.roundinyType = ml::RoundingType::Floor;
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue({9, 10.5, 12.5, 19.5, 21, 23, 33.5, 35, 37});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    options.roundinyType = ml::RoundingType::Ceil;
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {9, 10.5, 12.5, 13.5, 19.5, 21, 23, 24, 33.5, 35, 37, 38, 40.5, 42, 44, 45});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::SameLower;
+    options.layout = ml::InputOperandLayout::Nhwc;
+    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {5, 6, 8, 9.5, 12, 13, 15, 16.5, 26, 27, 29, 30.5, 36.5, 37.5, 39.5, 41});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
 TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
     const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
     const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
@@ -444,6 +722,108 @@ TEST_F(Pool2dTests, L2Pool2dPadsDefault) {
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
     utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes3x3) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.outputSizes = {3, 3};
+    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 1, 3, 3}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {10.692676544189453, 12.006942749023438, 13.790093421936035, 21.027759552001953,
+         22.438806533813477, 24.320772171020508, 34.41172409057617, 35.881752014160156,
+         37.835166931152344});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes4x4) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.outputSizes = {4, 4};
+    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 1, 4, 4}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {10.692676544189453, 12.006942749023438, 13.790093421936035, 14.668560981750488,
+         21.027759552001953, 22.438806533813477, 24.320772171020508, 25.248762130737305,
+         34.41172409057617, 35.881752014160156, 37.835166931152344, 38.80077362060547,
+         40.65915298461914, 42.16040802001953, 44.153141021728516, 45.138675689697266});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeFloor) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.roundinyType = ml::RoundingType::Floor;
+    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 1, 3, 3}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {10.692676544189453, 12.006942749023438, 13.790093421936035, 21.027759552001953,
+         22.438806533813477, 24.320772171020508, 34.41172409057617, 35.881752014160156,
+         37.835166931152344});
+    EXPECT_TRUE(utils::CheckValue(result, expectedValue));
+}
+
+TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeCeil) {
+    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
+    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    utils::Pool2dOptions options;
+    options.windowDimensions = {4, 4};
+    options.padding = {1, 1, 1, 1};
+    options.strides = {2, 2};
+    options.autoPad = ml::AutoPad::Explicit;
+    options.roundinyType = ml::RoundingType::Ceil;
+    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    ASSERT_TRUE(graph);
+    const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
+                                      14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+                                      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+                                      40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
+    std::vector<float> result(utils::SizeOfShape({1, 1, 4, 4}));
+    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    const std::vector<float> expectedValue(
+        {10.692676544189453, 12.006942749023438, 13.790093421936035, 14.668560981750488,
+         21.027759552001953, 22.438806533813477, 24.320772171020508, 25.248762130737305,
+         34.41172409057617, 35.881752014160156, 37.835166931152344, 38.80077362060547,
+         40.65915298461914, 42.16040802001953, 44.153141021728516, 45.138675689697266});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
