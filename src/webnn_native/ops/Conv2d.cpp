@@ -77,7 +77,7 @@ namespace webnn_native { namespace op {
             mOptions.bias = options->bias;
             mOptions.activation = options->activation;
         }
-        mActivation = Ref<OperatorBase>(mOptions.activation);
+        mActivation = Ref<FusionOperatorBase>(mOptions.activation);
     }
 
     MaybeError Conv2d::AddToGraph(GraphBase* graph) const {

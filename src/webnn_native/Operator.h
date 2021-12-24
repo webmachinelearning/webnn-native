@@ -21,21 +21,11 @@
 
 namespace webnn_native {
 
-    enum class FusedOperator : uint32_t {
-        Clamp = 0x00000000,
-        Relu = 0x00000001,
-        Sigmoid = 0x00000002,
-        LeakyRelu = 0x00000003,
-        HardSwish = 0x00000004,
-        Tanh = 0x00000005,
-    };
-
     class OperatorBase : public ObjectBase {
       public:
         explicit OperatorBase(GraphBuilderBase* GraphBuilder,
                               std::vector<Ref<OperandBase>> inputs = {},
                               size_t outputSize = 1);
-        explicit OperatorBase(GraphBuilderBase* GraphBuilder, FusedOperator fusedOperator);
         virtual ~OperatorBase() = default;
 
         const std::vector<Ref<OperandBase>>& Inputs() const;
@@ -45,13 +35,11 @@ namespace webnn_native {
         // Add the operand to model for specific backend.
         virtual MaybeError AddToGraph(GraphBase* graph) const;
         virtual MaybeError ValidateAndInferOutputInfo();
-        FusedOperator GetFusedOperator() const;
 
         static OperatorBase* MakeError(GraphBuilderBase* graphBuilder);
 
       private:
         OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag);
-        FusedOperator mFusedOperator;
 
       protected:
         // The input operands of operator.
@@ -59,6 +47,7 @@ namespace webnn_native {
         // The output operands of operator.
         std::vector<Ref<OperandBase>> mOutputs;
     };
+
 }  // namespace webnn_native
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

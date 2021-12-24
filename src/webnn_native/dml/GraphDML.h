@@ -90,7 +90,7 @@ namespace webnn_native { namespace dml {
                                           void const* value,
                                           size_t size);
         ::dml::Expression HardSwish(::dml::Expression& input);
-        ::dml::Expression EmulateFusedActivation(OperatorBase* activation,
+        ::dml::Expression EmulateFusedActivation(FusionOperatorBase* activation,
                                                  ::dml::Expression& input);
 
         std::shared_ptr<::pydml::Device> mDevice;

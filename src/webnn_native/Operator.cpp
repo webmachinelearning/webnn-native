@@ -29,10 +29,6 @@ namespace webnn_native {
         }
     }
 
-    OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, FusedOperator fusedOperator)
-        : ObjectBase(graphBuilder->GetContext()), mFusedOperator(fusedOperator) {
-    }
-
     OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder, ObjectBase::ErrorTag tag)
         : ObjectBase(graphBuilder->GetContext(), tag) {
     }
@@ -67,12 +63,9 @@ namespace webnn_native {
         return {};
     }
 
-    FusedOperator OperatorBase::GetFusedOperator() const {
-        return mFusedOperator;
-    }
-
     // static
     OperatorBase* OperatorBase::MakeError(GraphBuilderBase* graphBuilder) {
         return new OperatorBase(graphBuilder, ObjectBase::kError);
     }
+
 }  // namespace webnn_native

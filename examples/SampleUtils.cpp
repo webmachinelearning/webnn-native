@@ -80,10 +80,10 @@ namespace utils {
         return prod;
     }
 
-    const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
+    const ml::FusionOperator CreateActivationOperator(const ml::GraphBuilder& builder,
                                                 FusedActivation activation,
                                                 const void* options) {
-        ml::Operator activationOperator;
+        ml::FusionOperator activationOperator;
         switch (activation) {
             case FusedActivation::RELU:
                 activationOperator = builder.ReluOperator();

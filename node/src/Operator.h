@@ -28,15 +28,15 @@ namespace node {
         explicit Operator(const Napi::CallbackInfo& info);
         ~Operator() = default;
 
-        ml::Operator GetImpl() const {
+        ml::FusionOperator GetImpl() const {
             return mImpl;
         };
-        void SetImpl(const ml::Operator& mlOperator) {
+        void SetImpl(const ml::FusionOperator& mlOperator) {
             mImpl = mlOperator;
         };
 
       private:
-        ml::Operator mImpl;
+        ml::FusionOperator mImpl;
         std::vector<Napi::ObjectReference> mOperands;
     };
 
