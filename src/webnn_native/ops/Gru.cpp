@@ -44,7 +44,8 @@ namespace webnn_native { namespace op {
         }
         if (options == nullptr || options->activations == nullptr) {
             mActivations = AcquireRef(new OperatorArrayBase());
-            mActivations->Set(AcquireRef(new FusionOperatorBase(builder, FusionType::Sigmoid)).Get());
+            mActivations->Set(
+                AcquireRef(new FusionOperatorBase(builder, FusionType::Sigmoid)).Get());
             mActivations->Set(AcquireRef(new FusionOperatorBase(builder, FusionType::Tanh)).Get());
         } else {
             mActivations = Ref<OperatorArrayBase>(mOptions.activations);

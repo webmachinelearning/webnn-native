@@ -144,7 +144,7 @@ namespace webnn_native { namespace ie {
         }
 
         IEStatusCode AddActivationNode(const ngraph_node_t* inputNode,
-                                       OperatorBase* activation,
+                                       FusionOperatorBase* activation,
                                        ngraph_node_t** activationNode) {
             IEStatusCode status = IEStatusCode::OK;
             if (activation == nullptr) {

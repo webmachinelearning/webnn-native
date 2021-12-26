@@ -15,10 +15,10 @@
 #ifndef WEBNN_NATIVE_OPS_CLAMP_H_
 #define WEBNN_NATIVE_OPS_CLAMP_H_
 
+#include "webnn_native/FusionOperator.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
-#include "webnn_native/FusionOperator.h"
 
 namespace webnn_native { namespace op {
 

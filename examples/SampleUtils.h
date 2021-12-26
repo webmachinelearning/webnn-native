@@ -68,9 +68,10 @@ namespace utils {
                                         const std::vector<int32_t>& maxShape,
                                         const std::vector<float>& maxValue);
 
-    const ml::FusionOperator CreateActivationOperator(const ml::GraphBuilder& builder,
-                                                FusedActivation activation = FusedActivation::NONE,
-                                                const void* options = nullptr);
+    const ml::FusionOperator CreateActivationOperator(
+        const ml::GraphBuilder& builder,
+        FusedActivation activation = FusedActivation::NONE,
+        const void* options = nullptr);
 
     const ml::Operand CreateActivationOperand(const ml::GraphBuilder& builder,
                                               const ml::Operand& input,

@@ -19,9 +19,9 @@
 #include "webnn_native/Forward.h"
 #include "webnn_native/NamedOperands.h"
 #include "webnn_native/ObjectBase.h"
-#include "webnn_native/webnn_platform.h"
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
+#include "webnn_native/webnn_platform.h"
 
 #include <functional>
 #include <vector>

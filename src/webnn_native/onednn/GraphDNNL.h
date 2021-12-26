@@ -53,7 +53,7 @@ namespace webnn_native { namespace onednn {
       private:
         dnnl_status_t AddConv2dImpl(const op::Conv2d* conv2d,
                                     const op::Binary* add = nullptr,
-                                    const op::Clamp* clamp = nullptr);
+                                    const op::FusionClamp* clamp = nullptr);
         dnnl_status_t AddBinaryImpl(const op::Binary* binary);
         dnnl_status_t AddClampImpl(const op::Clamp* clamp);
         dnnl_status_t AddPool2dImpl(const op::Pool2d* pool2d);
