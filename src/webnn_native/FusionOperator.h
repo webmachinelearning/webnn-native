@@ -15,8 +15,8 @@
 #ifndef WEBNN_NATIVE_FUSION_OPERATOR_H_
 #define WEBNN_NATIVE_FUSION_OPERATOR_H_
 
-#include "webnn_native/ObjectBase.h"
 #include "webnn_native/GraphBuilder.h"
+#include "webnn_native/ObjectBase.h"
 
 namespace webnn_native {
 

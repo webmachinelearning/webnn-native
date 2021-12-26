@@ -81,8 +81,8 @@ namespace utils {
     }
 
     const ml::FusionOperator CreateActivationOperator(const ml::GraphBuilder& builder,
-                                                FusedActivation activation,
-                                                const void* options) {
+                                                      FusedActivation activation,
+                                                      const void* options) {
         ml::FusionOperator activationOperator;
         switch (activation) {
             case FusedActivation::RELU:

@@ -23,11 +23,11 @@ namespace node { namespace op {
         // Operator leakyReluOperator(optional LeakyReluOptions options = {});
         std::vector<napi_value> args;
         ml::Operand input;
-        bool isFusionType =
+        bool isFusedOperator =
             info.Length() == 0 ||
             (info.Length() == 1 && info[0].IsObject() &&
              !info[0].As<Napi::Object>().InstanceOf(Operand::constructor.Value()));
-        if (!isFusionType) {
+        if (!isFusedOperator) {
             WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                               "The number of arguments is invalid.");
             WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
@@ -40,7 +40,7 @@ namespace node { namespace op {
         //   float alpha = 0.01;
         // };
         ml::LeakyReluOptions options;
-        size_t argumentsCount = isFusionType ? 1 : 2;
+        size_t argumentsCount = isFusedOperator ? 1 : 2;
         if (info.Length() == argumentsCount && !info[argumentsCount - 1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[argumentsCount - 1].IsObject(),
                               "The options must be an object.");
@@ -50,7 +50,7 @@ namespace node { namespace op {
                                   "The alpha parameter is invalid.");
             }
         }
-        if (!isFusionType) {
+        if (!isFusedOperator) {
             Napi::Object object = Operand::constructor.New(args);
             Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
             operand->SetImpl(builder.LeakyRelu(input, &options));
