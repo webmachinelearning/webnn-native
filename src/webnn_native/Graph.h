@@ -74,7 +74,6 @@ namespace webnn_native {
         virtual MaybeError AddSplit(const op::Split* split);
         virtual MaybeError AddTranspose(const op::Transpose* transpose);
         virtual MaybeError AddUnary(const op::Unary* unary);
-        virtual MaybeError AddLeakyRelu(const op::LeakyRelu* leakyRelu);
         virtual MaybeError AddConcat(const op::Concat* concat);
         virtual MaybeError AddGemm(const op::Gemm* gemm);
         virtual MaybeError AddClamp(const op::Clamp* clamp);

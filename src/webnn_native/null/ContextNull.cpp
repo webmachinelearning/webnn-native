@@ -81,11 +81,39 @@ namespace webnn_native { namespace null {
         return {};
     }
 
+    MaybeError Graph::AddGru(const op::Gru* gru) {
+        return {};
+    }
+
+    MaybeError Graph::AddPad(const op::Pad* pad) {
+        return {};
+    }
+
     MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         return {};
     }
 
+    MaybeError Graph::AddReduce(const op::Reduce* reduce) {
+        return {};
+    }
+
+    MaybeError Graph::AddResample2d(const op::Resample2d* resample2d) {
+        return {};
+    }
+
     MaybeError Graph::AddReshape(const op::Reshape* relu) {
+        return {};
+    }
+
+    MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+        return {};
+    }
+
+    MaybeError Graph::AddSlice(const op::Slice* slice) {
+        return {};
+    }
+
+    MaybeError Graph::AddSplit(const op::Split* split) {
         return {};
     }
 
@@ -101,10 +129,6 @@ namespace webnn_native { namespace null {
         return {};
     }
 
-    MaybeError Graph::AddLeakyRelu(const op::LeakyRelu* unary) {
-        return {};
-    }
-
     MaybeError Graph::AddConcat(const op::Concat* concat) {
         return {};
     }
@@ -114,6 +138,10 @@ namespace webnn_native { namespace null {
     }
 
     MaybeError Graph::AddClamp(const op::Clamp* clamp) {
+        return {};
+    }
+
+    MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
         return {};
     }
 
