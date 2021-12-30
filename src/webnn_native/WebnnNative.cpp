@@ -19,6 +19,7 @@
 
 #include "common/Assert.h"
 #include "webnn_native/GraphBuilder.h"
+#include "webnn_native/Instance.h"
 
 #if defined(_WIN32)
 #    include <crtdbg.h>
@@ -46,50 +47,37 @@ namespace webnn_native {
         }
     }  // namespace
 
+    // Instance
+
+    Instance::Instance() : mImpl(InstanceBase::Create()) {
+    }
+
+    Instance::~Instance() {
+        if (mImpl != nullptr) {
+            mImpl->Release();
+            mImpl = nullptr;
+        }
+    }
+
+    MLContext Instance::CreateTestContext(const ml::ContextOptions* options) {
+        return reinterpret_cast<MLContext>(
+            mImpl->CreateTestContext(reinterpret_cast<const ContextOptions*>(options)));
+    }
+
+    MLContext Instance::CreateContext(const ml::ContextOptions* options) {
+        return reinterpret_cast<MLContext>(
+            mImpl->CreateContext(reinterpret_cast<const ContextOptions*>(options)));
+    }
+
+    MLInstance Instance::Get() const {
+        return reinterpret_cast<MLInstanceImpl*>(mImpl);
+    }
+
     const WebnnProcTable& GetProcsAutogen();
 
     const WebnnProcTable& GetProcs() {
         DumpMemoryLeaks();
         return GetProcsAutogen();
-    }
-
-    namespace null {
-        ContextBase* Create(MLContextOptions const* options);
-    }
-    namespace ie {
-        ContextBase* Create(MLContextOptions const* options);
-    }
-    namespace dml {
-        ContextBase* Create(MLContextOptions const* options);
-    }
-    namespace onednn {
-        ContextBase* Create();
-    }
-    namespace xnnpack {
-        ContextBase* Create();
-    }
-
-    // Should put the default null backend at the end.
-    MLContext CreateContext(MLContextOptions const* options) {
-#if defined(WEBNN_ENABLE_BACKEND_OPENVINO) && defined(WEBNN_ENABLE_BACKEND_DML)
-        if (options != nullptr && options->devicePreference == MLDevicePreference_Gpu) {
-            return reinterpret_cast<MLContext>(dml::Create(options));
-        } else {
-            return reinterpret_cast<MLContext>(ie::Create(options));
-        }
-#elif defined(WEBNN_ENABLE_BACKEND_OPENVINO)
-        return reinterpret_cast<MLContext>(ie::Create(options));
-#elif defined(WEBNN_ENABLE_BACKEND_DML)
-        return reinterpret_cast<MLContext>(dml::Create(options));
-#elif defined(WEBNN_ENABLE_BACKEND_ONEDNN)
-        return reinterpret_cast<MLContext>(onednn::Create());
-#elif defined(WEBNN_ENABLE_BACKEND_XNNPACK)
-        return reinterpret_cast<MLContext>(xnnpack::Create());
-#elif defined(WEBNN_ENABLE_BACKEND_NULL)
-        return reinterpret_cast<MLContext>(null::Create(options));
-#else
-        return nullptr;
-#endif
     }
 
 }  // namespace webnn_native

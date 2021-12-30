@@ -15,6 +15,32 @@
     "See the License for the specific language governing permissions and",
     "limitations under the License."
   ],
+  "instance descriptor": {
+    "category": "structure",
+    "members": []
+  },
+  "instance": {
+    "category": "object",
+    "methods": [
+      {
+        "name": "create context",
+        "returns": "context",
+        "args": [
+          {"name": "options", "type": "context options", "annotation": "const*", "optional": true}
+        ]
+      }
+    ]
+  },
+  "backend type": {
+    "category": "enum",
+    "emscripten_no_enum_table": true,
+    "values": [
+        {"value": 0, "name": "null"},
+        {"value": 1, "name": "DirectML"},
+        {"value": 2, "name": "OpenVINO"},
+        {"value": 3, "name": "OneDNN"}
+    ]
+  },
   "error type": {
     "category": "enum",
     "values": [

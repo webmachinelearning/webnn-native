@@ -42,6 +42,7 @@ class ValidationTest : public testing::Test {
     std::string GetLastErrorMessage() const;
 
   protected:
+    std::unique_ptr<webnn_native::Instance> instance;
     ml::Context mContext;
     ml::GraphBuilder mBuilder;
 

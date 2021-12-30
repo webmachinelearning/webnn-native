@@ -56,6 +56,7 @@ webnn_json_generator("webnn_native_utils_gen") {
     "src/webnn_native/webnn_structs_autogen.cpp",
     "src/webnn_native/ValidationUtils_autogen.h",
     "src/webnn_native/ValidationUtils_autogen.cpp",
+    "src/webnn_native/webnn_platform_autogen.h",
   ]
 }
 
@@ -92,6 +93,8 @@ source_set("webnn_native_sources") {
   sources = get_target_outputs(":webnn_native_utils_gen")
 
   sources += [
+    "BackendConnection.cpp",
+    "BackendConnection.h",
     "Context.cpp",
     "Context.h",
     "Error.cpp",
@@ -105,6 +108,8 @@ source_set("webnn_native_sources") {
     "Graph.h",
     "GraphBuilder.cpp",
     "GraphBuilder.h",
+    "Instance.cpp",
+    "Instance.h",
     "NamedInputs.h",
     "NamedOutputs.h",
     "NamedRecords.h",
@@ -162,6 +167,8 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_openvino) {
     sources += [
+      "openvino/BackendIE.cpp",
+      "openvino/BackendIE.h",
       "openvino/ContextIE.cpp",
       "openvino/ContextIE.h",
       "openvino/ErrorIE.cpp",
@@ -216,6 +223,8 @@ source_set("webnn_native_sources") {
     ]
 
     sources += [
+      "dml/BackendDML.cpp",
+      "dml/BackendDML.h",
       "dml/ContextDML.cpp",
       "dml/ContextDML.h",
       "dml/GraphDML.cpp",
@@ -250,6 +259,8 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_onednn) {
     sources += [
+      "onednn/BackendDNNL.cpp",
+      "onednn/BackendDNNL.h",
       "onednn/ContextDNNL.cpp",
       "onednn/ContextDNNL.h",
       "onednn/GraphDNNL.cpp",

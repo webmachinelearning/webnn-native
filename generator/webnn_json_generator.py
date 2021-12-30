@@ -331,6 +331,10 @@ class MultiGeneratorFromWebnnJSON(Generator):
                            'src/webnn_native/webnn_structs_autogen.cpp',
                            frontend_params))
             renders.append(
+                FileRender('webnn_native/webnn_platform.h',
+                           'src/webnn_native/webnn_platform_autogen.h',
+                           frontend_params))
+            renders.append(
                 FileRender('webnn_native/ProcTable.cpp',
                            'src/webnn_native/ProcTable.cpp', frontend_params))
 

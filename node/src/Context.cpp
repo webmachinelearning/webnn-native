@@ -16,7 +16,6 @@
 
 #include <napi.h>
 #include <webnn/webnn_proc.h>
-#include <webnn_native/WebnnNative.h>
 #include <iostream>
 
 Napi::FunctionReference node::Context::constructor;
@@ -24,7 +23,7 @@ Napi::FunctionReference node::Context::constructor;
 namespace node {
 
     Context::Context(const Napi::CallbackInfo& info) : Napi::ObjectWrap<Context>(info) {
-        MLContextOptions options = {MLDevicePreference_Default, MLPowerPreference_Default};
+        ml::ContextOptions options = {ml::DevicePreference::Default, ml::PowerPreference::Default};
         if (info.Length() > 0) {
             Napi::Object optionsObject = info[0].As<Napi::Object>();
             if (optionsObject.Has("powerPreference")) {
@@ -35,11 +34,11 @@ namespace node {
                 }
                 std::string powerPreference = optionsObject.Get("powerPreference").ToString();
                 if (powerPreference == "default") {
-                    options.powerPreference = MLPowerPreference_Default;
+                    options.powerPreference = ml::PowerPreference::Default;
                 } else if (powerPreference == "low-power") {
-                    options.powerPreference = MLPowerPreference_Low_power;
+                    options.powerPreference = ml::PowerPreference::Low_power;
                 } else if (powerPreference == "high-performance") {
-                    options.powerPreference = MLPowerPreference_High_performance;
+                    options.powerPreference = ml::PowerPreference::High_performance;
                 } else {
                     Napi::Error::New(info.Env(), "Invaild powerPreference")
                         .ThrowAsJavaScriptException();
@@ -55,11 +54,11 @@ namespace node {
                 }
                 std::string devicePreference = optionsObject.Get("devicePreference").ToString();
                 if (devicePreference == "default") {
-                    options.devicePreference = MLDevicePreference_Default;
+                    options.devicePreference = ml::DevicePreference::Default;
                 } else if (devicePreference == "gpu") {
-                    options.devicePreference = MLDevicePreference_Gpu;
+                    options.devicePreference = ml::DevicePreference::Gpu;
                 } else if (devicePreference == "cpu") {
-                    options.devicePreference = MLDevicePreference_Cpu;
+                    options.devicePreference = ml::DevicePreference::Cpu;
                 } else {
                     Napi::Error::New(info.Env(), "Invaild devicePreference")
                         .ThrowAsJavaScriptException();
@@ -70,7 +69,8 @@ namespace node {
 
         WebnnProcTable backendProcs = webnn_native::GetProcs();
         webnnProcSetProcs(&backendProcs);
-        mImpl = ml::Context::Acquire(webnn_native::CreateContext(&options));
+        instance = std::make_unique<webnn_native::Instance>();
+        mImpl = ml::Context::Acquire(instance->CreateContext(&options));
         if (!mImpl) {
             Napi::Error::New(info.Env(), "Failed to create Context").ThrowAsJavaScriptException();
             return;

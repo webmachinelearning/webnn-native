@@ -22,12 +22,38 @@
 #include <string>
 #include <vector>
 
+namespace ml {
+    struct ContextOptions;
+}
+
 namespace webnn_native {
+
+    class InstanceBase;
+
+    // Represents a connection to dawn_native and is used for dependency injection.
+    //
+    // This is an RAII class for Webnn instances and also controls the lifetime of all contexts
+    // for this instance.
+    class WEBNN_NATIVE_EXPORT Instance {
+      public:
+        Instance();
+        ~Instance();
+
+        Instance(const Instance& other) = delete;
+        Instance& operator=(const Instance& other) = delete;
+
+        MLContext CreateTestContext(const ml::ContextOptions* options = nullptr);
+        MLContext CreateContext(const ml::ContextOptions* options = nullptr);
+
+        // Returns the underlying MLInstance object.
+        MLInstance Get() const;
+
+      private:
+        InstanceBase* mImpl = nullptr;
+    };
 
     // Backend-agnostic API for webnn_native
     WEBNN_NATIVE_EXPORT const WebnnProcTable& GetProcs();
-
-    WEBNN_NATIVE_EXPORT MLContext CreateContext(MLContextOptions const* options = nullptr);
 
 }  // namespace webnn_native
 

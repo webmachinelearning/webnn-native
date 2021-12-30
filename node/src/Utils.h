@@ -335,7 +335,7 @@ namespace node {
     }
 
     inline bool GetOperatorArray(const Napi::Value& jsValue,
-                                 ml::FusionOperatorArray& operatorArray,
+                                 ml::OperatorArray& operatorArray,
                                  std::vector<napi_value>& args) {
         if (!jsValue.IsArray()) {
             return false;

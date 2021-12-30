@@ -19,10 +19,6 @@
 
 namespace webnn_native { namespace dml {
 
-    ContextBase* Create(MLContextOptions const* options) {
-        return new Context(reinterpret_cast<ContextOptions const*>(options));
-    }
-
     Context::Context(ContextOptions const* options) : ContextBase(options) {
     }
 
