@@ -68,9 +68,6 @@ namespace webnn_native {
     namespace xnnpack {
         ContextBase* Create();
     }
-    namespace mlas {
-        ContextBase* Create();
-    }
 
     // Should put the default null backend at the end.
     MLContext CreateContext(MLContextOptions const* options) {
@@ -88,8 +85,6 @@ namespace webnn_native {
         return reinterpret_cast<MLContext>(onednn::Create());
 #elif defined(WEBNN_ENABLE_BACKEND_XNNPACK)
         return reinterpret_cast<MLContext>(xnnpack::Create());
-#elif defined(WEBNN_ENABLE_BACKEND_MLAS)
-        return reinterpret_cast<MLContext>(mlas::Create());
 #elif defined(WEBNN_ENABLE_BACKEND_NULL)
         return reinterpret_cast<MLContext>(null::Create(options));
 #else

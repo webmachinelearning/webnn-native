@@ -31,7 +31,7 @@ namespace webnn_native {
         OperandBase(GraphBuilderBase*, OperatorBase*);
         virtual ~OperandBase() = default;
 
-        const OperatorBase* Operator() const {
+        const OperatorBase* Operator() {
             return mOperator.Get();
         }
 

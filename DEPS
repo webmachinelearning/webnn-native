@@ -49,9 +49,6 @@ deps = {
   'third_party/XNNPACK': {
     'url': '{github_git}/google/XNNPACK.git@60fc61373f21f0ad3164cc719de464f4b787dc04'
   },
-  'third_party/onnxruntime': {
-    'url': '{github_git}/microsoft/onnxruntime.git@0d9030e79888d1d5828730b254fedc53c7b640c1'
-  },
 
   # Dependencies required to use GN/Clang in standalone
   'build': {
