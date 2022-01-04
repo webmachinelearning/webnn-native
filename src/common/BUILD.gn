@@ -83,10 +83,6 @@ config("dawn_internal") {
     defines += [ "WEBNN_ENABLE_BACKEND_XNNPACK" ]
   }
 
-  if (webnn_enable_mlas) {
-    defines += [ "WEBNN_ENABLE_BACKEND_MLAS" ]
-  }
-
   # Only internal Dawn targets can use this config, this means only targets in
   # this BUILD.gn file and related subdirs.
   visibility = [ "../*" ]
@@ -140,7 +136,7 @@ config("dawn_internal") {
     cflags += [ "/wd4063" ]
   }
 
-  if (is_clang && (webnn_enable_dml || webnn_enable_mlas)) {
+  if (is_clang && webnn_enable_dml) {
     cflags += [
       # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
       "-Wno-extra-semi",
@@ -150,10 +146,6 @@ config("dawn_internal") {
 
       # Allow the use of DML_OPERATOR_GRAPH_NODE_DESC{ node.op.Get() } in DirectMLX.h
       "-Wno-missing-field-initializers",
-
-      # Allow third_party/onnxruntime/include/onnxruntime/core/common/status.h(115,9):
-      # use of the 'nodiscard' attribute is a C++17 extension
-      "-Wno-c++17-extensions",
     ]
   }
 }

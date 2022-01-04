@@ -25,9 +25,6 @@ declare_args() {
   # Enables the compilation of XNNPACK backend
   webnn_enable_xnnpack = false
 
-  # Enables the compilation of MLAS backend
-  webnn_enable_mlas = false
-
   # Enables the compilation of WebNN's Null backend
   # (required for unittests, obviously non-conformant)
   webnn_enable_null = true
