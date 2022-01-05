@@ -144,35 +144,35 @@ namespace webnn_native { namespace ie {
         }
 
         IEStatusCode AddActivationNode(const ngraph_node_t* inputNode,
-                                       OperatorBase* activation,
+                                       FusionOperatorBase* activation,
                                        ngraph_node_t** activationNode) {
             IEStatusCode status = IEStatusCode::OK;
             if (activation == nullptr) {
                 *activationNode = const_cast<ngraph_node_t*>(inputNode);
                 return status;
             }
-            switch (activation->GetFusedOperator()) {
+            switch (activation->GetFusionType()) {
                 // Currently we implement Relu6 operator by Clamp.
-                case FusedOperator::Clamp: {
-                    auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+                case FusionType::Clamp: {
+                    auto clamp = reinterpret_cast<const op::FusionClamp*>(activation);
                     status = ngraph_clamp(inputNode, clamp->GetMinValue(), clamp->GetMaxValue(),
                                           activationNode);
                     break;
                 }
-                case FusedOperator::Relu:
+                case FusionType::Relu:
                     status = ngraph_relu(inputNode, activationNode);
                     break;
-                case FusedOperator::Sigmoid:
+                case FusionType::Sigmoid:
                     status = ngraph_sigmoid(inputNode, activationNode);
                     break;
-                case FusedOperator::LeakyRelu: {
-                    auto leakyRelu = reinterpret_cast<const op::LeakyRelu*>(activation);
+                case FusionType::LeakyRelu: {
+                    auto leakyRelu = reinterpret_cast<const op::FusionLeakyRelu*>(activation);
                     const ngraph_node_t* constantNode = AddConstantWithGraph<float>(
                         precision_e::FP32, {1}, {leakyRelu->GetAlpha()});
                     status = ngraph_leaky_relu(inputNode, constantNode, activationNode);
                     break;
                 }
-                case FusedOperator::HardSwish:
+                case FusionType::HardSwish:
                     status = ngraph_hard_swish(inputNode, activationNode);
                     break;
                 default:
@@ -186,14 +186,14 @@ namespace webnn_native { namespace ie {
             activations.reserve(activationArray->Size());
             for (size_t i = 0; i < activationArray->Size(); i++) {
                 const char* operatorName = nullptr;
-                switch (activationArray->Get(i)->GetFusedOperator()) {
-                    case FusedOperator::Relu:
+                switch (activationArray->Get(i)->GetFusionType()) {
+                    case FusionType::Relu:
                         operatorName = "relu";
                         break;
-                    case FusedOperator::Sigmoid:
+                    case FusionType::Sigmoid:
                         operatorName = "sigmoid";
                         break;
-                    case FusedOperator::Tanh:
+                    case FusionType::Tanh:
                         operatorName = "tanh";
                         break;
                     default:

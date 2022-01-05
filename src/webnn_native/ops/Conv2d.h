@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_CONV2D_H_
 #define WEBNN_NATIVE_OPS_CONV2D_H_
 
+#include "webnn_native/FusionOperator.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
@@ -40,7 +41,7 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mDilations;
         std::vector<int32_t> mOutputPadding;
         std::vector<int32_t> mOutputSizes;
-        Ref<OperatorBase> mActivation;
+        Ref<FusionOperatorBase> mActivation;
     };
 
 }}  // namespace webnn_native::op

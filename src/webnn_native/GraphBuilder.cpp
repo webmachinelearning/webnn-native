@@ -60,9 +60,6 @@
 #define VALIDATE_FOR_OPERAND(ptr)     \
     WEBNN_VALIDATE(ptr, OperandBase); \
     return op->PrimaryOutput()
-#define VALIDATE_FUSED_OPERATOR(ptr)   \
-    WEBNN_VALIDATE(ptr, OperatorBase); \
-    return op.Detach()
 #define VALIDATE_ARRAY_OPERAND(ptr)        \
     WEBNN_VALIDATE(ptr, OperandArrayBase); \
     return new OperandArrayBase(this, op->Outputs())
@@ -95,8 +92,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Clamp(this, input, options));
     }
 
-    OperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
-        VALIDATE_FUSED_OPERATOR(new op::Clamp(this, options));
+    FusionOperatorBase* GraphBuilderBase::ClampOperator(ClampOptions const* options) {
+        return new op::FusionClamp(this, options);
     }
 
     OperandBase* GraphBuilderBase::Ceil(OperandBase* input) {
@@ -161,9 +158,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kHardSwish, input));
     }
 
-    OperatorBase* GraphBuilderBase::HardSwishOperator() {
-        VALIDATE_FUSED_OPERATOR(
-            new op::Unary(this, op::UnaryOpType::kHardSwish, FusedOperator::HardSwish));
+    FusionOperatorBase* GraphBuilderBase::HardSwishOperator() {
+        return new op::FusionUnary(this, FusionType::HardSwish);
     }
 
     OperandBase* GraphBuilderBase::Input(char const* name, OperandDescriptor const* desc) {
@@ -179,8 +175,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::LeakyRelu(this, input, options));
     }
 
-    OperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
-        VALIDATE_FUSED_OPERATOR(new op::LeakyRelu(this, options));
+    FusionOperatorBase* GraphBuilderBase::LeakyReluOperator(LeakyReluOptions const* options) {
+        return new op::FusionLeakyRelu(this, options);
     }
 
     OperandBase* GraphBuilderBase::Log(OperandBase* input) {
@@ -257,8 +253,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kRelu, input));
     }
 
-    OperatorBase* GraphBuilderBase::ReluOperator() {
-        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kRelu, FusedOperator::Relu));
+    FusionOperatorBase* GraphBuilderBase::ReluOperator() {
+        return new op::FusionUnary(this, FusionType::Relu);
     }
 
     OperandBase* GraphBuilderBase::Resample2d(OperandBase* input,
@@ -276,9 +272,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kSigmoid, input));
     }
 
-    OperatorBase* GraphBuilderBase::SigmoidOperator() {
-        VALIDATE_FUSED_OPERATOR(
-            new op::Unary(this, op::UnaryOpType::kSigmoid, FusedOperator::Sigmoid));
+    FusionOperatorBase* GraphBuilderBase::SigmoidOperator() {
+        return new op::FusionUnary(this, FusionType::Sigmoid);
     }
 
     OperandBase* GraphBuilderBase::Sin(OperandBase* input) {
@@ -322,8 +317,8 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kTanh, input));
     }
 
-    OperatorBase* GraphBuilderBase::TanhOperator() {
-        VALIDATE_FUSED_OPERATOR(new op::Unary(this, op::UnaryOpType::kTanh, FusedOperator::Tanh));
+    FusionOperatorBase* GraphBuilderBase::TanhOperator() {
+        return new op::FusionUnary(this, FusionType::Tanh);
     }
 
     OperandBase* GraphBuilderBase::Transpose(OperandBase* input, TransposeOptions const* options) {

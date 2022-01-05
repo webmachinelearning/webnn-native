@@ -20,10 +20,6 @@
 
 namespace webnn_native { namespace ie {
 
-    ContextBase* Create(MLContextOptions const* options) {
-        return new Context(reinterpret_cast<ContextOptions const*>(options));
-    }
-
     Context::Context(ContextOptions const* options) : ContextBase(options) {
         IEStatusCode status = ie_core_create("", &mInferEngineCore);
         if (status != IEStatusCode::OK) {

@@ -19,6 +19,8 @@
 #include "webnn_native/Forward.h"
 #include "webnn_native/NamedOperands.h"
 #include "webnn_native/ObjectBase.h"
+#include "webnn_native/Operand.h"
+#include "webnn_native/Operator.h"
 #include "webnn_native/webnn_platform.h"
 
 #include <functional>
@@ -40,7 +42,7 @@ namespace webnn_native {
                                OperandBase*,
                                BatchNormOptions const* options);
         OperandBase* Clamp(OperandBase*, ClampOptions const* options);
-        OperatorBase* ClampOperator(ClampOptions const* options);
+        FusionOperatorBase* ClampOperator(ClampOptions const* options);
         OperandBase* Ceil(OperandBase*);
         OperandBase* Concat(uint32_t inputsCount, OperandBase* const* inputs, uint32_t axis);
         OperandBase* Constant(OperandDescriptor const* desc, ArrayBufferView const* arrayBuffer);
@@ -57,11 +59,11 @@ namespace webnn_native {
                               int32_t hiddenSize,
                               GruOptions const* options);
         OperandBase* HardSwish(OperandBase*);
-        OperatorBase* HardSwishOperator();
+        FusionOperatorBase* HardSwishOperator();
         OperandBase* Input(char const* name, OperandDescriptor const* desc);
         OperandBase* InstanceNorm(OperandBase*, InstanceNormOptions const* options);
         OperandBase* LeakyRelu(OperandBase*, LeakyReluOptions const* options);
-        OperatorBase* LeakyReluOperator(LeakyReluOptions const* options);
+        FusionOperatorBase* LeakyReluOperator(LeakyReluOptions const* options);
         OperandBase* Log(OperandBase*);
         OperandBase* L2Pool2d(OperandBase*, Pool2dOptions const* options);
         OperandBase* Matmul(OperandBase* a, OperandBase* b);
@@ -80,11 +82,11 @@ namespace webnn_native {
         OperandBase* ReduceProduct(OperandBase*, ReduceOptions const* options);
         OperandBase* ReduceSum(OperandBase*, ReduceOptions const* options);
         OperandBase* Relu(OperandBase*);
-        OperatorBase* ReluOperator();
+        FusionOperatorBase* ReluOperator();
         OperandBase* Resample2d(OperandBase*, Resample2dOptions const* options);
         OperandBase* Reshape(OperandBase*, int32_t const*, size_t);
         OperandBase* Sigmoid(OperandBase*);
-        OperatorBase* SigmoidOperator();
+        FusionOperatorBase* SigmoidOperator();
         OperandBase* Sin(OperandBase*);
         OperandBase* Slice(OperandBase*,
                            int32_t const* starts,
@@ -101,7 +103,7 @@ namespace webnn_native {
         OperandBase* Sub(OperandBase*, OperandBase*);
         OperandBase* Tan(OperandBase*);
         OperandBase* Tanh(OperandBase*);
-        OperatorBase* TanhOperator();
+        FusionOperatorBase* TanhOperator();
         OperandBase* Transpose(OperandBase*, TransposeOptions const* options);
 
         GraphBase* Build(NamedOperandsBase const* namedOperands);

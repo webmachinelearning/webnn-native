@@ -28,11 +28,12 @@
 #include "common/Assert.h"
 #include "common/Log.h"
 
+static std::unique_ptr<webnn_native::Instance> instance;
 ml::Context CreateCppContext(ml::ContextOptions const* options) {
+    instance = std::make_unique<webnn_native::Instance>();
     WebnnProcTable backendProcs = webnn_native::GetProcs();
     webnnProcSetProcs(&backendProcs);
-    MLContext context =
-        webnn_native::CreateContext(reinterpret_cast<MLContextOptions const*>(options));
+    MLContext context = instance->CreateContext(options);
     if (context) {
         return ml::Context::Acquire(context);
     }
@@ -80,10 +81,10 @@ namespace utils {
         return prod;
     }
 
-    const ml::Operator CreateActivationOperator(const ml::GraphBuilder& builder,
-                                                FusedActivation activation,
-                                                const void* options) {
-        ml::Operator activationOperator;
+    const ml::FusionOperator CreateActivationOperator(const ml::GraphBuilder& builder,
+                                                      FusedActivation activation,
+                                                      const void* options) {
+        ml::FusionOperator activationOperator;
         switch (activation) {
             case FusedActivation::RELU:
                 activationOperator = builder.ReluOperator();

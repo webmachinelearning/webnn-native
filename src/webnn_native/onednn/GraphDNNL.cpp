@@ -346,7 +346,7 @@ namespace webnn_native { namespace onednn {
                 return dnnl_invalid_arguments;
             }
             const op::Binary* add = nullptr;
-            const op::Clamp* clamp = nullptr;
+            const op::FusionClamp* clamp = nullptr;
             for (size_t i = 1; i < mOperandsToBuild.size(); ++i) {
                 auto& postOp = mOperandsToBuild[i];
                 if (postOp.opType == OperatorType::BINARY &&
@@ -354,7 +354,7 @@ namespace webnn_native { namespace onednn {
                         op::BinaryOpType::kAdd) {
                     add = reinterpret_cast<const op::Binary*>(postOp.op);
                 } else if (postOp.opType == OperatorType::CLAMP) {
-                    clamp = reinterpret_cast<const op::Clamp*>(postOp.op);
+                    clamp = reinterpret_cast<const op::FusionClamp*>(postOp.op);
                 }
             }
             if ((mOperandsToBuild.size() == 2 && !add && !clamp) ||
@@ -539,7 +539,7 @@ namespace webnn_native { namespace onednn {
 
     dnnl_status_t Graph::AddConv2dImpl(const op::Conv2d* conv2d,
                                        const op::Binary* add,
-                                       const op::Clamp* clamp) {
+                                       const op::FusionClamp* clamp) {
         DAWN_ASSERT(conv2d->Inputs().size() == 2 || conv2d->Inputs().size() == 3);
         const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
         DAWN_ASSERT(mOperandMemoryMap.find(inputOperand) != mOperandMemoryMap.end());
@@ -724,17 +724,6 @@ namespace webnn_native { namespace onednn {
         if (clamp) {
             float outputMin = -std::numeric_limits<float>::infinity();
             float outputMax = +std::numeric_limits<float>::infinity();
-            if (add) {
-                if (add->PrimaryOutput() != clamp->Inputs()[0].Get()) {
-                    dawn::ErrorLog() << "The clamp is not fusable.";
-                    return dnnl_invalid_arguments;
-                }
-            } else {
-                if (conv2d->PrimaryOutput() != clamp->Inputs()[0].Get()) {
-                    dawn::ErrorLog() << "The clamp is not fusable.";
-                    return dnnl_invalid_arguments;
-                }
-            }
             outputMin = clamp->GetMinValue();
             outputMax = clamp->GetMaxValue();
             DNNL_TRY(dnnl_post_ops_create(&postops));
@@ -790,9 +779,8 @@ namespace webnn_native { namespace onednn {
         mMemories.push_back(outputMemory);
 
         const OperandBase* output =
-            clamp ? reinterpret_cast<const OperandBase*>(clamp->PrimaryOutput())
-                  : (add ? reinterpret_cast<const OperandBase*>(add->PrimaryOutput())
-                         : reinterpret_cast<const OperandBase*>(conv2d->PrimaryOutput()));
+            add ? reinterpret_cast<const OperandBase*>(add->PrimaryOutput())
+                : reinterpret_cast<const OperandBase*>(conv2d->PrimaryOutput());
 
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             // reorder the output from primitive query layout to nhwc

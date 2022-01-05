@@ -503,25 +503,25 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    ::dml::FusedActivation CreateFusedActivation(OperatorBase* activation) {
+    ::dml::FusedActivation CreateFusedActivation(FusionOperatorBase* activation) {
         ::dml::FusedActivation dmlActivation = ::dml::FusedActivation::None();
         if (activation == nullptr) {
             return dmlActivation;
         }
 
-        switch (activation->GetFusedOperator()) {
-            case FusedOperator::Clamp:
-            case FusedOperator::HardSwish:
+        switch (activation->GetFusionType()) {
+            case FusionType::Clamp:
+            case FusionType::HardSwish:
                 return dmlActivation;
-            case FusedOperator::Relu:
+            case FusionType::Relu:
                 dmlActivation = ::dml::FusedActivation::Relu();
                 break;
-            case FusedOperator::Sigmoid:
+            case FusionType::Sigmoid:
                 dmlActivation = ::dml::FusedActivation::Sigmoid();
                 break;
-            case FusedOperator::LeakyRelu:
+            case FusionType::LeakyRelu:
                 dmlActivation = ::dml::FusedActivation::LeakyRelu(
-                    reinterpret_cast<op::LeakyRelu*>(activation)->GetAlpha());
+                    reinterpret_cast<op::FusionLeakyRelu*>(activation)->GetAlpha());
                 break;
             default:
                 DAWN_ASSERT(0);
@@ -529,18 +529,18 @@ namespace webnn_native { namespace dml {
         return dmlActivation;
     }
 
-    ::dml::Expression Graph::EmulateFusedActivation(OperatorBase* activation,
+    ::dml::Expression Graph::EmulateFusedActivation(FusionOperatorBase* activation,
                                                     ::dml::Expression& input) {
         if (activation == nullptr) {
             return input;
         }
         // HardSwish and Clamp are not supported for fusion, so we add them directly to emulate.
         // Currently we implement Relu6 operator by Clamp.
-        auto type = activation->GetFusedOperator();
-        if (type == FusedOperator::HardSwish) {
+        auto type = activation->GetFusionType();
+        if (type == FusionType::HardSwish) {
             return HardSwish(input);
-        } else if (type == FusedOperator::Clamp) {
-            auto clamp = reinterpret_cast<const op::Clamp*>(activation);
+        } else if (type == FusionType::Clamp) {
+            auto clamp = reinterpret_cast<const op::FusionClamp*>(activation);
             return ::dml::Clip(input, clamp->GetMinValue(), clamp->GetMaxValue());
         }
         return input;

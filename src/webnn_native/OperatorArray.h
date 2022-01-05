@@ -29,15 +29,15 @@ namespace webnn_native {
             return mOperators.size();
         }
 
-        void Set(OperatorBase* mlOperator) {
-            mOperators.push_back(Ref<OperatorBase>(mlOperator));
+        void Set(FusionOperatorBase* mlOperator) {
+            mOperators.push_back(Ref<FusionOperatorBase>(mlOperator));
         }
 
-        OperatorBase* Get(size_t index) {
+        FusionOperatorBase* Get(size_t index) {
             return mOperators[index].Get();
         }
 
-        std::vector<Ref<OperatorBase>> mOperators;
+        std::vector<Ref<FusionOperatorBase>> mOperators;
     };
 }  // namespace webnn_native
 

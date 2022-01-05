@@ -14,8 +14,24 @@
 
 #include "webnn_native/null/ContextNull.h"
 #include "common/RefCounted.h"
+#include "webnn_native/BackendConnection.h"
+#include "webnn_native/Instance.h"
 
 namespace webnn_native { namespace null {
+
+    class Backend : public BackendConnection {
+      public:
+        Backend(InstanceBase* instance) : BackendConnection(instance, ml::BackendType::Null) {
+        }
+
+        ContextBase* CreateContext(ContextOptions const* options) {
+            return new Context(options);
+        }
+    };
+
+    BackendConnection* Connect(InstanceBase* instance) {
+        return new Backend(instance);
+    }
 
     // Context
     ContextBase* Create(MLContextOptions const* options) {

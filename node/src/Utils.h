@@ -298,7 +298,7 @@ namespace node {
     }
 
     inline bool GetOperator(const Napi::Value& jsValue,
-                            ml::Operator& mlOperator,
+                            ml::FusionOperator& mlOperator,
                             std::vector<napi_value>& args) {
         if (!jsValue.IsObject()) {
             return false;
@@ -346,7 +346,7 @@ namespace node {
             if (!jsArray.Get(i).IsObject()) {
                 return false;
             } else {
-                ml::Operator mlOperator;
+                ml::FusionOperator mlOperator;
                 if (GetOperator(jsArray.Get(i), mlOperator, args)) {
                     operatorArray.Set(mlOperator);
                 } else {

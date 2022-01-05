@@ -34,6 +34,7 @@ namespace webnn_native {
     class OperatorArrayBase;
     class OperandBase;
     class OperatorBase;
+    class FusionOperatorBase;
     class ResultBase;
 
 }  // namespace webnn_native
