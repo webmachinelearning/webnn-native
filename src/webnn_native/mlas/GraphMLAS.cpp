@@ -755,29 +755,29 @@ namespace webnn_native { namespace mlas {
         MLAS_ACTIVATION activation;
         activation.ActivationKind = MlasIdentityActivation;
         if (options->activation) {
-            switch (options->activation->GetFusedOperator()) {
-                case FusedOperator::Clamp:
+            switch (options->activation->GetFusionType()) {
+                case FusionType::Clamp:
                     activation.ActivationKind = MlasClipActivation;
                     activation.Parameters.Clip.minimum =
-                        reinterpret_cast<op::Clamp*>(options->activation)->GetMinValue();
+                        reinterpret_cast<op::FusionClamp*>(options->activation)->GetMinValue();
                     activation.Parameters.Clip.maximum =
-                        reinterpret_cast<op::Clamp*>(options->activation)->GetMaxValue();
+                        reinterpret_cast<op::FusionClamp*>(options->activation)->GetMaxValue();
                     break;
-                case FusedOperator::HardSwish:
+                case FusionType::HardSwish:
                     activation.ActivationKind = MlasHardSigmoidActivation;
                     activation.Parameters.HardSigmoid.alpha = 1.0 / 6.0;
                     activation.Parameters.HardSigmoid.beta = 0.5;
                     break;
-                case FusedOperator::Relu:
+                case FusionType::Relu:
                     activation.ActivationKind = MlasReluActivation;
                     break;
-                case FusedOperator::Sigmoid:
+                case FusionType::Sigmoid:
                     activation.ActivationKind = MlasLogisticActivation;
                     break;
-                case FusedOperator::LeakyRelu:
+                case FusionType::LeakyRelu:
                     activation.ActivationKind = MlasLeakyReluActivation;
                     activation.Parameters.LeakyRelu.alpha =
-                        reinterpret_cast<op::LeakyRelu*>(options->activation)->GetAlpha();
+                        reinterpret_cast<op::FusionLeakyRelu*>(options->activation)->GetAlpha();
                     break;
                 default:
                     return DAWN_INTERNAL_ERROR("Unsupported fused activation");

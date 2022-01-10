@@ -328,6 +328,8 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_mlas) {
     sources += [
+      "mlas/BackendMLAS.cpp",
+      "mlas/BackendMLAS.h",
       "mlas/ContextMLAS.cpp",
       "mlas/ContextMLAS.h",
       "mlas/GraphMLAS.cpp",

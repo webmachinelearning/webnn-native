@@ -44,6 +44,11 @@ namespace webnn_native {
         BackendConnection* Connect(InstanceBase* instance);
     }
 #endif  // defined(WEBNN_ENABLE_BACKEND_ONEDNN)
+#if defined(WEBNN_ENABLE_BACKEND_MLAS)
+    namespace mlas {
+        BackendConnection* Connect(InstanceBase* instance);
+    }
+#endif  // defined(WEBNN_ENABLE_BACKEND_MLAS)
 
     namespace {
 
@@ -61,6 +66,9 @@ namespace webnn_native {
 #if defined(WEBNN_ENABLE_BACKEND_ONEDNN)
             enabledBackends.set(ml::BackendType::OneDNN);
 #endif  // defined(WEBNN_ENABLE_BACKEND_ONEDNN)
+#if defined(WEBNN_ENABLE_BACKEND_MLAS)
+            enabledBackends.set(ml::BackendType::MLAS);
+#endif  // defined(WEBNN_ENABLE_BACKEND_MLAS)
             return enabledBackends;
         }
 
@@ -119,6 +127,12 @@ namespace webnn_native {
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_ONEDNN)
 
+#if defined(WEBNN_ENABLE_BACKEND_MLAS)
+            case ml::BackendType::MLAS:
+                Register(mlas::Connect(this), ml::BackendType::MLAS);
+                break;
+#endif  // defined(WEBNN_ENABLE_BACKEND_MLAS)
+
             default:
                 UNREACHABLE();
         }
@@ -136,6 +150,8 @@ namespace webnn_native {
             return mBackends[ml::BackendType::OpenVINO]->CreateContext(options);
         } else if (mBackends.find(ml::BackendType::OneDNN) != mBackends.end()) {
             return mBackends[ml::BackendType::OneDNN]->CreateContext(options);
+        } else if (mBackends.find(ml::BackendType::MLAS) != mBackends.end()) {
+            return mBackends[ml::BackendType::MLAS]->CreateContext(options);
         }
         UNREACHABLE();
         return nullptr;

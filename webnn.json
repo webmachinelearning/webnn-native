@@ -38,7 +38,8 @@
         {"value": 0, "name": "null"},
         {"value": 1, "name": "DirectML"},
         {"value": 2, "name": "OpenVINO"},
-        {"value": 3, "name": "OneDNN"}
+        {"value": 3, "name": "OneDNN"},
+        {"value": 4, "name": "MLAS"}
     ]
   },
   "error type": {
