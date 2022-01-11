@@ -38,6 +38,11 @@ jobs:
         path: baseline
         fetch-depth: 0
 
+    - name: Update DEPS for main branch
+      run: |
+        cd baseline
+        sed -i "s/'checkout_samples':\ True/'checkout_samples':\ False/" DEPS
+
     - name: Sync code for main branch
       run: |
         export PATH=$PWD/../depot_tools:$PATH
@@ -70,6 +75,11 @@ jobs:
       with:
         path: update
         fetch-depth: 0
+
+    - name: Update DEPS for update branch
+      run: |
+        cd update
+        sed -i "s/'checkout_samples':\ True/'checkout_samples':\ False/" DEPS
 
     - name: Sync latest code
       run: |
