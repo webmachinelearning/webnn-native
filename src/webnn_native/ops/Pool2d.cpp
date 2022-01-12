@@ -118,27 +118,22 @@ namespace webnn_native { namespace op {
             ceil(1 + 1.0 * (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) /
                          mStride[1]);
         if (mOptions.outputSizes == nullptr) {
-            if (mOptions.roundingType == ml::RoundingType::Floor) {
-                outputHeight = floorOutputHeight;
-                outputWidth = floorOutputWidth;
-            } else {
-                outputHeight = ceilOutputHeight;
-                outputWidth = ceilOutputWidth;
-            }
+            outputHeight = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputHeight
+                                                                            : ceilOutputHeight;
+            outputWidth = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputWidth
+                                                                           : ceilOutputWidth;
         } else {
             outputHeight = mOptions.outputSizes[0];
             outputWidth = mOptions.outputSizes[1];
-            // The specified outputSizes should match either floor or ceil rounding type.
-            if (!((outputHeight == floorOutputHeight && outputWidth == floorOutputWidth) ||
-                  (outputHeight == ceilOutputHeight && outputWidth == ceilOutputWidth))) {
+            // Predict and reset the implicit rounding type by the explicitly specified outputSizes
+            // which should match either floor or ceil rounding type.
+            if (outputHeight == floorOutputHeight && outputWidth == floorOutputWidth) {
+                mOptions.roundingType = ml::RoundingType::Floor;
+            } else if (outputHeight == ceilOutputHeight && outputWidth == ceilOutputWidth) {
+                mOptions.roundingType = ml::RoundingType::Ceil;
+            } else {
                 return DAWN_VALIDATION_ERROR("Invalid output sizes.");
             }
-        }
-        // Predict the implicit rounding type by the specified outputSizes.
-        if ((outputHeight == floorOutputHeight && outputWidth == floorOutputWidth)) {
-            mOptions.roundingType = ml::RoundingType::Floor;
-        } else {
-            mOptions.roundingType = ml::RoundingType::Ceil;
         }
 
         std::vector<int32_t> outputShape;
