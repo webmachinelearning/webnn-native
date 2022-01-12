@@ -325,6 +325,65 @@ source_set("webnn_native_sources") {
       "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool/${libfolder}/${libprefix}pthreadpool.${libext}",
     ]
   }
+
+  if (webnn_enable_mlas) {
+    sources += [
+      "mlas/BackendMLAS.cpp",
+      "mlas/BackendMLAS.h",
+      "mlas/ContextMLAS.cpp",
+      "mlas/ContextMLAS.h",
+      "mlas/GraphMLAS.cpp",
+      "mlas/GraphMLAS.h",
+    ]
+
+    include_dirs += [
+      "${webnn_root}/third_party/onnxruntime/onnxruntime/core/mlas/inc",
+      "${webnn_root}/third_party/onnxruntime/include/onnxruntime",
+      "${webnn_root}/third_party/onnxruntime/onnxruntime/",
+    ]
+
+    libprefix = ""
+    libext = ""
+    libfolder = ""
+    libsubfolder = ""
+    libos = ""
+
+    if (is_debug) {
+      libfolder = "Debug"
+    } else {
+      libfolder = "Release"
+    }
+
+    if (is_win) {
+      libext = "lib"
+      libos = "Windows"
+      if (is_debug) {
+        libsubfolder = "Debug"
+      } else {
+        libsubfolder = "Release"
+      }
+    }
+
+    if (is_linux) {
+      libprefix = "lib"
+      libext = "a"
+      libos = "Linux"
+    }
+
+    libs += [
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_mlas.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_common.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/${libsubfolder}/${libprefix}cpuinfo.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/deps/clog/${libsubfolder}/${libprefix}clog.${libext}",
+    ]
+
+    if (is_linux) {
+      libs += [
+        "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/nsync/${libsubfolder}/${libprefix}nsync_cpp.${libext}",
+        "stdc++",
+      ]
+    }
+  }
 }
 
 # The static and shared libraries for webnn_native. Most of the files are

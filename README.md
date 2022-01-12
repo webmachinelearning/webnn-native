@@ -23,6 +23,7 @@ It provides several building blocks:
    - **OpenVINO** on Windows 10 and Linux
    - **oneDNN** on Windows 10 and Linux
    - **XNNPACK** on Windows 10 and Linux
+   - **MLAS** on Windows 10 and Linux
    - _Other backends are to be added_
 
 WebNN-native uses the code of other open source projects:
@@ -31,6 +32,7 @@ WebNN-native uses the code of other open source projects:
  * The DirectMLX and device wrapper of [DirectML](https://github.com/microsoft/DirectML) project.
  * The [XNNPACK](https://github.com/google/XNNPACK) project.
  * The [oneDNN](https://github.com/oneapi-src/oneDNN) project.
+ * The [MLAS](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas) project.
 
 ## Build and Run
 
@@ -58,6 +60,9 @@ Get the source code as follows:
 > gclient sync
 ```
 
+**Notes**
+ * To build with MLAS backend, please set `'checkout_onnxruntime': True` in DEPS.
+
 ### Setting up the build
 
 Generate build files using `gn args out/Debug` or `gn args out/Release`.
@@ -72,6 +77,7 @@ To build with a backend, please set the corresponding option from following tabl
 | OpenVINO | `webnn_enable_openvino=true` |
 | XNNPACK | `webnn_enable_xnnpack=true` |
 | oneDNN | `webnn_enable_onednn=true` |
+| MLAS | `webnn_enable_mlas=true` |
 
 ### Build
 
@@ -80,6 +86,7 @@ Then use `ninja -C out/Release` or `ninja -C out/Debug` to build WebNN-native.
 **Notes**
  * To build with XNNPACK backend, please build XNNPACK first, e.g. by [`XNNPACK/scripts/build-local.sh`](https://github.com/google/XNNPACK/blob/master/scripts/build-local.sh).
  * To build with oneDNN backend, please build oneDNN first by following the [build from source instructions](https://oneapi-src.github.io/oneDNN/dev_guide_build.html).
+ * To build with MLAS backend, please build MLAS (part of ONNX Runtime) first by following the [Build ONNX Runtime for inferencing](https://onnxruntime.ai/docs/build/inferencing.html#build-onnx-runtime-for-inferencing), e.g., by `.\build.bat --config Release --parallel --enable_msvc_static_runtime` for Windows build.
 
 ### Run tests
 
@@ -100,7 +107,7 @@ Currently "cpu", "gpu" and "default" are supported, more devices are to be suppo
 
 **Notes**:
  * For OpenVINO backend, please [install 2021.4 version](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
- * The current implementation of XNNPACK and oneDNN backends is mainly for the investigation of WebNN [Operation Level Execution
+ * The current implementation of XNNPACK, oneDNN and MLAS backends is mainly for the investigation of WebNN [Operation Level Execution
 ](https://webmachinelearning.github.io/webnn/#usecase-op-level-exec) use case. So only a limited set of tests (such as of conv2d) is expected to pass.
 
 ### Run examples
