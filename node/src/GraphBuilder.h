@@ -38,6 +38,7 @@ namespace node {
         Napi::Value Concat(const Napi::CallbackInfo& info);
         Napi::Value Constant(const Napi::CallbackInfo& info);
         Napi::Value Conv2d(const Napi::CallbackInfo& info);
+        Napi::Value ConvTranspose2d(const Napi::CallbackInfo& info);
         Napi::Value Cos(const Napi::CallbackInfo& info);
         Napi::Value Div(const Napi::CallbackInfo& info);
         Napi::Value Exp(const Napi::CallbackInfo& info);

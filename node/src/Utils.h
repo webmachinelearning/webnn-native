@@ -85,13 +85,31 @@ namespace node {
         return GetMappedValue(inputOperandLayoutMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
-    inline bool GetFilterOperandLayout(const Napi::Value& jsValue, ml::FilterOperandLayout& value) {
-        const std::unordered_map<std::string, ml::FilterOperandLayout> filterOperandLayoutMap = {
-            {"oihw", ml::FilterOperandLayout::Oihw},
-            {"hwio", ml::FilterOperandLayout::Hwio},
-            {"ohwi", ml::FilterOperandLayout::Ohwi},
-            {"ihwo", ml::FilterOperandLayout::Ihwo},
-        };
+    inline bool GetConv2dFilterOperandLayout(const Napi::Value& jsValue,
+                                             ml::Conv2dFilterOperandLayout& value) {
+        const std::unordered_map<std::string, ml::Conv2dFilterOperandLayout>
+            filterOperandLayoutMap = {
+                {"oihw", ml::Conv2dFilterOperandLayout::Oihw},
+                {"hwio", ml::Conv2dFilterOperandLayout::Hwio},
+                {"ohwi", ml::Conv2dFilterOperandLayout::Ohwi},
+                {"ihwo", ml::Conv2dFilterOperandLayout::Ihwo},
+            };
+        if (!jsValue.IsString()) {
+            return false;
+        }
+        return GetMappedValue(filterOperandLayoutMap, jsValue.As<Napi::String>().Utf8Value(),
+                              value);
+    };
+
+    inline bool GetConvTranspose2dFilterOperandLayout(
+        const Napi::Value& jsValue,
+        ml::ConvTranspose2dFilterOperandLayout& value) {
+        const std::unordered_map<std::string, ml::ConvTranspose2dFilterOperandLayout>
+            filterOperandLayoutMap = {
+                {"iohw", ml::ConvTranspose2dFilterOperandLayout::Iohw},
+                {"hwoi", ml::ConvTranspose2dFilterOperandLayout::Hwoi},
+                {"ohwi", ml::ConvTranspose2dFilterOperandLayout::Ohwi},
+            };
         if (!jsValue.IsString()) {
             return false;
         }

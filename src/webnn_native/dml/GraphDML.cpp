@@ -156,23 +156,24 @@ namespace webnn_native { namespace dml {
             return strides;
         }
 
-        ::dml::TensorDimensions CalculateFilterLayoutStrides(ml::FilterOperandLayout filterLayout,
-                                                             ::dml::TensorDimensions sizes) {
+        ::dml::TensorDimensions CalculateFilterLayoutStrides(
+            ml::Conv2dFilterOperandLayout filterLayout,
+            ::dml::TensorDimensions sizes) {
             uint32_t hStride = 0, wStride = 0, iStride = 0, oStride = 0;
             switch (filterLayout) {
-                case ml::FilterOperandLayout::Hwio:
+                case ml::Conv2dFilterOperandLayout::Hwio:
                     hStride = sizes[1] * sizes[2] * sizes[3];
                     wStride = sizes[2] * sizes[3];
                     iStride = sizes[3];
                     oStride = 1;
                     break;
-                case ml::FilterOperandLayout::Ohwi:
+                case ml::Conv2dFilterOperandLayout::Ohwi:
                     oStride = sizes[1] * sizes[2] * sizes[3];
                     hStride = sizes[2] * sizes[3];
                     wStride = sizes[3];
                     iStride = 1;
                     break;
-                case ml::FilterOperandLayout::Ihwo:
+                case ml::Conv2dFilterOperandLayout::Ihwo:
                     iStride = sizes[1] * sizes[2] * sizes[3];
                     hStride = sizes[2] * sizes[3];
                     wStride = sizes[3];
@@ -185,39 +186,42 @@ namespace webnn_native { namespace dml {
             return {oStride, iStride, hStride, wStride};
         }
 
-        ::dml::Expression ReinterpretFilterLayoutAsOihw(ml::FilterOperandLayout filterLayout,
+        ::dml::Expression ReinterpretFilterLayoutAsOihw(ml::Conv2dFilterOperandLayout filterLayout,
                                                         ::dml::Expression filter) {
             ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
             ::dml::TensorDimensions newFilterDims;
             newFilterDims.resize(4);
             switch (filterLayout) {
-                case ml::FilterOperandLayout::Ohwi:
+                case ml::Conv2dFilterOperandLayout::Ohwi:
                     newFilterDims.resize(4);
                     newFilterDims[0] = filterDims[0];
                     newFilterDims[1] = filterDims[3];
                     newFilterDims[2] = filterDims[1];
                     newFilterDims[3] = filterDims[2];
-                    filter = ::dml::Reinterpret(
-                        filter, newFilterDims,
-                        CalculateFilterLayoutStrides(ml::FilterOperandLayout::Ohwi, filterDims));
+                    filter =
+                        ::dml::Reinterpret(filter, newFilterDims,
+                                           CalculateFilterLayoutStrides(
+                                               ml::Conv2dFilterOperandLayout::Ohwi, filterDims));
                     break;
-                case ml::FilterOperandLayout::Hwio:
+                case ml::Conv2dFilterOperandLayout::Hwio:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[2];
                     newFilterDims[2] = filterDims[0];
                     newFilterDims[3] = filterDims[1];
-                    filter = ::dml::Reinterpret(
-                        filter, newFilterDims,
-                        CalculateFilterLayoutStrides(ml::FilterOperandLayout::Hwio, filterDims));
+                    filter =
+                        ::dml::Reinterpret(filter, newFilterDims,
+                                           CalculateFilterLayoutStrides(
+                                               ml::Conv2dFilterOperandLayout::Hwio, filterDims));
                     break;
-                case ml::FilterOperandLayout::Ihwo:
+                case ml::Conv2dFilterOperandLayout::Ihwo:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[0];
                     newFilterDims[2] = filterDims[1];
                     newFilterDims[3] = filterDims[2];
-                    filter = ::dml::Reinterpret(
-                        filter, newFilterDims,
-                        CalculateFilterLayoutStrides(ml::FilterOperandLayout::Ihwo, filterDims));
+                    filter =
+                        ::dml::Reinterpret(filter, newFilterDims,
+                                           CalculateFilterLayoutStrides(
+                                               ml::Conv2dFilterOperandLayout::Ihwo, filterDims));
                     break;
                 default:
                     DAWN_ASSERT(0);
@@ -762,7 +766,7 @@ namespace webnn_native { namespace dml {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
 
-        if (options->filterLayout != ml::FilterOperandLayout::Oihw) {
+        if (options->filterLayout != ml::Conv2dFilterOperandLayout::Oihw) {
             filter = ReinterpretFilterLayoutAsOihw(options->filterLayout, filter);
         }
 
@@ -781,10 +785,6 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> startPadding(startPaddingVector);
         std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
-
-        if (options->transpose == true) {
-            return DAWN_UNIMPLEMENTED_ERROR("Transpose Conv2D has not been supported.");
-        }
 
         ::dml::Optional<::dml::Expression> bias = ::dml::NullOpt;
         if (options->bias != nullptr) {
@@ -813,6 +813,10 @@ namespace webnn_native { namespace dml {
         mExpression.insert(std::make_pair(conv2d->PrimaryOutput(), output));
         DAWN_ASSERT(CheckShape(output, conv2d));
         return {};
+    }
+
+    MaybeError Graph::AddConvTranspose2d(const op::Conv2d* conv2d) {
+        return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
     }
 
     MaybeError Graph::AddGru(const op::Gru* gru) {

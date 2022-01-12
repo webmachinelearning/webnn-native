@@ -122,6 +122,12 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Conv2d(this, input, filter, options));
     }
 
+    OperandBase* GraphBuilderBase::ConvTranspose2d(OperandBase* input,
+                                                   OperandBase* filter,
+                                                   ConvTranspose2dOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::ConvTranspose2d(this, input, filter, options));
+    }
+
     OperandBase* GraphBuilderBase::Cos(OperandBase* input) {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kCos, input));
     }

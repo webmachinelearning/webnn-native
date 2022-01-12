@@ -213,7 +213,7 @@ const ml::Operand ResNet::BuildNhwcBottlenectV2(const ml::GraphBuilder& builder,
     utils::Conv2dOptions conv1Options;
     conv1Options.autoPad = ml::AutoPad::SameUpper;
     conv1Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv1Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv1Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv1 =
         BuildNhwcConv(builder, fusedBn, extendStringVector(nameIndices, "1"), &conv1Options);
     if (downsample) {
@@ -223,7 +223,7 @@ const ml::Operand ResNet::BuildNhwcBottlenectV2(const ml::GraphBuilder& builder,
     ml::Operand conv2;
     utils::Conv2dOptions conv2Options;
     conv2Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv2Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv2Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     if (!downsample && shortcut) {
         utils::Pool2dOptions maxPoolOptions;
         maxPoolOptions.windowDimensions = {1, 1};
@@ -247,7 +247,7 @@ const ml::Operand ResNet::BuildNhwcBottlenectV2(const ml::GraphBuilder& builder,
     utils::Conv2dOptions conv3Options;
     conv3Options.autoPad = ml::AutoPad::SameUpper;
     conv3Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv3Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv3Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv3 =
         BuildNhwcConv(builder, conv2, extendStringVector(nameIndices, "3"), &conv3Options, false);
     return builder.Add(conv3, residual);
@@ -344,7 +344,7 @@ const ml::Operand ResNet::LoadNHWC(const ml::GraphBuilder& builder, bool softmax
     const ml::Operand pad = builder.Pad(input, padding);
     utils::Conv2dOptions conv1Options;
     conv1Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv1Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv1Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     conv1Options.strides = {2, 2};
     const ml::Operand conv1 = BuildNhwcConv(builder, pad, {"", "", "1"}, &conv1Options, false);
     utils::Pool2dOptions maxPoolOptions;
@@ -389,7 +389,7 @@ const ml::Operand ResNet::LoadNHWC(const ml::GraphBuilder& builder, bool softmax
     utils::Conv2dOptions conv2Options;
     conv2Options.autoPad = ml::AutoPad::SameUpper;
     conv2Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv2Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv2Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv2 =
         BuildNhwcConv(builder, mean, {"", "", "logits"}, &conv2Options, false);
     const std::vector<int32_t> newShape = {1, -1};

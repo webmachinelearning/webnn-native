@@ -20,22 +20,37 @@
 
 namespace webnn_native { namespace op {
 
-    Conv2d::Conv2d(GraphBuilderBase* builder,
-                   OperandBase* input,
-                   OperandBase* filter,
-                   Conv2dOptions const* options)
+    ConvTranspose2d::ConvTranspose2d(GraphBuilderBase* builder,
+                                     OperandBase* input,
+                                     OperandBase* filter,
+                                     ConvTranspose2dOptions const* options)
         : Conv2dBase(builder, input, filter, options) {
+        if (options == nullptr || options->outputPadding == nullptr) {
+            mOutputPadding = std::vector<int32_t>(2, 0);
+        } else {
+            mOutputPadding.assign(options->outputPadding,
+                                  options->outputPadding + options->outputPaddingCount);
+        }
+        mOptions.outputPadding = mOutputPadding.data();
+        mOptions.outputPaddingCount = mOutputPadding.size();
+
+        if (options != nullptr && options->outputSizes != nullptr) {
+            mOutputSizes.assign(options->outputSizes,
+                                options->outputSizes + options->outputSizesCount);
+            mOptions.outputSizes = mOutputSizes.data();
+            mOptions.outputSizesCount = mOutputSizes.size();
+        }
     }
 
-    MaybeError Conv2d::AddToGraph(GraphBase* graph) const {
-        return graph->AddConv2d(this);
+    MaybeError ConvTranspose2d::AddToGraph(GraphBase* graph) const {
+        return graph->AddConvTranspose2d(this);
     }
 
-    Conv2dOptions const* Conv2d::GetOptions() const {
+    ConvTranspose2dOptions const* ConvTranspose2d::GetOptions() const {
         return &mOptions;
     }
 
-    MaybeError Conv2d::CalculateShape() {
+    MaybeError ConvTranspose2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto filterShape = mInputs[1]->Shape();
         bool nchw = mOptions.inputLayout == ml::InputOperandLayout::Nchw;
@@ -45,29 +60,23 @@ namespace webnn_native { namespace op {
                                  inputHeight, inputWidth);
         int32_t filterHeight = 0, filterWidth = 0, outputChannels = 0, filterDepthIn = 0;
         switch (mOptions.filterLayout) {
-            case ml::Conv2dFilterOperandLayout::Hwio:
+            case ml::ConvTranspose2dFilterOperandLayout::Iohw:
+                filterHeight = filterShape[2];
+                filterWidth = filterShape[3];
+                outputChannels = filterShape[1];
+                filterDepthIn = filterShape[0];
+                break;
+            case ml::ConvTranspose2dFilterOperandLayout::Hwoi:
                 filterHeight = filterShape[0];
                 filterWidth = filterShape[1];
-                outputChannels = filterShape[3];
-                filterDepthIn = filterShape[2];
+                outputChannels = filterShape[2];
+                filterDepthIn = filterShape[3];
                 break;
-            case ml::Conv2dFilterOperandLayout::Ohwi:
+            case ml::ConvTranspose2dFilterOperandLayout::Ohwi:
                 filterHeight = filterShape[1];
                 filterWidth = filterShape[2];
                 outputChannels = filterShape[0];
                 filterDepthIn = filterShape[3];
-                break;
-            case ml::Conv2dFilterOperandLayout::Ihwo:
-                filterHeight = filterShape[1];
-                filterWidth = filterShape[2];
-                outputChannels = filterShape[3];
-                filterDepthIn = filterShape[0];
-                break;
-            case ml::Conv2dFilterOperandLayout::Oihw:
-                filterHeight = filterShape[2];
-                filterWidth = filterShape[3];
-                outputChannels = filterShape[0];
-                filterDepthIn = filterShape[1];
                 break;
             default:
                 return DAWN_VALIDATION_ERROR("The filter layout is unsupported");
@@ -78,8 +87,17 @@ namespace webnn_native { namespace op {
         }
 
         int32_t outputHeight, outputWidth;
-        calculateOutputSize(inputHeight, inputWidth, filterHeight, filterWidth, outputHeight,
-                            outputWidth);
+        if (mOptions.outputSizes != nullptr) {
+            outputHeight = mOptions.outputSizes[0];
+            outputWidth = mOptions.outputSizes[1];
+        } else {
+            calculateOutputSize(inputHeight, inputWidth, filterHeight, filterWidth, outputHeight,
+                                outputWidth);
+            if (mOptions.outputPadding != nullptr) {
+                outputHeight += mOptions.outputPadding[0];
+                outputWidth += mOptions.outputPadding[1];
+            }
+        }
         std::vector<int32_t> outputShape;
         if (nchw) {
             outputShape = {batchSize, outputChannels, outputHeight, outputWidth};
@@ -91,10 +109,14 @@ namespace webnn_native { namespace op {
         return {};
     }
 
-    MaybeError Conv2d::ValidateAndInferOutputInfo() {
+    MaybeError ConvTranspose2d::ValidateAndInferOutputInfo() {
         MaybeError maybeError = Conv2dBase::ValidateBase();
         if (maybeError.IsError()) {
             return maybeError;
+        }
+        // outputPadding: a sequence of long of length 2
+        if (mOptions.outputPaddingCount != 2) {
+            return DAWN_VALIDATION_ERROR("outputPaddingCount is incorrect.");
         }
 
         return CalculateShape();

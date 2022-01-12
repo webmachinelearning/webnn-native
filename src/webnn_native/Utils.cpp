@@ -42,4 +42,28 @@ namespace webnn_native { namespace utils {
                 DAWN_UNREACHABLE();
         }
     }
+
+    void ParseInputOperand(ml::InputOperandLayout inputLayout,
+                           std::vector<int32_t> inputShape,
+                           int32_t& batchSize,
+                           int32_t& inputChannels,
+                           int32_t& inputHeight,
+                           int32_t& inputWidth) {
+        batchSize = inputShape[0];
+        switch (inputLayout) {
+            case ml::InputOperandLayout::Nchw:
+                inputChannels = inputShape[1];
+                inputHeight = inputShape[2];
+                inputWidth = inputShape[3];
+                break;
+            case ml::InputOperandLayout::Nhwc:
+                inputChannels = inputShape[3];
+                inputHeight = inputShape[1];
+                inputWidth = inputShape[2];
+                break;
+
+            default:
+                DAWN_UNREACHABLE();
+        }
+    }
 }}  // namespace webnn_native::utils

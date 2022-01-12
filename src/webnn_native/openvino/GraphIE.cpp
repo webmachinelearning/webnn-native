@@ -232,49 +232,54 @@ namespace webnn_native { namespace ie {
             return transposeNode;
         }
 
-        // FilterOperandLayout => oihw or FilterOperandLayout => iohw
-        ngraph_node_t* TransposeFilterLayout(const ngraph_node_t* node,
-                                             ml::FilterOperandLayout layout,
-                                             bool transpose = false) {
+        // Conv2dFilterOperandLayout => oihw
+        ngraph_node_t* TransposeConv2dFilterLayout(const ngraph_node_t* node,
+                                                   ml::Conv2dFilterOperandLayout layout) {
             std::vector<int64_t> order;
-            if (transpose) {
-                // FilterOperandLayout => iohw
-                switch (layout) {
-                    case ml::FilterOperandLayout::Oihw:
-                        order = std::vector<int64_t>{1, 0, 2, 3};
-                        break;
-                    case ml::FilterOperandLayout::Hwio:
-                        order = std::vector<int64_t>{2, 3, 0, 1};
-                        break;
-                    case ml::FilterOperandLayout::Ohwi:
-                        order = std::vector<int64_t>{3, 0, 1, 2};
-                        break;
-                    case ml::FilterOperandLayout::Ihwo:
-                        order = std::vector<int64_t>{0, 3, 1, 2};
-                        break;
-                    default:
-                        WEBNN_ASSERT(0, "The filter layout isn't supported.");
-                        break;
-                }
-            } else {
-                switch (layout) {
-                    case ml::FilterOperandLayout::Oihw:
-                        return const_cast<ngraph_node_t*>(node);
-                    case ml::FilterOperandLayout::Hwio:
-                        order = std::vector<int64_t>{3, 2, 0, 1};
-                        break;
-                    case ml::FilterOperandLayout::Ohwi:
-                        order = std::vector<int64_t>{0, 3, 1, 2};
-                        break;
-                    case ml::FilterOperandLayout::Ihwo:
-                        order = std::vector<int64_t>{3, 0, 1, 2};
-                        break;
-                    default:
-                        WEBNN_ASSERT(0, "The filter layout isn't supported.");
-                        break;
-                }
+            switch (layout) {
+                case ml::Conv2dFilterOperandLayout::Oihw:
+                    return const_cast<ngraph_node_t*>(node);
+                case ml::Conv2dFilterOperandLayout::Hwio:
+                    order = std::vector<int64_t>{3, 2, 0, 1};
+                    break;
+                case ml::Conv2dFilterOperandLayout::Ohwi:
+                    order = std::vector<int64_t>{0, 3, 1, 2};
+                    break;
+                case ml::Conv2dFilterOperandLayout::Ihwo:
+                    order = std::vector<int64_t>{3, 0, 1, 2};
+                    break;
+                default:
+                    WEBNN_ASSERT(0, "The filter layout isn't supported.");
+                    break;
             }
+            const ngraph_node_t* orderNode =
+                AddConstantWithGraph<int64_t>(precision_e::I64, {order.size()}, order);
+            ngraph_node_t* transposeNode = nullptr;
+            IEStatusCode status = ngraph_transpose(node, orderNode, &transposeNode);
+            if (status != IEStatusCode::OK) {
+                dawn::ErrorLog() << "Failed to transpose filter layout.";
+            }
+            return transposeNode;
+        }
 
+        // ConvTranspose2dFilterOperandLayout => iohw
+        ngraph_node_t* TransposeConvTranspose2dFilterLayout(
+            const ngraph_node_t* node,
+            ml::ConvTranspose2dFilterOperandLayout layout) {
+            std::vector<int64_t> order;
+            switch (layout) {
+                case ml::ConvTranspose2dFilterOperandLayout::Iohw:
+                    return const_cast<ngraph_node_t*>(node);
+                case ml::ConvTranspose2dFilterOperandLayout::Hwoi:
+                    order = std::vector<int64_t>{3, 2, 0, 1};
+                    break;
+                case ml::ConvTranspose2dFilterOperandLayout::Ohwi:
+                    order = std::vector<int64_t>{3, 0, 1, 2};
+                    break;
+                default:
+                    WEBNN_ASSERT(0, "The ConvTranspose2d filter layout is not supported.");
+                    break;
+            }
             const ngraph_node_t* orderNode =
                 AddConstantWithGraph<int64_t>(precision_e::I64, {order.size()}, order);
             ngraph_node_t* transposeNode = nullptr;
@@ -620,25 +625,13 @@ namespace webnn_native { namespace ie {
         std::vector<size_t> dilations(options->dilations,
                                       options->dilations + options->dilationsCount);
         DAWN_ASSERT(dilations.size() == 2);
-        std::vector<int32_t> outputPadding(options->outputPadding,
-                                           options->outputPadding + options->outputPaddingCount);
-        DAWN_ASSERT(outputPadding.size() == 2);
-        ngraph_node_t* outputShapeNode = nullptr;
-        bool transpose = options->transpose;
-        if (transpose && options->outputSizes != nullptr) {
-            std::vector<int32_t> outputSizes(options->outputSizes,
-                                             options->outputSizes + options->outputSizesCount);
-            DAWN_ASSERT(outputSizes.size() == 2);
-            outputShapeNode =
-                AddConstantWithGraph<int32_t>(precision_e::I32, {outputSizes.size()}, outputSizes);
-        }
 
         auto input = mGraphNodeMap[conv2d->Inputs()[0].Get()];
         if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         auto filterNode = const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[1].Get()]);
-        filterNode = TransposeFilterLayout(filterNode, options->filterLayout, transpose);
+        filterNode = TransposeConv2dFilterLayout(filterNode, options->filterLayout);
         ngraph_node_t* conv2dNode;
         dimensions_t filterDims;
         ngraph_get_shape(filterNode, &filterDims);
@@ -652,35 +645,17 @@ namespace webnn_native { namespace ie {
                 AddConstantWithGraph<uint64_t>(precision_e::U64, {filterShape.size()}, filterShape);
             status = ngraph_reshape(filterNode, reshapeNode, &filterNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
-            if (transpose) {
-                status = ngraph_group_convolution_backprop_data(
-                    input, filterNode, outputShapeNode, strides.data(), strides.size(),
-                    padding.data(), padding.size(), dilations.data(), dilations.size(),
-                    static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
-                    outputPadding.size(), &conv2dNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph group convolution backprop data"));
-            } else {
-                status = ngraph_group_convolution(
-                    input, filterNode, strides.data(), strides.size(), padding.data(),
-                    padding.size(), dilations.data(), dilations.size(),
-                    static_cast<ngraph_auto_pad>(options->autoPad), &conv2dNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
-            }
+            status = ngraph_group_convolution(
+                input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
+                dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
+                &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph group convolution"));
         } else {
-            if (transpose) {
-                status = ngraph_convolution_backprop_data(
-                    input, filterNode, outputShapeNode, strides.data(), strides.size(),
-                    padding.data(), padding.size(), dilations.data(), dilations.size(),
-                    static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
-                    outputPadding.size(), &conv2dNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph convolution backprop data"));
-            } else {
-                status = ngraph_convolution(
-                    input, filterNode, strides.data(), strides.size(), padding.data(),
-                    padding.size(), dilations.data(), dilations.size(),
-                    static_cast<ngraph_auto_pad>(options->autoPad), &conv2dNode);
-                DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
-            }
+            status = ngraph_convolution(
+                input, filterNode, strides.data(), strides.size(), padding.data(), padding.size(),
+                dilations.data(), dilations.size(), static_cast<ngraph_auto_pad>(options->autoPad),
+                &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph convolution"));
         }
         if (options->bias != nullptr) {
             ngraph_node_t* biasNode =
@@ -705,11 +680,92 @@ namespace webnn_native { namespace ie {
             activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
-        // TODO(mingming): Need to check output shape for transpose Conv2d, disable it due to some
-        // known issues.
-        if (!transpose) {
-            DAWN_ASSERT(CheckShape(activationNode, conv2d));
+        DAWN_ASSERT(CheckShape(activationNode, conv2d));
+        return {};
+    }
+
+    MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
+        IEStatusCode status;
+        auto options = convTranspose2d->GetOptions();
+        std::vector<size_t> strides(options->strides, options->strides + options->stridesCount);
+        DAWN_ASSERT(strides.size() == 2);
+        std::vector<int32_t> padding(options->padding, options->padding + options->paddingCount);
+        DAWN_ASSERT(padding.size() == 4);
+        std::vector<size_t> dilations(options->dilations,
+                                      options->dilations + options->dilationsCount);
+        DAWN_ASSERT(dilations.size() == 2);
+        std::vector<int32_t> outputPadding(options->outputPadding,
+                                           options->outputPadding + options->outputPaddingCount);
+        DAWN_ASSERT(outputPadding.size() == 2);
+        ngraph_node_t* outputShapeNode = nullptr;
+        if (options->outputSizes != nullptr) {
+            std::vector<int32_t> outputSizes(options->outputSizes,
+                                             options->outputSizes + options->outputSizesCount);
+            DAWN_ASSERT(outputSizes.size() == 2);
+            outputShapeNode =
+                AddConstantWithGraph<int32_t>(precision_e::I32, {outputSizes.size()}, outputSizes);
         }
+
+        auto input = mGraphNodeMap[convTranspose2d->Inputs()[0].Get()];
+        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+            input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
+        }
+        auto filterNode =
+            const_cast<ngraph_node_t*>(mGraphNodeMap[convTranspose2d->Inputs()[1].Get()]);
+        filterNode = TransposeConvTranspose2dFilterLayout(filterNode, options->filterLayout);
+        ngraph_node_t* conv2dNode;
+        dimensions_t filterDims;
+        ngraph_get_shape(filterNode, &filterDims);
+        if (options->groups > 1) {
+            // Insert the groups to the shape of filter as first item.
+            std::vector<size_t> filterShape(filterDims.dims, filterDims.dims + filterDims.ranks);
+            filterShape.at(0) = filterShape.at(0) / options->groups;
+            filterShape.insert(filterShape.begin(), options->groups);
+            // Reshape the filter to support groups conv.
+            const ngraph_node_t* reshapeNode =
+                AddConstantWithGraph<uint64_t>(precision_e::U64, {filterShape.size()}, filterShape);
+            status = ngraph_reshape(filterNode, reshapeNode, &filterNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph reshape"));
+
+            status = ngraph_group_convolution_backprop_data(
+                input, filterNode, outputShapeNode, strides.data(), strides.size(), padding.data(),
+                padding.size(), dilations.data(), dilations.size(),
+                static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                outputPadding.size(), &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph group convolution backprop data"));
+
+        } else {
+            status = ngraph_convolution_backprop_data(
+                input, filterNode, outputShapeNode, strides.data(), strides.size(), padding.data(),
+                padding.size(), dilations.data(), dilations.size(),
+                static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                outputPadding.size(), &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph convolution backprop data"));
+        }
+        if (options->bias != nullptr) {
+            ngraph_node_t* biasNode =
+                const_cast<ngraph_node_t*>(mGraphNodeMap[convTranspose2d->Inputs()[2].Get()]);
+            dimensions_t biasDims;
+            ngraph_get_shape(biasNode, &biasDims);
+            if (biasDims.ranks != 1 || biasDims.dims[0] != filterDims.dims[0]) {
+                return DAWN_INTERNAL_ERROR(
+                    "The bias should be 1-D tensor with the shape of [output_channels].");
+            }
+            // Reshape bias from 1-D to 4-D for NCHW layout.
+            const ngraph_node_t* reshapeNode =
+                AddConstantWithGraph<int64_t>(precision_e::I64, {4}, {1, -1, 1, 1});
+            status = ngraph_reshape(biasNode, reshapeNode, &biasNode);
+            status = ngraph_add(conv2dNode, biasNode, &conv2dNode);
+            DAWN_TRY(CheckStatusCode(status, "ngraph add"));
+        }
+        ngraph_node_t* activationNode;
+        status = AddActivationNode(conv2dNode, options->activation, &activationNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
+        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+            activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
+        }
+        mGraphNodeMap[convTranspose2d->PrimaryOutput()] = activationNode;
+        DAWN_ASSERT(CheckShape(activationNode, convTranspose2d));
         return {};
     }
 
