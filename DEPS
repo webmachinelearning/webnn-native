@@ -8,7 +8,7 @@ vars = {
   'github_git': 'https://github.com',
 
   'dawn_standalone': True,
-  'checkout_onnxruntime': False,
+  'checkout_onnxruntime': True,
   'checkout_polyfill': True,
   'checkout_samples': True,
 }

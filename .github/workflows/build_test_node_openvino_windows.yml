@@ -58,6 +58,7 @@ jobs:
       shell: pwsh
       run: |
         cd baseline
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_onnxruntime': True", "'checkout_onnxruntime': False" | Set-Content -path .\DEPS
         (Get-Content -path .\DEPS -Raw) -replace "'checkout_samples': True", "'checkout_samples': False" | Set-Content -path .\DEPS
 
     - name: Generate project for main branch
@@ -112,6 +113,7 @@ jobs:
       shell: pwsh
       run: |
         cd update
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_onnxruntime': True", "'checkout_onnxruntime': False" | Set-Content -path .\DEPS
         (Get-Content -path .\DEPS -Raw) -replace "'checkout_samples': True", "'checkout_samples': False" | Set-Content -path .\DEPS
 
     - name: Sync latest code
