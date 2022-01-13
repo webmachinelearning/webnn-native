@@ -39,10 +39,11 @@ namespace webnn_native { namespace op {
         auto inputShape = mInputs[0]->Shape();
         auto filterShape = mInputs[1]->Shape();
         bool nchw = mOptions.inputLayout == ml::InputOperandLayout::Nchw;
+        int32_t batchSize = inputShape[0];
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
+        int32_t inputChannels = nchw ? inputShape[1] : inputShape[3];
 
-        int32_t batchSize = 0, inputChannels = 0, inputHeight = 0, inputWidth = 0;
-        utils::ParseInputOperand(mOptions.inputLayout, inputShape, batchSize, inputChannels,
-                                 inputHeight, inputWidth);
         int32_t filterHeight = 0, filterWidth = 0, outputChannels = 0, filterDepthIn = 0;
         switch (mOptions.filterLayout) {
             case ml::Conv2dFilterOperandLayout::Hwio:

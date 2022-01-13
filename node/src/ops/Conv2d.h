@@ -23,7 +23,7 @@
 
 namespace node { namespace op {
 
-    template <typename mlOptionType>
+    template <typename T>
     struct Conv2dBaseOptions {
       public:
         std::vector<int32_t> padding;
@@ -33,9 +33,9 @@ namespace node { namespace op {
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
         ml::Operand bias;
-        ml::Operator activation;
+        ml::FusionOperator activation;
 
-        void SetupOptions() {
+        T& GetBaseOptions() {
             if (!padding.empty()) {
                 mOptions.paddingCount = padding.size();
                 mOptions.padding = padding.data();
@@ -53,10 +53,12 @@ namespace node { namespace op {
             mOptions.inputLayout = inputLayout;
             mOptions.bias = bias;
             mOptions.activation = activation;
+
+            return mOptions;
         }
 
       protected:
-        mlOptionType mOptions;
+        T mOptions;
     };
 
     struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
@@ -64,7 +66,7 @@ namespace node { namespace op {
         ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
 
         const ml::Conv2dOptions* AsPtr() {
-            Conv2dBaseOptions::SetupOptions();
+            mOptions = GetBaseOptions();
             mOptions.filterLayout = filterLayout;
             return &mOptions;
         }
@@ -78,7 +80,7 @@ namespace node { namespace op {
             ml::ConvTranspose2dFilterOperandLayout::Iohw;
 
         const ml::ConvTranspose2dOptions* AsPtr() {
-            Conv2dBaseOptions::SetupOptions();
+            mOptions = GetBaseOptions();
             if (!outputPadding.empty()) {
                 mOptions.outputPaddingCount = outputPadding.size();
                 mOptions.outputPadding = outputPadding.data();

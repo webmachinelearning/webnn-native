@@ -26,13 +26,13 @@ class ConvTranspose2dTests : public WebnnTest {
     };
 
     void CheckConvTranspose2d(const Tensor& input,
-                     const Tensor& filter,
-                     const Tensor& expected,
-                     utils::ConvTranspose2dOptions options = {},
-                     const Tensor& bias = {},
-                     utils::FusedActivation activation = utils::FusedActivation::NONE,
-                     bool fusion = false,
-                     void* activationOptions = nullptr) {
+                              const Tensor& filter,
+                              const Tensor& expected,
+                              utils::ConvTranspose2dOptions options = {},
+                              const Tensor& bias = {},
+                              utils::FusedActivation activation = utils::FusedActivation::NONE,
+                              bool fusion = false,
+                              void* activationOptions = nullptr) {
         const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
         const ml::Operand w = utils::BuildConstant(builder, filter.shape, filter.value.data(),
                                                    filter.value.size() * sizeof(float));
@@ -351,7 +351,7 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNchwOhwi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
-    
+
     options.inputLayout = ml::InputOperandLayout::Nchw;
     options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);

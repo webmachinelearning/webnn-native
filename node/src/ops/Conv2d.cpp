@@ -16,19 +16,17 @@
 
 namespace node { namespace op {
 
-    template <typename OptionType>
-    Napi::Value SetupOptions(const Napi::CallbackInfo& info,
-                             std::vector<napi_value>& args,
-                             ml::Operand& input,
-                             ml::Operand& filter,
-                             OptionType& options,
-                             Napi::Object& jsOptions) {
+    template <typename T>
+    Napi::Value GetConv2dBaseOptions(const Napi::CallbackInfo& info,
+                                     std::vector<napi_value>& args,
+                                     ml::Operand& input,
+                                     ml::Operand& filter,
+                                     T& options,
+                                     Napi::Object& jsOptions) {
         // Operand conv2d(Operand input, Operand filter, optional Conv2dOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 2 || info.Length() == 3,
                           "The number of arguments is invalid.");
-
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
-
         WEBNN_NODE_ASSERT(GetOperand(info[1], filter, args), "The filter parameter is invalid.");
 
         if (info.Length() == 3 && !info[2].IsUndefined()) {
@@ -79,11 +77,13 @@ namespace node { namespace op {
         Conv2dOptions options;
         Napi::Object jsOptions;
 
-        SetupOptions<Conv2dOptions>(info, args, input, filter, options, jsOptions);
-        if (HasOptionMember(jsOptions, "filterLayout")) {
-            WEBNN_NODE_ASSERT(
-                GetConv2dFilterOperandLayout(jsOptions.Get("filterLayout"), options.filterLayout),
-                "The filterLayout parameter is invalid.");
+        GetConv2dBaseOptions<Conv2dOptions>(info, args, input, filter, options, jsOptions);
+        if (info.Length() == 3 && !info[2].IsUndefined()) {
+            if (HasOptionMember(jsOptions, "filterLayout")) {
+                WEBNN_NODE_ASSERT(GetConv2dFilterOperandLayout(jsOptions.Get("filterLayout"),
+                                                               options.filterLayout),
+                                  "The filterLayout parameter is invalid.");
+            }
         }
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
@@ -99,19 +99,22 @@ namespace node { namespace op {
         ConvTranspose2dOptions options;
         Napi::Object jsOptions;
 
-        SetupOptions<ConvTranspose2dOptions>(info, args, input, filter, options, jsOptions);
-        if (HasOptionMember(jsOptions, "outputPadding")) {
-            WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("outputPadding"), options.outputPadding, 2),
-                              "The outputPadding parameter is invalid.");
-        }
-        if (HasOptionMember(jsOptions, "outputSizes")) {
-            WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("outputSizes"), options.outputSizes, 2),
-                              "The outputSizes parameter is invalid.");
-        }
-        if (HasOptionMember(jsOptions, "filterLayout")) {
-            WEBNN_NODE_ASSERT(GetConvTranspose2dFilterOperandLayout(jsOptions.Get("filterLayout"),
-                                                                    options.filterLayout),
-                              "The filterLayout parameter is invalid.");
+        GetConv2dBaseOptions<ConvTranspose2dOptions>(info, args, input, filter, options, jsOptions);
+        if (info.Length() == 3 && !info[2].IsUndefined()) {
+            if (HasOptionMember(jsOptions, "outputPadding")) {
+                WEBNN_NODE_ASSERT(
+                    GetArray(jsOptions.Get("outputPadding"), options.outputPadding, 2),
+                    "The outputPadding parameter is invalid.");
+            }
+            if (HasOptionMember(jsOptions, "outputSizes")) {
+                WEBNN_NODE_ASSERT(GetArray(jsOptions.Get("outputSizes"), options.outputSizes, 2),
+                                  "The outputSizes parameter is invalid.");
+            }
+            if (HasOptionMember(jsOptions, "filterLayout")) {
+                WEBNN_NODE_ASSERT(GetConvTranspose2dFilterOperandLayout(
+                                      jsOptions.Get("filterLayout"), options.filterLayout),
+                                  "The filterLayout parameter is invalid.");
+            }
         }
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);

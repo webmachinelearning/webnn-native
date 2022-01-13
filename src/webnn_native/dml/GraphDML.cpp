@@ -815,7 +815,7 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MaybeError Graph::AddConvTranspose2d(const op::Conv2d* conv2d) {
+    MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
         return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
     }
 

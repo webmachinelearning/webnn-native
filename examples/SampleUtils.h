@@ -89,7 +89,7 @@ namespace utils {
                               size_t size,
                               ml::OperandType type = ml::OperandType::Float32);
 
-    template <typename OptionType>
+    template <typename T>
     struct Conv2dBaseOptions {
       public:
         std::vector<int32_t> padding;
@@ -101,7 +101,7 @@ namespace utils {
         ml::Operand bias;
         ml::FusionOperator activation;
 
-        void init() {
+        T& GetBaseOptions() {
             if (!padding.empty()) {
                 mOptions.paddingCount = padding.size();
                 mOptions.padding = padding.data();
@@ -119,10 +119,12 @@ namespace utils {
             mOptions.inputLayout = inputLayout;
             mOptions.bias = bias;
             mOptions.activation = activation;
+
+            return mOptions;
         }
 
       protected:
-        OptionType mOptions;
+        T mOptions;
     };
 
     struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
@@ -130,7 +132,7 @@ namespace utils {
         ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
 
         const ml::Conv2dOptions* AsPtr() {
-            init();
+            mOptions = GetBaseOptions();
             mOptions.filterLayout = filterLayout;
 
             return &mOptions;
@@ -145,7 +147,7 @@ namespace utils {
             ml::ConvTranspose2dFilterOperandLayout::Iohw;
 
         const ml::ConvTranspose2dOptions* AsPtr() {
-            init();
+            mOptions = GetBaseOptions();
             if (!outputPadding.empty()) {
                 mOptions.outputPaddingCount = outputPadding.size();
                 mOptions.outputPadding = outputPadding.data();
