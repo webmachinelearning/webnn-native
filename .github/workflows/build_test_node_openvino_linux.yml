@@ -86,6 +86,7 @@ jobs:
         echo "Baseline node test result:"
         cat baseline/node/result.xml
         cp baseline/node/result.xml ${{ github.workspace }}/../baseline.xml
+        rm -rf baseline
 
     - uses: actions/checkout@v2
       with:

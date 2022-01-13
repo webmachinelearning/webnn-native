@@ -101,6 +101,7 @@ jobs:
         echo "Baseline node test result:"
         type baseline\node\result.xml
         copy baseline\node\result.xml ${{ github.workspace }}\..\baseline.xml
+        rmdir /s /q baseline
 
     - uses: actions/checkout@v2
       with:
