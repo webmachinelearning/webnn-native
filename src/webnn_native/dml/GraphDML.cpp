@@ -1522,7 +1522,7 @@ namespace webnn_native { namespace dml {
             // The shape of c tensor is 2D definited in WebNN Spec, but DML only support 4D,
             // so expand dimensions to 4D.
             DAWN_ASSERT(cDims.size() == 2);
-            auto expandDims = ExpandDimensions(cDims, 4);
+            expandDims = ExpandDimensions(cDims, 4);
             auto expandStrides = CalculateBroadcastStrides(expandDims, broadcast);
             c = ::dml::Reinterpret(c->Impl(), expandDims, expandStrides);
         }
