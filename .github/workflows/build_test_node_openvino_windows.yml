@@ -54,6 +54,13 @@ jobs:
         copy scripts\standalone.gclient .gclient
         gclient sync
 
+    - name: Update DEPS for main branch
+      shell: pwsh
+      run: |
+        cd baseline
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_onnxruntime': True", "'checkout_onnxruntime': False" | Set-Content -path .\DEPS
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_samples': True", "'checkout_samples': False" | Set-Content -path .\DEPS
+
     - name: Generate project for main branch
       shell: cmd
       run: |
@@ -95,11 +102,19 @@ jobs:
         echo "Baseline node test result:"
         type baseline\node\result.xml
         copy baseline\node\result.xml ${{ github.workspace }}\..\baseline.xml
+        rmdir /s /q baseline
 
     - uses: actions/checkout@v2
       with:
         path: update
         fetch-depth: 0
+
+    - name: Update DEPS for update branch
+      shell: pwsh
+      run: |
+        cd update
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_onnxruntime': True", "'checkout_onnxruntime': False" | Set-Content -path .\DEPS
+        (Get-Content -path .\DEPS -Raw) -replace "'checkout_samples': True", "'checkout_samples': False" | Set-Content -path .\DEPS
 
     - name: Sync latest code
       shell: cmd

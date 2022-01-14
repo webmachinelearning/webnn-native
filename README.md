@@ -60,9 +60,6 @@ Get the source code as follows:
 > gclient sync
 ```
 
-**Notes**
- * To build with MLAS backend, please set `'checkout_onnxruntime': True` in DEPS.
-
 ### Setting up the build
 
 Generate build files using `gn args out/Debug` or `gn args out/Release`.

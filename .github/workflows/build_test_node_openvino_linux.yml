@@ -38,6 +38,12 @@ jobs:
         path: baseline
         fetch-depth: 0
 
+    - name: Update DEPS for main branch
+      run: |
+        cd baseline
+        sed -i "s/'checkout_onnxruntime':\ True/'checkout_onnxruntime':\ False/" DEPS
+        sed -i "s/'checkout_samples':\ True/'checkout_samples':\ False/" DEPS
+
     - name: Sync code for main branch
       run: |
         export PATH=$PWD/../depot_tools:$PATH
@@ -81,11 +87,18 @@ jobs:
         echo "Baseline node test result:"
         cat baseline/node/result.xml
         cp baseline/node/result.xml ${{ github.workspace }}/../baseline.xml
+        rm -rf baseline
 
     - uses: actions/checkout@v2
       with:
         path: update
         fetch-depth: 0
+
+    - name: Update DEPS for update branch
+      run: |
+        cd update
+        sed -i "s/'checkout_onnxruntime':\ True/'checkout_onnxruntime':\ False/" DEPS
+        sed -i "s/'checkout_samples':\ True/'checkout_samples':\ False/" DEPS
 
     - name: Sync latest code
       run: |
