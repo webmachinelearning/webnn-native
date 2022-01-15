@@ -22,6 +22,8 @@
 #include "webnn_wire/client/GraphBuilder.h"
 #include "webnn_wire/client/NamedInputs.h"
 #include "webnn_wire/client/NamedOutputs.h"
+#include "webnn_wire/client/OperandArray.h"
+#include "webnn_wire/client/OperatorArray.h"
 
 #include "webnn_wire/client/ApiObjects_autogen.h"
 

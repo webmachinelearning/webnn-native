@@ -253,11 +253,17 @@ namespace webnn_wire { namespace client {
         return nullptr;
     }
 
+    MLOperatorArray ClientCreateOperatorArray() {
+        UNREACHABLE();
+        return nullptr;
+    }
+
     static WebnnProcTable gProcTable = {
         ClientCreateGraphBuilder,
         ClientCreateNamedInputs,
         ClientCreateNamedOperands,
         ClientCreateNamedOutputs,
+        ClientCreateOperatorArray,
         {% for type in by_category["object"] %}
             {% for method in c_methods(type) %}
                 Client{{as_MethodSuffix(type.name, method.name)}},

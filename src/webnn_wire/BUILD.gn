@@ -82,6 +82,10 @@ dawn_component("webnn_wire") {
     "client/NamedInputs.h",
     "client/NamedOutputs.cpp",
     "client/NamedOutputs.h",
+    "client/OperandArray.cpp",
+    "client/OperandArray.h",
+    "client/OperatorArray.cpp",
+    "client/OperatorArray.h",
     "client/ObjectAllocator.h",
     "client/ObjectBase.h",
     "server/ObjectStorage.h",
@@ -92,6 +96,8 @@ dawn_component("webnn_wire") {
     "server/ServerGraphBuilder.cpp",
     "server/ServerNamedInputs.cpp",
     "server/ServerNamedOutputs.cpp",
+    "server/ServerOperatorArray.cpp",
+    "server/ServerOperandArray.cpp",
   ]
 
   # Make headers publicly visible

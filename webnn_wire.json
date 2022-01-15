@@ -33,6 +33,12 @@
       {"name": "inputs id", "type": "ObjectId" },
       {"name": "outputs id", "type": "ObjectId" }
     ],
+    "operand array size": [
+      {"name": "operand array id", "type": "ObjectId" }
+    ],
+    "operator array size": [
+      {"name": "operator array id", "type": "ObjectId" }
+    ],
     "named inputs set": [
       {"name": "named inputs id", "type": "ObjectId" },
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
@@ -76,7 +82,9 @@
       "ContextSetUncapturedErrorCallback",
       "GraphBuilderConstant",
       "NamedInputsSet",
-      "NamedOutputsSet"
+      "NamedOutputsSet",
+      "OperandArraySize",
+      "OperatorArraySize"
     ],
     "client_handwritten_commands": [
       "GraphCompute",
@@ -87,7 +95,9 @@
       "Graph",
       "GraphBuilder",
       "NamedInputs",
-      "NamedOutputs"
+      "NamedOutputs",
+      "OperandArray",
+      "OperatorArray"
     ],
     "server_custom_pre_handler_commands": [],
     "server_handwritten_commands": [],
