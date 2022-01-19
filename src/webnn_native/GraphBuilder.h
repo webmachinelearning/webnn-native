@@ -47,6 +47,9 @@ namespace webnn_native {
         OperandBase* Concat(uint32_t inputsCount, OperandBase* const* inputs, uint32_t axis);
         OperandBase* Constant(OperandDescriptor const* desc, ArrayBufferView const* arrayBuffer);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
+        OperandBase* ConvTranspose2d(OperandBase*,
+                                     OperandBase*,
+                                     ConvTranspose2dOptions const* options);
         OperandBase* Cos(OperandBase*);
         OperandBase* Div(OperandBase*, OperandBase*);
         OperandBase* Exp(OperandBase*);

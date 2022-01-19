@@ -16,7 +16,7 @@ vars = {
 deps = {
   # Dependencies required for tests.
   'node/third_party/webnn-polyfill': {
-    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@9ef11ab490be1275df801a43a7b81977b6966560',
+    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@6a9754420d9c761cc8d9ecb7625b061d849bca6f',
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-polyfill/test-data': {

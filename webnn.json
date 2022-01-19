@@ -230,13 +230,21 @@
       {"value": 1, "name": "nhwc"}
     ]
   },
-  "filter operand layout": {
+  "conv2d filter operand layout": {
     "category": "enum",
     "values": [
       {"value": 0, "name": "oihw"},
       {"value": 1, "name": "hwio"},
       {"value": 2, "name": "ohwi"},
       {"value": 3, "name": "ihwo"}
+    ]
+  },
+  "conv transpose2d filter operand layout": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "iohw"},
+      {"value": 1, "name": "hwoi"},
+      {"value": 2, "name": "ohwi"}
     ]
   },
   "auto pad": {
@@ -301,15 +309,31 @@
       {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "auto pad", "type": "auto pad", "default": "explicit"},
+      {"name": "groups", "type": "int32_t", "default": 1},
+      {"name": "input layout", "type": "input operand layout", "default": "nchw"},
+      {"name": "filter layout", "type": "conv2d filter operand layout", "default": "oihw"},
+      {"name": "bias", "type": "operand", "optional": true},
+      {"name": "activation", "type": "fusion operator", "optional": true}
+    ]
+  },
+  "conv transpose2d options": {
+    "category": "structure",
+    "members": [
+      {"name": "padding count", "type": "uint32_t", "default": 0},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "strides count", "type": "uint32_t", "default": 0},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "dilations count", "type": "uint32_t", "default": 0},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
       {"name": "output padding count", "type": "uint32_t", "default": 0},
       {"name": "output padding", "type": "int32_t", "annotation": "const*", "length": "output padding count", "optional": true},
       {"name": "output sizes count", "type": "uint32_t", "default": 0},
       {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "optional": true},
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
-      {"name": "transpose", "type": "bool", "default": "false"},
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
-      {"name": "filter layout", "type": "filter operand layout", "default": "oihw"},
+      {"name": "filter layout", "type": "conv transpose2d filter operand layout", "default": "iohw"},
       {"name": "bias", "type": "operand", "optional": true},
       {"name": "activation", "type": "fusion operator", "optional": true}
     ]
@@ -524,6 +548,15 @@
           {"name": "input", "type": "operand"},
           {"name": "filter", "type": "operand"},
           {"name": "options", "type": "conv2d options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+        "name": "conv transpose2d",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "filter", "type": "operand"},
+          {"name": "options", "type": "conv transpose2d options", "annotation": "const*", "optional": true}
         ]
       },
       {

@@ -81,7 +81,7 @@ const ml::Operand SqueezeNet::BuildFire(const ml::GraphBuilder& builder,
     utils::Conv2dOptions convOptions;
     if (!(mLayout == "nchw")) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
-        convOptions.filterLayout = ml::FilterOperandLayout::Ohwi;
+        convOptions.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     }
     const ml::Operand conv = BuildConv(builder, input, convName, &convOptions);
     const ml::Operand conv1x1 = BuildConv(builder, conv, conv1x1Name, &convOptions);
@@ -136,7 +136,7 @@ const ml::Operand SqueezeNet::LoadNHWC(const ml::GraphBuilder& builder, bool sof
     conv1Options.strides = {2, 2};
     conv1Options.autoPad = ml::AutoPad::SameUpper;
     conv1Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv1Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv1Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv1 = BuildConv(builder, input, "conv1", &conv1Options);
     utils::Pool2dOptions maxPool1Options;
     maxPool1Options.windowDimensions = {3, 3};
@@ -165,7 +165,7 @@ const ml::Operand SqueezeNet::LoadNHWC(const ml::GraphBuilder& builder, bool sof
         BuildFire(builder, maxpool8, "fire9_squeeze", "fire9_e1x1", "fire9_e3x3");
     utils::Conv2dOptions conv10Options;
     conv10Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv10Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv10Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv10 = BuildConv(builder, fire9, "conv10", &conv10Options);
     utils::Pool2dOptions avgPoolOptions;
     avgPoolOptions.windowDimensions = {13, 13};

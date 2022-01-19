@@ -89,22 +89,19 @@ namespace utils {
                               size_t size,
                               ml::OperandType type = ml::OperandType::Float32);
 
-    struct Conv2dOptions {
+    template <typename T>
+    struct Conv2dBaseOptions {
       public:
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
-        std::vector<int32_t> outputPadding;
-        std::vector<int32_t> outputSizes;
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
-        bool transpose = false;
         int32_t groups = 1;
         ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
-        ml::FilterOperandLayout filterLayout = ml::FilterOperandLayout::Oihw;
         ml::Operand bias;
         ml::FusionOperator activation;
 
-        const ml::Conv2dOptions* AsPtr() {
+        T& GetBaseOptions() {
             if (!padding.empty()) {
                 mOptions.paddingCount = padding.size();
                 mOptions.padding = padding.data();
@@ -117,6 +114,40 @@ namespace utils {
                 mOptions.dilationsCount = dilations.size();
                 mOptions.dilations = dilations.data();
             }
+            mOptions.groups = groups;
+            mOptions.autoPad = autoPad;
+            mOptions.inputLayout = inputLayout;
+            mOptions.bias = bias;
+            mOptions.activation = activation;
+
+            return mOptions;
+        }
+
+      protected:
+        T mOptions;
+    };
+
+    struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
+      public:
+        ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
+
+        const ml::Conv2dOptions* AsPtr() {
+            mOptions = GetBaseOptions();
+            mOptions.filterLayout = filterLayout;
+
+            return &mOptions;
+        }
+    };
+
+    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<ml::ConvTranspose2dOptions> {
+      public:
+        std::vector<int32_t> outputPadding;
+        std::vector<int32_t> outputSizes;
+        ml::ConvTranspose2dFilterOperandLayout filterLayout =
+            ml::ConvTranspose2dFilterOperandLayout::Iohw;
+
+        const ml::ConvTranspose2dOptions* AsPtr() {
+            mOptions = GetBaseOptions();
             if (!outputPadding.empty()) {
                 mOptions.outputPaddingCount = outputPadding.size();
                 mOptions.outputPadding = outputPadding.data();
@@ -125,19 +156,10 @@ namespace utils {
                 mOptions.outputSizesCount = outputSizes.size();
                 mOptions.outputSizes = outputSizes.data();
             }
-            mOptions.transpose = transpose;
-            mOptions.groups = groups;
-            mOptions.autoPad = autoPad;
-            mOptions.inputLayout = inputLayout;
             mOptions.filterLayout = filterLayout;
-            mOptions.bias = bias;
-            mOptions.activation = activation;
 
             return &mOptions;
         }
-
-      private:
-        ml::Conv2dOptions mOptions;
     };
 
     struct SliceOptions {

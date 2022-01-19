@@ -16,6 +16,7 @@
 #define WEBNN_NATIVE_NATIVEUTILS_H_
 
 #include <webnn/webnn_cpp.h>
+#include <vector>
 
 namespace webnn_native { namespace utils {
     void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,

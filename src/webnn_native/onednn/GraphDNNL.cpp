@@ -576,7 +576,7 @@ namespace webnn_native { namespace onednn {
         std::vector<dnnl_dim_t> groupFilterDims;
         const dnnl_memory_desc_t* actualFilterMemoryDesc;
         dnnl_memory_desc_t transposedFilterMemoryDesc;
-        if (options->filterLayout == ml::FilterOperandLayout::Hwio) {
+        if (options->filterLayout == ml::Conv2dFilterOperandLayout::Hwio) {
             const int permute[] = {2, 3, 1, 0};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -589,7 +589,7 @@ namespace webnn_native { namespace onednn {
                                                   dnnl_hwio));
 
             actualFilterMemoryDesc = &transposedFilterMemoryDesc;
-        } else if (options->filterLayout == ml::FilterOperandLayout::Ohwi) {
+        } else if (options->filterLayout == ml::Conv2dFilterOperandLayout::Ohwi) {
             const int permute[] = {0, 2, 3, 1};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -599,7 +599,7 @@ namespace webnn_native { namespace onednn {
                                                   filterDims.data(), filterMemoryDesc->data_type,
                                                   dnnl_ohwi));
             actualFilterMemoryDesc = &transposedFilterMemoryDesc;
-        } else if (options->filterLayout == ml::FilterOperandLayout::Ihwo) {
+        } else if (options->filterLayout == ml::Conv2dFilterOperandLayout::Ihwo) {
             const int permute[] = {1, 2, 3, 0};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -620,22 +620,22 @@ namespace webnn_native { namespace onednn {
             groupFilterDims = {options->groups, filterDims[0] / options->groups, filterDims[1],
                                filterDims[2], filterDims[3]};
             switch (options->filterLayout) {
-                case ml::FilterOperandLayout::Oihw:
+                case ml::Conv2dFilterOperandLayout::Oihw:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_goihw));
                     break;
-                case ml::FilterOperandLayout::Hwio:
+                case ml::Conv2dFilterOperandLayout::Hwio:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_hwigo));
                     break;
-                case ml::FilterOperandLayout::Ohwi:
+                case ml::Conv2dFilterOperandLayout::Ohwi:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_gohwi));
                     break;
-                case ml::FilterOperandLayout::Ihwo:
+                case ml::Conv2dFilterOperandLayout::Ihwo:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_idhwo));

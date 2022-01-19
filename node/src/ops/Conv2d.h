@@ -18,9 +18,87 @@
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
 
+#include "Operand.h"
+#include "Utils.h"
+
 namespace node { namespace op {
 
+    template <typename T>
+    struct Conv2dBaseOptions {
+      public:
+        std::vector<int32_t> padding;
+        std::vector<int32_t> strides;
+        std::vector<int32_t> dilations;
+        int32_t groups = 1;
+        ml::AutoPad autoPad = ml::AutoPad::Explicit;
+        ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
+        ml::Operand bias;
+        ml::FusionOperator activation;
+
+        T& GetBaseOptions() {
+            if (!padding.empty()) {
+                mOptions.paddingCount = padding.size();
+                mOptions.padding = padding.data();
+            }
+            if (!strides.empty()) {
+                mOptions.stridesCount = strides.size();
+                mOptions.strides = strides.data();
+            }
+            if (!dilations.empty()) {
+                mOptions.dilationsCount = dilations.size();
+                mOptions.dilations = dilations.data();
+            }
+            mOptions.groups = groups;
+            mOptions.autoPad = autoPad;
+            mOptions.inputLayout = inputLayout;
+            mOptions.bias = bias;
+            mOptions.activation = activation;
+
+            return mOptions;
+        }
+
+      protected:
+        T mOptions;
+    };
+
+    struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
+      public:
+        ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
+
+        const ml::Conv2dOptions* AsPtr() {
+            mOptions = GetBaseOptions();
+            mOptions.filterLayout = filterLayout;
+            return &mOptions;
+        }
+    };
+
+    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<ml::ConvTranspose2dOptions> {
+      public:
+        std::vector<int32_t> outputPadding;
+        std::vector<int32_t> outputSizes;
+        ml::ConvTranspose2dFilterOperandLayout filterLayout =
+            ml::ConvTranspose2dFilterOperandLayout::Iohw;
+
+        const ml::ConvTranspose2dOptions* AsPtr() {
+            mOptions = GetBaseOptions();
+            if (!outputPadding.empty()) {
+                mOptions.outputPaddingCount = outputPadding.size();
+                mOptions.outputPadding = outputPadding.data();
+            }
+            if (!outputSizes.empty()) {
+                mOptions.outputSizesCount = outputSizes.size();
+                mOptions.outputSizes = outputSizes.data();
+            }
+            mOptions.filterLayout = filterLayout;
+            return &mOptions;
+        }
+    };
+
     struct Conv2d {
+        static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
+    };
+
+    struct ConvTranspose2d {
         static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
     };
 

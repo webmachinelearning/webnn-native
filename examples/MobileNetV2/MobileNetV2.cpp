@@ -152,7 +152,7 @@ const ml::Operand MobileNetV2::BuildFire(const ml::GraphBuilder& builder,
     utils::Conv2dOptions convOptions;
     if (!(mLayout == "nchw")) {
         convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
-        convOptions.filterLayout = ml::FilterOperandLayout::Hwio;
+        convOptions.filterLayout = ml::Conv2dFilterOperandLayout::Hwio;
     }
     const ml::Operand conv1x1 = BuildConv(builder, input, convIndexes[0], true, &convOptions);
     convOptions.padding = {1, 1, 1, 1};
@@ -185,7 +185,7 @@ const ml::Operand MobileNetV2::BuildLinearBottleneck(const ml::GraphBuilder& bui
     utils::Conv2dOptions convOptions;
     convOptions.autoPad = ml::AutoPad::SameUpper;
     convOptions.inputLayout = ml::InputOperandLayout::Nhwc;
-    convOptions.filterLayout = ml::FilterOperandLayout::Ohwi;
+    convOptions.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
 
     const std::string biasPrefix = "expanded_conv_" + std::to_string(biasIndex);
 
@@ -193,7 +193,7 @@ const ml::Operand MobileNetV2::BuildLinearBottleneck(const ml::GraphBuilder& bui
                                           biasPrefix + "_expand_Conv2D");
     dwiseOptions->autoPad = ml::AutoPad::SameUpper;
     dwiseOptions->inputLayout = ml::InputOperandLayout::Nhwc;
-    dwiseOptions->filterLayout = ml::FilterOperandLayout::Ihwo;
+    dwiseOptions->filterLayout = ml::Conv2dFilterOperandLayout::Ihwo;
     const ml::Operand conv3x3 = BuildConv(builder, conv1x1, convIndexes[1], true, dwiseOptions,
                                           biasPrefix + "_depthwise_depthwise");
 
@@ -267,21 +267,21 @@ const ml::Operand MobileNetV2::LoadNHWC(const ml::GraphBuilder& builder, bool so
     conv0Options.strides = {2, 2};
     conv0Options.autoPad = ml::AutoPad::SameUpper;
     conv0Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv0Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv0Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv0 = BuildConv(builder, input, 90, true, &conv0Options, "Conv_Conv2D");
 
     utils::Conv2dOptions conv1Options;
     conv1Options.groups = 32;
     conv1Options.autoPad = ml::AutoPad::SameUpper;
     conv1Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv1Options.filterLayout = ml::FilterOperandLayout::Ihwo;
+    conv1Options.filterLayout = ml::Conv2dFilterOperandLayout::Ihwo;
     const ml::Operand conv1 =
         BuildConv(builder, conv0, 238, true, &conv1Options, "expanded_conv_depthwise_depthwise");
 
     utils::Conv2dOptions conv2Options;
     conv2Options.autoPad = ml::AutoPad::SameUpper;
     conv2Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv2Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv2Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv2 =
         BuildConv(builder, conv1, 167, false, &conv2Options, "expanded_conv_project_Conv2D");
 
@@ -366,7 +366,7 @@ const ml::Operand MobileNetV2::LoadNHWC(const ml::GraphBuilder& builder, bool so
     utils::Conv2dOptions conv3Options;
     conv3Options.autoPad = ml::AutoPad::SameUpper;
     conv3Options.inputLayout = ml::InputOperandLayout::Nhwc;
-    conv3Options.filterLayout = ml::FilterOperandLayout::Ohwi;
+    conv3Options.filterLayout = ml::Conv2dFilterOperandLayout::Ohwi;
     const ml::Operand conv3 =
         BuildConv(builder, bottleneck15, 71, true, &conv3Options, "Conv_1_Conv2D");
 

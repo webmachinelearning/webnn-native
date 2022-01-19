@@ -42,4 +42,5 @@ namespace webnn_native { namespace utils {
                 DAWN_UNREACHABLE();
         }
     }
+
 }}  // namespace webnn_native::utils

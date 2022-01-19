@@ -134,6 +134,10 @@ namespace node {
         return op::Conv2d::Build(info, mImpl);
     }
 
+    Napi::Value GraphBuilder::ConvTranspose2d(const Napi::CallbackInfo& info) {
+        return op::ConvTranspose2d::Build(info, mImpl);
+    }
+
     Napi::Value GraphBuilder::Concat(const Napi::CallbackInfo& info) {
         return op::Concat::Build(info, mImpl);
     }
@@ -324,6 +328,7 @@ namespace node {
              InstanceMethod("pow", &GraphBuilder::Pow, napi_enumerable),
              InstanceMethod("concat", &GraphBuilder::Concat, napi_enumerable),
              InstanceMethod("conv2d", &GraphBuilder::Conv2d, napi_enumerable),
+             InstanceMethod("convTranspose2d", &GraphBuilder::ConvTranspose2d, napi_enumerable),
              InstanceMethod("clamp", &GraphBuilder::Clamp, napi_enumerable),
              InstanceMethod("gemm", &GraphBuilder::Gemm, napi_enumerable),
              InstanceMethod("gru", &GraphBuilder::Gru, napi_enumerable),
