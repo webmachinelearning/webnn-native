@@ -14,6 +14,8 @@
 
 #include "webnn_native/ops/Pool2d.h"
 
+#include <math.h>
+
 #include "webnn_native/Error.h"
 #include "webnn_native/Utils.h"
 
@@ -29,11 +31,6 @@ namespace webnn_native { namespace op {
                                      options->windowDimensions + options->windowDimensionsCount);
             mOptions.windowDimensions = mWindowDimensions.data();
             mOptions.windowDimensionsCount = mWindowDimensions.size();
-        } else {
-            // If options or windowDimensions is not present, the backend should assume the window
-            // dimensions to be the height and width dimensions of the input shape.
-            mOptions.windowDimensions = nullptr;
-            mOptions.windowDimensionsCount = 0;
         }
 
         if (options == nullptr || options->padding == nullptr) {
@@ -62,6 +59,15 @@ namespace webnn_native { namespace op {
 
         mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
         mOptions.layout = options == nullptr ? ml::InputOperandLayout::Nchw : options->layout;
+        mOptions.roundingType =
+            options == nullptr ? ml::RoundingType::Floor : options->roundingType;
+
+        if (options != nullptr && options->outputSizes != nullptr) {
+            mOutputSizes.assign(options->outputSizes,
+                                options->outputSizes + options->outputSizesCount);
+            mOptions.outputSizes = mOutputSizes.data();
+            mOptions.outputSizesCount = mOutputSizes.size();
+        }
     }
 
     MaybeError Pool2d::AddToGraph(GraphBase* graph) const {
@@ -96,13 +102,39 @@ namespace webnn_native { namespace op {
                                                     inputWidth, windowWidth, mOptions.strides[1],
                                                     paddingBeginningWidth, paddingEndingWidth);
         }
-        // TODO(mingming): Support ceil and floor rounding types for pool2d.
-        int32_t outputHeight =
+
+        // TODO(mingming): We may need to consider dilations when calculating output sizes.
+        int32_t outputHeight, outputWidth;
+        int32_t floorOutputHeight =
             1 + (inputHeight - windowHeight + paddingBeginningHeight + paddingEndingHeight) /
                     mStride[0];
-        int32_t outputWidth =
+        int32_t floorOutputWidth =
             1 +
             (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) / mStride[1];
+        int32_t ceilOutputHeight = ceil(
+            1 + 1.0 * (inputHeight - windowHeight + paddingBeginningHeight + paddingEndingHeight) /
+                    mStride[0]);
+        int32_t ceilOutputWidth =
+            ceil(1 + 1.0 * (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) /
+                         mStride[1]);
+        if (mOptions.outputSizes == nullptr) {
+            outputHeight = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputHeight
+                                                                            : ceilOutputHeight;
+            outputWidth = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputWidth
+                                                                           : ceilOutputWidth;
+        } else {
+            outputHeight = mOptions.outputSizes[0];
+            outputWidth = mOptions.outputSizes[1];
+            // Predict and reset the implicit rounding type by the explicitly specified outputSizes
+            // which should match either floor or ceil rounding type.
+            if (outputHeight == floorOutputHeight && outputWidth == floorOutputWidth) {
+                mOptions.roundingType = ml::RoundingType::Floor;
+            } else if (outputHeight == ceilOutputHeight && outputWidth == ceilOutputWidth) {
+                mOptions.roundingType = ml::RoundingType::Ceil;
+            } else {
+                return DAWN_VALIDATION_ERROR("Invalid output sizes.");
+            }
+        }
 
         std::vector<int32_t> outputShape;
         int32_t batches = inputShape[0];

@@ -161,8 +161,10 @@ namespace utils {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
+        std::vector<int32_t> outputSizes;
         ml::AutoPad autoPad = ml::AutoPad::Explicit;
         ml::InputOperandLayout layout = ml::InputOperandLayout::Nchw;
+        ml::RoundingType roundinyType = ml::RoundingType::Floor;
 
         const ml::Pool2dOptions* AsPtr() {
             if (!windowDimensions.empty()) {
@@ -181,8 +183,13 @@ namespace utils {
                 mOptions.dilationsCount = dilations.size();
                 mOptions.dilations = dilations.data();
             }
+            if (!outputSizes.empty()) {
+                mOptions.outputSizesCount = outputSizes.size();
+                mOptions.outputSizes = outputSizes.data();
+            }
             mOptions.layout = layout;
             mOptions.autoPad = autoPad;
+            mOptions.roundingType = roundinyType;
             return &mOptions;
         }
 

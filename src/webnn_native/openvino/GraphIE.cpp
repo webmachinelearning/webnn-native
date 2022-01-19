@@ -895,6 +895,9 @@ namespace webnn_native { namespace ie {
             windowDimensions.push_back(options->windowDimensions[0]);
             windowDimensions.push_back(options->windowDimensions[1]);
         }
+        if (options->dilations[0] != 1 || options->dilations[1] != 1) {
+            return DAWN_INTERNAL_ERROR("The dilations of pool2d are not supported.");
+        }
         ngraph_node_t* poolNode = nullptr;
         IEStatusCode status = IEStatusCode::OK;
         switch (pool2d->GetType()) {
@@ -902,21 +905,24 @@ namespace webnn_native { namespace ie {
                 status = ngraph_average_pool(
                     input, strides.data(), strides.size(), padding.data(), padding.size(),
                     windowDimensions.data(), windowDimensions.size(),
-                    static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
+                    static_cast<ngraph_auto_pad>(options->autoPad),
+                    static_cast<ngraph_rounding_type>(options->roundingType), &poolNode);
                 break;
             // L2Pool2d is not supported, emulate it by referring to
             // https://github.com/tensorflow/tfjs/issues/5539.
             case op::Pool2dType::kL2Pool2d:
-                status =
-                    ngraph_l2_pool(input, strides.data(), strides.size(), padding.data(),
-                                   padding.size(), windowDimensions.data(), windowDimensions.size(),
-                                   static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
+                status = ngraph_l2_pool(
+                    input, strides.data(), strides.size(), padding.data(), padding.size(),
+                    windowDimensions.data(), windowDimensions.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad),
+                    static_cast<ngraph_rounding_type>(options->roundingType), &poolNode);
                 break;
             case op::Pool2dType::kMaxPool2d:
-                status = ngraph_max_pool(input, strides.data(), strides.size(), padding.data(),
-                                         padding.size(), windowDimensions.data(),
-                                         windowDimensions.size(),
-                                         static_cast<ngraph_auto_pad>(options->autoPad), &poolNode);
+                status = ngraph_max_pool(
+                    input, strides.data(), strides.size(), padding.data(), padding.size(),
+                    windowDimensions.data(), windowDimensions.size(),
+                    static_cast<ngraph_auto_pad>(options->autoPad),
+                    static_cast<ngraph_rounding_type>(options->roundingType), &poolNode);
                 break;
             default:
                 DAWN_ASSERT(0);

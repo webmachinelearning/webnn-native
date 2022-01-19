@@ -278,6 +278,13 @@
       {"value": 2, "name": "both"}
     ]
   },
+  "rounding type": {
+    "category": "enum",
+    "values": [
+      {"value": 0, "name": "floor"},
+      {"value": 1, "name": "ceil"}
+    ]
+  },
   "clamp options": {
     "category": "structure",
     "members": [
@@ -346,7 +353,10 @@
       {"name": "dilations count", "type": "uint32_t", "default": 0},
       {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
-      {"name": "layout", "type": "input operand layout", "default": "nchw"}
+      {"name": "layout", "type": "input operand layout", "default": "nchw"},
+      {"name": "rounding type", "type": "rounding type", "default": "floor"},
+      {"name": "output sizes count", "type": "uint32_t", "default": 0},
+      {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "optional": true}
     ]
   },
   "gemm options": {
