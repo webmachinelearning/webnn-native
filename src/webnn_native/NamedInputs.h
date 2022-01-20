@@ -32,6 +32,8 @@ namespace webnn_native {
 
         // WebNN API
         void Set(char const* name, const Input* input) {
+            mInputs[std::string(name)] = *input;
+#if defined(WEBNN_ENABLE_WIRE)
             std::vector<int32_t> dimensions;
             dimensions.assign(input->dimensions, input->dimensions + input->dimensionsCount);
 
@@ -39,12 +41,12 @@ namespace webnn_native {
             memcpy(buffer.get(), input->resource.buffer, input->resource.byteLength);
 
             // Prevent destroy from allocator memory after hanlding the command.
-            mInputs[std::string(name)] = *input;
             mInputs[std::string(name)].dimensions = dimensions.data();
             mInputs[std::string(name)].resource.buffer = buffer.get();
 
             mInputsBuffer.push_back(std::move(buffer));
             mInputsDimensions.push_back(std::move(dimensions));
+#endif  // defined(WEBNN_ENABLE_WIRE)
         }
 
         Input Get(char const* name) const {

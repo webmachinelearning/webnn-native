@@ -33,15 +33,14 @@ namespace webnn_native {
 
         // WebNN API
         void Set(char const* name, const ArrayBufferView* arrayBuffer) {
+            mOutputs[std::string(name)] = *arrayBuffer;
+#if defined(WEBNN_ENABLE_WIRE)
             // malloc a memory to host the result of computing.
             std::unique_ptr<char> buffer(new char[arrayBuffer->byteLength]);
-
             // Prevent destroy from allocator memory after hanlding the command.
             mOutputs[std::string(name)].buffer = buffer.get();
-            mOutputs[std::string(name)].byteLength = arrayBuffer->byteLength;
-            mOutputs[std::string(name)].byteOffset = arrayBuffer->byteOffset;
-
             mOutputsBuffer.push_back(std::move(buffer));
+#endif  // defined(WEBNN_ENABLE_WIRE)
         }
 
         // It's not support char** type in webnn.json to get name.

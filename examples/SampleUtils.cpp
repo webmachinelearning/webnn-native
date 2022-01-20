@@ -40,7 +40,11 @@ enum class CmdBufType {
     // TODO(cwallez@chromium.org): double terrible cmdbuf
 };
 
-static CmdBufType cmdBufType = CmdBufType::Terrible;
+#if defined(WEBNN_ENABLE_WIRE)
+    static CmdBufType cmdBufType = CmdBufType::Terrible;
+#else 
+    static CmdBufType cmdBufType = CmdBufType::None;
+#endif  // defined(WEBNN_ENABLE_WIRE)
 static webnn_wire::WireServer* wireServer = nullptr;
 static webnn_wire::WireClient* wireClient = nullptr;
 static utils::TerribleCommandBuffer* c2sBuf = nullptr;
@@ -262,7 +266,11 @@ namespace utils {
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
+#if defined(WEBNN_ENABLE_WIRE)
         static ml::NamedOperands namedOperands = CreateCppNamedOperands();
+#else
+        ml::NamedOperands namedOperands = ml::CreateNamedOperands();
+#endif  // defined(WEBNN_ENABLE_WIRE)
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

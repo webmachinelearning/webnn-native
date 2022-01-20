@@ -31,4 +31,6 @@ declare_args() {
   # Enables the compilation of WebNN's Null backend
   # (required for unittests, obviously non-conformant)
   webnn_enable_null = true
+
+  webnn_enable_wire = false
 }
