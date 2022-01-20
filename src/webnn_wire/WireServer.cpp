@@ -42,14 +42,14 @@ namespace webnn_wire {
     }
 
     bool WireServer::InjectNamedOperands(MLNamedOperands namedOperands,
-                                       uint32_t id,
-                                       uint32_t generation) {
+                                         uint32_t id,
+                                         uint32_t generation) {
         return mImpl->InjectNamedOperands(namedOperands, id, generation);
     }
 
     bool WireServer::InjectNamedOutputs(MLNamedOutputs namedOutputs,
-                                       uint32_t id,
-                                       uint32_t generation) {
+                                        uint32_t id,
+                                        uint32_t generation) {
         return mImpl->InjectNamedOutputs(namedOutputs, id, generation);
     }
 

@@ -64,9 +64,8 @@ namespace webnn_wire { namespace server {
     class ForwardToServer<R (Server::*)(Args...)> {
       private:
         // Get the type T of the last argument. It has CallbackUserdata as its base.
-        using UserdataT =
-            typename std::remove_pointer<typename std::decay<decltype(std::get<sizeof...(Args) - 1>(
-                std::declval<std::tuple<Args...>>()))>::type>::type;
+        using UserdataT = typename std::remove_pointer<typename std::decay<decltype(
+            std::get<sizeof...(Args) - 1>(std::declval<std::tuple<Args...>>()))>::type>::type;
 
         static_assert(std::is_base_of<CallbackUserdata, UserdataT>::value,
                       "Last argument of callback handler should derive from CallbackUserdata.");

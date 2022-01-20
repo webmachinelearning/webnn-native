@@ -18,10 +18,10 @@
 namespace webnn_wire { namespace server {
 
     bool Server::DoNamedOutputsSet(ObjectId namedOutputsId,
-                           char const* name,
-                           uint8_t const* buffer,
-                           size_t byteLength,
-                           size_t byteOffset) {
+                                   char const* name,
+                                   uint8_t const* buffer,
+                                   size_t byteLength,
+                                   size_t byteOffset) {
         auto* namedOutputs = NamedOutputsObjects().Get(namedOutputsId);
         if (namedOutputs == nullptr) {
             return false;
@@ -36,10 +36,10 @@ namespace webnn_wire { namespace server {
     }
 
     bool Server::DoNamedOutputsGet(ObjectId namedOutputsId,
-                           size_t index,
-                           uint8_t const* buffer,
-                           size_t byteLength,
-                           size_t byteOffset) {
+                                   size_t index,
+                                   uint8_t const* buffer,
+                                   size_t byteLength,
+                                   size_t byteOffset) {
         UNREACHABLE();
         return true;
     }

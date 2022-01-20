@@ -49,8 +49,8 @@ namespace webnn_wire { namespace server {
     }
 
     void Server::OnContextPopErrorScope(MLErrorType type,
-                                       const char* message,
-                                       ErrorScopeUserdata* userdata) {
+                                        const char* message,
+                                        ErrorScopeUserdata* userdata) {
         ReturnContextPopErrorScopeCallbackCmd cmd;
         cmd.context = userdata->context;
         cmd.requestSerial = userdata->requestSerial;
@@ -59,6 +59,5 @@ namespace webnn_wire { namespace server {
 
         SerializeCommand(cmd);
     }
-
 
 }}  // namespace webnn_wire::server

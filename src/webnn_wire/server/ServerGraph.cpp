@@ -13,9 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_wire/server/Server.h"
 #include "webnn_wire/WireCmd_autogen.h"
-#include "webnn_native/NamedOutputs.h"
+#include "webnn_wire/server/Server.h"
 
 namespace webnn_wire { namespace server {
 

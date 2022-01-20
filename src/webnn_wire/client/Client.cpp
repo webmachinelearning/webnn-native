@@ -43,8 +43,7 @@ namespace webnn_wire { namespace client {
 
     }  // anonymous namespace
 
-    Client::Client(CommandSerializer* serializer)
-        : ClientBase(), mSerializer(serializer) {
+    Client::Client(CommandSerializer* serializer) : ClientBase(), mSerializer(serializer) {
     }
 
     Client::~Client() {

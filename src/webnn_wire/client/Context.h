@@ -32,9 +32,7 @@ namespace webnn_wire { namespace client {
         bool PopErrorScope(MLErrorCallback callback, void* userdata);
         void SetUncapturedErrorCallback(MLErrorCallback callback, void* userdata);
 
-        bool OnPopErrorScopeCallback(uint64_t requestSerial,
-                                     MLErrorType type,
-                                     const char* message);
+        bool OnPopErrorScopeCallback(uint64_t requestSerial, MLErrorType type, const char* message);
 
       private:
         struct ErrorScopeData {

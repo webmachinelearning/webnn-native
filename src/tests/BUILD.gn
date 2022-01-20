@@ -113,11 +113,11 @@ test("webnn_unittests") {
     ":gmock_and_gtest",
     ":mock_webnn_gen",
     "${webnn_root}/src/common",
+    "${webnn_root}/src/utils:webnn_utils",
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_native:webnn_native_sources",
-    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   # Add internal webnn_native config for internal unittests.
@@ -172,11 +172,11 @@ source_set("webnn_end2end_tests_sources") {
     ":gmock_and_gtest",
     "${webnn_root}/examples:webnn_sample_utils",
     "${webnn_root}/src/common",
+    "${webnn_root}/src/utils:webnn_utils",
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_wire",
-    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   sources = [
@@ -246,11 +246,11 @@ test("webnn_end2end_tests") {
     ":gmock_and_gtest",
     ":webnn_end2end_tests_sources",
     "${webnn_root}/src/common",
+    "${webnn_root}/src/utils:webnn_utils",
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_wire",
-    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   libs = []

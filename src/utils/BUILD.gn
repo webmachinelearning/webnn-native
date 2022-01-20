@@ -29,9 +29,7 @@ static_library("webnn_utils") {
     "TerribleCommandBuffer.cpp",
     "TerribleCommandBuffer.h",
   ]
-  deps = [
-    "${webnn_root}/src/common",
-  ]
+  deps = [ "${webnn_root}/src/common" ]
   libs = []
   frameworks = []
 

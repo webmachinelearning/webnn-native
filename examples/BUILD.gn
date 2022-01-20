@@ -37,11 +37,11 @@ static_library("webnn_sample_utils") {
   # Export all of these as public deps so that `gn check` allows includes
   public_deps = [
     "${webnn_root}/src/common",
+    "${webnn_root}/src/utils:webnn_utils",
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn:webnncpp",
     "${webnn_root}/src/webnn_native",
     "${webnn_root}/src/webnn_wire",
-    "${webnn_root}/src/utils:webnn_utils",
   ]
 
   defines = [

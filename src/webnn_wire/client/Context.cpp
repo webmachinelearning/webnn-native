@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn_wire/client/context.h"
+#include "webnn_wire/client/Context.h"
 
-#include "webnn_wire/client/Client.h"
 #include "webnn_wire/WireCmd_autogen.h"
+#include "webnn_wire/client/Client.h"
 
 namespace webnn_wire { namespace client {
 
@@ -55,8 +55,8 @@ namespace webnn_wire { namespace client {
     }
 
     bool Context::OnPopErrorScopeCallback(uint64_t requestSerial,
-                                         MLErrorType type,
-                                         const char* message) {
+                                          MLErrorType type,
+                                          const char* message) {
         switch (type) {
             case MLErrorType_NoError:
             case MLErrorType_Validation:

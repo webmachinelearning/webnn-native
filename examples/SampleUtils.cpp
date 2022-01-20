@@ -41,9 +41,9 @@ enum class CmdBufType {
 };
 
 #if defined(WEBNN_ENABLE_WIRE)
-    static CmdBufType cmdBufType = CmdBufType::Terrible;
-#else 
-    static CmdBufType cmdBufType = CmdBufType::None;
+static CmdBufType cmdBufType = CmdBufType::Terrible;
+#else
+static CmdBufType cmdBufType = CmdBufType::None;
 #endif  // defined(WEBNN_ENABLE_WIRE)
 static webnn_wire::WireServer* wireServer = nullptr;
 static webnn_wire::WireClient* wireClient = nullptr;
@@ -111,10 +111,9 @@ ml::NamedInputs CreateCppNamedInputs() {
     MLNamedInputs namedInputs =
         reinterpret_cast<MLNamedInputs>(new webnn_native::NamedInputsBase());
     auto namedInputsReservation = wireClient->ReserveNamedInputs(nullptr);
-    wireServer->InjectNamedInputs(namedInputs, namedInputsReservation.id,
-                                  namedInputsReservation.generation,
-                                  namedInputsReservation.contextId,
-                                  namedInputsReservation.contextGeneration);
+    wireServer->InjectNamedInputs(
+        namedInputs, namedInputsReservation.id, namedInputsReservation.generation,
+        namedInputsReservation.contextId, namedInputsReservation.contextGeneration);
 
     namedInputs = namedInputsReservation.namedInputs;
 
@@ -126,7 +125,7 @@ ml::NamedOperands CreateCppNamedOperands() {
         reinterpret_cast<MLNamedOperands>(new webnn_native::NamedOperandsBase());
     auto namedOperandsReservation = wireClient->ReserveNamedOperands();
     wireServer->InjectNamedOperands(namedOperands, namedOperandsReservation.id,
-                                  namedOperandsReservation.generation);
+                                    namedOperandsReservation.generation);
 
     namedOperands = namedOperandsReservation.namedOperands;
     return ml::NamedOperands::Acquire(namedOperands);
@@ -137,7 +136,7 @@ ml::NamedOutputs CreateCppNamedOutputs() {
         reinterpret_cast<MLNamedOutputs>(new webnn_native::NamedOutputsBase());
     auto namedOutputsReservation = wireClient->ReserveNamedOutputs();
     wireServer->InjectNamedOutputs(namedOutputs, namedOutputsReservation.id,
-                                  namedOutputsReservation.generation);
+                                   namedOutputsReservation.generation);
 
     namedOutputs = namedOutputsReservation.namedOutputs;
     return ml::NamedOutputs::Acquire(namedOutputs);

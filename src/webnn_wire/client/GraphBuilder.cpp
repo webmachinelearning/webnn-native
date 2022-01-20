@@ -14,8 +14,8 @@
 
 #include "webnn_wire/client/GraphBuilder.h"
 
-#include "webnn_wire/client/ApiObjects_autogen.h"
 #include "webnn_wire/WireCmd_autogen.h"
+#include "webnn_wire/client/ApiObjects_autogen.h"
 #include "webnn_wire/client/Client.h"
 
 namespace webnn_wire { namespace client {

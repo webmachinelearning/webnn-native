@@ -16,12 +16,12 @@
 #ifndef WEBNN_WIRE_CLIENT_APIOBJECTS_H_
 #define WEBNN_WIRE_CLIENT_APIOBJECTS_H_
 
-#include "webnn_wire/client/ObjectBase.h"
 #include "webnn_wire/client/Context.h"
 #include "webnn_wire/client/Graph.h"
 #include "webnn_wire/client/GraphBuilder.h"
 #include "webnn_wire/client/NamedInputs.h"
 #include "webnn_wire/client/NamedOutputs.h"
+#include "webnn_wire/client/ObjectBase.h"
 #include "webnn_wire/client/OperandArray.h"
 #include "webnn_wire/client/OperatorArray.h"
 

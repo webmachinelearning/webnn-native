@@ -28,7 +28,7 @@ namespace webnn_wire { namespace client {
       public:
         using ObjectBase::ObjectBase;
 
-        void Set(char const * name, MLInput const * input);
+        void Set(char const* name, MLInput const* input);
     };
 
 }}  // namespace webnn_wire::client

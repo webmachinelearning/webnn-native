@@ -14,12 +14,12 @@
 
 #include "webnn_wire/client/NamedInputs.h"
 
-#include "webnn_wire/client/Client.h"
 #include "webnn_wire/WireCmd_autogen.h"
+#include "webnn_wire/client/Client.h"
 
 namespace webnn_wire { namespace client {
 
-    void NamedInputs::Set(char const * name, MLInput const * input) {
+    void NamedInputs::Set(char const* name, MLInput const* input) {
         NamedInputsSetCmd cmd;
         cmd.namedInputsId = this->id;
         cmd.name = name;

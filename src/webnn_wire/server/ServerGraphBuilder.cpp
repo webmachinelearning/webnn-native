@@ -25,13 +25,13 @@ namespace webnn_wire { namespace server {
                                                 ObjectHandle result) {
         auto* graphBuilder = GraphBuilderObjects().Get(graphBuilderId);
         if (graphBuilder == nullptr) {
-          return false;
+            return false;
         }
 
         // Create and register the operand object.
         auto* resultData = OperandObjects().Allocate(result.id);
         if (resultData == nullptr) {
-          return false;
+            return false;
         }
         resultData->generation = result.generation;
         resultData->contextInfo = graphBuilder->contextInfo;
