@@ -262,7 +262,7 @@ namespace utils {
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
-        ml::NamedOperands namedOperands = CreateCppNamedOperands();
+        static ml::NamedOperands namedOperands = CreateCppNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

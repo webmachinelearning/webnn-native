@@ -14,6 +14,8 @@
 // limitations under the License.
 
 #include "webnn_wire/server/Server.h"
+#include "webnn_wire/WireCmd_autogen.h"
+#include "webnn_native/NamedOutputs.h"
 
 namespace webnn_wire { namespace server {
 
@@ -26,6 +28,17 @@ namespace webnn_wire { namespace server {
         }
 
         mProcs.graphCompute(graph->handle, namedInputs->handle, namedOutputs->handle);
+
+        MLArrayBufferView arrayBuffer = {};
+        mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
+        // Return the result.
+        ReturnGraphComputeResultCmd cmd;
+        cmd.name = "TODO: use the name getting from namedOutputs";
+        cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
+        cmd.byteLength = arrayBuffer.byteLength;
+        cmd.byteOffset = arrayBuffer.byteOffset;
+
+        SerializeCommand(cmd);
         return true;
     }
 

@@ -35,4 +35,13 @@ namespace webnn_wire { namespace server {
         return true;
     }
 
+    bool Server::DoNamedOutputsGet(ObjectId namedOutputsId,
+                           size_t index,
+                           uint8_t const* buffer,
+                           size_t byteLength,
+                           size_t byteOffset) {
+        UNREACHABLE();
+        return true;
+    }
+
 }}  // namespace webnn_wire::server

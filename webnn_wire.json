@@ -55,6 +55,13 @@
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0}
     ],
+    "named outputs get": [
+      {"name": "named outputs id", "type": "ObjectId" },
+      {"name": "index", "type": "size_t"},
+      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "byte length", "type": "size_t"},
+      {"name": "byte offset", "type": "size_t", "default": 0}
+    ],
     "destroy object": [
       {"name": "object type", "type": "ObjectType" },
       {"name": "object id", "type": "ObjectId" }
@@ -70,6 +77,13 @@
       { "name": "request serial", "type": "uint64_t" },
       { "name": "type", "type": "error type" },
       { "name": "message", "type": "char", "annotation": "const*", "length": "strlen" }
+    ],
+    "graph compute result": [
+      { "name": "named outputs", "type": "ObjectHandle", "handle_type": "named outputs" },
+      {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "byte length", "type": "size_t"},
+      {"name": "byte offset", "type": "size_t", "default": 0}
     ]
   },
   "special items": {
@@ -83,6 +97,7 @@
       "GraphBuilderConstant",
       "NamedInputsSet",
       "NamedOutputsSet",
+      "NamedOutputsGet",
       "OperandArraySize",
       "OperatorArraySize"
     ],
