@@ -38,6 +38,21 @@ namespace webnn_wire { namespace server {
         // mProcs.contextSetContextLostCallback(context, nullptr, nullptr);
     }
 
+    bool Server::InjectInstance(MLInstance instance, uint32_t id, uint32_t generation) {
+        ASSERT(instance != nullptr);
+        ObjectData<MLInstance>* data = InstanceObjects().Allocate(id);
+        if (data == nullptr) {
+            return false;
+        }
+
+        data->handle = instance;
+        data->generation = generation;
+        data->state = AllocationState::Allocated;
+        mProcs.instanceReference(instance);
+
+        return true;
+    }
+
     bool Server::InjectContext(MLContext context, uint32_t id, uint32_t generation) {
         ASSERT(context != nullptr);
         ObjectData<MLContext>* data = ContextObjects().Allocate(id);

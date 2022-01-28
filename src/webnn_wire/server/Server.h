@@ -120,6 +120,7 @@ namespace webnn_wire { namespace server {
         const volatile char* HandleCommandsImpl(const volatile char* commands,
                                                 size_t size) override;
 
+        bool InjectInstance(MLInstance instance, uint32_t id, uint32_t generation);
         bool InjectContext(MLContext context, uint32_t id, uint32_t generation);
         bool InjectNamedInputs(MLNamedInputs namedInputs,
                                uint32_t id,

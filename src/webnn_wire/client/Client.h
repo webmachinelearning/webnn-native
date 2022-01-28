@@ -37,6 +37,7 @@ namespace webnn_wire { namespace client {
         const volatile char* HandleCommandsImpl(const volatile char* commands,
                                                 size_t size) override;
 
+        ReservedInstance ReserveInstance();
         ReservedContext ReserveContext();
         ReservedNamedInputs ReserveNamedInputs(MLContext context);
         ReservedNamedOperands ReserveNamedOperands();

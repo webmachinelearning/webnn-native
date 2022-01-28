@@ -18,6 +18,9 @@
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
+#include "webnn_native/NamedInputs.h"
+#include "webnn_native/NamedOperands.h"
+#include "webnn_native/NamedOutputs.h"
 #include "webnn_native/ValidationUtils_autogen.h"
 
 namespace webnn_native {
@@ -155,6 +158,18 @@ namespace webnn_native {
         }
         UNREACHABLE();
         return nullptr;
+    }
+
+    NamedInputsBase* InstanceBase::CreateNamedInputs() {
+        return new NamedInputsBase();
+    }
+
+    NamedOperandsBase* InstanceBase::CreateNamedOperands() {
+        return new NamedOperandsBase();
+    }
+
+    NamedOutputsBase* InstanceBase::CreateNamedOutputs() {
+        return new NamedOutputsBase();
     }
 
     bool InstanceBase::ConsumedError(MaybeError maybeError) {

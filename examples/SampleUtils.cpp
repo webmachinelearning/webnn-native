@@ -50,11 +50,12 @@ static webnn_wire::WireClient* wireClient = nullptr;
 static utils::TerribleCommandBuffer* c2sBuf = nullptr;
 static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 
-static std::unique_ptr<webnn_native::Instance> instance;
+static ml::Instance clientInstance;
+static std::unique_ptr<webnn_native::Instance> nativeInstance;
 ml::Context CreateCppContext(ml::ContextOptions const* options) {
-    instance = std::make_unique<webnn_native::Instance>();
+    nativeInstance = std::make_unique<webnn_native::Instance>();
     WebnnProcTable backendProcs = webnn_native::GetProcs();
-    MLContext backendContext = instance->CreateContext(options);
+    MLContext backendContext = nativeInstance->CreateContext(options);
     if (backendContext == nullptr) {
         return ml::Context();
     }
@@ -86,11 +87,22 @@ ml::Context CreateCppContext(ml::ContextOptions const* options) {
             procs = webnn_wire::client::GetProcs();
             s2cBuf->SetHandler(wireClient);
 
+#ifdef ENABLE_INJECT_CONTEXT
             auto contextReservation = wireClient->ReserveContext();
             wireServer->InjectContext(backendContext, contextReservation.id,
                                       contextReservation.generation);
 
             context = contextReservation.context;
+#else
+            webnnProcSetProcs(&procs);
+            auto instanceReservation = wireClient->ReserveInstance();
+            wireServer->InjectInstance(nativeInstance->Get(), instanceReservation.id,
+                                       instanceReservation.generation);
+            // Keep the reference instread of using Acquire.
+            // TODO:: make the instance in the client as singleton object.
+            clientInstance = ml::Instance(instanceReservation.instance);
+            return clientInstance.CreateContext(options);
+#endif
         } break;
     }
     webnnProcSetProcs(&procs);
@@ -108,6 +120,7 @@ void DoFlush() {
 }
 
 ml::NamedInputs CreateCppNamedInputs() {
+#ifdef ENABLE_INJECT_CONTEXT
     MLNamedInputs namedInputs =
         reinterpret_cast<MLNamedInputs>(new webnn_native::NamedInputsBase());
     auto namedInputsReservation = wireClient->ReserveNamedInputs(nullptr);
@@ -118,9 +131,13 @@ ml::NamedInputs CreateCppNamedInputs() {
     namedInputs = namedInputsReservation.namedInputs;
 
     return ml::NamedInputs::Acquire(namedInputs);
+#else
+    return clientInstance.CreateNamedInputs();
+#endif
 }
 
 ml::NamedOperands CreateCppNamedOperands() {
+#ifdef ENABLE_INJECT_CONTEXT
     MLNamedOperands namedOperands =
         reinterpret_cast<MLNamedOperands>(new webnn_native::NamedOperandsBase());
     auto namedOperandsReservation = wireClient->ReserveNamedOperands();
@@ -129,9 +146,13 @@ ml::NamedOperands CreateCppNamedOperands() {
 
     namedOperands = namedOperandsReservation.namedOperands;
     return ml::NamedOperands::Acquire(namedOperands);
+#else
+    return clientInstance.CreateNamedOperands();
+#endif
 }
 
 ml::NamedOutputs CreateCppNamedOutputs() {
+#ifdef ENABLE_INJECT_CONTEXT
     MLNamedOutputs namedOutputs =
         reinterpret_cast<MLNamedOutputs>(new webnn_native::NamedOutputsBase());
     auto namedOutputsReservation = wireClient->ReserveNamedOutputs();
@@ -140,6 +161,9 @@ ml::NamedOutputs CreateCppNamedOutputs() {
 
     namedOutputs = namedOutputsReservation.namedOutputs;
     return ml::NamedOutputs::Acquire(namedOutputs);
+#else
+    return clientInstance.CreateNamedOutputs();
+#endif
 }
 
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
@@ -266,7 +290,7 @@ namespace utils {
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
 #if defined(WEBNN_ENABLE_WIRE)
-        static ml::NamedOperands namedOperands = CreateCppNamedOperands();
+        ml::NamedOperands namedOperands = CreateCppNamedOperands();
 #else
         ml::NamedOperands namedOperands = ml::CreateNamedOperands();
 #endif  // defined(WEBNN_ENABLE_WIRE)

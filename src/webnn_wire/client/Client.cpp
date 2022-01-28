@@ -65,6 +65,16 @@ namespace webnn_wire { namespace client {
         }
     }
 
+    ReservedInstance Client::ReserveInstance() {
+        auto* allocation = InstanceAllocator().New(this);
+
+        ReservedInstance result;
+        result.instance = ToAPI(allocation->object.get());
+        result.id = allocation->object->id;
+        result.generation = allocation->generation;
+        return result;
+    }
+
     ReservedContext Client::ReserveContext() {
         auto* allocation = ContextAllocator().New(this);
 

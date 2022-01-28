@@ -225,8 +225,7 @@ namespace utils {
         std::vector<ml::Input> mlInputs;
         mlInputs.reserve(inputs.size());
 #if defined(WEBNN_ENABLE_WIRE)
-        // TODO: Use static namedInputs which inject server's namedInputs
-        static ml::NamedInputs namedInputs = CreateCppNamedInputs();
+        ml::NamedInputs namedInputs = CreateCppNamedInputs();
 #else
         ml::NamedInputs namedInputs = ml::CreateNamedInputs();
 #endif  // defined(WEBNN_ENABLE_WIRE)
@@ -241,8 +240,7 @@ namespace utils {
         std::vector<ml::ArrayBufferView> mlOutputs;
         mlOutputs.reserve(outputs.size());
 #if defined(WEBNN_ENABLE_WIRE)
-        // TODO: Use static NamedOutputs which inject server's NamedOutputs
-        static ml::NamedOutputs namedOutputs = CreateCppNamedOutputs();
+        ml::NamedOutputs namedOutputs = CreateCppNamedOutputs();
 #else
         ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
 #endif  // defined(WEBNN_ENABLE_WIRE)

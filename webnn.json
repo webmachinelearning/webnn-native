@@ -28,6 +28,21 @@
         "args": [
           {"name": "options", "type": "context options", "annotation": "const*", "optional": true}
         ]
+      },
+      {
+        "name": "create named inputs",
+        "returns": "named inputs",
+        "args": []
+      },
+      {
+        "name": "create named operands",
+        "returns": "named operands",
+        "args": []
+      },
+      {
+        "name": "create named outputs",
+        "returns": "named outputs",
+        "args": []
       }
     ]
   },

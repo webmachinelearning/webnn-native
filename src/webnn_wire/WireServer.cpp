@@ -29,6 +29,10 @@ namespace webnn_wire {
         return mImpl->HandleCommands(commands, size);
     }
 
+    bool WireServer::InjectInstance(MLInstance instance, uint32_t id, uint32_t generation) {
+        return mImpl->InjectInstance(instance, id, generation);
+    }
+
     bool WireServer::InjectContext(MLContext context, uint32_t id, uint32_t generation) {
         return mImpl->InjectContext(context, id, generation);
     }

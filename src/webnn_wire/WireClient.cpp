@@ -29,6 +29,10 @@ namespace webnn_wire {
         return mImpl->HandleCommands(commands, size);
     }
 
+    ReservedInstance WireClient::ReserveInstance() {
+        return mImpl->ReserveInstance();
+    }
+
     ReservedContext WireClient::ReserveContext() {
         return mImpl->ReserveContext();
     }

@@ -34,6 +34,12 @@ namespace webnn_wire {
         CommandSerializer* serializer;
     };
 
+    struct ReservedInstance {
+        MLInstance instance;
+        uint32_t id;
+        uint32_t generation;
+    };
+
     struct ReservedContext {
         MLContext context;
         uint32_t id;
@@ -68,6 +74,7 @@ namespace webnn_wire {
         const volatile char* HandleCommands(const volatile char* commands,
                                             size_t size) override final;
 
+        ReservedInstance ReserveInstance();
         ReservedContext ReserveContext();
         ReservedNamedInputs ReserveNamedInputs(MLContext context);
         ReservedNamedOperands ReserveNamedOperands();
