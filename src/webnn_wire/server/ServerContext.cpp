@@ -17,15 +17,6 @@
 
 namespace webnn_wire { namespace server {
 
-    // void Server::OnUncapturedError(ObjectHandle context, MLErrorType type, const char* message) {
-    //     ReturnContextUncapturedErrorCallbackCmd cmd;
-    //     cmd.context = context;
-    //     cmd.type = type;
-    //     cmd.message = message;
-
-    //     SerializeCommand(cmd);
-    // }
-
     bool Server::DoContextPopErrorScope(ObjectId contextId, uint64_t requestSerial) {
         auto* context = ContextObjects().Get(contextId);
         if (context == nullptr) {

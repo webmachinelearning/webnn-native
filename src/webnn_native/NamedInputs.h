@@ -24,7 +24,7 @@
 
 namespace webnn_native {
 
-    // TODO::Use WebGPU instead of ArrayBufferView
+    // TODO::Use WebGPUBuffer instead of ArrayBufferView
     class NamedInputsBase : public RefCounted {
       public:
         NamedInputsBase() = default;

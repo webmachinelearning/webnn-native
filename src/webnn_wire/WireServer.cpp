@@ -57,8 +57,4 @@ namespace webnn_wire {
         return mImpl->InjectNamedOutputs(namedOutputs, id, generation);
     }
 
-    // WGPUContext WireServer::GetContext(uint32_t id, uint32_t generation) {
-    //     return mImpl->GetContext(id, generation);
-    // }
-
 }  // namespace webnn_wire

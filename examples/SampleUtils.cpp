@@ -120,50 +120,27 @@ void DoFlush() {
 }
 
 ml::NamedInputs CreateCppNamedInputs() {
-#ifdef ENABLE_INJECT_CONTEXT
-    MLNamedInputs namedInputs =
-        reinterpret_cast<MLNamedInputs>(new webnn_native::NamedInputsBase());
-    auto namedInputsReservation = wireClient->ReserveNamedInputs(nullptr);
-    wireServer->InjectNamedInputs(
-        namedInputs, namedInputsReservation.id, namedInputsReservation.generation,
-        namedInputsReservation.contextId, namedInputsReservation.contextGeneration);
-
-    namedInputs = namedInputsReservation.namedInputs;
-
-    return ml::NamedInputs::Acquire(namedInputs);
-#else
+#if defined(WEBNN_ENABLE_WIRE)
     return clientInstance.CreateNamedInputs();
-#endif
+#else
+    return ml::CreateNamedInputs();
+#endif  // defined(WEBNN_ENABLE_WIRE)
 }
 
 ml::NamedOperands CreateCppNamedOperands() {
-#ifdef ENABLE_INJECT_CONTEXT
-    MLNamedOperands namedOperands =
-        reinterpret_cast<MLNamedOperands>(new webnn_native::NamedOperandsBase());
-    auto namedOperandsReservation = wireClient->ReserveNamedOperands();
-    wireServer->InjectNamedOperands(namedOperands, namedOperandsReservation.id,
-                                    namedOperandsReservation.generation);
-
-    namedOperands = namedOperandsReservation.namedOperands;
-    return ml::NamedOperands::Acquire(namedOperands);
-#else
+#if defined(WEBNN_ENABLE_WIRE)
     return clientInstance.CreateNamedOperands();
-#endif
+#else
+    return ml::CreateNamedOperands();
+#endif  // defined(WEBNN_ENABLE_WIRE)
 }
 
 ml::NamedOutputs CreateCppNamedOutputs() {
-#ifdef ENABLE_INJECT_CONTEXT
-    MLNamedOutputs namedOutputs =
-        reinterpret_cast<MLNamedOutputs>(new webnn_native::NamedOutputsBase());
-    auto namedOutputsReservation = wireClient->ReserveNamedOutputs();
-    wireServer->InjectNamedOutputs(namedOutputs, namedOutputsReservation.id,
-                                   namedOutputsReservation.generation);
-
-    namedOutputs = namedOutputsReservation.namedOutputs;
-    return ml::NamedOutputs::Acquire(namedOutputs);
-#else
+#if defined(WEBNN_ENABLE_WIRE)
     return clientInstance.CreateNamedOutputs();
-#endif
+#else
+    return ml::CreateNamedOutputs();
+#endif  // defined(WEBNN_ENABLE_WIRE)
 }
 
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
@@ -289,11 +266,7 @@ namespace utils {
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
-#if defined(WEBNN_ENABLE_WIRE)
         ml::NamedOperands namedOperands = CreateCppNamedOperands();
-#else
-        ml::NamedOperands namedOperands = ml::CreateNamedOperands();
-#endif  // defined(WEBNN_ENABLE_WIRE)
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

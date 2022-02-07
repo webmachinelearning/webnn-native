@@ -224,11 +224,7 @@ namespace utils {
         // The `mlInputs` local variable to hold the input data util computing the graph.
         std::vector<ml::Input> mlInputs;
         mlInputs.reserve(inputs.size());
-#if defined(WEBNN_ENABLE_WIRE)
         ml::NamedInputs namedInputs = CreateCppNamedInputs();
-#else
-        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
-#endif  // defined(WEBNN_ENABLE_WIRE)
         for (auto& input : inputs) {
             const ml::ArrayBufferView resource = {(void*)input.resource.data(),
                                                   input.resource.size() * sizeof(float)};
@@ -239,11 +235,7 @@ namespace utils {
         // The `mlOutputs` local variable to hold the output data util computing the graph.
         std::vector<ml::ArrayBufferView> mlOutputs;
         mlOutputs.reserve(outputs.size());
-#if defined(WEBNN_ENABLE_WIRE)
         ml::NamedOutputs namedOutputs = CreateCppNamedOutputs();
-#else
-        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
-#endif  // defined(WEBNN_ENABLE_WIRE)
         for (auto& output : outputs) {
             const ml::ArrayBufferView resource = {output.resource.data(),
                                                   output.resource.size() * sizeof(float)};

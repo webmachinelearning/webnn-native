@@ -22,6 +22,7 @@
 #include <map>
 #include <unordered_set>
 
+// TODO: Refactor the file that fork from dawn Repo.
 namespace webnn_wire { namespace server {
 
     struct ContextInfo {

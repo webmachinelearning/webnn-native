@@ -17,27 +17,6 @@
 
 namespace webnn_wire { namespace client {
 
-    // bool Client::DoDeviceUncapturedErrorCallback(Device* device,
-    //                                              WGPUErrorType errorType,
-    //                                              const char* message) {
-    //     switch (errorType) {
-    //         case WGPUErrorType_NoError:
-    //         case WGPUErrorType_Validation:
-    //         case WGPUErrorType_OutOfMemory:
-    //         case WGPUErrorType_Unknown:
-    //         case WGPUErrorType_DeviceLost:
-    //             break;
-    //         default:
-    //             return false;
-    //     }
-    //     if (device == nullptr) {
-    //         // The device might have been deleted or recreated so this isn't an error.
-    //         return true;
-    //     }
-    //     device->HandleError(errorType, message);
-    //     return true;
-    // }
-
     bool Client::DoContextPopErrorScopeCallback(Context* context,
                                                 uint64_t requestSerial,
                                                 MLErrorType errorType,
