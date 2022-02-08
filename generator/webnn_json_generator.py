@@ -30,7 +30,7 @@ except ValueError:
     sys.exit(1)
 
 from generator_lib import Generator, run_generator, FileRender
-from dawn_json_generator import parse_json, Method, Name
+from dawn_json_generator import parse_json, Method, Name, compute_wire_params
 
 #############################################################
 # Generator
@@ -174,6 +174,13 @@ def as_frontendType(typ):
     else:
         return as_cType(typ.name)
 
+def as_wireType(typ):
+    if typ.category == 'object':
+        return typ.name.CamelCase() + '*'
+    elif typ.category in ['bitmask', 'enum']:
+        return 'ML' + typ.name.CamelCase()
+    else:
+        return as_cppType(typ.name)
 
 def c_methods(types, typ):
     return typ.methods + [
@@ -195,18 +202,22 @@ def has_callback_arguments(method):
 
 class MultiGeneratorFromWebnnJSON(Generator):
     def get_description(self):
-        return 'Generates code for various target from Dawn.json.'
+        return 'Generates code for various target from webnn.json.'
 
     def add_commandline_arguments(self, parser):
         allowed_targets = [
             'webnn_headers', 'webnncpp_headers', 'webnncpp', 'webnn_proc',
-            'mock_webnn', 'webnn_native_utils'
+            'mock_webnn', 'webnn_wire', 'webnn_native_utils'
         ]
 
         parser.add_argument('--webnn-json',
                             required=True,
                             type=str,
                             help='The WebNN JSON definition to use.')
+        parser.add_argument('--wire-json',
+                            default=None,
+                            type=str,
+                            help='The WEBNN WIRE JSON definition to use.')
         parser.add_argument(
             '--targets',
             required=True,
@@ -226,6 +237,11 @@ class MultiGeneratorFromWebnnJSON(Generator):
         api_params = parse_json(loaded_json)
 
         targets = args.targets.split(',')
+
+        wire_json = None
+        if args.wire_json:
+            with open(args.wire_json) as f:
+                wire_json = json.loads(f.read())
 
         base_params = {
             'Name': lambda name: Name(name),
@@ -338,10 +354,70 @@ class MultiGeneratorFromWebnnJSON(Generator):
                 FileRender('webnn_native/ProcTable.cpp',
                            'src/webnn_native/ProcTable.cpp', frontend_params))
 
+        if 'webnn_wire' in targets:
+            additional_params = compute_wire_params(api_params, wire_json)
+
+            wire_params = [
+                base_params, api_params, {
+                    'as_wireType': as_wireType,
+                    'as_annotated_wireType': \
+                        lambda arg: annotated(as_wireType(arg.type), arg),
+                }, additional_params
+            ]
+            renders.append(
+                FileRender('webnn_wire/ObjectType.h',
+                           'src/webnn_wire/ObjectType_autogen.h', wire_params))
+            renders.append(
+                FileRender('webnn_wire/WireCmd.h',
+                           'src/webnn_wire/WireCmd_autogen.h', wire_params))
+            renders.append(
+                FileRender('webnn_wire/WireCmd.cpp',
+                           'src/webnn_wire/WireCmd_autogen.cpp', wire_params))
+            renders.append(
+                FileRender('webnn_wire/client/ApiObjects.h',
+                           'src/webnn_wire/client/ApiObjects_autogen.h',
+                           wire_params))
+            renders.append(
+                FileRender('webnn_wire/client/ApiProcs.cpp',
+                           'src/webnn_wire/client/ApiProcs_autogen.cpp',
+                           wire_params))
+            renders.append(
+                FileRender('webnn_wire/client/ClientBase.h',
+                           'src/webnn_wire/client/ClientBase_autogen.h',
+                           wire_params))
+            renders.append(
+                FileRender('webnn_wire/client/ClientHandlers.cpp',
+                           'src/webnn_wire/client/ClientHandlers_autogen.cpp',
+                           wire_params))
+            renders.append(
+                FileRender(
+                    'webnn_wire/client/ClientPrototypes.inc',
+                    'src/webnn_wire/client/ClientPrototypes_autogen.inc',
+                    wire_params))
+            renders.append(
+                FileRender('webnn_wire/server/ServerBase.h',
+                           'src/webnn_wire/server/ServerBase_autogen.h',
+                           wire_params))
+            renders.append(
+                FileRender('webnn_wire/server/ServerDoers.cpp',
+                           'src/webnn_wire/server/ServerDoers_autogen.cpp',
+                           wire_params))
+            renders.append(
+                FileRender('webnn_wire/server/ServerHandlers.cpp',
+                           'src/webnn_wire/server/ServerHandlers_autogen.cpp',
+                           wire_params))
+            renders.append(
+                FileRender(
+                    'webnn_wire/server/ServerPrototypes.inc',
+                    'src/webnn_wire/server/ServerPrototypes_autogen.inc',
+                    wire_params))
+
         return renders
 
     def get_dependencies(self, args):
         deps = [os.path.abspath(args.webnn_json)]
+        if args.wire_json != None:
+            deps += [os.path.abspath(args.wire_json)]
         return deps
 
 

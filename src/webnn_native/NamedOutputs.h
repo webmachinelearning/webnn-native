@@ -16,13 +16,65 @@
 #define WEBNN_NATIVE_NAMED_OUTPUTS_H_
 
 #include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
-#include "webnn_native/NamedRecords.h"
+#include "common/RefCounted.h"
+#include "webnn_native/webnn_platform.h"
 
 namespace webnn_native {
 
-    class NamedOutputsBase : public NamedRecords<ArrayBufferView> {};
+    // TODO::Use WebGPU instead of ArrayBufferView
+    class NamedOutputsBase : public RefCounted {
+      public:
+        NamedOutputsBase() = default;
+        virtual ~NamedOutputsBase() = default;
+
+        // WebNN API
+        void Set(char const* name, const ArrayBufferView* arrayBuffer) {
+            mOutputs[std::string(name)] = *arrayBuffer;
+#if defined(WEBNN_ENABLE_WIRE)
+            // malloc a memory to host the result of computing.
+            std::unique_ptr<char> buffer(new char[arrayBuffer->byteLength]);
+            // Prevent destroy from allocator memory after hanlding the command.
+            mOutputs[std::string(name)].buffer = buffer.get();
+            mOutputsBuffer.push_back(std::move(buffer));
+#endif  // defined(WEBNN_ENABLE_WIRE)
+        }
+
+        // It's not support char** type in webnn.json to get name.
+        void Get(size_t index, ArrayBufferView const* arrayBuffer) const {
+            size_t i = 0;
+            for (auto& namedOutput : mOutputs) {
+                if (index == i) {
+                    *const_cast<ArrayBufferView*>(arrayBuffer) = namedOutput.second;
+                    return;
+                }
+                ++i;
+            }
+            UNREACHABLE();
+        }
+
+        ArrayBufferView Get(char const* name) const {
+            if (mOutputs.find(std::string(name)) == mOutputs.end()) {
+                return ArrayBufferView();
+            }
+            return mOutputs.at(std::string(name));
+        }
+
+        // Other methods
+        const std::map<std::string, ArrayBufferView>& GetRecords() const {
+            return mOutputs;
+        }
+
+      private:
+        // The tempary memory in Allocator will be released after handling the command, so malloc
+        // the same size memory to hold the result from GraphComputeCmd.
+        std::vector<std::unique_ptr<char>> mOutputsBuffer;
+
+        std::map<std::string, ArrayBufferView> mOutputs;
+    };
 
 }  // namespace webnn_native
 

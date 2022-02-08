@@ -28,6 +28,21 @@
         "args": [
           {"name": "options", "type": "context options", "annotation": "const*", "optional": true}
         ]
+      },
+      {
+        "name": "create named inputs",
+        "returns": "named inputs",
+        "args": []
+      },
+      {
+        "name": "create named operands",
+        "returns": "named operands",
+        "args": []
+      },
+      {
+        "name": "create named outputs",
+        "returns": "named outputs",
+        "args": []
       }
     ]
   },
@@ -52,6 +67,18 @@
         {"value": 4, "name": "device lost"}
     ]
   },
+  "ObjectType": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
+  "ObjectId": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
+  "ObjectHandle": {
+    "_comment": "Only used for the wire",
+    "category": "native"
+  },
   "char": {
     "category": "native"
   },
@@ -61,7 +88,13 @@
   "const void*": {
     "category": "native"
   },
+  "uint8_t": {
+    "category": "native"
+  },
   "uint32_t": {
+    "category": "native"
+  },
+  "uint64_t": {
     "category": "native"
   },
   "const uint32_t*": {
@@ -124,6 +157,14 @@
   "context": {
     "category": "object",
     "methods": [
+      {
+        "name": "inject error",
+        "args": [
+            {"name": "type", "type": "error type"},
+            {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"}
+        ],
+        "TODO": "enga@: Make this a Dawn extension"
+      },
       {
         "name": "set uncaptured error callback",
         "args": [
@@ -940,6 +981,13 @@
         "name": "set",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "resource", "type": "array buffer view", "annotation": "const*"}
+        ]
+      },
+      {
+        "name": "get",
+        "args": [
+          {"name": "index", "type": "size_t"},
           {"name": "resource", "type": "array buffer view", "annotation": "const*"}
         ]
       }

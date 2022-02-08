@@ -63,6 +63,10 @@ config("dawn_internal") {
     defines += [ "DAWN_ABORT_ON_ASSERT" ]
   }
 
+  if (webnn_enable_wire) {
+    defines += [ "WEBNN_ENABLE_WIRE" ]
+  }
+
   if (webnn_enable_null) {
     defines += [ "WEBNN_ENABLE_BACKEND_NULL" ]
   }

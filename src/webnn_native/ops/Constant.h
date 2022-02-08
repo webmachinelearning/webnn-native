@@ -33,10 +33,19 @@ namespace webnn_native { namespace op {
             mDescriptor.dimensions = mDimensions.data();
             mDescriptor.dimensionsCount = mDimensions.size();
             mDescriptor.type = desc->type;
+#if defined(WEBNN_ENABLE_WIRE)
+            // Prevent destroy from allocator memory after handling the command.
+            mBuffer = malloc(arrayBuffer->byteLength);
+            memcpy(mBuffer, static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset,
+                   arrayBuffer->byteLength);
+#else
             mBuffer = static_cast<int8_t*>(arrayBuffer->buffer) + arrayBuffer->byteOffset;
+#endif  // defined(WEBNN_ENABLE_WIRE)
             mByteLength = arrayBuffer->byteLength;
         }
-        ~Constant() override = default;
+        ~Constant() override {
+            free(mBuffer);
+        }
 
         MaybeError AddToGraph(GraphBase* graph) const override {
             return graph->AddConstant(this);
@@ -66,7 +75,7 @@ namespace webnn_native { namespace op {
       private:
         OperandDescriptor mDescriptor;
         std::vector<int32_t> mDimensions;
-        void const* mBuffer;
+        void* mBuffer;
         size_t mByteLength;
     };
 

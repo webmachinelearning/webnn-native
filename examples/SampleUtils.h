@@ -53,6 +53,9 @@ class ExampleBase {
 };
 
 ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
+ml::NamedInputs CreateCppNamedInputs();
+ml::NamedOutputs CreateCppNamedOutputs();
+void DoFlush();
 
 bool Expected(float output, float expected);
 
@@ -250,7 +253,7 @@ namespace utils {
         // The `mlInputs` local variable to hold the input data util computing the graph.
         std::vector<ml::Input> mlInputs;
         mlInputs.reserve(inputs.size());
-        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
+        ml::NamedInputs namedInputs = CreateCppNamedInputs();
         for (auto& input : inputs) {
             const ml::ArrayBufferView resource = {(void*)input.resource.data(),
                                                   input.resource.size() * sizeof(float)};
@@ -261,14 +264,17 @@ namespace utils {
         // The `mlOutputs` local variable to hold the output data util computing the graph.
         std::vector<ml::ArrayBufferView> mlOutputs;
         mlOutputs.reserve(outputs.size());
-        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
+        ml::NamedOutputs namedOutputs = CreateCppNamedOutputs();
         for (auto& output : outputs) {
             const ml::ArrayBufferView resource = {output.resource.data(),
                                                   output.resource.size() * sizeof(float)};
             mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        return graph.Compute(namedInputs, namedOutputs);
+        ml::ComputeGraphStatus status = graph.Compute(namedInputs, namedOutputs);
+        DoFlush();
+
+        return status;
     }
 
     ml::ComputeGraphStatus Compute(const ml::Graph& graph,

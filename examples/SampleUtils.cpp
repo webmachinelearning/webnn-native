@@ -14,10 +14,19 @@
 
 #include "SampleUtils.h"
 
+#include "common/Assert.h"
+#include "common/Log.h"
+#include "utils/TerribleCommandBuffer.h"
+#include "webnn_native/NamedInputs.h"
+#include "webnn_native/NamedOperands.h"
+#include "webnn_native/NamedOutputs.h"
+
 #include <webnn/webnn.h>
 #include <webnn/webnn_cpp.h>
 #include <webnn/webnn_proc.h>
 #include <webnn_native/WebnnNative.h>
+#include <webnn_wire/WireClient.h>
+#include <webnn_wire/WireServer.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -25,19 +34,113 @@
 #include <iostream>
 #include <numeric>
 
-#include "common/Assert.h"
-#include "common/Log.h"
+enum class CmdBufType {
+    None,
+    Terrible,
+    // TODO(cwallez@chromium.org): double terrible cmdbuf
+};
 
-static std::unique_ptr<webnn_native::Instance> instance;
+#if defined(WEBNN_ENABLE_WIRE)
+static CmdBufType cmdBufType = CmdBufType::Terrible;
+#else
+static CmdBufType cmdBufType = CmdBufType::None;
+#endif  // defined(WEBNN_ENABLE_WIRE)
+static webnn_wire::WireServer* wireServer = nullptr;
+static webnn_wire::WireClient* wireClient = nullptr;
+static utils::TerribleCommandBuffer* c2sBuf = nullptr;
+static utils::TerribleCommandBuffer* s2cBuf = nullptr;
+
+static ml::Instance clientInstance;
+static std::unique_ptr<webnn_native::Instance> nativeInstance;
 ml::Context CreateCppContext(ml::ContextOptions const* options) {
-    instance = std::make_unique<webnn_native::Instance>();
+    nativeInstance = std::make_unique<webnn_native::Instance>();
     WebnnProcTable backendProcs = webnn_native::GetProcs();
-    webnnProcSetProcs(&backendProcs);
-    MLContext context = instance->CreateContext(options);
-    if (context) {
-        return ml::Context::Acquire(context);
+    MLContext backendContext = nativeInstance->CreateContext(options);
+    if (backendContext == nullptr) {
+        return ml::Context();
     }
-    return ml::Context();
+    // Choose whether to use the backend procs and context directly, or set up the wire.
+    MLContext context = nullptr;
+    WebnnProcTable procs;
+
+    switch (cmdBufType) {
+        case CmdBufType::None:
+            procs = backendProcs;
+            context = backendContext;
+            break;
+
+        case CmdBufType::Terrible: {
+            c2sBuf = new utils::TerribleCommandBuffer();
+            s2cBuf = new utils::TerribleCommandBuffer();
+
+            webnn_wire::WireServerDescriptor serverDesc = {};
+            serverDesc.procs = &backendProcs;
+            serverDesc.serializer = s2cBuf;
+
+            wireServer = new webnn_wire::WireServer(serverDesc);
+            c2sBuf->SetHandler(wireServer);
+
+            webnn_wire::WireClientDescriptor clientDesc = {};
+            clientDesc.serializer = c2sBuf;
+
+            wireClient = new webnn_wire::WireClient(clientDesc);
+            procs = webnn_wire::client::GetProcs();
+            s2cBuf->SetHandler(wireClient);
+
+#ifdef ENABLE_INJECT_CONTEXT
+            auto contextReservation = wireClient->ReserveContext();
+            wireServer->InjectContext(backendContext, contextReservation.id,
+                                      contextReservation.generation);
+
+            context = contextReservation.context;
+#else
+            webnnProcSetProcs(&procs);
+            auto instanceReservation = wireClient->ReserveInstance();
+            wireServer->InjectInstance(nativeInstance->Get(), instanceReservation.id,
+                                       instanceReservation.generation);
+            // Keep the reference instread of using Acquire.
+            // TODO:: make the instance in the client as singleton object.
+            clientInstance = ml::Instance(instanceReservation.instance);
+            return clientInstance.CreateContext(options);
+#endif
+        } break;
+    }
+    webnnProcSetProcs(&procs);
+
+    return ml::Context::Acquire(context);
+}
+
+void DoFlush() {
+    if (cmdBufType == CmdBufType::Terrible) {
+        bool c2sSuccess = c2sBuf->Flush();
+        bool s2cSuccess = s2cBuf->Flush();
+
+        ASSERT(c2sSuccess && s2cSuccess);
+    }
+}
+
+ml::NamedInputs CreateCppNamedInputs() {
+#if defined(WEBNN_ENABLE_WIRE)
+    return clientInstance.CreateNamedInputs();
+#else
+    return ml::CreateNamedInputs();
+#endif  // defined(WEBNN_ENABLE_WIRE)
+}
+
+ml::NamedOperands CreateCppNamedOperands() {
+#if defined(WEBNN_ENABLE_WIRE)
+    return clientInstance.CreateNamedOperands();
+#else
+    return ml::CreateNamedOperands();
+#endif  // defined(WEBNN_ENABLE_WIRE)
+}
+
+ml::NamedOutputs CreateCppNamedOutputs() {
+#if defined(WEBNN_ENABLE_WIRE)
+    return clientInstance.CreateNamedOutputs();
+#else
+    return ml::CreateNamedOutputs();
+#endif  // defined(WEBNN_ENABLE_WIRE)
 }
 
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
@@ -163,7 +266,7 @@ namespace utils {
     }
 
     ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
-        ml::NamedOperands namedOperands = ml::CreateNamedOperands();
+        ml::NamedOperands namedOperands = CreateCppNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

@@ -1345,7 +1345,7 @@ namespace webnn_native { namespace ie {
                 dawn::ErrorLog() << "IE Failed to ie_blob_get_buffer";
                 return MLComputeGraphStatus_Error;
             }
-            auto& resource = namedInputs[input.first]->resource;
+            auto& resource = namedInputs[input.first].resource;
             memcpy(buffer.buffer, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
                    resource.byteLength);
         }
@@ -1359,8 +1359,8 @@ namespace webnn_native { namespace ie {
 
         // Get Data from nGraph with output.
         for (auto namedOutput : outputs->GetRecords()) {
-            const ArrayBufferView* output = namedOutput.second;
-            DAWN_ASSERT(output->buffer != nullptr && output->byteLength != 0);
+            ArrayBufferView output = namedOutput.second;
+            DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
             auto originalName = mOutputNameMap[namedOutput.first];
             if (mOriginalNameMap.find(originalName) == mOriginalNameMap.end()) {
@@ -1380,8 +1380,8 @@ namespace webnn_native { namespace ie {
             status = ie_blob_get_cbuffer(outputBlob, &outputBuffer);
             int bufferLength;
             status = ie_blob_byte_size(outputBlob, &bufferLength);
-            if (output->byteLength >= static_cast<size_t>(bufferLength)) {
-                memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset,
+            if (output.byteLength >= static_cast<size_t>(bufferLength)) {
+                memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset,
                        outputBuffer.cbuffer, bufferLength);
             }
         }
