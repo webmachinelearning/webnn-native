@@ -29,7 +29,8 @@ int main(int argc, const char* argv[]) {
     }
 
     // Create a graph with weights and biases from .npy files.
-    const ml::ContextOptions options = utils::CreateContextOptions(resnet.mDevice);
+    const ml::ContextOptions options =
+        utils::CreateContextOptions(resnet.mDevicePreference, resnet.mPowerPreference);
     ml::Context context = CreateCppContext(&options);
     context.SetUncapturedErrorCallback(
         [](MLErrorType type, char const* message, void* userData) {

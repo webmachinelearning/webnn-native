@@ -16,13 +16,17 @@
 #include "tests/WebnnTest.h"
 
 int main(int argc, char** argv) {
-    std::string device = "default";
+    std::string devicePreference = "default", powerPreference = "default";
     for (int i = 1; i < argc; ++i) {
         if (strcmp("-d", argv[i]) == 0 && i + 1 < argc) {
-            device = argv[i + 1];
+            devicePreference = argv[i + 1];
+        }
+        if (strcmp("-p", argv[i]) == 0 && i + 1 < argc) {
+            powerPreference = argv[i + 1];
         }
     }
-    const ml::ContextOptions options = utils::CreateContextOptions(device);
+    const ml::ContextOptions options =
+        utils::CreateContextOptions(devicePreference, powerPreference);
     InitWebnnEnd2EndTestEnvironment(&options);
     testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();

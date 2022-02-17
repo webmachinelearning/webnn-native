@@ -461,10 +461,23 @@ namespace webnn_native { namespace dml {
     Graph::Graph(Context* context) : GraphBase(context) {
         ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
         bool useGpu = devicePreference == ml::DevicePreference::Cpu ? false : true;
+
+        ml::PowerPreference powerPreference = GetContext()->GetContextOptions().powerPreference;
+        DXGI_GPU_PREFERENCE gpuPreference;
+        switch (powerPreference) {
+            case ml::PowerPreference::High_performance:
+                gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE;
+                break;
+            case ml::PowerPreference::Low_power:
+                gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_MINIMUM_POWER;
+                break;
+            default:
+                gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_UNSPECIFIED;
+        }
 #if defined(_DEBUG)
-        mDevice.reset(new ::pydml::Device(useGpu, true));
+        mDevice.reset(new ::pydml::Device(useGpu, true, gpuPreference));
 #else
-        mDevice.reset(new ::pydml::Device(useGpu, false));
+        mDevice.reset(new ::pydml::Device(useGpu, false, gpuPreference));
 #endif
         mDevice->Init();
         mGraph.reset(new ::dml::Graph(mDevice->GetDevice()));

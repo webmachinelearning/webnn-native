@@ -19,7 +19,7 @@ namespace pydml
     class Device
     {
     public:
-        explicit Device(bool useGpu = true, bool useDebugLayer = false);
+        explicit Device(bool useGpu = true, bool useDebugLayer = false, DXGI_GPU_PREFERENCE gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_UNSPECIFIED);
 
         HRESULT Init();
 
@@ -102,5 +102,6 @@ namespace pydml
         bool m_useCpuCustomHeapResources = false;
         bool m_useGpu = true;
         bool m_useDebugLayer = false;
+        DXGI_GPU_PREFERENCE m_gpuPreference;
     };
 }

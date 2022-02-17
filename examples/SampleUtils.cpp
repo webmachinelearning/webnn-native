@@ -158,12 +158,18 @@ bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
         } else if (strcmp("-n", argv[i]) == 0 && i + 1 < argc) {
             mNIter = atoi(argv[i + 1]);
         } else if (strcmp("-d", argv[i]) == 0 && i + 1 < argc) {
-            mDevice = argv[i + 1];
+            mDevicePreference = argv[i + 1];
+        } else if (strcmp("-p", argv[i]) == 0 && i + 1 < argc) {
+            mPowerPreference = argv[i + 1];
         }
     }
 
     if (mImagePath.empty() || mWeightsPath.empty() || (mLayout != "nchw" && mLayout != "nhwc") ||
-        mNIter < 1 || (mDevice != "gpu" && mDevice != "cpu" && mDevice != "default")) {
+        mNIter < 1 ||
+        (mDevicePreference != "gpu" && mDevicePreference != "cpu" &&
+         mDevicePreference != "default") ||
+        (mPowerPreference != "high-performance" && mPowerPreference != "low-power" &&
+         mPowerPreference != "default")) {
         dawn::ErrorLog() << "Invalid options.";
         utils::ShowUsage();
         return false;
@@ -395,23 +401,28 @@ namespace utils {
     void ShowUsage() {
         std::cout << std::endl;
         std::cout << "Example Options:" << std::endl;
-        std::cout << "    -h                      "
+        std::cout << "    -h                        "
                   << "Print this message." << std::endl;
-        std::cout << "    -i \"<path>\"             "
+        std::cout << "    -i \"<path>\"               "
                   << "Required. Path to an image." << std::endl;
-        std::cout << "    -m \"<path>\"             "
+        std::cout << "    -m \"<path>\"               "
                   << "Required. Path to the .npy files with trained weights/biases." << std::endl;
         std::cout
-            << "    -l \"<layout>\"           "
+            << "    -l \"<layout>\"             "
             << "Optional. Specify the layout: \"nchw\" or \"nhwc\". The default value is \"nchw\"."
             << std::endl;
-        std::cout << "    -n \"<integer>\"          "
+        std::cout << "    -n \"<integer>\"            "
                   << "Optional. Number of iterations. The default value is 1, and should not be "
                      "less than 1."
                   << std::endl;
-        std::cout << "    -d \"<device>\"           "
-                  << "Optional. Specify a target device: \"cpu\" or \"gpu\" or "
-                     "\"default\" to infer on. The default value is \"default\"."
+        std::cout << "    -d \"<device preference>\"  "
+                  << "Optional. Specify a preferred kind of device: \"default\" or \"gpu\" or "
+                     "\"cpu\" to infer on. The default value is \"default\"."
+                  << std::endl;
+        std::cout << "    -p \"<power preference>\"   "
+                  << "Optional. Specify a preference as related to power consumption: \"default\" "
+                     "or \"high-performance\" or "
+                     "\"lower-power\". The default value is \"default\"."
                   << std::endl;
     }
 
@@ -429,17 +440,30 @@ namespace utils {
         }
     }
 
-    const ml::ContextOptions CreateContextOptions(const std::string& device) {
+    const ml::ContextOptions CreateContextOptions(const std::string& devicePreference,
+                                                  const std::string& powerPreference) {
         ml::ContextOptions options;
-        if (device == "cpu") {
-            options.devicePreference = ml::DevicePreference::Cpu;
-        } else if (device == "gpu") {
-            options.devicePreference = ml::DevicePreference::Gpu;
-        } else if (device == "default") {
+        if (devicePreference == "default") {
             options.devicePreference = ml::DevicePreference::Default;
+        } else if (devicePreference == "gpu") {
+            options.devicePreference = ml::DevicePreference::Gpu;
+        } else if (devicePreference == "cpu") {
+            options.devicePreference = ml::DevicePreference::Cpu;
         } else {
-            dawn::ErrorLog()
-                << "Invalid options, only support devices: \"cpu\", \"gpu\" and \"default\".";
+            dawn::ErrorLog() << "Invalid options, only support device preference: \"default\", "
+                                "\"gpu\" and \"cpu\".";
+            DAWN_ASSERT(0);
+        }
+
+        if (powerPreference == "default") {
+            options.powerPreference = ml::PowerPreference::Default;
+        } else if (powerPreference == "high-performance") {
+            options.powerPreference = ml::PowerPreference::High_performance;
+        } else if (powerPreference == "low-power") {
+            options.powerPreference = ml::PowerPreference::Low_power;
+        } else {
+            dawn::ErrorLog() << "Invalid options, only support power preference: \"default\", "
+                                "\"high-performance\" and \"low-power\".";
             DAWN_ASSERT(0);
         }
         return options;
