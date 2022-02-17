@@ -47,7 +47,7 @@ deps = {
   },
   # GPGMM support for fast DML allocation and residency management.
   'third_party/gpgmm': {
-    'url': '{github_git}/intel/gpgmm.git@c52956998962b6481d99739eaf077997ef89abe2',
+    'url': '{github_git}/intel/gpgmm.git@1e5ae00712c8f91e209864027818e26093df9f45',
     'condition': 'checkout_win',
   },
   'third_party/oneDNN': {
