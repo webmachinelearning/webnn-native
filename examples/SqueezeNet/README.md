@@ -10,12 +10,13 @@ This example leverages the network topology of [SqueezeNet 1.0](https://storage.
 > out/Release/SqueezeNet -h
 
 Example Options:
-    -h                      Print this message.
-    -i "<path>"             Required. Path to an image.
-    -m "<path>"             Required. Path to the .npy files with trained weights/biases.
-    -l "<layout>"           Optional. Specify the layout: "nchw" or "nhwc". The default value is "nchw".
-    -n "<integer>"          Optional. Number of iterations. The default value is 1, and should not be less than 1.
-    -d "<device>"           Optional. Specify a target device: "cpu" or "gpu" or "default" to infer on. The default value is "default".
+    -h                        Print this message.
+    -i "<path>"               Required. Path to an image.
+    -m "<path>"               Required. Path to the .npy files with trained weights/biases.
+    -l "<layout>"             Optional. Specify the layout: "nchw" or "nhwc". The default value is "nchw".
+    -n "<integer>"            Optional. Number of iterations. The default value is 1, and should not be less than 1.
+    -d "<device preference>"  Optional. Specify a preferred kind of device: "default" or "gpu" or "cpu" to infer on. The default value is "default".
+    -p "<power preference>"   Optional. Specify a preference as related to power consumption: "default" or "high-performance" or "lower-power". The default value is "default".
 ```
 
 ## Example Output
