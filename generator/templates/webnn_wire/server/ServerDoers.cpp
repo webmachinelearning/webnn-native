@@ -114,8 +114,6 @@ namespace webnn_wire { namespace server {
             default:
                 return false;
         }
-
-        return true;
     }
 
 }}  // namespace webnn_wire::server

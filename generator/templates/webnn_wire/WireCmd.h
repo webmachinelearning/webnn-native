@@ -115,7 +115,7 @@ namespace webnn_wire {
         //* Deserialize returns:
         //*  - Success if everything went well (yay!)
         //*  - FatalError is something bad happened (buffer too small for example)
-        DeserializeResult Deserialize(const volatile char** buffer, size_t* size, DeserializeAllocator* allocator
+        DeserializeResult Deserialize(const volatile char** deserializeBuffer, size_t* size, DeserializeAllocator* allocator
             {%- if command.may_have_dawn_object -%}
                 , const ObjectIdResolver& resolver
             {%- endif -%}

@@ -344,31 +344,31 @@
         return size;
     }
 
-    void {{Cmd}}::Serialize(size_t commandSize, char* buffer
+    void {{Cmd}}::Serialize(size_t commandSize, char* serializeBuffer
         {%- if not is_return -%}
             , const ObjectIdProvider& objectIdProvider
         {%- endif -%}
     ) const {
-        auto transfer = reinterpret_cast<{{Name}}Transfer*>(buffer);
+        auto transfer = reinterpret_cast<{{Name}}Transfer*>(serializeBuffer);
         transfer->commandSize = commandSize;
-        buffer += sizeof({{Name}}Transfer);
+        serializeBuffer += sizeof({{Name}}Transfer);
 
-        {{Name}}Serialize(*this, transfer, &buffer
+        {{Name}}Serialize(*this, transfer, &serializeBuffer
             {%- if command.may_have_dawn_object -%}
                 , objectIdProvider
             {%- endif -%}
         );
     }
 
-    DeserializeResult {{Cmd}}::Deserialize(const volatile char** buffer, size_t* size, DeserializeAllocator* allocator
+    DeserializeResult {{Cmd}}::Deserialize(const volatile char** deserializeBuffer, size_t* size, DeserializeAllocator* allocator
         {%- if command.may_have_dawn_object -%}
             , const ObjectIdResolver& resolver
         {%- endif -%}
     ) {
         const volatile {{Name}}Transfer* transfer = nullptr;
-        DESERIALIZE_TRY(GetPtrFromBuffer(buffer, size, 1, &transfer));
+        DESERIALIZE_TRY(GetPtrFromBuffer(deserializeBuffer, size, 1, &transfer));
 
-        return {{Name}}Deserialize(this, transfer, buffer, size, allocator
+        return {{Name}}Deserialize(this, transfer, deserializeBuffer, size, allocator
             {%- if command.may_have_dawn_object -%}
                 , resolver
             {%- endif -%}
