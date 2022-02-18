@@ -22,16 +22,16 @@ class PadTests : public WebnnTest {
                  const std::vector<uint32_t>& paddingData,
                  const std::vector<int32_t>& expectedShape,
                  const std::vector<float>& expectedValue,
-                 ml::PaddingMode mode = ml::PaddingMode::Constant) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand x = utils::BuildInput(builder, "x", inputShape);
-        const ml::Operand padding =
+                 wnn::PaddingMode mode = wnn::PaddingMode::Constant) {
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand x = utils::BuildInput(builder, "x", inputShape);
+        const wnn::Operand padding =
             utils::BuildConstant(builder, paddingShape, paddingData.data(),
-                                 paddingData.size() * sizeof(int32_t), ml::OperandType::Uint32);
-        ml::PadOptions options;
+                                 paddingData.size() * sizeof(int32_t), wnn::OperandType::Uint32);
+        wnn::PadOptions options;
         options.mode = mode;
-        ml::Operand y = builder.Pad(x, padding, &options);
-        const ml::Graph graph = utils::Build(builder, {{"y", y}});
+        wnn::Operand y = builder.Pad(x, padding, &options);
+        const wnn::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"x", inputData}}, {{"y", result}});
@@ -49,19 +49,19 @@ TEST_F(PadTests, PadEdgeMode) {
     TestPad({2, 3}, {1, 2, 3, 4, 5, 6}, {2, 2}, {1, 1, 2, 2}, {4, 7},
             {1., 1., 1., 2., 3., 3., 3., 1., 1., 1., 2., 3., 3., 3.,
              4., 4., 4., 5., 6., 6., 6., 4., 4., 4., 5., 6., 6., 6.},
-            ml::PaddingMode::Edge);
+            wnn::PaddingMode::Edge);
 }
 
 TEST_F(PadTests, PadReflectionMode) {
     TestPad({2, 3}, {1, 2, 3, 4, 5, 6}, {2, 2}, {1, 1, 2, 2}, {4, 7},
             {6., 5., 4., 5., 6., 5., 4., 3., 2., 1., 2., 3., 2., 1.,
              6., 5., 4., 5., 6., 5., 4., 3., 2., 1., 2., 3., 2., 1.},
-            ml::PaddingMode::Reflection);
+            wnn::PaddingMode::Reflection);
 }
 
 TEST_F(PadTests, PadSymmetricMode) {
     TestPad({2, 3}, {1, 2, 3, 4, 5, 6}, {2, 2}, {1, 1, 2, 2}, {4, 7},
             {2., 1., 1., 2., 3., 3., 2., 2., 1., 1., 2., 3., 3., 2.,
              5., 4., 4., 5., 6., 6., 5., 5., 4., 4., 5., 6., 6., 5.},
-            ml::PaddingMode::Symmetric);
+            wnn::PaddingMode::Symmetric);
 }

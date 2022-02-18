@@ -23,7 +23,7 @@ namespace node { namespace op {
       public:
         std::vector<int32_t> axes;
 
-        const ml::SqueezeOptions* AsPtr() {
+        const wnn::SqueezeOptions* AsPtr() {
             if (!axes.empty()) {
                 mOptions.axesCount = axes.size();
                 mOptions.axes = axes.data();
@@ -32,16 +32,16 @@ namespace node { namespace op {
         }
 
       private:
-        ml::SqueezeOptions mOptions;
+        wnn::SqueezeOptions mOptions;
     };
 
-    Napi::Value Squeeze::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Squeeze::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand squeeze(Operand input, MLSqueezeOptions options = {})
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary SqueezeOptions {
@@ -57,7 +57,7 @@ namespace node { namespace op {
             }
         }
 
-        ml::Operand squeeze = builder.Squeeze(input, options.AsPtr());
+        wnn::Operand squeeze = builder.Squeeze(input, options.AsPtr());
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
         operand->SetImpl(squeeze);

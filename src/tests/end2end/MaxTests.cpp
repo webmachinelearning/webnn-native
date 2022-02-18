@@ -17,8 +17,8 @@
 class MaxTests : public WebnnTest {};
 
 TEST_F(MaxTests, MaxConstantAndInput) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const std::vector<float> bData = {
         -0.00724315, -1.4088361,  0.17466596, 1.1395162,   1.3720452,   -0.35610083, -0.5597993,
         -0.26632488, -0.31922337, -0.2980101, 0.12268824,  -1.1521344,  -1.0502838,  0.85281086,
@@ -29,10 +29,10 @@ TEST_F(MaxTests, MaxConstantAndInput) {
         0.06214673,  -0.09415992, 0.9173279,  0.55409455,  0.6537859,   -1.1739589,  1.1591603,
         0.5907742,   -1.0454807,  -0.8065648, 2.0162134,   -0.30215183, 0.67375183,  1.6682644,
         -2.916385,   0.43166366,  -0.7290503, 0.11509943};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Max(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Max(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.54270846,  0.3356357,  0.04034169,  1.6710619,  -1.0029255, 1.4024457,  -0.5183214,
@@ -60,11 +60,11 @@ TEST_F(MaxTests, MaxConstantAndInput) {
 }
 
 TEST_F(MaxTests, MaxTwoInputs) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
-    const ml::Operand c = builder.Max(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
+    const wnn::Operand c = builder.Max(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.54270846,  0.3356357,  0.04034169,  1.6710619,  -1.0029255, 1.4024457,  -0.5183214,
@@ -102,11 +102,11 @@ TEST_F(MaxTests, MaxTwoInputs) {
 }
 
 TEST_F(MaxTests, MaxBroadcast) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = utils::BuildInput(builder, "b", {5});
-    const ml::Operand c = builder.Max(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = utils::BuildInput(builder, "b", {5});
+    const wnn::Operand c = builder.Max(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         -0.78042406, -0.18523395, -0.12612817, -0.24858657, 0.36215156,  -0.41349608, 1.540389,

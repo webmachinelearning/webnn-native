@@ -17,12 +17,12 @@
 class Pool2dTests : public WebnnTest {};
 
 TEST_F(Pool2dTests, MaxPool2dDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
@@ -32,13 +32,13 @@ TEST_F(Pool2dTests, MaxPool2dDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
@@ -48,13 +48,13 @@ TEST_F(Pool2dTests, MaxPool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dDilationsDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.dilations = {2, 2};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
@@ -64,14 +64,14 @@ TEST_F(Pool2dTests, MaxPool2dDilationsDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dDilationsNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.dilations = {2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
@@ -81,13 +81,13 @@ TEST_F(Pool2dTests, MaxPool2dDilationsNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dPadsDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
     options.padding = {2, 2, 2, 2};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -99,14 +99,14 @@ TEST_F(Pool2dTests, MaxPool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dPadsNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
     options.padding = {2, 2, 2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -118,13 +118,13 @@ TEST_F(Pool2dTests, MaxPool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
-    options.autoPad = ml::AutoPad::SameUpper;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -136,16 +136,16 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {2, 1, 2, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -159,17 +159,17 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     options.outputSizes = {3, 3};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -182,17 +182,17 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     options.outputSizes = {4, 4};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -206,17 +206,17 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    options.roundinyType = ml::RoundingType::Floor;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    options.roundinyType = wnn::RoundingType::Floor;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -229,17 +229,17 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    options.roundinyType = ml::RoundingType::Ceil;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    options.roundinyType = wnn::RoundingType::Ceil;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -253,15 +253,15 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::SameLower;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameLower;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -275,14 +275,14 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
-    options.autoPad = ml::AutoPad::SameUpper;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -294,13 +294,13 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dStridesDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -311,14 +311,14 @@ TEST_F(Pool2dTests, MaxPool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dStridesNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.MaxPool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.MaxPool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -329,12 +329,12 @@ TEST_F(Pool2dTests, MaxPool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
@@ -344,13 +344,13 @@ TEST_F(Pool2dTests, AveragePool2dDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
@@ -360,13 +360,13 @@ TEST_F(Pool2dTests, AveragePool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dPadsDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
     options.padding = {2, 2, 2, 2};
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -379,14 +379,14 @@ TEST_F(Pool2dTests, AveragePool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dPadsNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
     options.padding = {2, 2, 2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -399,13 +399,13 @@ TEST_F(Pool2dTests, AveragePool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
-    options.autoPad = ml::AutoPad::SameUpper;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -418,14 +418,14 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
-    options.autoPad = ml::AutoPad::SameUpper;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -438,16 +438,16 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {2, 1, 2, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -461,17 +461,17 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     options.outputSizes = {3, 3};
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -484,17 +484,17 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     options.outputSizes = {4, 4};
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -508,17 +508,17 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    options.roundinyType = ml::RoundingType::Floor;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    options.roundinyType = wnn::RoundingType::Floor;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -531,17 +531,17 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    options.roundinyType = ml::RoundingType::Ceil;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    options.roundinyType = wnn::RoundingType::Ceil;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -555,15 +555,15 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::SameLower;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameLower;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -577,13 +577,13 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -594,14 +594,14 @@ TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dStridesNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
@@ -612,10 +612,10 @@ TEST_F(Pool2dTests, AveragePool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, GlobalAveragePool2dDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 3, 5, 5});
-    const ml::Operand y = builder.AveragePool2d(x);
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 3, 5, 5});
+    const wnn::Operand y = builder.AveragePool2d(x);
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {
         -1.1289884,  0.34016284,  0.497431,    2.1915932,   0.42038894,  -0.18261199, -0.15769927,
@@ -636,12 +636,12 @@ TEST_F(Pool2dTests, GlobalAveragePool2dDefault) {
 }
 
 TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 3});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 3});
     utils::Pool2dOptions options;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.AveragePool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.AveragePool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {
         -1.1289884,  -1.4767597,  0.02117888,  0.34016284,  -1.4969662,  -1.0636739,  0.497431,
@@ -662,12 +662,12 @@ TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dStridesDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 3}));
@@ -677,13 +677,13 @@ TEST_F(Pool2dTests, L2Pool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dStrides) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -693,13 +693,13 @@ TEST_F(Pool2dTests, L2Pool2dStrides) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dStridesNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -709,14 +709,14 @@ TEST_F(Pool2dTests, L2Pool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dPadsDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
     options.strides = {2, 2};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -726,16 +726,16 @@ TEST_F(Pool2dTests, L2Pool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes3x3) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
+    options.autoPad = wnn::AutoPad::Explicit;
     options.outputSizes = {3, 3};
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -751,16 +751,16 @@ TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes3x3) {
 }
 
 TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes4x4) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
+    options.autoPad = wnn::AutoPad::Explicit;
     options.outputSizes = {4, 4};
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -777,16 +777,16 @@ TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes4x4) {
 }
 
 TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeFloor) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.roundinyType = ml::RoundingType::Floor;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.roundinyType = wnn::RoundingType::Floor;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -802,16 +802,16 @@ TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeFloor) {
 }
 
 TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeCeil) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
     options.padding = {1, 1, 1, 1};
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::Explicit;
-    options.roundinyType = ml::RoundingType::Ceil;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::Explicit;
+    options.roundinyType = wnn::RoundingType::Ceil;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
@@ -828,15 +828,15 @@ TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeCeil) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dPadsNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
     options.strides = {3, 3};
     options.padding = {1, 0, 1, 1};
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -846,14 +846,14 @@ TEST_F(Pool2dTests, L2Pool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dSameUpperDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
     options.strides = {3, 3};
-    options.autoPad = ml::AutoPad::SameUpper;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -863,15 +863,15 @@ TEST_F(Pool2dTests, L2Pool2dSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dSameUpperNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
     options.strides = {3, 3};
-    options.autoPad = ml::AutoPad::SameUpper;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameUpper;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -881,14 +881,14 @@ TEST_F(Pool2dTests, L2Pool2dSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dSameLowerDefault) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
     options.strides = {3, 3};
-    options.autoPad = ml::AutoPad::SameLower;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameLower;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
@@ -898,15 +898,15 @@ TEST_F(Pool2dTests, L2Pool2dSameLowerDefault) {
 }
 
 TEST_F(Pool2dTests, L2Pool2dSameLowerNhwc) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
     options.strides = {3, 3};
-    options.autoPad = ml::AutoPad::SameLower;
-    options.layout = ml::InputOperandLayout::Nhwc;
-    const ml::Operand y = builder.L2Pool2d(x, options.AsPtr());
-    const ml::Graph graph = utils::Build(builder, {{"y", y}});
+    options.autoPad = wnn::AutoPad::SameLower;
+    options.layout = wnn::InputOperandLayout::Nhwc;
+    const wnn::Operand y = builder.L2Pool2d(x, options.AsPtr());
+    const wnn::Graph graph = utils::Build(builder, {{"y", y}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));

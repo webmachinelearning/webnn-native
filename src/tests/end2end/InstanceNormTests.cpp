@@ -16,35 +16,35 @@
 
 class InstanceNormTests : public WebnnTest {
     void SetUp() override {
-        builder = ml::CreateGraphBuilder(GetContext());
+        builder = wnn::CreateGraphBuilder(GetContext());
     }
 
   protected:
     void CheckInstanceNorm(const std::vector<int32_t>& inputShape,
                            const std::vector<float>& inputData,
                            const std::vector<float>& expectedValue,
-                           const ml::InstanceNormOptions* options = nullptr) {
-        const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        const ml::Operand b = builder.InstanceNorm(a, options);
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+                           const wnn::InstanceNormOptions* options = nullptr) {
+        const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
+        const wnn::Operand b = builder.InstanceNorm(a, options);
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(inputShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
-    ml::GraphBuilder builder;
+    wnn::GraphBuilder builder;
 };
 
 TEST_F(InstanceNormTests, InstanceNormNchw) {
     const std::vector<int32_t> inputShape = {1, 2, 1, 3};
     const std::vector<float> inputData = {-1, 0, 1, 2, 3, 4};
     const std::vector<float> scaleData = {1.0, 1.5};
-    const ml::Operand scale =
+    const wnn::Operand scale =
         utils::BuildConstant(builder, {2}, scaleData.data(), scaleData.size() * sizeof(float));
     const std::vector<float> biasData = {0, 1};
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, {2}, biasData.data(), biasData.size() * sizeof(float));
-    ml::InstanceNormOptions options;
+    wnn::InstanceNormOptions options;
     options.scale = scale;
     options.bias = bias;
     std::vector<float> expectedValue = {-1.2247356, 0., 1.2247356, -0.8371035, 1., 2.8371034};
@@ -69,32 +69,32 @@ TEST_F(InstanceNormTests, InstanceNormNhwc) {
     const std::vector<int32_t> inputShape = {1, 1, 3, 2};
     const std::vector<float> inputData = {-1, 2, 0, 3, 1, 4};
     const std::vector<float> scaleData = {1.0, 1.5};
-    const ml::Operand scale =
+    const wnn::Operand scale =
         utils::BuildConstant(builder, {2}, scaleData.data(), scaleData.size() * sizeof(float));
     const std::vector<float> biasData = {0, 1};
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, {2}, biasData.data(), biasData.size() * sizeof(float));
-    ml::InstanceNormOptions options;
+    wnn::InstanceNormOptions options;
     options.scale = scale;
     options.bias = bias;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     std::vector<float> expectedValue = {-1.2247356, -0.8371035, 0., 1., 1.2247356, 2.8371034};
     CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
     options = {};
     options.scale = scale;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     expectedValue = {-1.2247356, -1.8371035, 0, 0, 1.2247356, 1.8371034};
     CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
     options = {};
     options.bias = bias;
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     expectedValue = {-1.2247356, -0.2247356, 0, 1., 1.2247356, 2.2247356};
     CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
     options = {};
-    options.layout = ml::InputOperandLayout::Nhwc;
+    options.layout = wnn::InputOperandLayout::Nhwc;
     expectedValue = {-1.2247356, -1.2247356, 0, 0., 1.2247356, 1.2247356};
     CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 }
@@ -122,13 +122,13 @@ TEST_F(InstanceNormTests, InstanceNormWithEpsilon) {
         -0.33925202,
     };
     const std::vector<float> scaleData = {0.55290383, -1.1786512, -0.12353817};
-    const ml::Operand scale =
+    const wnn::Operand scale =
         utils::BuildConstant(builder, {3}, scaleData.data(), scaleData.size() * sizeof(float));
     const std::vector<float> biasData = {0.36079535, 2.3073995, -0.12267359};
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, {3}, biasData.data(), biasData.size() * sizeof(float));
 
-    ml::InstanceNormOptions options;
+    wnn::InstanceNormOptions options;
     options.scale = scale;
     options.bias = bias;
     options.epsilon = 1e-2;

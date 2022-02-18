@@ -25,31 +25,31 @@ class WebnnTest : public testing::Test {
     void SetUp() override;
     void TearDown() override;
 
-    const ml::Context& GetContext();
+    const wnn::Context& GetContext();
     void StartExpectContextError();
     bool EndExpectContextError();
     std::string GetLastErrorMessage() const;
 
   private:
-    static void ErrorCallback(MLErrorType type, const char* message, void* userdata);
+    static void ErrorCallback(WNNErrorType type, const char* message, void* userdata);
     std::string mErrorMessage;
     bool mExpectError = false;
     bool mError = false;
 };
 
-void InitWebnnEnd2EndTestEnvironment(ml::ContextOptions const* options = nullptr);
+void InitWebnnEnd2EndTestEnvironment(wnn::ContextOptions const* options = nullptr);
 
 class WebnnTestEnvironment : public testing::Environment {
   public:
-    explicit WebnnTestEnvironment(ml::ContextOptions const* options) : mOptions(options) {
+    explicit WebnnTestEnvironment(wnn::ContextOptions const* options) : mOptions(options) {
     }
     void SetUp() override;
 
-    const ml::Context& GetContext();
+    const wnn::Context& GetContext();
 
   protected:
-    ml::ContextOptions const* mOptions;
-    ml::Context mContext;
+    wnn::ContextOptions const* mOptions;
+    wnn::Context mContext;
 };
 
 #endif  // TESTS_WEBNN_TEST_H_

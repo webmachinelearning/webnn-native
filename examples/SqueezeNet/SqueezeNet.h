@@ -23,19 +23,19 @@ class SqueezeNet : public ExampleBase {
     ~SqueezeNet() override = default;
 
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
-    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
-                                           const std::string& path);
-    const ml::Operand BuildConv(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                const std::string& name,
-                                utils::Conv2dOptions* options = nullptr);
-    const ml::Operand BuildFire(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                const std::string& convName,
-                                const std::string& conv1x1Name,
-                                const std::string& conv3x3Name);
+    const wnn::Operand LoadNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNHWC(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
+                                            const std::string& path);
+    const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 const std::string& name,
+                                 utils::Conv2dOptions* options = nullptr);
+    const wnn::Operand BuildFire(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 const std::string& convName,
+                                 const std::string& conv1x1Name,
+                                 const std::string& conv3x3Name);
 
   private:
     std::vector<SHARED_DATA_TYPE> mConstants;

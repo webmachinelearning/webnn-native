@@ -30,7 +30,7 @@ namespace node { namespace op {
         };
     }  // namespace
 
-    Napi::Value Constant::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Constant::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         //   Operand constant(OperandDescriptor desc, ArrayBufferView value);
         //   Operand constant(double value, optional OperandType type = "float32");
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
@@ -39,11 +39,11 @@ namespace node { namespace op {
         Napi::Object object = Operand::constructor.New({});
         OperandDescriptor desc;
         Scalar scalar;
-        ml::ArrayBufferView arrayBufferView;
+        wnn::ArrayBufferView arrayBufferView;
         if (info[0].IsNumber()) {
             // Operand constant(double value, optional OperandType type = "float32");
             if (info.Length() == 1) {
-                desc.type = ml::OperandType::Float32;
+                desc.type = wnn::OperandType::Float32;
             } else {
                 WEBNN_NODE_ASSERT(GetOperandType(info[1], desc.type),
                                   "The type parameter is invalid.");
@@ -51,30 +51,30 @@ namespace node { namespace op {
             void* value;
             size_t size;
             Napi::Number jsValue = info[0].As<Napi::Number>();
-            if (desc.type == ml::OperandType::Float32) {
+            if (desc.type == wnn::OperandType::Float32) {
                 scalar.floatValue = jsValue.FloatValue();
                 value = &scalar.floatValue;
                 size = sizeof(float);
-            } else if (desc.type == ml::OperandType::Float16) {
+            } else if (desc.type == wnn::OperandType::Float16) {
                 scalar.uint16Value = static_cast<uint16_t>(jsValue.Uint32Value());
                 value = &scalar.uint16Value;
                 size = sizeof(uint16_t);
-            } else if (desc.type == ml::OperandType::Int32) {
+            } else if (desc.type == wnn::OperandType::Int32) {
                 WEBNN_NODE_ASSERT(GetValue(info[0], scalar.int32Value),
                                   "Invalid value according to int32 type.");
                 value = &scalar.int32Value;
                 size = sizeof(int32_t);
-            } else if (desc.type == ml::OperandType::Uint32) {
+            } else if (desc.type == wnn::OperandType::Uint32) {
                 WEBNN_NODE_ASSERT(GetValue(info[0], scalar.uint32Value),
                                   "Invalid value according to uint32 type.")
                 value = &scalar.uint32Value;
                 size = sizeof(uint32_t);
-            } else if (desc.type == ml::OperandType::Int8) {
+            } else if (desc.type == wnn::OperandType::Int8) {
                 WEBNN_NODE_ASSERT(GetValue(info[0], scalar.int8Value),
                                   "Invalid value according to int8 type.")
                 value = &scalar.int8Value;
                 size = sizeof(int8_t);
-            } else if (desc.type == ml::OperandType::Uint8) {
+            } else if (desc.type == wnn::OperandType::Uint8) {
                 WEBNN_NODE_ASSERT(GetValue(info[0], scalar.uint8Value),
                                   "Invalid value according to uint8 type.")
                 value = &scalar.uint8Value;

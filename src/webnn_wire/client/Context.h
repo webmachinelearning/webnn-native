@@ -28,15 +28,17 @@ namespace webnn_wire { namespace client {
       public:
         using ObjectBase::ObjectBase;
 
-        void PushErrorScope(MLErrorFilter filter);
-        bool PopErrorScope(MLErrorCallback callback, void* userdata);
-        void SetUncapturedErrorCallback(MLErrorCallback callback, void* userdata);
+        void PushErrorScope(WNNErrorFilter filter);
+        bool PopErrorScope(WNNErrorCallback callback, void* userdata);
+        void SetUncapturedErrorCallback(WNNErrorCallback callback, void* userdata);
 
-        bool OnPopErrorScopeCallback(uint64_t requestSerial, MLErrorType type, const char* message);
+        bool OnPopErrorScopeCallback(uint64_t requestSerial,
+                                     WNNErrorType type,
+                                     const char* message);
 
       private:
         struct ErrorScopeData {
-            MLErrorCallback callback = nullptr;
+            WNNErrorCallback callback = nullptr;
             void* userdata = nullptr;
         };
         std::map<uint64_t, ErrorScopeData> mErrorScopes;

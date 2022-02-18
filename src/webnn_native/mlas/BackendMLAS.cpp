@@ -19,7 +19,7 @@
 
 namespace webnn_native { namespace mlas {
 
-    Backend::Backend(InstanceBase* instance) : BackendConnection(instance, ml::BackendType::MLAS) {
+    Backend::Backend(InstanceBase* instance) : BackendConnection(instance, wnn::BackendType::MLAS) {
     }
 
     MaybeError Backend::Initialize() {

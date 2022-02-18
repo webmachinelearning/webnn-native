@@ -17,10 +17,10 @@
 class SoftmaxTests : public WebnnTest {};
 
 TEST_F(SoftmaxTests, Softmax) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4});
-    const ml::Operand b = builder.Softmax(a);
-    const ml::Graph graph = utils::Build(builder, {{"b", b}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4});
+    const wnn::Operand b = builder.Softmax(a);
+    const wnn::Graph graph = utils::Build(builder, {{"b", b}});
     ASSERT_TRUE(graph);
     const std::vector<float> inputData = {0.4301911,   0.54719144,  -1.1637765, 0.18390046,
                                           0.58390397,  0.1735679,   0.539724,   -0.953514,

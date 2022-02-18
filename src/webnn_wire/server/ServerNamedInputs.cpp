@@ -29,11 +29,11 @@ namespace webnn_wire { namespace server {
             return false;
         }
 
-        MLArrayBufferView value;
+        WNNArrayBufferView value;
         value.buffer = const_cast<void*>(static_cast<const void*>(buffer));
         value.byteLength = byteLength;
         value.byteOffset = byteOffset;
-        MLInput input;
+        WNNInput input;
         input.dimensions = dimensions;
         input.dimensionsCount = dimensionsCount;
         input.resource = value;

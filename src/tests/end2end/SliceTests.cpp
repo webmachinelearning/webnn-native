@@ -16,7 +16,7 @@
 
 class SliceTests : public WebnnTest {
     void SetUp() override {
-        builder = ml::CreateGraphBuilder(GetContext());
+        builder = wnn::CreateGraphBuilder(GetContext());
     }
 
   protected:
@@ -30,18 +30,18 @@ class SliceTests : public WebnnTest {
                     const std::vector<int>& sizes,
                     const Tensor& expected,
                     utils::SliceOptions options = {}) {
-        const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
-        const ml::Operand output =
+        const wnn::Operand x = utils::BuildInput(builder, "input", input.shape);
+        const wnn::Operand output =
             builder.Slice(x, (int32_t*)starts.data(), starts.size(), (int32_t*)sizes.data(),
                           sizes.size(), options.AsPtr());
-        const ml::Graph graph = utils::Build(builder, {{"output", output}});
+        const wnn::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expected.shape));
         utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expected.value));
     }
 
-    ml::GraphBuilder builder;
+    wnn::GraphBuilder builder;
 };
 
 TEST_F(SliceTests, SliceTests) {

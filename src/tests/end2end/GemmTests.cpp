@@ -32,10 +32,10 @@ class GemmTests : public WebnnTest {
                   const std::vector<int32_t>& expectedShape,
                   const std::vector<float>& expectedValue,
                   const Options* options = nullptr) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", aShape);
-        const ml::Operand b = utils::BuildInput(builder, "b", bShape);
-        ml::GemmOptions gemmOptions = {};
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", aShape);
+        const wnn::Operand b = utils::BuildInput(builder, "b", bShape);
+        wnn::GemmOptions gemmOptions = {};
         if (options != nullptr) {
             if (!options->cData.empty()) {
                 gemmOptions.c =
@@ -48,8 +48,8 @@ class GemmTests : public WebnnTest {
             gemmOptions.bTranspose = options->bTranspose;
         }
 
-        const ml::Operand gemm = builder.Gemm(a, b, &gemmOptions);
-        const ml::Graph graph = utils::Build(builder, {{"c", gemm}});
+        const wnn::Operand gemm = builder.Gemm(a, b, &gemmOptions);
+        const wnn::Graph graph = utils::Build(builder, {{"c", gemm}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});

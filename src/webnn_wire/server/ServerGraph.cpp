@@ -28,7 +28,7 @@ namespace webnn_wire { namespace server {
 
         mProcs.graphCompute(graph->handle, namedInputs->handle, namedOutputs->handle);
 
-        MLArrayBufferView arrayBuffer = {};
+        WNNArrayBufferView arrayBuffer = {};
         mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
         // Return the result.
         ReturnGraphComputeResultCmd cmd;

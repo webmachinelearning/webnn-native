@@ -23,7 +23,8 @@ namespace webnn_native { namespace op {
                            OperandBase* input,
                            Resample2dOptions const* options)
         : OperatorBase(builder, {input}), mScales({1.0, 1.0}), mSizes({}), mAxes({2, 3}) {
-        mOptions.mode = options == nullptr ? ml::InterpolationMode::NearestNeighbor : options->mode;
+        mOptions.mode =
+            options == nullptr ? wnn::InterpolationMode::NearestNeighbor : options->mode;
         if (options != nullptr && options->scales != nullptr) {
             mScales.assign(options->scales, options->scales + options->scalesCount);
         }

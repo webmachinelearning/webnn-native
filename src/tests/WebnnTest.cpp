@@ -16,22 +16,22 @@
 
 static WebnnTestEnvironment* gTestEnv = nullptr;
 
-void InitWebnnEnd2EndTestEnvironment(ml::ContextOptions const* options) {
+void InitWebnnEnd2EndTestEnvironment(wnn::ContextOptions const* options) {
     gTestEnv = new WebnnTestEnvironment(options);
     testing::AddGlobalTestEnvironment(gTestEnv);
 }
 
-const ml::Context& WebnnTest::GetContext() {
+const wnn::Context& WebnnTest::GetContext() {
     return gTestEnv->GetContext();
 }
 
 void WebnnTest::SetUp() {
-    const ml::Context& context = GetContext();
+    const wnn::Context& context = GetContext();
     context.SetUncapturedErrorCallback(ErrorCallback, this);
 }
 
 WebnnTest::~WebnnTest() {
-    const ml::Context& context = GetContext();
+    const wnn::Context& context = GetContext();
     context.SetUncapturedErrorCallback(ErrorCallback, nullptr);
 }
 
@@ -52,8 +52,8 @@ std::string WebnnTest::GetLastErrorMessage() const {
     return mErrorMessage;
 }
 
-void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userdata) {
-    ASSERT(type != MLErrorType_NoError);
+void WebnnTest::ErrorCallback(WNNErrorType type, char const* message, void* userdata) {
+    ASSERT(type != WNNErrorType_NoError);
     auto self = static_cast<WebnnTest*>(userdata);
     if (self) {
         self->mErrorMessage = message;
@@ -62,7 +62,7 @@ void WebnnTest::ErrorCallback(MLErrorType type, char const* message, void* userd
         ASSERT_FALSE(self->mError) << "Got two errors in expect block";
         self->mError = true;
     } else {
-        ASSERT_TRUE(type == MLErrorType_NoError) << "Got unexpected error: " << message;
+        ASSERT_TRUE(type == WNNErrorType_NoError) << "Got unexpected error: " << message;
     }
 }
 
@@ -71,6 +71,6 @@ void WebnnTestEnvironment::SetUp() {
     DAWN_ASSERT(mContext);
 }
 
-const ml::Context& WebnnTestEnvironment::GetContext() {
+const wnn::Context& WebnnTestEnvironment::GetContext() {
     return mContext;
 }

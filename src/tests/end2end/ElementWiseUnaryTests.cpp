@@ -32,9 +32,9 @@ class ElementWiseUnaryTests : public WebnnTest {
                                const std::vector<float>& inputData,
                                const std::vector<float>& expectedValue,
                                const std::vector<int32_t>& shape) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", shape);
-        ml::Operand b;
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", shape);
+        wnn::Operand b;
         switch (type) {
             case kAbs:
                 b = builder.Abs(a);
@@ -66,7 +66,7 @@ class ElementWiseUnaryTests : public WebnnTest {
             default:
                 DAWN_ASSERT(0);
         }
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(shape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});

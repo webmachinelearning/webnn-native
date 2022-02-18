@@ -35,10 +35,10 @@ namespace webnn_native {
             return mOperator.Get();
         }
 
-        ml::OperandType Type() const {
+        wnn::OperandType Type() const {
             return mType;
         }
-        void SetType(ml::OperandType type) {
+        void SetType(wnn::OperandType type) {
             mType = type;
         }
 
@@ -59,7 +59,7 @@ namespace webnn_native {
         // The operator of generating the operand.
         Ref<OperatorBase> mOperator;
         // The operand type.
-        ml::OperandType mType;
+        wnn::OperandType mType;
         // The operand dimensions
         std::vector<int32_t> mShape;
     };

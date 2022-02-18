@@ -25,8 +25,8 @@ class LeNet {
     LeNet();
     ~LeNet() = default;
 
-    ml::Graph Build(const std::string& weigthsPath);
+    wnn::Graph Build(const std::string& weigthsPath);
 
   private:
-    ml::Context mContext;
+    wnn::Context mContext;
 };

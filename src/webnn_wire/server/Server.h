@@ -120,15 +120,15 @@ namespace webnn_wire { namespace server {
         const volatile char* HandleCommandsImpl(const volatile char* commands,
                                                 size_t size) override;
 
-        bool InjectInstance(MLInstance instance, uint32_t id, uint32_t generation);
-        bool InjectContext(MLContext context, uint32_t id, uint32_t generation);
-        bool InjectNamedInputs(MLNamedInputs namedInputs,
+        bool InjectInstance(WNNInstance instance, uint32_t id, uint32_t generation);
+        bool InjectContext(WNNContext context, uint32_t id, uint32_t generation);
+        bool InjectNamedInputs(WNNNamedInputs namedInputs,
                                uint32_t id,
                                uint32_t generation,
                                uint32_t contextId,
                                uint32_t contextGeneration);
-        bool InjectNamedOperands(MLNamedOperands namedOperands, uint32_t id, uint32_t generation);
-        bool InjectNamedOutputs(MLNamedOutputs namedOutputs, uint32_t id, uint32_t generation);
+        bool InjectNamedOperands(WNNNamedOperands namedOperands, uint32_t id, uint32_t generation);
+        bool InjectNamedOutputs(WNNNamedOutputs namedOutputs, uint32_t id, uint32_t generation);
 
         template <typename T,
                   typename Enable = std::enable_if<std::is_base_of<CallbackUserdata, T>::value>>
@@ -149,12 +149,12 @@ namespace webnn_wire { namespace server {
             mSerializer.SerializeCommand(cmd, extraSize, SerializeExtraSize);
         }
 
-        void ClearContextCallbacks(MLContext context);
+        void ClearContextCallbacks(WNNContext context);
 
         // Error callbacks
-        void OnUncapturedError(MLErrorType type, const char* message);
+        void OnUncapturedError(WNNErrorType type, const char* message);
         void OnContextLost(const char* message);
-        void OnContextPopErrorScope(MLErrorType type,
+        void OnContextPopErrorScope(WNNErrorType type,
                                     const char* message,
                                     ErrorScopeUserdata* userdata);
 

@@ -53,9 +53,9 @@ class ExampleBase {
     bool mFused = true;
 };
 
-ml::Context CreateCppContext(ml::ContextOptions const* options = nullptr);
-ml::NamedInputs CreateCppNamedInputs();
-ml::NamedOutputs CreateCppNamedOutputs();
+wnn::Context CreateCppContext(wnn::ContextOptions const* options = nullptr);
+wnn::NamedInputs CreateCppNamedInputs();
+wnn::NamedOutputs CreateCppNamedOutputs();
 void DoFlush();
 
 bool Expected(float output, float expected);
@@ -66,32 +66,32 @@ namespace utils {
 
     enum FusedActivation { NONE, RELU, RELU6, SIGMOID, LEAKYRELU, TANH };
 
-    ml::ClampOptions CreateClampOptions(const ml::GraphBuilder& builder,
-                                        const std::vector<int32_t>& minShape,
-                                        const std::vector<float>& minValue,
-                                        const std::vector<int32_t>& maxShape,
-                                        const std::vector<float>& maxValue);
+    wnn::ClampOptions CreateClampOptions(const wnn::GraphBuilder& builder,
+                                         const std::vector<int32_t>& minShape,
+                                         const std::vector<float>& minValue,
+                                         const std::vector<int32_t>& maxShape,
+                                         const std::vector<float>& maxValue);
 
-    const ml::FusionOperator CreateActivationOperator(
-        const ml::GraphBuilder& builder,
+    const wnn::FusionOperator CreateActivationOperator(
+        const wnn::GraphBuilder& builder,
         FusedActivation activation = FusedActivation::NONE,
         const void* options = nullptr);
 
-    const ml::Operand CreateActivationOperand(const ml::GraphBuilder& builder,
-                                              const ml::Operand& input,
-                                              FusedActivation activation,
-                                              const void* options = nullptr);
+    const wnn::Operand CreateActivationOperand(const wnn::GraphBuilder& builder,
+                                               const wnn::Operand& input,
+                                               FusedActivation activation,
+                                               const void* options = nullptr);
 
-    ml::Operand BuildInput(const ml::GraphBuilder& builder,
-                           std::string name,
-                           const std::vector<int32_t>& dimensions,
-                           ml::OperandType type = ml::OperandType::Float32);
+    wnn::Operand BuildInput(const wnn::GraphBuilder& builder,
+                            std::string name,
+                            const std::vector<int32_t>& dimensions,
+                            wnn::OperandType type = wnn::OperandType::Float32);
 
-    ml::Operand BuildConstant(const ml::GraphBuilder& builder,
-                              const std::vector<int32_t>& dimensions,
-                              const void* value,
-                              size_t size,
-                              ml::OperandType type = ml::OperandType::Float32);
+    wnn::Operand BuildConstant(const wnn::GraphBuilder& builder,
+                               const std::vector<int32_t>& dimensions,
+                               const void* value,
+                               size_t size,
+                               wnn::OperandType type = wnn::OperandType::Float32);
 
     template <typename T>
     struct Conv2dBaseOptions {
@@ -99,11 +99,11 @@ namespace utils {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
-        ml::AutoPad autoPad = ml::AutoPad::Explicit;
+        wnn::AutoPad autoPad = wnn::AutoPad::Explicit;
         int32_t groups = 1;
-        ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
-        ml::Operand bias;
-        ml::FusionOperator activation;
+        wnn::InputOperandLayout inputLayout = wnn::InputOperandLayout::Nchw;
+        wnn::Operand bias;
+        wnn::FusionOperator activation;
 
         T& GetBaseOptions() {
             if (!padding.empty()) {
@@ -131,11 +131,11 @@ namespace utils {
         T mOptions;
     };
 
-    struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
+    struct Conv2dOptions final : public Conv2dBaseOptions<wnn::Conv2dOptions> {
       public:
-        ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
+        wnn::Conv2dFilterOperandLayout filterLayout = wnn::Conv2dFilterOperandLayout::Oihw;
 
-        const ml::Conv2dOptions* AsPtr() {
+        const wnn::Conv2dOptions* AsPtr() {
             mOptions = GetBaseOptions();
             mOptions.filterLayout = filterLayout;
 
@@ -143,14 +143,14 @@ namespace utils {
         }
     };
 
-    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<ml::ConvTranspose2dOptions> {
+    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<wnn::ConvTranspose2dOptions> {
       public:
         std::vector<int32_t> outputPadding;
         std::vector<int32_t> outputSizes;
-        ml::ConvTranspose2dFilterOperandLayout filterLayout =
-            ml::ConvTranspose2dFilterOperandLayout::Iohw;
+        wnn::ConvTranspose2dFilterOperandLayout filterLayout =
+            wnn::ConvTranspose2dFilterOperandLayout::Iohw;
 
-        const ml::ConvTranspose2dOptions* AsPtr() {
+        const wnn::ConvTranspose2dOptions* AsPtr() {
             mOptions = GetBaseOptions();
             if (!outputPadding.empty()) {
                 mOptions.outputPaddingCount = outputPadding.size();
@@ -168,7 +168,7 @@ namespace utils {
 
     struct SliceOptions {
         std::vector<int32_t> axes;
-        const ml::SliceOptions* AsPtr() {
+        const wnn::SliceOptions* AsPtr() {
             if (!axes.empty()) {
                 mOptions.axesCount = axes.size();
                 mOptions.axes = axes.data();
@@ -178,7 +178,7 @@ namespace utils {
         }
 
       private:
-        ml::SliceOptions mOptions;
+        wnn::SliceOptions mOptions;
     };
 
     struct Pool2dOptions {
@@ -188,11 +188,11 @@ namespace utils {
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
         std::vector<int32_t> outputSizes;
-        ml::AutoPad autoPad = ml::AutoPad::Explicit;
-        ml::InputOperandLayout layout = ml::InputOperandLayout::Nchw;
-        ml::RoundingType roundinyType = ml::RoundingType::Floor;
+        wnn::AutoPad autoPad = wnn::AutoPad::Explicit;
+        wnn::InputOperandLayout layout = wnn::InputOperandLayout::Nchw;
+        wnn::RoundingType roundinyType = wnn::RoundingType::Floor;
 
-        const ml::Pool2dOptions* AsPtr() {
+        const wnn::Pool2dOptions* AsPtr() {
             if (!windowDimensions.empty()) {
                 mOptions.windowDimensionsCount = windowDimensions.size();
                 mOptions.windowDimensions = windowDimensions.data();
@@ -220,15 +220,15 @@ namespace utils {
         }
 
       private:
-        ml::Pool2dOptions mOptions;
+        wnn::Pool2dOptions mOptions;
     };
 
     typedef struct {
         const std::string name;
-        const ml::Operand operand;
+        const wnn::Operand operand;
     } NamedOperand;
 
-    ml::Graph Build(const ml::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
+    wnn::Graph Build(const wnn::GraphBuilder& builder, const std::vector<NamedOperand>& outputs);
 
     template <typename T>
     struct NamedInput {
@@ -243,44 +243,44 @@ namespace utils {
     };
 
     template <typename T>
-    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
-                                   const std::vector<NamedInput<T>>& inputs,
-                                   const std::vector<NamedOutput<T>>& outputs) {
+    wnn::ComputeGraphStatus Compute(const wnn::Graph& graph,
+                                    const std::vector<NamedInput<T>>& inputs,
+                                    const std::vector<NamedOutput<T>>& outputs) {
         if (graph.GetHandle() == nullptr) {
             dawn::ErrorLog() << "The graph is invaild.";
-            return ml::ComputeGraphStatus::Error;
+            return wnn::ComputeGraphStatus::Error;
         }
 
         // The `mlInputs` local variable to hold the input data util computing the graph.
-        std::vector<ml::Input> mlInputs;
+        std::vector<wnn::Input> mlInputs;
         mlInputs.reserve(inputs.size());
-        ml::NamedInputs namedInputs = CreateCppNamedInputs();
+        wnn::NamedInputs namedInputs = CreateCppNamedInputs();
         for (auto& input : inputs) {
-            const ml::ArrayBufferView resource = {(void*)input.resource.data(),
-                                                  input.resource.size() * sizeof(float)};
+            const wnn::ArrayBufferView resource = {(void*)input.resource.data(),
+                                                   input.resource.size() * sizeof(float)};
             mlInputs.push_back({resource});
             namedInputs.Set(input.name.c_str(), &mlInputs.back());
         }
         DAWN_ASSERT(outputs.size() > 0);
         // The `mlOutputs` local variable to hold the output data util computing the graph.
-        std::vector<ml::ArrayBufferView> mlOutputs;
+        std::vector<wnn::ArrayBufferView> mlOutputs;
         mlOutputs.reserve(outputs.size());
-        ml::NamedOutputs namedOutputs = CreateCppNamedOutputs();
+        wnn::NamedOutputs namedOutputs = CreateCppNamedOutputs();
         for (auto& output : outputs) {
-            const ml::ArrayBufferView resource = {output.resource.data(),
-                                                  output.resource.size() * sizeof(float)};
+            const wnn::ArrayBufferView resource = {output.resource.data(),
+                                                   output.resource.size() * sizeof(float)};
             mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        ml::ComputeGraphStatus status = graph.Compute(namedInputs, namedOutputs);
+        wnn::ComputeGraphStatus status = graph.Compute(namedInputs, namedOutputs);
         DoFlush();
 
         return status;
     }
 
-    ml::ComputeGraphStatus Compute(const ml::Graph& graph,
-                                   const std::vector<NamedInput<float>>& inputs,
-                                   const std::vector<NamedOutput<float>>& outputs);
+    wnn::ComputeGraphStatus Compute(const wnn::Graph& graph,
+                                    const std::vector<NamedInput<float>>& inputs,
+                                    const std::vector<NamedOutput<float>>& outputs);
 
     template <class T>
     bool CheckValue(const std::vector<T>& value, const std::vector<T>& expectedValue) {
@@ -329,8 +329,8 @@ namespace utils {
     void PrintExexutionTime(
         std::vector<std::chrono::duration<double, std::milli>> executionTimeVector);
 
-    const ml::ContextOptions CreateContextOptions(const std::string& devicePreference = "default",
-                                                  const std::string& powerPreference = "default");
+    const wnn::ContextOptions CreateContextOptions(const std::string& devicePreference = "default",
+                                                   const std::string& powerPreference = "default");
 }  // namespace utils
 
 #endif  // WEBNN_NATIVE_EXAMPLES_SAMPLE_UTILS_H_

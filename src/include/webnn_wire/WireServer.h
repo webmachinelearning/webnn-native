@@ -42,15 +42,15 @@ namespace webnn_wire {
         const volatile char* HandleCommands(const volatile char* commands,
                                             size_t size) override final;
 
-        bool InjectInstance(MLInstance instance, uint32_t id, uint32_t generation);
-        bool InjectContext(MLContext context, uint32_t id, uint32_t generation);
-        bool InjectNamedInputs(MLNamedInputs namedInputs,
+        bool InjectInstance(WNNInstance instance, uint32_t id, uint32_t generation);
+        bool InjectContext(WNNContext context, uint32_t id, uint32_t generation);
+        bool InjectNamedInputs(WNNNamedInputs namedInputs,
                                uint32_t id,
                                uint32_t generation,
                                uint32_t contextId,
                                uint32_t contextGeneration);
-        bool InjectNamedOperands(MLNamedOperands namedOperands, uint32_t id, uint32_t generation);
-        bool InjectNamedOutputs(MLNamedOutputs namedOutputs, uint32_t id, uint32_t generation);
+        bool InjectNamedOperands(WNNNamedOperands namedOperands, uint32_t id, uint32_t generation);
+        bool InjectNamedOutputs(WNNNamedOutputs namedOutputs, uint32_t id, uint32_t generation);
 
       private:
         std::unique_ptr<server::Server> mImpl;

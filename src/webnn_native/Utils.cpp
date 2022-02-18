@@ -18,7 +18,7 @@
 #include "common/Assert.h"
 
 namespace webnn_native { namespace utils {
-    void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
+    void ComputeImplicitPaddingForAutoPad(wnn::AutoPad autoPad,
                                           int32_t dilation,
                                           int32_t inputSize,
                                           int32_t filterSize,
@@ -30,11 +30,11 @@ namespace webnn_native { namespace utils {
         int32_t neededInput = (outSize - 1) * stride + dilatedFilter;
         int32_t totalPadding = neededInput > inputSize ? neededInput - inputSize : 0;
         switch (autoPad) {
-            case ml::AutoPad::SameUpper:
+            case wnn::AutoPad::SameUpper:
                 paddingBegin = totalPadding / 2;
                 paddingEnd = (totalPadding + 1) / 2;
                 break;
-            case ml::AutoPad::SameLower:
+            case wnn::AutoPad::SameLower:
                 paddingBegin = (totalPadding + 1) / 2;
                 paddingEnd = totalPadding / 2;
                 break;

@@ -19,14 +19,14 @@
 
 namespace node { namespace op {
 
-    Napi::Value Split::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Split::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand Split(Operand input, (unsigned long or sequence<unsigned long>) splits,
         // MLSplitOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 2 || info.Length() == 3,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         std::vector<uint32_t> splits;
@@ -39,7 +39,7 @@ namespace node { namespace op {
             WEBNN_NODE_ASSERT(splits.empty() == false, "The split is empty.");
         }
 
-        ml::SplitOptions options;
+        wnn::SplitOptions options;
         if (info.Length() == 3) {
             WEBNN_NODE_ASSERT(info[2].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[2].As<Napi::Object>();
@@ -49,7 +49,7 @@ namespace node { namespace op {
             }
         }
 
-        ml::OperandArray split = builder.Split(input, splits.data(), splits.size(), &options);
+        wnn::OperandArray split = builder.Split(input, splits.data(), splits.size(), &options);
         size_t len = split.Size();
         Napi::Array objectArray = Napi::Array::New(info.Env(), len);
         for (size_t i = 0; i < len; i++) {

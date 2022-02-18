@@ -28,7 +28,7 @@ namespace webnn_wire { namespace client {
       public:
         using ObjectBase::ObjectBase;
 
-        MLOperand Constant(MLOperandDescriptor const* desc, MLArrayBufferView const* value);
+        WNNOperand Constant(WNNOperandDescriptor const* desc, WNNArrayBufferView const* value);
     };
 
 }}  // namespace webnn_wire::client

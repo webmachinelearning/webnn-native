@@ -17,8 +17,8 @@
 class MulTests : public WebnnTest {};
 
 TEST_F(MulTests, MulInputAndConstant) {
-    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         2.0435283,  0.07213961,  -1.1644137,  -1.2209045,  0.8982674,   0.21796915,  0.27658972,
         0.7744382,  -0.52159035, -0.969913,   0.6081186,   -0.04225572, 0.3275312,   -0.06443629,
@@ -29,10 +29,10 @@ TEST_F(MulTests, MulInputAndConstant) {
         0.78826934, -0.18788454, 0.38178417,  0.9748209,   1.0242884,   0.7939937,   0.24449475,
         -1.3840157, 1.9665064,   0.35833818,  -0.87076694, -0.76727265, 0.6157508,   -0.5558823,
         0.18417479, -0.93904793, -0.00859687, 0.5034271};
-    ml::Operand b =
+    wnn::Operand b =
         utils::BuildConstant(builder, {3, 4, 5}, dataB.data(), dataB.size() * sizeof(float));
-    ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::Build(builder, {{"c", c}});
+    wnn::Operand c = builder.Mul(a, b);
+    wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
@@ -66,11 +66,11 @@ TEST_F(MulTests, MulInputAndConstant) {
 }
 
 TEST_F(MulTests, MulTwoInputs) {
-    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
-    ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::Build(builder, {{"c", c}});
+    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
+    wnn::Operand c = builder.Mul(a, b);
+    wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         5.6232101e-01,  1.3117781e-01,  -1.4161869e+00, 2.0386910e-02,  9.1077393e-01,
@@ -114,14 +114,14 @@ TEST_F(MulTests, MulTwoInputs) {
 }
 
 TEST_F(MulTests, MulBroadcast) {
-    ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         0.6338172, 1.630534, -1.3819867, -1.0427561, 1.058136,
     };
-    ml::Operand b = utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
-    ml::Operand c = builder.Mul(a, b);
-    ml::Graph graph = utils::Build(builder, {{"c", c}});
+    wnn::Operand b = utils::BuildConstant(builder, {5}, dataB.data(), dataB.size() * sizeof(float));
+    wnn::Operand c = builder.Mul(a, b);
+    wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     std::vector<float> dataA = {
         -0.08539673, 0.11800674,  -1.2358714,  0.30089188,  -0.73443925, 1.4894297,   0.16823359,

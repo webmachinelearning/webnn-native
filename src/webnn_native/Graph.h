@@ -83,12 +83,12 @@ namespace webnn_native {
         virtual MaybeError Compile();
 
         // Webnn API
-        MLComputeGraphStatus Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
+        WNNComputeGraphStatus Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
 
       private:
         virtual MaybeError CompileImpl() = 0;
-        virtual MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                                 NamedOutputsBase* outputs) = 0;
+        virtual WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                                  NamedOutputsBase* outputs) = 0;
     };
 }  // namespace webnn_native
 

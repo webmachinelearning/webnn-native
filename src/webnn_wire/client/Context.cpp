@@ -19,7 +19,7 @@
 
 namespace webnn_wire { namespace client {
 
-    void Context::PushErrorScope(MLErrorFilter filter) {
+    void Context::PushErrorScope(WNNErrorFilter filter) {
         mErrorScopeStackSize++;
 
         ContextPushErrorScopeCmd cmd;
@@ -29,14 +29,14 @@ namespace webnn_wire { namespace client {
         client->SerializeCommand(cmd);
     }
 
-    bool Context::PopErrorScope(MLErrorCallback callback, void* userdata) {
+    bool Context::PopErrorScope(WNNErrorCallback callback, void* userdata) {
         if (mErrorScopeStackSize == 0) {
             return false;
         }
         mErrorScopeStackSize--;
 
         if (client->IsDisconnected()) {
-            callback(MLErrorType_DeviceLost, "GPU device disconnected", userdata);
+            callback(WNNErrorType_DeviceLost, "GPU device disconnected", userdata);
             return true;
         }
 
@@ -55,14 +55,14 @@ namespace webnn_wire { namespace client {
     }
 
     bool Context::OnPopErrorScopeCallback(uint64_t requestSerial,
-                                          MLErrorType type,
+                                          WNNErrorType type,
                                           const char* message) {
         switch (type) {
-            case MLErrorType_NoError:
-            case MLErrorType_Validation:
-            case MLErrorType_OutOfMemory:
-            case MLErrorType_Unknown:
-            case MLErrorType_DeviceLost:
+            case WNNErrorType_NoError:
+            case WNNErrorType_Validation:
+            case WNNErrorType_OutOfMemory:
+            case WNNErrorType_Unknown:
+            case WNNErrorType_DeviceLost:
                 break;
             default:
                 return false;
@@ -80,7 +80,7 @@ namespace webnn_wire { namespace client {
         return true;
     }
 
-    void Context::SetUncapturedErrorCallback(MLErrorCallback callback, void* userdata) {
+    void Context::SetUncapturedErrorCallback(WNNErrorCallback callback, void* userdata) {
     }
 
 }}  // namespace webnn_wire::client

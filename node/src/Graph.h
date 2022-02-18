@@ -38,7 +38,7 @@ namespace node {
 
         Napi::Value Compute(const Napi::CallbackInfo& info);
 
-        ml::Graph mImpl;
+        wnn::Graph mImpl;
         std::vector<std::string> mOutputNames;
     };
 

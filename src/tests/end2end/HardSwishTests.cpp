@@ -21,10 +21,10 @@ class HardSwishTests : public WebnnTest {
     void CheckHardSwish(const std::vector<int32_t>& inputShape,
                         const std::vector<float>& inputBuffer,
                         const std::vector<float>& expectedBuffer) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand x = utils::BuildInput(builder, "x", inputShape);
-        const ml::Operand y = builder.HardSwish(x);
-        const ml::Graph graph = utils::Build(builder, {{"y", y}});
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand x = utils::BuildInput(builder, "x", inputShape);
+        const wnn::Operand y = builder.HardSwish(x);
+        const wnn::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(inputShape));
         utils::Compute(graph, {{"x", inputBuffer}}, {{"y", result}});

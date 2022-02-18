@@ -16,7 +16,7 @@
 
 class BatchNormTests : public WebnnTest {
     void SetUp() override {
-        builder = ml::CreateGraphBuilder(GetContext());
+        builder = wnn::CreateGraphBuilder(GetContext());
     }
 
   protected:
@@ -31,13 +31,13 @@ class BatchNormTests : public WebnnTest {
                         const std::vector<float>& expectedValue,
                         const Tensor& scale = {},
                         const Tensor& bias = {},
-                        ml::BatchNormOptions options = {},
+                        wnn::BatchNormOptions options = {},
                         utils::FusedActivation activation = utils::FusedActivation::NONE) {
-        const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
-        const ml::Operand m = utils::BuildConstant(builder, mean.shape, mean.value.data(),
-                                                   mean.value.size() * sizeof(float));
-        const ml::Operand v = utils::BuildConstant(builder, variance.shape, variance.value.data(),
-                                                   variance.value.size() * sizeof(float));
+        const wnn::Operand x = utils::BuildInput(builder, "input", input.shape);
+        const wnn::Operand m = utils::BuildConstant(builder, mean.shape, mean.value.data(),
+                                                    mean.value.size() * sizeof(float));
+        const wnn::Operand v = utils::BuildConstant(builder, variance.shape, variance.value.data(),
+                                                    variance.value.size() * sizeof(float));
         if (!scale.value.empty()) {
             options.scale = utils::BuildConstant(builder, scale.shape, scale.value.data(),
                                                  scale.value.size() * sizeof(float));
@@ -49,15 +49,15 @@ class BatchNormTests : public WebnnTest {
         if (activation != utils::FusedActivation::NONE) {
             options.activation = utils::CreateActivationOperator(builder, activation);
         }
-        const ml::Operand output = builder.BatchNorm(x, m, v, &options);
-        const ml::Graph graph = utils::Build(builder, {{"output", output}});
+        const wnn::Operand output = builder.BatchNorm(x, m, v, &options);
+        const wnn::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(input.shape));
         utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 
-    ml::GraphBuilder builder;
+    wnn::GraphBuilder builder;
 };
 
 TEST_F(BatchNormTests, BatchNormNchw) {
@@ -95,7 +95,7 @@ TEST_F(BatchNormTests, BatchNormNhwc) {
     Tensor variance = {{2}, {1.0, 1.5}};
     Tensor scale = {{2}, {1.0, 1.5}};
     Tensor bias = {{2}, {0, 1}};
-    ml::BatchNormOptions options;
+    wnn::BatchNormOptions options;
 
     options.axis = 3;
     std::vector<float> expectedValue = {-0.999995, -0.22474074, 0., 1., 0.999995, 2.2247407};
@@ -154,7 +154,7 @@ TEST_F(BatchNormTests, BatchNormWithEpsilon) {
     Tensor variance = {{3}, {0.601868, 0.86580527, 0.38809904}};
     Tensor scale = {{3}, {0.17215693, -0.7909758, 0.12456307}};
     Tensor bias = {{3}, {0.5280557, -1.4475446, 0.1760742}};
-    ml::BatchNormOptions options;
+    wnn::BatchNormOptions options;
     options.epsilon = 1e-2;
 
     const std::vector<float> expectedValue = {

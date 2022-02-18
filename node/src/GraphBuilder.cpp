@@ -47,9 +47,9 @@ Napi::FunctionReference node::GraphBuilder::constructor;
 #define BUILD_BINARY(op)                                                            \
     WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");   \
     std::vector<napi_value> args;                                                   \
-    ml::Operand a;                                                                  \
+    wnn::Operand a;                                                                 \
     WEBNN_NODE_ASSERT(GetOperand(info[0], a, args), "The a parameter is invalid."); \
-    ml::Operand b;                                                                  \
+    wnn::Operand b;                                                                 \
     WEBNN_NODE_ASSERT(GetOperand(info[1], b, args), "The b parameter is invalid."); \
     Napi::Object object = Operand::constructor.New(args);                           \
     Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);                   \
@@ -59,7 +59,7 @@ Napi::FunctionReference node::GraphBuilder::constructor;
 #define BUILD_UNARY_OPERAND(op)                                                             \
     WEBNN_NODE_ASSERT(info.Length() == 1, "The number of arguments is invalid.");           \
     std::vector<napi_value> args;                                                           \
-    ml::Operand input;                                                                      \
+    wnn::Operand input;                                                                     \
     WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid."); \
     Napi::Object object = Operand::constructor.New(args);                                   \
     Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);                           \
@@ -79,7 +79,7 @@ namespace node {
         : Napi::ObjectWrap<GraphBuilder>(info) {
         Napi::Object object = info[0].As<Napi::Object>();
         node::Context* context = Napi::ObjectWrap<node::Context>::Unwrap(object);
-        mImpl = ml::CreateGraphBuilder(context->GetImpl());
+        mImpl = wnn::CreateGraphBuilder(context->GetImpl());
     }
 
     Napi::Value GraphBuilder::Constant(const Napi::CallbackInfo& info) {
@@ -297,11 +297,11 @@ namespace node {
     Napi::Value GraphBuilder::Build(const Napi::CallbackInfo& info) {
         // MLGraph BuildSync(NamedOperands outputs);
         WEBNN_NODE_ASSERT(info.Length() == 1, "The number of arguments is invalid.");
-        ml::NamedOperands namedOperands;
+        wnn::NamedOperands namedOperands;
         std::vector<std::string> names;
         WEBNN_NODE_ASSERT(GetNamedOperands(info[0], namedOperands, names),
                           "The outputs parameter is invalid.");
-        ml::Graph graph = mImpl.Build(namedOperands);
+        wnn::Graph graph = mImpl.Build(namedOperands);
         WEBNN_NODE_ASSERT(graph != nullptr, "Failed to build graph.");
         Napi::Object object = node::Graph::constructor.New({});
         node::Graph* jsGraph = Napi::ObjectWrap<node::Graph>::Unwrap(object);

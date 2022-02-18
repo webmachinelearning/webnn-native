@@ -18,19 +18,19 @@
 
 namespace node { namespace op {
 
-    Napi::Value Reshape::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Reshape::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand reshape(Operand input, sequence<long> newShape);
         WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         std::vector<int32_t> newShape;
         WEBNN_NODE_ASSERT(GetArray(info[1], newShape), "The newShape parameter is invalid.");
         WEBNN_NODE_ASSERT(newShape.empty() == false, "The newShape is empty.");
 
-        ml::Operand reshape = builder.Reshape(input, newShape.data(), newShape.size());
+        wnn::Operand reshape = builder.Reshape(input, newShape.data(), newShape.size());
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
         operand->SetImpl(reshape);

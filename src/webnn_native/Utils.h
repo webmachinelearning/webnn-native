@@ -19,7 +19,7 @@
 #include <vector>
 
 namespace webnn_native { namespace utils {
-    void ComputeImplicitPaddingForAutoPad(ml::AutoPad autoPad,
+    void ComputeImplicitPaddingForAutoPad(wnn::AutoPad autoPad,
                                           int32_t dilation,
                                           int32_t inputSize,
                                           int32_t filterSize,

@@ -20,20 +20,20 @@ namespace node { namespace op {
 
     Napi::Value Reduce::Build(ReduceType opType,
                               const Napi::CallbackInfo& info,
-                              ml::GraphBuilder builder) {
+                              wnn::GraphBuilder builder) {
         // Operand Reduce(Operand input, optional ReduceOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary ReduceOptions {
         //   sequence<long> axes;
         //   boolean keepDimensions = false;
         // };
-        ml::ReduceOptions options;
+        wnn::ReduceOptions options;
         std::vector<int32_t> axes;
         if (info.Length() == 2 && !info[1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");

@@ -17,10 +17,10 @@
 class ReluTests : public WebnnTest {};
 
 TEST_F(ReluTests, Relu) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = builder.Relu(a);
-    const ml::Graph graph = utils::Build(builder, {{"b", b}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = builder.Relu(a);
+    const wnn::Graph graph = utils::Build(builder, {{"b", b}});
     ASSERT_TRUE(graph);
     const std::vector<float> inputData = {
         -1.483762,   0.6447428,   -1.2266507,  -1.7132527,  0.9777725,   -0.34438756, -0.99921757,

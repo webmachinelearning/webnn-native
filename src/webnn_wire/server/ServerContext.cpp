@@ -39,7 +39,7 @@ namespace webnn_wire { namespace server {
         return success;
     }
 
-    void Server::OnContextPopErrorScope(MLErrorType type,
+    void Server::OnContextPopErrorScope(WNNErrorType type,
                                         const char* message,
                                         ErrorScopeUserdata* userdata) {
         ReturnContextPopErrorScopeCallbackCmd cmd;

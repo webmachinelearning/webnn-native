@@ -21,13 +21,13 @@ class TransposeTests : public WebnnTest {
                         const std::vector<int32_t>& expectedShape,
                         const std::vector<float>& expectedValue,
                         const std::vector<int32_t>& permutation = {}) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        ml::TransposeOptions options;
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
+        wnn::TransposeOptions options;
         options.permutation = permutation.data();
         options.permutationCount = permutation.size();
-        const ml::Operand b = builder.Transpose(a, &options);
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+        const wnn::Operand b = builder.Transpose(a, &options);
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});

@@ -20,11 +20,11 @@
 
 namespace node { namespace op {
 
-    Napi::Value Clamp::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Clamp::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand clamp(Operand x, optional ClampOptions options = {});
         // Operator clamp(optional ClampOptions options = {});
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         bool isFusedOperator =
             info.Length() == 0 ||
             (info.Length() == 1 && info[0].IsObject() &&
@@ -42,7 +42,7 @@ namespace node { namespace op {
         //   float minValue = std::numeric_limits<float>::lowest();
         //   float maxValue = std::numeric_limits<float>::max();
         // };
-        ml::ClampOptions options;
+        wnn::ClampOptions options;
         size_t argumentsCount = isFusedOperator ? 1 : 2;
         if (info.Length() == argumentsCount && !info[argumentsCount - 1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[argumentsCount - 1].IsObject(),

@@ -21,15 +21,15 @@ class SqueezeTests : public WebnnTest {
     void CheckSqueeze(const std::vector<int32_t>& inputShape,
                       const std::vector<int32_t>& axes,
                       const std::vector<int32_t>& expectedShape) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand x = utils::BuildInput(builder, "x", inputShape);
-        ml::SqueezeOptions options;
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand x = utils::BuildInput(builder, "x", inputShape);
+        wnn::SqueezeOptions options;
         if (!axes.empty()) {
             options.axes = axes.data();
             options.axesCount = axes.size();
         }
-        const ml::Operand y = builder.Squeeze(x, axes.empty() ? nullptr : &options);
-        const ml::Graph graph = utils::Build(builder, {{"y", y}});
+        const wnn::Operand y = builder.Squeeze(x, axes.empty() ? nullptr : &options);
+        const wnn::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
         std::vector<float> inputBuffer(utils::SizeOfShape(inputShape));
         for (auto& input : inputBuffer) {

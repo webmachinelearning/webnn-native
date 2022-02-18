@@ -72,7 +72,7 @@ int main(int argc, const char* argv[]) {
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
         std::chrono::high_resolution_clock::now();
     LeNet lenet;
-    ml::Graph graph = lenet.Build(modelPath);
+    wnn::Graph graph = lenet.Build(modelPath);
     if (graph == nullptr) {
         dawn::ErrorLog() << "Failed to build LeNet graph.";
         return -1;
@@ -87,9 +87,9 @@ int main(int argc, const char* argv[]) {
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        ml::ComputeGraphStatus status =
+        wnn::ComputeGraphStatus status =
             utils::Compute(graph, {{"input", input}}, {{"output", result}});
-        DAWN_ASSERT(status == ml::ComputeGraphStatus::Success);
+        DAWN_ASSERT(status == wnn::ComputeGraphStatus::Success);
         executionTimeVector.push_back(std::chrono::high_resolution_clock::now() -
                                       executionStartTime);
     }

@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
             powerPreference = argv[i + 1];
         }
     }
-    const ml::ContextOptions options =
+    const wnn::ContextOptions options =
         utils::CreateContextOptions(devicePreference, powerPreference);
     InitWebnnEnd2EndTestEnvironment(&options);
     testing::InitGoogleTest(&argc, argv);

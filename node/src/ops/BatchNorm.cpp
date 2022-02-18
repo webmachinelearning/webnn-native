@@ -19,18 +19,18 @@
 
 namespace node { namespace op {
 
-    Napi::Value BatchNorm::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value BatchNorm::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand batchNormalization(Operand input, Operand mean, Operand variance,
         //                            optional BatchNormalizationOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 3 || info.Length() == 4,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
-        ml::Operand mean;
+        wnn::Operand mean;
         WEBNN_NODE_ASSERT(GetOperand(info[1], mean, args), "The mean parameter is invalid.");
-        ml::Operand variance;
+        wnn::Operand variance;
         WEBNN_NODE_ASSERT(GetOperand(info[2], variance, args),
                           "The variance parameter is invalid.");
 
@@ -41,7 +41,7 @@ namespace node { namespace op {
         //   float epsilon = 1e-5;
         //   Operator activation;
         // };
-        ml::BatchNormOptions options;
+        wnn::BatchNormOptions options;
         if (info.Length() == 4 && !info[3].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[3].IsObject(), "The options must be an object.")
             Napi::Object jsOptions = info[3].As<Napi::Object>();

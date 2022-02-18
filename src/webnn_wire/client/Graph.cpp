@@ -20,7 +20,7 @@
 
 namespace webnn_wire { namespace client {
 
-    MLComputeGraphStatus Graph::Compute(MLNamedInputs inputs, MLNamedOutputs outputs) {
+    WNNComputeGraphStatus Graph::Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs) {
         NamedInputs* namedInputs = FromAPI(inputs);
         NamedOutputs* namedOutputs = FromAPI(outputs);
 
@@ -31,7 +31,7 @@ namespace webnn_wire { namespace client {
 
         client->SerializeCommand(cmd);
 
-        return MLComputeGraphStatus::MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus::WNNComputeGraphStatus_Success;
     }
 
 }}  // namespace webnn_wire::client

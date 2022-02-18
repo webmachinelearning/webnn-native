@@ -36,11 +36,11 @@ namespace webnn_wire { namespace client {
             };
         {% endif %}
 
-        inline {{Type}}* FromAPI(ML{{Type}} obj) {
+        inline {{Type}}* FromAPI(WNN{{Type}} obj) {
             return reinterpret_cast<{{Type}}*>(obj);
         }
-        inline ML{{Type}} ToAPI({{Type}}* obj) {
-            return reinterpret_cast<ML{{Type}}>(obj);
+        inline WNN{{Type}} ToAPI({{Type}}* obj) {
+            return reinterpret_cast<WNN{{Type}}>(obj);
         }
 
         template <>

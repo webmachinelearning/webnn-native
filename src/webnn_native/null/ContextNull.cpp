@@ -21,7 +21,7 @@ namespace webnn_native { namespace null {
 
     class Backend : public BackendConnection {
       public:
-        Backend(InstanceBase* instance) : BackendConnection(instance, ml::BackendType::Null) {
+        Backend(InstanceBase* instance) : BackendConnection(instance, wnn::BackendType::Null) {
         }
 
         ContextBase* CreateContext(ContextOptions const* options) {
@@ -34,7 +34,7 @@ namespace webnn_native { namespace null {
     }
 
     // Context
-    ContextBase* Create(MLContextOptions const* options) {
+    ContextBase* Create(WNNContextOptions const* options) {
         return new Context(reinterpret_cast<ContextOptions const*>(options));
     }
 
@@ -57,8 +57,8 @@ namespace webnn_native { namespace null {
         return {};
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        return MLComputeGraphStatus_Success;
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        return WNNComputeGraphStatus_Success;
     }
 
     MaybeError Graph::AddConstant(const op::Constant* constant) {

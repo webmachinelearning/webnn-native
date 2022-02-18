@@ -26,8 +26,8 @@ class ConcatTests : public WebnnTest {
                      const std::vector<int32_t>& expectedShape,
                      const std::vector<float>& expectedValue,
                      bool inputsDefined = true) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        std::vector<ml::Operand> inputsOperand;
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        std::vector<wnn::Operand> inputsOperand;
         inputsOperand.reserve(inputs.size());
         size_t index = 0;
         std::vector<utils::NamedInput<float>> namedInputs;
@@ -41,9 +41,10 @@ class ConcatTests : public WebnnTest {
             namedInputs.push_back({inputName, input.value});
             ++index;
         }
-        const ml::Operand output = builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
+        const wnn::Operand output =
+            builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
         std::string outputName = std::to_string(inputs.size());
-        const ml::Graph graph = utils::Build(builder, {{outputName, output}});
+        const wnn::Graph graph = utils::Build(builder, {{outputName, output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, namedInputs, {{outputName, result}});

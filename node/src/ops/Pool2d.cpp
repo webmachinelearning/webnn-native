@@ -25,10 +25,10 @@ namespace node { namespace op {
         std::vector<int32_t> padding;
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
-        ml::AutoPad autoPad = ml::AutoPad::Explicit;
-        ml::InputOperandLayout layout = ml::InputOperandLayout::Nchw;
+        wnn::AutoPad autoPad = wnn::AutoPad::Explicit;
+        wnn::InputOperandLayout layout = wnn::InputOperandLayout::Nchw;
 
-        const ml::Pool2dOptions* AsPtr() {
+        const wnn::Pool2dOptions* AsPtr() {
             if (!windowDimensions.empty()) {
                 mOptions.windowDimensionsCount = windowDimensions.size();
                 mOptions.windowDimensions = windowDimensions.data();
@@ -51,11 +51,11 @@ namespace node { namespace op {
         }
 
       private:
-        ml::Pool2dOptions mOptions;
+        wnn::Pool2dOptions mOptions;
     };
 
     Napi::Value Pool2d::Build(const Napi::CallbackInfo& info,
-                              ml::GraphBuilder builder,
+                              wnn::GraphBuilder builder,
                               Pool2dType type) {
         //   Operand averagePool2d(Operand input, optional Pool2dOptions options = {});
         //   Operand l2Pool2d(Operand input, optional Pool2dOptions options = {});
@@ -64,7 +64,7 @@ namespace node { namespace op {
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary Pool2dOptions {
@@ -106,7 +106,7 @@ namespace node { namespace op {
             }
         }
 
-        ml::Operand pool2d;
+        wnn::Operand pool2d;
         switch (type) {
             case Pool2dType::kAveragePool2d:
                 pool2d = builder.AveragePool2d(input, options.AsPtr());

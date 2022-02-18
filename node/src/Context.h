@@ -29,11 +29,11 @@ namespace node {
         Context(const Napi::CallbackInfo& info);
         ~Context() = default;
 
-        ml::Context GetImpl();
+        wnn::Context GetImpl();
 
       private:
         std::unique_ptr<webnn_native::Instance> instance;
-        ml::Context mImpl;
+        wnn::Context mImpl;
     };
 
 }  // namespace node

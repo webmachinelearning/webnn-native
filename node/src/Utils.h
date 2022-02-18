@@ -62,11 +62,11 @@ namespace node {
         return true;
     }
 
-    inline bool GetOperandType(const Napi::Value& jsValue, ml::OperandType& value) {
-        const std::unordered_map<std::string, ml::OperandType> operandTypeMap = {
-            {"float32", ml::OperandType::Float32}, {"float16", ml::OperandType::Float16},
-            {"int32", ml::OperandType::Int32},     {"uint32", ml::OperandType::Uint32},
-            {"int8", ml::OperandType::Int8},       {"uint8", ml::OperandType::Uint8},
+    inline bool GetOperandType(const Napi::Value& jsValue, wnn::OperandType& value) {
+        const std::unordered_map<std::string, wnn::OperandType> operandTypeMap = {
+            {"float32", wnn::OperandType::Float32}, {"float16", wnn::OperandType::Float16},
+            {"int32", wnn::OperandType::Int32},     {"uint32", wnn::OperandType::Uint32},
+            {"int8", wnn::OperandType::Int8},       {"uint8", wnn::OperandType::Uint8},
         };
         if (!jsValue.IsString()) {
             return false;
@@ -74,10 +74,10 @@ namespace node {
         return GetMappedValue(operandTypeMap, jsValue.As<Napi::String>().Utf8Value(), value);
     }
 
-    inline bool GetInputOperandLayout(const Napi::Value& jsValue, ml::InputOperandLayout& value) {
-        const std::unordered_map<std::string, ml::InputOperandLayout> inputOperandLayoutMap = {
-            {"nchw", ml::InputOperandLayout::Nchw},
-            {"nhwc", ml::InputOperandLayout::Nhwc},
+    inline bool GetInputOperandLayout(const Napi::Value& jsValue, wnn::InputOperandLayout& value) {
+        const std::unordered_map<std::string, wnn::InputOperandLayout> inputOperandLayoutMap = {
+            {"nchw", wnn::InputOperandLayout::Nchw},
+            {"nhwc", wnn::InputOperandLayout::Nhwc},
         };
         if (!jsValue.IsString()) {
             return false;
@@ -86,13 +86,13 @@ namespace node {
     };
 
     inline bool GetConv2dFilterOperandLayout(const Napi::Value& jsValue,
-                                             ml::Conv2dFilterOperandLayout& value) {
-        const std::unordered_map<std::string, ml::Conv2dFilterOperandLayout>
+                                             wnn::Conv2dFilterOperandLayout& value) {
+        const std::unordered_map<std::string, wnn::Conv2dFilterOperandLayout>
             filterOperandLayoutMap = {
-                {"oihw", ml::Conv2dFilterOperandLayout::Oihw},
-                {"hwio", ml::Conv2dFilterOperandLayout::Hwio},
-                {"ohwi", ml::Conv2dFilterOperandLayout::Ohwi},
-                {"ihwo", ml::Conv2dFilterOperandLayout::Ihwo},
+                {"oihw", wnn::Conv2dFilterOperandLayout::Oihw},
+                {"hwio", wnn::Conv2dFilterOperandLayout::Hwio},
+                {"ohwi", wnn::Conv2dFilterOperandLayout::Ohwi},
+                {"ihwo", wnn::Conv2dFilterOperandLayout::Ihwo},
             };
         if (!jsValue.IsString()) {
             return false;
@@ -103,12 +103,12 @@ namespace node {
 
     inline bool GetConvTranspose2dFilterOperandLayout(
         const Napi::Value& jsValue,
-        ml::ConvTranspose2dFilterOperandLayout& value) {
-        const std::unordered_map<std::string, ml::ConvTranspose2dFilterOperandLayout>
+        wnn::ConvTranspose2dFilterOperandLayout& value) {
+        const std::unordered_map<std::string, wnn::ConvTranspose2dFilterOperandLayout>
             filterOperandLayoutMap = {
-                {"iohw", ml::ConvTranspose2dFilterOperandLayout::Iohw},
-                {"hwoi", ml::ConvTranspose2dFilterOperandLayout::Hwoi},
-                {"ohwi", ml::ConvTranspose2dFilterOperandLayout::Ohwi},
+                {"iohw", wnn::ConvTranspose2dFilterOperandLayout::Iohw},
+                {"hwoi", wnn::ConvTranspose2dFilterOperandLayout::Hwoi},
+                {"ohwi", wnn::ConvTranspose2dFilterOperandLayout::Ohwi},
             };
         if (!jsValue.IsString()) {
             return false;
@@ -117,11 +117,11 @@ namespace node {
                               value);
     };
 
-    inline bool GetAutopad(const Napi::Value& jsValue, ml::AutoPad& value) {
-        const std::unordered_map<std::string, ml::AutoPad> AutoPadMap = {
-            {"explicit", ml::AutoPad::Explicit},
-            {"same-upper", ml::AutoPad::SameUpper},
-            {"same-lower", ml::AutoPad::SameLower},
+    inline bool GetAutopad(const Napi::Value& jsValue, wnn::AutoPad& value) {
+        const std::unordered_map<std::string, wnn::AutoPad> AutoPadMap = {
+            {"explicit", wnn::AutoPad::Explicit},
+            {"same-upper", wnn::AutoPad::SameUpper},
+            {"same-lower", wnn::AutoPad::SameLower},
         };
         if (!jsValue.IsString()) {
             return false;
@@ -129,12 +129,12 @@ namespace node {
         return GetMappedValue(AutoPadMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
-    inline bool GetPaddingMode(const Napi::Value& jsValue, ml::PaddingMode& value) {
-        const std::unordered_map<std::string, ml::PaddingMode> paddingModeMap = {
-            {"constant", ml::PaddingMode::Constant},
-            {"edge", ml::PaddingMode::Edge},
-            {"reflection", ml::PaddingMode::Reflection},
-            {"symmetric", ml::PaddingMode::Symmetric},
+    inline bool GetPaddingMode(const Napi::Value& jsValue, wnn::PaddingMode& value) {
+        const std::unordered_map<std::string, wnn::PaddingMode> paddingModeMap = {
+            {"constant", wnn::PaddingMode::Constant},
+            {"edge", wnn::PaddingMode::Edge},
+            {"reflection", wnn::PaddingMode::Reflection},
+            {"symmetric", wnn::PaddingMode::Symmetric},
         };
         if (!jsValue.IsString()) {
             return false;
@@ -142,10 +142,10 @@ namespace node {
         return GetMappedValue(paddingModeMap, jsValue.As<Napi::String>().Utf8Value(), value);
     };
 
-    inline bool GetInterpolationMode(const Napi::Value& jsValue, ml::InterpolationMode& value) {
-        const std::unordered_map<std::string, ml::InterpolationMode> interpolationModeMap = {
-            {"nearest-neighbor", ml::InterpolationMode::NearestNeighbor},
-            {"linear", ml::InterpolationMode::Linear},
+    inline bool GetInterpolationMode(const Napi::Value& jsValue, wnn::InterpolationMode& value) {
+        const std::unordered_map<std::string, wnn::InterpolationMode> interpolationModeMap = {
+            {"nearest-neighbor", wnn::InterpolationMode::NearestNeighbor},
+            {"linear", wnn::InterpolationMode::Linear},
         };
         if (!jsValue.IsString()) {
             return false;
@@ -154,11 +154,11 @@ namespace node {
     };
 
     inline bool GetRecurrentNetworkWeightLayout(const Napi::Value& jsValue,
-                                                ml::RecurrentNetworkWeightLayout& value) {
-        const std::unordered_map<std::string, ml::RecurrentNetworkWeightLayout>
+                                                wnn::RecurrentNetworkWeightLayout& value) {
+        const std::unordered_map<std::string, wnn::RecurrentNetworkWeightLayout>
             recurrentNetworkWeightLayoutMap = {
-                {"zrn", ml::RecurrentNetworkWeightLayout::Zrn},
-                {"rzn", ml::RecurrentNetworkWeightLayout::Rzn},
+                {"zrn", wnn::RecurrentNetworkWeightLayout::Zrn},
+                {"rzn", wnn::RecurrentNetworkWeightLayout::Rzn},
             };
         if (!jsValue.IsString()) {
             return false;
@@ -168,12 +168,12 @@ namespace node {
     };
 
     inline bool GetRecurrentNetworkDirection(const Napi::Value& jsValue,
-                                             ml::RecurrentNetworkDirection& value) {
-        const std::unordered_map<std::string, ml::RecurrentNetworkDirection>
+                                             wnn::RecurrentNetworkDirection& value) {
+        const std::unordered_map<std::string, wnn::RecurrentNetworkDirection>
             recurrentNetworkDirectionMap = {
-                {"forward", ml::RecurrentNetworkDirection::Forward},
-                {"backward", ml::RecurrentNetworkDirection::Backward},
-                {"both", ml::RecurrentNetworkDirection::Both},
+                {"forward", wnn::RecurrentNetworkDirection::Forward},
+                {"backward", wnn::RecurrentNetworkDirection::Backward},
+                {"both", wnn::RecurrentNetworkDirection::Both},
             };
         if (!jsValue.IsString()) {
             return false;
@@ -301,7 +301,7 @@ namespace node {
     }
 
     inline bool GetOperand(const Napi::Value& jsValue,
-                           ml::Operand& operand,
+                           wnn::Operand& operand,
                            std::vector<napi_value>& args) {
         if (!jsValue.IsObject()) {
             return false;
@@ -316,7 +316,7 @@ namespace node {
     }
 
     inline bool GetOperator(const Napi::Value& jsValue,
-                            ml::FusionOperator& mlOperator,
+                            wnn::FusionOperator& mlOperator,
                             std::vector<napi_value>& args) {
         if (!jsValue.IsObject()) {
             return false;
@@ -331,7 +331,7 @@ namespace node {
     }
 
     inline bool GetOperandArray(const Napi::Value& jsValue,
-                                std::vector<ml::Operand>& array,
+                                std::vector<wnn::Operand>& array,
                                 std::vector<napi_value>& args) {
         if (!jsValue.IsArray()) {
             return false;
@@ -353,18 +353,18 @@ namespace node {
     }
 
     inline bool GetOperatorArray(const Napi::Value& jsValue,
-                                 ml::OperatorArray& operatorArray,
+                                 wnn::OperatorArray& operatorArray,
                                  std::vector<napi_value>& args) {
         if (!jsValue.IsArray()) {
             return false;
         }
         Napi::Array jsArray = jsValue.As<Napi::Array>();
-        operatorArray = ml::CreateOperatorArray();
+        operatorArray = wnn::CreateOperatorArray();
         for (size_t i = 0; i < jsArray.Length(); i++) {
             if (!jsArray.Get(i).IsObject()) {
                 return false;
             } else {
-                ml::FusionOperator mlOperator;
+                wnn::FusionOperator mlOperator;
                 if (GetOperator(jsArray.Get(i), mlOperator, args)) {
                     operatorArray.Set(mlOperator);
                 } else {
@@ -377,10 +377,10 @@ namespace node {
 
     struct OperandDescriptor {
       public:
-        ml::OperandType type;
+        wnn::OperandType type;
         std::vector<int32_t> dimensions;
 
-        const ml::OperandDescriptor* AsPtr() {
+        const wnn::OperandDescriptor* AsPtr() {
             if (!dimensions.empty()) {
                 mDesc.dimensions = dimensions.data();
                 mDesc.dimensionsCount = dimensions.size();
@@ -390,7 +390,7 @@ namespace node {
         }
 
       private:
-        ml::OperandDescriptor mDesc;
+        wnn::OperandDescriptor mDesc;
     };
 
     inline bool GetOperandDescriptor(const Napi::Value& jsValue, OperandDescriptor& desc) {
@@ -413,7 +413,7 @@ namespace node {
     }
 
     inline bool GetArrayBufferView(const Napi::Value& jsValue,
-                                   ml::ArrayBufferView& arrayBufferView) {
+                                   wnn::ArrayBufferView& arrayBufferView) {
         if (!jsValue.IsTypedArray()) {
             return false;
         }
@@ -430,16 +430,16 @@ namespace node {
     }
 
     inline bool GetArrayBufferView(const Napi::Value& jsValue,
-                                   const ml::OperandType type,
+                                   const wnn::OperandType type,
                                    const std::vector<int32_t>& dimensions,
-                                   ml::ArrayBufferView& arrayBufferView) {
-        const std::unordered_map<ml::OperandType, napi_typedarray_type> arrayTypeMap = {
-            {ml::OperandType::Float32, napi_float32_array},
-            {ml::OperandType::Float16, napi_uint16_array},
-            {ml::OperandType::Int32, napi_int32_array},
-            {ml::OperandType::Uint32, napi_uint32_array},
-            {ml::OperandType::Int8, napi_int8_array},
-            {ml::OperandType::Uint8, napi_uint8_array},
+                                   wnn::ArrayBufferView& arrayBufferView) {
+        const std::unordered_map<wnn::OperandType, napi_typedarray_type> arrayTypeMap = {
+            {wnn::OperandType::Float32, napi_float32_array},
+            {wnn::OperandType::Float16, napi_uint16_array},
+            {wnn::OperandType::Int32, napi_int32_array},
+            {wnn::OperandType::Uint32, napi_uint32_array},
+            {wnn::OperandType::Int8, napi_int8_array},
+            {wnn::OperandType::Uint8, napi_uint8_array},
         };
         if (!jsValue.IsTypedArray()) {
             return false;
@@ -459,22 +459,22 @@ namespace node {
 
         size_t expectedSize;
         switch (type) {
-            case ml::OperandType::Float32:
+            case wnn::OperandType::Float32:
                 expectedSize = sizeof(float);
                 break;
-            case ml::OperandType::Float16:
+            case wnn::OperandType::Float16:
                 expectedSize = sizeof(uint16_t);
                 break;
-            case ml::OperandType::Int32:
+            case wnn::OperandType::Int32:
                 expectedSize = sizeof(int32_t);
                 break;
-            case ml::OperandType::Uint32:
+            case wnn::OperandType::Uint32:
                 expectedSize = sizeof(uint32_t);
                 break;
-            case ml::OperandType::Int8:
+            case wnn::OperandType::Int8:
                 expectedSize = sizeof(int8_t);
                 break;
-            case ml::OperandType::Uint8:
+            case wnn::OperandType::Uint8:
                 expectedSize = sizeof(uint8_t);
                 break;
             default:
@@ -488,13 +488,13 @@ namespace node {
     }
 
     inline bool GetNamedOperands(const Napi::Value& jsValue,
-                                 ml::NamedOperands& namedOperands,
+                                 wnn::NamedOperands& namedOperands,
                                  std::vector<std::string>& names) {
         if (!jsValue.IsObject()) {
             return false;
         }
         Napi::Object jsOutputs = jsValue.As<Napi::Object>();
-        namedOperands = ml::CreateNamedOperands();
+        namedOperands = wnn::CreateNamedOperands();
         Napi::Array outputNames = jsOutputs.GetPropertyNames();
         if (outputNames.Length() == 0) {
             return false;
@@ -505,7 +505,7 @@ namespace node {
             if (!output.InstanceOf(Operand::constructor.Value())) {
                 return false;
             }
-            ml::Operand operand = Napi::ObjectWrap<Operand>::Unwrap(output)->GetImpl();
+            wnn::Operand operand = Napi::ObjectWrap<Operand>::Unwrap(output)->GetImpl();
             namedOperands.Set(name.data(), operand);
             names.push_back(name);
         }

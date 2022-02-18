@@ -30,15 +30,15 @@ namespace node {
         explicit Operand(const Napi::CallbackInfo& info);
         ~Operand() = default;
 
-        ml::Operand GetImpl() const {
+        wnn::Operand GetImpl() const {
             return mImpl;
         };
-        void SetImpl(const ml::Operand& operand) {
+        void SetImpl(const wnn::Operand& operand) {
             mImpl = operand;
         };
 
       private:
-        ml::Operand mImpl;
+        wnn::Operand mImpl;
         std::vector<Napi::ObjectReference> mObjects;
     };
 

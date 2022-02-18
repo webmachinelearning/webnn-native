@@ -19,10 +19,10 @@ class TanhTests : public WebnnTest {
     void TestTanh(const std::vector<float>& inputData,
                   const std::vector<float>& expectedData,
                   const std::vector<int32_t>& shape) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", shape);
-        const ml::Operand b = builder.Tanh(a);
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", shape);
+        const wnn::Operand b = builder.Tanh(a);
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(shape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});

@@ -85,7 +85,7 @@ namespace webnn_wire { namespace client {
         return result;
     }
 
-    ReservedNamedInputs Client::ReserveNamedInputs(MLContext context) {
+    ReservedNamedInputs Client::ReserveNamedInputs(WNNContext context) {
         auto* allocation = NamedInputsAllocator().New(this);
 
         ReservedNamedInputs result;

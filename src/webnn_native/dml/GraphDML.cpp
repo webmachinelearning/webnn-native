@@ -69,15 +69,15 @@ namespace webnn_native { namespace dml {
             return true;
         }
 
-        bool GetDmlTensorDataType(ml::OperandType operandType,
+        bool GetDmlTensorDataType(wnn::OperandType operandType,
                                   DML_TENSOR_DATA_TYPE& dmlTensorDataType) {
-            if (operandType == ml::OperandType::Float32) {
+            if (operandType == wnn::OperandType::Float32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_FLOAT32;
-            } else if (operandType == ml::OperandType::Float16) {
+            } else if (operandType == wnn::OperandType::Float16) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_FLOAT16;
-            } else if (operandType == ml::OperandType::Int32) {
+            } else if (operandType == wnn::OperandType::Int32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_INT32;
-            } else if (operandType == ml::OperandType::Uint32) {
+            } else if (operandType == wnn::OperandType::Uint32) {
                 dmlTensorDataType = DML_TENSOR_DATA_TYPE_UINT32;
             } else {
                 return false;
@@ -157,23 +157,23 @@ namespace webnn_native { namespace dml {
         }
 
         ::dml::TensorDimensions CalculateFilterLayoutStrides(
-            ml::Conv2dFilterOperandLayout filterLayout,
+            wnn::Conv2dFilterOperandLayout filterLayout,
             ::dml::TensorDimensions sizes) {
             uint32_t hStride = 0, wStride = 0, iStride = 0, oStride = 0;
             switch (filterLayout) {
-                case ml::Conv2dFilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     hStride = sizes[1] * sizes[2] * sizes[3];
                     wStride = sizes[2] * sizes[3];
                     iStride = sizes[3];
                     oStride = 1;
                     break;
-                case ml::Conv2dFilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     oStride = sizes[1] * sizes[2] * sizes[3];
                     hStride = sizes[2] * sizes[3];
                     wStride = sizes[3];
                     iStride = 1;
                     break;
-                case ml::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     iStride = sizes[1] * sizes[2] * sizes[3];
                     hStride = sizes[2] * sizes[3];
                     wStride = sizes[3];
@@ -186,13 +186,13 @@ namespace webnn_native { namespace dml {
             return {oStride, iStride, hStride, wStride};
         }
 
-        ::dml::Expression ReinterpretFilterLayoutAsOihw(ml::Conv2dFilterOperandLayout filterLayout,
+        ::dml::Expression ReinterpretFilterLayoutAsOihw(wnn::Conv2dFilterOperandLayout filterLayout,
                                                         ::dml::Expression filter) {
             ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
             ::dml::TensorDimensions newFilterDims;
             newFilterDims.resize(4);
             switch (filterLayout) {
-                case ml::Conv2dFilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     newFilterDims.resize(4);
                     newFilterDims[0] = filterDims[0];
                     newFilterDims[1] = filterDims[3];
@@ -201,9 +201,9 @@ namespace webnn_native { namespace dml {
                     filter =
                         ::dml::Reinterpret(filter, newFilterDims,
                                            CalculateFilterLayoutStrides(
-                                               ml::Conv2dFilterOperandLayout::Ohwi, filterDims));
+                                               wnn::Conv2dFilterOperandLayout::Ohwi, filterDims));
                     break;
-                case ml::Conv2dFilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[2];
                     newFilterDims[2] = filterDims[0];
@@ -211,9 +211,9 @@ namespace webnn_native { namespace dml {
                     filter =
                         ::dml::Reinterpret(filter, newFilterDims,
                                            CalculateFilterLayoutStrides(
-                                               ml::Conv2dFilterOperandLayout::Hwio, filterDims));
+                                               wnn::Conv2dFilterOperandLayout::Hwio, filterDims));
                     break;
-                case ml::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[0];
                     newFilterDims[2] = filterDims[1];
@@ -221,7 +221,7 @@ namespace webnn_native { namespace dml {
                     filter =
                         ::dml::Reinterpret(filter, newFilterDims,
                                            CalculateFilterLayoutStrides(
-                                               ml::Conv2dFilterOperandLayout::Ihwo, filterDims));
+                                               wnn::Conv2dFilterOperandLayout::Ihwo, filterDims));
                     break;
                 default:
                     DAWN_ASSERT(0);
@@ -459,16 +459,16 @@ namespace webnn_native { namespace dml {
     }
 
     Graph::Graph(Context* context) : GraphBase(context) {
-        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
-        bool useGpu = devicePreference == ml::DevicePreference::Cpu ? false : true;
+        wnn::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
+        bool useGpu = devicePreference == wnn::DevicePreference::Cpu ? false : true;
 
-        ml::PowerPreference powerPreference = GetContext()->GetContextOptions().powerPreference;
+        wnn::PowerPreference powerPreference = GetContext()->GetContextOptions().powerPreference;
         DXGI_GPU_PREFERENCE gpuPreference;
         switch (powerPreference) {
-            case ml::PowerPreference::High_performance:
+            case wnn::PowerPreference::High_performance:
                 gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE;
                 break;
-            case ml::PowerPreference::Low_power:
+            case wnn::PowerPreference::Low_power:
                 gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_MINIMUM_POWER;
                 break;
             default:
@@ -775,11 +775,11 @@ namespace webnn_native { namespace dml {
         ::dml::Expression filter = mExpression.at(inputsOperand[1].Get());
         const Conv2dOptions* options = conv2d->GetOptions();
 
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
 
-        if (options->filterLayout != ml::Conv2dFilterOperandLayout::Oihw) {
+        if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Oihw) {
             filter = ReinterpretFilterLayoutAsOihw(options->filterLayout, filter);
         }
 
@@ -790,7 +790,7 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
                                               options->dilationsCount);
 
-        auto padding = options->autoPad == ml::AutoPad::Explicit
+        auto padding = options->autoPad == wnn::AutoPad::Explicit
                            ? ExplicitPadding<Conv2dOptions>(options)
                            : ImplicitPadding<Conv2dOptions>(options, input, filter);
         // dml::Span just holds the refernces, need a variable to hold the memory.
@@ -819,7 +819,7 @@ namespace webnn_native { namespace dml {
             {},
             // groupCount
             options->groups, CreateFusedActivation(options->activation));
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
         output = EmulateFusedActivation(options->activation, output);
@@ -867,16 +867,16 @@ namespace webnn_native { namespace dml {
         const PadOptions* options = pad->GetOptions();
         DML_PADDING_MODE paddingMode;
         switch (options->mode) {
-            case ml::PaddingMode::Edge:
+            case wnn::PaddingMode::Edge:
                 paddingMode = DML_PADDING_MODE_EDGE;
                 break;
-            case ml::PaddingMode::Reflection:
+            case wnn::PaddingMode::Reflection:
                 paddingMode = DML_PADDING_MODE_REFLECTION;
                 break;
-            case ml::PaddingMode::Symmetric:
+            case wnn::PaddingMode::Symmetric:
                 paddingMode = DML_PADDING_MODE_SYMMETRIC;
                 break;
-            case ml::PaddingMode::Constant:
+            case wnn::PaddingMode::Constant:
                 paddingMode = DML_PADDING_MODE_CONSTANT;
                 break;
             default:
@@ -907,7 +907,7 @@ namespace webnn_native { namespace dml {
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
         const Pool2dOptions* options = pool2d->GetOptions();
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
@@ -926,7 +926,7 @@ namespace webnn_native { namespace dml {
         ::dml::Span<const uint32_t> windowSizes(windowSizesVector);
         ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
                                               options->dilationsCount);
-        auto padding = options->autoPad == ml::AutoPad::Explicit
+        auto padding = options->autoPad == wnn::AutoPad::Explicit
                            ? ExplicitPadding<Pool2dOptions>(options)
                            : ImplicitPadding<Pool2dOptions>(options, input, windowSizesVector);
         // dml::Span just holds the refernces, need a variable to hold the memory.
@@ -960,7 +960,7 @@ namespace webnn_native { namespace dml {
             return DAWN_INTERNAL_ERROR("This pool2d type is not supported.");
         }
 
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
         mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
@@ -1059,10 +1059,10 @@ namespace webnn_native { namespace dml {
 
         DML_INTERPOLATION_MODE mode;
         switch (options->mode) {
-            case ml::InterpolationMode::NearestNeighbor:
+            case wnn::InterpolationMode::NearestNeighbor:
                 mode = DML_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
                 break;
-            case ml::InterpolationMode::Linear:
+            case wnn::InterpolationMode::Linear:
                 mode = DML_INTERPOLATION_MODE_LINEAR;
                 break;
             default:
@@ -1280,7 +1280,7 @@ namespace webnn_native { namespace dml {
         DAWN_ASSERT(mExpression.find(instanceNorm->Inputs()[0].Get()) != mExpression.end());
         ::dml::Expression input = mExpression.at(instanceNorm->Inputs()[0].Get());
         const InstanceNormOptions* options = instanceNorm->GetOptions();
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
 
@@ -1323,7 +1323,7 @@ namespace webnn_native { namespace dml {
         ::dml::Expression output = ::dml::MeanVarianceNormalization(
             input, expressions[0], expressions[1], axes, true, options->epsilon);
 
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             output = ReinterpretInputLayout(NchwToNhwc, output);
         }
         mExpression.insert(std::make_pair(instanceNorm->PrimaryOutput(), output));
@@ -1599,13 +1599,13 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& input : mInputs) {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input must be set.";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
 
             ::pydml::Binding* inputBinding = input.second;
@@ -1628,7 +1628,7 @@ namespace webnn_native { namespace dml {
         if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
                                              outputExpressions, outputTensors))) {
             dawn::ErrorLog() << "Failed to dispatch operator.";
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
         for (size_t i = 0; i < outputNames.size(); ++i) {
@@ -1647,7 +1647,7 @@ namespace webnn_native { namespace dml {
             free(outputBuffer);
             delete tensor;
         }
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 
 }}  // namespace webnn_native::dml

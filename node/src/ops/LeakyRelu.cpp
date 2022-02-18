@@ -18,11 +18,11 @@
 
 namespace node { namespace op {
 
-    Napi::Value LeakyRelu::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value LeakyRelu::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand leakyRelu(Operand x, optional LeakyReluOptions options = {});
         // Operator leakyReluOperator(optional LeakyReluOptions options = {});
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         bool isFusedOperator =
             info.Length() == 0 ||
             (info.Length() == 1 && info[0].IsObject() &&
@@ -39,7 +39,7 @@ namespace node { namespace op {
         // dictionary LeakyReluOptions {
         //   float alpha = 0.01;
         // };
-        ml::LeakyReluOptions options;
+        wnn::LeakyReluOptions options;
         size_t argumentsCount = isFusedOperator ? 1 : 2;
         if (info.Length() == argumentsCount && !info[argumentsCount - 1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[argumentsCount - 1].IsObject(),

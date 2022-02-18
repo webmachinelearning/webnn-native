@@ -23,43 +23,45 @@ class ResNet : public ExampleBase {
     ~ResNet() override = default;
 
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
-    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
-                                           const std::string& path);
-    const ml::Operand BuildNchwConv(const ml::GraphBuilder& builder,
-                                    const ml::Operand& input,
-                                    const std::string& name,
-                                    const std::string& stageName,
-                                    utils::Conv2dOptions* options = nullptr);
-    const ml::Operand BuildNhwcConv(const ml::GraphBuilder& builder,
-                                    const ml::Operand& input,
-                                    const std::vector<std::string> nameIndices,
-                                    utils::Conv2dOptions* options = nullptr,
-                                    bool relu = true);
-    const ml::Operand BuildBatchNorm(const ml::GraphBuilder& builder,
-                                     const ml::Operand& input,
+    const wnn::Operand LoadNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNHWC(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
+                                            const std::string& path);
+    const wnn::Operand BuildNchwConv(const wnn::GraphBuilder& builder,
+                                     const wnn::Operand& input,
                                      const std::string& name,
                                      const std::string& stageName,
+                                     utils::Conv2dOptions* options = nullptr);
+    const wnn::Operand BuildNhwcConv(const wnn::GraphBuilder& builder,
+                                     const wnn::Operand& input,
+                                     const std::vector<std::string> nameIndices,
+                                     utils::Conv2dOptions* options = nullptr,
                                      bool relu = true);
-    const ml::Operand BuildFusedBatchNorm(const ml::GraphBuilder& builder,
-                                          const ml::Operand& input,
-                                          const std::vector<std::string> nameIndices);
-    const ml::Operand BuildNchwBottlenectV2(const ml::GraphBuilder& builder,
-                                            const ml::Operand& input,
-                                            const std::string& stageName,
-                                            const std::vector<std::string> nameIndices,
-                                            bool downsample = false,
-                                            int32_t stride = 1);
-    const ml::Operand BuildNhwcBottlenectV2(const ml::GraphBuilder& builder,
-                                            const ml::Operand& input,
-                                            std::vector<std::string> nameIndices,
-                                            bool downsample = false,
-                                            bool shortcut = true);
-    const ml::Operand BuildGemm(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                const std::string& name);
-    const ml::Operand loop(const ml::GraphBuilder& builder, const ml::Operand node, uint32_t num);
+    const wnn::Operand BuildBatchNorm(const wnn::GraphBuilder& builder,
+                                      const wnn::Operand& input,
+                                      const std::string& name,
+                                      const std::string& stageName,
+                                      bool relu = true);
+    const wnn::Operand BuildFusedBatchNorm(const wnn::GraphBuilder& builder,
+                                           const wnn::Operand& input,
+                                           const std::vector<std::string> nameIndices);
+    const wnn::Operand BuildNchwBottlenectV2(const wnn::GraphBuilder& builder,
+                                             const wnn::Operand& input,
+                                             const std::string& stageName,
+                                             const std::vector<std::string> nameIndices,
+                                             bool downsample = false,
+                                             int32_t stride = 1);
+    const wnn::Operand BuildNhwcBottlenectV2(const wnn::GraphBuilder& builder,
+                                             const wnn::Operand& input,
+                                             std::vector<std::string> nameIndices,
+                                             bool downsample = false,
+                                             bool shortcut = true);
+    const wnn::Operand BuildGemm(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 const std::string& name);
+    const wnn::Operand loop(const wnn::GraphBuilder& builder,
+                            const wnn::Operand node,
+                            uint32_t num);
 
   private:
     std::vector<SHARED_DATA_TYPE> mConstants;

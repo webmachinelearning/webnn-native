@@ -18,7 +18,7 @@
 
 namespace node { namespace op {
 
-    Napi::Value Input::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Input::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand input(DOMString name, OperandDescriptor desc);
         WEBNN_NODE_ASSERT(info.Length() == 2, "The number of arguments is invalid.");
         std::string name;
