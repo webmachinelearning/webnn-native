@@ -20,7 +20,7 @@
 namespace webnn_native { namespace ie {
 
     Backend::Backend(InstanceBase* instance)
-        : BackendConnection(instance, ml::BackendType::OpenVINO) {
+        : BackendConnection(instance, wnn::BackendType::OpenVINO) {
     }
 
     MaybeError Backend::Initialize() {

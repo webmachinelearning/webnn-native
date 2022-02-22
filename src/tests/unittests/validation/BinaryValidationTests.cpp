@@ -22,24 +22,24 @@ class BinaryValidationTest : public ValidationTest {};
 
 TEST_F(BinaryValidationTest, InputsType) {
     std::vector<int32_t> shape = {2, 2};
-    ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
-                                       (uint32_t)shape.size()};
-    ml::Operand a = mBuilder.Input("input", &inputDesc);
+    wnn::OperandDescriptor inputDesc = {wnn::OperandType::Float32, shape.data(),
+                                        (uint32_t)shape.size()};
+    wnn::Operand a = mBuilder.Input("input", &inputDesc);
     // success
     {
         std::vector<float> data(4, 1);
-        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
-        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
-        ml::Operand add = mBuilder.Add(a, b);
-        ml::Operand mul = mBuilder.Mul(a, b);
-        ml::Operand matmul = mBuilder.Matmul(a, b);
+        wnn::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+        wnn::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
+        wnn::Operand add = mBuilder.Add(a, b);
+        wnn::Operand mul = mBuilder.Mul(a, b);
+        wnn::Operand matmul = mBuilder.Matmul(a, b);
     }
     // inputs types are inconsistent
     {
         std::vector<int32_t> data(4, 1);
-        inputDesc = {ml::OperandType::Int32, shape.data(), (uint32_t)shape.size()};
-        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(int32_t)};
-        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
+        inputDesc = {wnn::OperandType::Int32, shape.data(), (uint32_t)shape.size()};
+        wnn::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(int32_t)};
+        wnn::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
         ASSERT_CONTEXT_ERROR(mBuilder.Add(a, b));
         ASSERT_CONTEXT_ERROR(mBuilder.Mul(a, b));
         ASSERT_CONTEXT_ERROR(mBuilder.Matmul(a, b));

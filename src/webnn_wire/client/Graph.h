@@ -28,7 +28,7 @@ namespace webnn_wire { namespace client {
       public:
         using ObjectBase::ObjectBase;
 
-        MLComputeGraphStatus Compute(MLNamedInputs inputs, MLNamedOutputs outputs);
+        WNNComputeGraphStatus Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs);
     };
 
 }}  // namespace webnn_wire::client

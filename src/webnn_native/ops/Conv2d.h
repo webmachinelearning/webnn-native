@@ -127,7 +127,7 @@ namespace webnn_native { namespace op {
                                  int32_t& outputWidth) {
             int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
                     paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
-            if (mOptions.autoPad != ml::AutoPad::Explicit) {
+            if (mOptions.autoPad != wnn::AutoPad::Explicit) {
                 utils::ComputeImplicitPaddingForAutoPad(
                     mOptions.autoPad, mOptions.dilations[0], inputHeight, filterHeight,
                     mOptions.strides[0], paddingBeginningHeight, paddingEndingHeight);

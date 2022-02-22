@@ -84,7 +84,7 @@ namespace webnn_wire { namespace server {
     }
 
     template <>
-    struct ObjectData<MLContext> : public ObjectDataBase<MLContext> {
+    struct ObjectData<WNNContext> : public ObjectDataBase<WNNContext> {
         // Store |info| as a separate allocation so that its address does not move.
         // The pointer to |info| is stored in device child objects.
         std::unique_ptr<ContextInfo> info = std::make_unique<ContextInfo>();

@@ -83,8 +83,8 @@ namespace webnn_native { namespace dml {
 
       private:
         MaybeError CompileImpl() override;
-        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                         NamedOutputsBase* outputs) override;
+        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                          NamedOutputsBase* outputs) override;
 
         ::dml::Expression BindingConstant(DML_TENSOR_DATA_TYPE dmlTensorType,
                                           ::dml::TensorDimensions dmlTensorDims,

@@ -33,9 +33,9 @@ class ReduceTests : public WebnnTest {
                      const std::vector<float>& expectedValue,
                      const std::vector<int32_t>& axes = {},
                      bool keepDimensions = false) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        ml::ReduceOptions options;
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
+        wnn::ReduceOptions options;
         if (!axes.empty()) {
             options.axes = axes.data();
             options.axesCount = axes.size();
@@ -43,7 +43,7 @@ class ReduceTests : public WebnnTest {
         if (keepDimensions) {
             options.keepDimensions = keepDimensions;
         }
-        ml::Operand b;
+        wnn::Operand b;
         switch (type) {
             case kReduceL1:
                 b = builder.ReduceL1(a, &options);
@@ -69,7 +69,7 @@ class ReduceTests : public WebnnTest {
             default:
                 DAWN_ASSERT(0);
         }
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});

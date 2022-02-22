@@ -17,11 +17,11 @@
 
 namespace webnn_native {
 
-    BackendConnection::BackendConnection(InstanceBase* instance, ml::BackendType type)
+    BackendConnection::BackendConnection(InstanceBase* instance, wnn::BackendType type)
         : mInstance(instance), mType(type) {
     }
 
-    ml::BackendType BackendConnection::GetType() const {
+    wnn::BackendType BackendConnection::GetType() const {
         return mType;
     }
 

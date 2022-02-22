@@ -62,8 +62,8 @@ namespace webnn_native { namespace onednn {
         dnnl_status_t BuildPrimitives();
 
         MaybeError CompileImpl() override;
-        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                         NamedOutputsBase* outputs) override;
+        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                          NamedOutputsBase* outputs) override;
         dnnl_engine_t GetEngine();
         dnnl_status_t GetMemoryDesc(dnnl_memory_t memory, const dnnl_memory_desc_t** desc);
         dnnl_status_t ReorderIfNeeded(const dnnl_memory_desc_t* srcDesc,

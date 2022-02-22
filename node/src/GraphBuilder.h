@@ -81,7 +81,7 @@ namespace node {
 
         Napi::Value Build(const Napi::CallbackInfo& info);
 
-        ml::GraphBuilder mImpl;
+        wnn::GraphBuilder mImpl;
     };
 
 }  // namespace node

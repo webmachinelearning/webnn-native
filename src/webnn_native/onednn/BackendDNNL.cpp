@@ -21,7 +21,7 @@
 namespace webnn_native { namespace onednn {
 
     Backend::Backend(InstanceBase* instance)
-        : BackendConnection(instance, ml::BackendType::OneDNN) {
+        : BackendConnection(instance, wnn::BackendType::OneDNN) {
     }
 
     MaybeError Backend::Initialize() {

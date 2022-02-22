@@ -19,11 +19,11 @@ class ClampTests : public WebnnTest {
     void TestClamp(const std::vector<int32_t>& inputShape,
                    const std::vector<float>& inputData,
                    const std::vector<float>& expectedValue,
-                   const ml::ClampOptions* options = nullptr) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand a = utils::BuildInput(builder, "a", inputShape);
-        const ml::Operand b = builder.Clamp(a, options);
-        const ml::Graph graph = utils::Build(builder, {{"b", b}});
+                   const wnn::ClampOptions* options = nullptr) {
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
+        const wnn::Operand b = builder.Clamp(a, options);
+        const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(inputShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
@@ -32,7 +32,7 @@ class ClampTests : public WebnnTest {
 };
 
 TEST_F(ClampTests, Clamp) {
-    ml::ClampOptions options = {-5, 5};
+    wnn::ClampOptions options = {-5, 5};
     TestClamp({3}, {-1, 0, 1}, {-1, 0, 1}, &options);
     TestClamp({3}, {-6, 0, 6}, {-5, 0, 5}, &options);
     TestClamp({3}, {-1, 0, 6}, {-1, 0, 5}, &options);
@@ -64,7 +64,7 @@ TEST_F(ClampTests, Clamp) {
 
 TEST_F(ClampTests, ClampWithDefaults) {
     TestClamp({3}, {-1, 0, 1}, {-1, 0, 1});
-    ml::ClampOptions options;
+    wnn::ClampOptions options;
     options.minValue = 0;
     TestClamp(
         {3, 4, 5},

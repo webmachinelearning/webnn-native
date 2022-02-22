@@ -17,10 +17,10 @@
 class SigmoidTests : public WebnnTest {};
 
 TEST_F(SigmoidTests, SigmoidWith1DTensor) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3});
-    const ml::Operand b = builder.Sigmoid(a);
-    const ml::Graph graph = utils::Build(builder, {{"b", b}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3});
+    const wnn::Operand b = builder.Sigmoid(a);
+    const wnn::Graph graph = utils::Build(builder, {{"b", b}});
     ASSERT_TRUE(graph);
     const std::vector<float> inputData = {-1, 0, 1};
     std::vector<float> result(utils::SizeOfShape({3}));
@@ -30,10 +30,10 @@ TEST_F(SigmoidTests, SigmoidWith1DTensor) {
 }
 
 TEST_F(SigmoidTests, SigmoidWith3DTensor) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = builder.Sigmoid(a);
-    const ml::Graph graph = utils::Build(builder, {{"b", b}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = builder.Sigmoid(a);
+    const wnn::Graph graph = utils::Build(builder, {{"b", b}});
     ASSERT_TRUE(graph);
     const std::vector<float> inputData = {
         -0.18371736, 0.4805392,   2.7183356,  0.03039639,  0.04197176,  -1.1536852,  -2.0124357,

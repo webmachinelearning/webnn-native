@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace ml {
+namespace wnn {
     struct ContextOptions;
 }
 
@@ -42,11 +42,11 @@ namespace webnn_native {
         Instance(const Instance& other) = delete;
         Instance& operator=(const Instance& other) = delete;
 
-        MLContext CreateTestContext(const ml::ContextOptions* options = nullptr);
-        MLContext CreateContext(const ml::ContextOptions* options = nullptr);
+        WNNContext CreateTestContext(const wnn::ContextOptions* options = nullptr);
+        WNNContext CreateContext(const wnn::ContextOptions* options = nullptr);
 
-        // Returns the underlying MLInstance object.
-        MLInstance Get() const;
+        // Returns the underlying WNNInstance object.
+        WNNInstance Get() const;
 
       private:
         InstanceBase* mImpl = nullptr;

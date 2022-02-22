@@ -20,7 +20,7 @@
 
 #include <limits>
 
-namespace ml {
+namespace wnn {
 
     {% for type in by_category["enum"] %}
         enum class {{as_cppType(type.name)}} : uint32_t {

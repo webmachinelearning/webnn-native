@@ -19,7 +19,7 @@
 
 namespace webnn_wire { namespace client {
 
-    void NamedInputs::Set(char const* name, MLInput const* input) {
+    void NamedInputs::Set(char const* name, WNNInput const* input) {
         NamedInputsSetCmd cmd;
         cmd.namedInputsId = this->id;
         cmd.name = name;

@@ -20,11 +20,11 @@ class Resample2dTests : public WebnnTest {
                         const std::vector<float>& inputData,
                         const std::vector<int32_t>& expectedShape,
                         const std::vector<float>& expectedValue,
-                        const ml::Resample2dOptions* options = nullptr) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand inputOperand = utils::BuildInput(builder, "input", inputShape);
-        const ml::Operand output = builder.Resample2d(inputOperand, options);
-        const ml::Graph graph = utils::Build(builder, {{"output", output}});
+                        const wnn::Resample2dOptions* options = nullptr) {
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand inputOperand = utils::BuildInput(builder, "input", inputShape);
+        const wnn::Operand output = builder.Resample2d(inputOperand, options);
+        const wnn::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
@@ -40,15 +40,15 @@ TEST_F(Resample2dTests, UpsampleLinear) {
         1., 1.25, 1.75, 2., 1.5, 1.75, 2.25, 2.5, 2.5, 2.75, 3.25, 3.5, 3., 3.25, 3.75, 4.,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::Linear;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<float> scales = {2.0, 2.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
     TestResample2d(inputShape, inputData, expectedShape, expectedValue, &options);
 
     options = {};
-    options.mode = ml::InterpolationMode::Linear;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<int32_t> sizes = {4, 4};
     options.sizesCount = sizes.size();
     options.sizes = sizes.data();
@@ -63,8 +63,8 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes01) {
         1., 1.25, 1.75, 2., 1.5, 1.75, 2.25, 2.5, 2.5, 2.75, 3.25, 3.5, 3., 3.25, 3.75, 4.,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::Linear;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<float> scales = {2.0, 2.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
@@ -74,7 +74,7 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes01) {
     TestResample2d(inputShape, inputData, expectedShape, expectedValue, &options);
 
     options = {};
-    options.mode = ml::InterpolationMode::Linear;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<int32_t> sizes = {4, 4};
     options.sizesCount = sizes.size();
     options.sizes = sizes.data();
@@ -91,8 +91,8 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes12) {
         1., 1.25, 1.75, 2., 1.5, 1.75, 2.25, 2.5, 2.5, 2.75, 3.25, 3.5, 3., 3.25, 3.75, 4.,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::Linear;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<float> scales = {2.0, 2.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
@@ -102,7 +102,7 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes12) {
     TestResample2d(inputShape, inputData, expectedShape, expectedValue, &options);
 
     options = {};
-    options.mode = ml::InterpolationMode::Linear;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<int32_t> sizes = {4, 4};
     options.sizesCount = sizes.size();
     options.sizes = sizes.data();
@@ -119,8 +119,8 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes23) {
         1., 1.25, 1.75, 2., 1.5, 1.75, 2.25, 2.5, 2.5, 2.75, 3.25, 3.5, 3., 3.25, 3.75, 4.,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::Linear;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<float> scales = {2.0, 2.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
@@ -130,7 +130,7 @@ TEST_F(Resample2dTests, UpsampleLinearWithAxes23) {
     TestResample2d(inputShape, inputData, expectedShape, expectedValue, &options);
 
     options = {};
-    options.mode = ml::InterpolationMode::Linear;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<int32_t> sizes = {4, 4};
     options.sizesCount = sizes.size();
     options.sizes = sizes.data();
@@ -147,8 +147,8 @@ TEST_F(Resample2dTests, UpsampleSizeLinearIgnoredScales) {
         1., 1.25, 1.75, 2., 1.5, 1.75, 2.25, 2.5, 2.5, 2.75, 3.25, 3.5, 3., 3.25, 3.75, 4.,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::Linear;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::Linear;
     std::vector<float> scales = {3.0, 4.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
@@ -166,15 +166,15 @@ TEST_F(Resample2dTests, UpsampleNearest) {
         1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4, 3, 3, 3, 4, 4, 4,
     };
 
-    ml::Resample2dOptions options;
-    options.mode = ml::InterpolationMode::NearestNeighbor;
+    wnn::Resample2dOptions options;
+    options.mode = wnn::InterpolationMode::NearestNeighbor;
     std::vector<float> scales = {2.0, 3.0};
     options.scalesCount = scales.size();
     options.scales = scales.data();
     TestResample2d(inputShape, inputData, expectedShape, expectedValue, &options);
 
     options = {};
-    options.mode = ml::InterpolationMode::NearestNeighbor;
+    options.mode = wnn::InterpolationMode::NearestNeighbor;
     std::vector<int32_t> sizes = {4, 6};
     options.sizesCount = sizes.size();
     options.sizes = sizes.data();

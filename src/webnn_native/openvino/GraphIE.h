@@ -80,8 +80,8 @@ namespace webnn_native { namespace ie {
 
       private:
         MaybeError CompileImpl() override;
-        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                         NamedOutputsBase* outputs) override;
+        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                          NamedOutputsBase* outputs) override;
 
         // Map the input name to IE internal input number.
         std::map<std::string, size_t> mInputIdMap;

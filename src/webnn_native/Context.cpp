@@ -33,29 +33,29 @@ namespace webnn_native {
         return CreateGraphImpl();
     }
 
-    void ContextBase::InjectError(ml::ErrorType type, const char* message) {
+    void ContextBase::InjectError(wnn::ErrorType type, const char* message) {
         if (ConsumedError(ValidateErrorType(type))) {
             return;
         }
 
         // This method should only be used to make error scope reject.
-        if (type != ml::ErrorType::Validation && type != ml::ErrorType::OutOfMemory) {
+        if (type != wnn::ErrorType::Validation && type != wnn::ErrorType::OutOfMemory) {
             HandleError(
                 DAWN_VALIDATION_ERROR("Invalid injected error, must be Validation or OutOfMemory"));
             return;
         }
 
-        HandleError(DAWN_MAKE_ERROR(FromMLErrorType(type), message));
+        HandleError(DAWN_MAKE_ERROR(FromWNNErrorType(type), message));
     }
 
-    void ContextBase::PushErrorScope(ml::ErrorFilter filter) {
+    void ContextBase::PushErrorScope(wnn::ErrorFilter filter) {
         if (ConsumedError(ValidateErrorFilter(filter))) {
             return;
         }
         mCurrentErrorScope = AcquireRef(new ErrorScope(filter, mCurrentErrorScope.Get()));
     }
 
-    bool ContextBase::PopErrorScope(ml::ErrorCallback callback, void* userdata) {
+    bool ContextBase::PopErrorScope(wnn::ErrorCallback callback, void* userdata) {
         if (DAWN_UNLIKELY(mCurrentErrorScope.Get() == mRootErrorScope.Get())) {
             return false;
         }
@@ -65,7 +65,7 @@ namespace webnn_native {
         return true;
     }
 
-    void ContextBase::SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata) {
+    void ContextBase::SetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata) {
         mRootErrorScope->SetCallback(callback, userdata);
     }
 
@@ -80,7 +80,7 @@ namespace webnn_native {
 
         // Still forward device loss and internal errors to the error scopes so they
         // all reject.
-        mCurrentErrorScope->HandleError(ToMLErrorType(error->GetType()), ss.str().c_str());
+        mCurrentErrorScope->HandleError(ToWNNErrorType(error->GetType()), ss.str().c_str());
     }
 
 }  // namespace webnn_native

@@ -30,10 +30,10 @@ namespace node { namespace op {
         std::vector<int32_t> strides;
         std::vector<int32_t> dilations;
         int32_t groups = 1;
-        ml::AutoPad autoPad = ml::AutoPad::Explicit;
-        ml::InputOperandLayout inputLayout = ml::InputOperandLayout::Nchw;
-        ml::Operand bias;
-        ml::FusionOperator activation;
+        wnn::AutoPad autoPad = wnn::AutoPad::Explicit;
+        wnn::InputOperandLayout inputLayout = wnn::InputOperandLayout::Nchw;
+        wnn::Operand bias;
+        wnn::FusionOperator activation;
 
         T& GetBaseOptions() {
             if (!padding.empty()) {
@@ -61,25 +61,25 @@ namespace node { namespace op {
         T mOptions;
     };
 
-    struct Conv2dOptions final : public Conv2dBaseOptions<ml::Conv2dOptions> {
+    struct Conv2dOptions final : public Conv2dBaseOptions<wnn::Conv2dOptions> {
       public:
-        ml::Conv2dFilterOperandLayout filterLayout = ml::Conv2dFilterOperandLayout::Oihw;
+        wnn::Conv2dFilterOperandLayout filterLayout = wnn::Conv2dFilterOperandLayout::Oihw;
 
-        const ml::Conv2dOptions* AsPtr() {
+        const wnn::Conv2dOptions* AsPtr() {
             mOptions = GetBaseOptions();
             mOptions.filterLayout = filterLayout;
             return &mOptions;
         }
     };
 
-    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<ml::ConvTranspose2dOptions> {
+    struct ConvTranspose2dOptions final : public Conv2dBaseOptions<wnn::ConvTranspose2dOptions> {
       public:
         std::vector<int32_t> outputPadding;
         std::vector<int32_t> outputSizes;
-        ml::ConvTranspose2dFilterOperandLayout filterLayout =
-            ml::ConvTranspose2dFilterOperandLayout::Iohw;
+        wnn::ConvTranspose2dFilterOperandLayout filterLayout =
+            wnn::ConvTranspose2dFilterOperandLayout::Iohw;
 
-        const ml::ConvTranspose2dOptions* AsPtr() {
+        const wnn::ConvTranspose2dOptions* AsPtr() {
             mOptions = GetBaseOptions();
             if (!outputPadding.empty()) {
                 mOptions.outputPaddingCount = outputPadding.size();
@@ -95,11 +95,11 @@ namespace node { namespace op {
     };
 
     struct Conv2d {
-        static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
+        static Napi::Value Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder);
     };
 
     struct ConvTranspose2d {
-        static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
+        static Napi::Value Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder);
     };
 
 }}  // namespace node::op

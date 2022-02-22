@@ -25,7 +25,7 @@ namespace webnn_native {
 
     {% for e in by_category["enum"] if e.contiguousFromZero %}
         template<>
-        struct EnumCount<ml::{{as_cppType(e.name)}}> {
+        struct EnumCount<wnn::{{as_cppType(e.name)}}> {
             static constexpr uint32_t value = {{len(e.values)}};
         };
     {% endfor %}

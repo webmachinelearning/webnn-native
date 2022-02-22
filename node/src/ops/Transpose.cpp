@@ -18,19 +18,19 @@
 
 namespace node { namespace op {
 
-    Napi::Value Transpose::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Transpose::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand transpose(Operand input, optional TransposeOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary TransposeOptions {
         //   sequence<long> permutation;
         // };
-        ml::TransposeOptions options;
+        wnn::TransposeOptions options;
         std::vector<int32_t> permutation;
         if (info.Length() == 2 && !info[1].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[1].IsObject(), "The options must be an object.");

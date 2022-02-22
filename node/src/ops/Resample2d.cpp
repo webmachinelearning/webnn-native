@@ -18,13 +18,13 @@
 
 namespace node { namespace op {
 
-    Napi::Value Resample2d::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Resample2d::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand Resample2d(Operand input, optional Resample2dOptions options = {});
         WEBNN_NODE_ASSERT(info.Length() == 1 || info.Length() == 2,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         // dictionary Resample2dOptions {
@@ -33,7 +33,7 @@ namespace node { namespace op {
         //   sequence<long> sizes;
         //   sequence<long> axes;
         // };
-        ml::Resample2dOptions options;
+        wnn::Resample2dOptions options;
         std::vector<float> scales;
         std::vector<int32_t> sizes;
         std::vector<int32_t> axes;

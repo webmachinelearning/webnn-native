@@ -43,8 +43,8 @@ namespace webnn_wire { namespace server {
             {% endfor %}
             //* Release devices last because webnn_native requires this.
             {
-                std::vector<MLContext> handles = mKnownContext.AcquireAllHandles();
-                for (MLContext handle : handles) {
+                std::vector<WNNContext> handles = mKnownContext.AcquireAllHandles();
+                for (WNNContext handle : handles) {
                     procs.contextRelease(handle);
                 }
             }

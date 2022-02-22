@@ -59,18 +59,18 @@ namespace webnn_native {
         }
     }
 
-    MLContext Instance::CreateTestContext(const ml::ContextOptions* options) {
-        return reinterpret_cast<MLContext>(
+    WNNContext Instance::CreateTestContext(const wnn::ContextOptions* options) {
+        return reinterpret_cast<WNNContext>(
             mImpl->CreateTestContext(reinterpret_cast<const ContextOptions*>(options)));
     }
 
-    MLContext Instance::CreateContext(const ml::ContextOptions* options) {
-        return reinterpret_cast<MLContext>(
+    WNNContext Instance::CreateContext(const wnn::ContextOptions* options) {
+        return reinterpret_cast<WNNContext>(
             mImpl->CreateContext(reinterpret_cast<const ContextOptions*>(options)));
     }
 
-    MLInstance Instance::Get() const {
-        return reinterpret_cast<MLInstanceImpl*>(mImpl);
+    WNNInstance Instance::Get() const {
+        return reinterpret_cast<WNNInstanceImpl*>(mImpl);
     }
     namespace mlas {
         ContextBase* Create();

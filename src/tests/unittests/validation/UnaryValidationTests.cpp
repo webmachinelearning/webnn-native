@@ -24,17 +24,17 @@ TEST_F(UnaryValidationTest, SoftmaxValidation) {
     // success
     {
         std::vector<int32_t> shape = {2, 2};
-        ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
-                                           (uint32_t)shape.size()};
-        ml::Operand a = mBuilder.Input("input", &inputDesc);
-        ml::Operand softmax = mBuilder.Softmax(a);
+        wnn::OperandDescriptor inputDesc = {wnn::OperandType::Float32, shape.data(),
+                                            (uint32_t)shape.size()};
+        wnn::Operand a = mBuilder.Input("input", &inputDesc);
+        wnn::Operand softmax = mBuilder.Softmax(a);
     }
     // Input dimensions is incorrect
     {
         std::vector<int32_t> shape = {2, 2, 2};
-        ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
-                                           (uint32_t)shape.size()};
-        ml::Operand a = mBuilder.Input("input", &inputDesc);
+        wnn::OperandDescriptor inputDesc = {wnn::OperandType::Float32, shape.data(),
+                                            (uint32_t)shape.size()};
+        wnn::Operand a = mBuilder.Input("input", &inputDesc);
         ASSERT_CONTEXT_ERROR(mBuilder.Softmax(a));
     }
 }
@@ -43,9 +43,9 @@ TEST_F(UnaryValidationTest, ReluValidation) {
     // success
     {
         std::vector<int32_t> shape = {2, 2};
-        ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
-                                           (uint32_t)shape.size()};
-        ml::Operand a = mBuilder.Input("input", &inputDesc);
-        ml::Operand relu = mBuilder.Relu(a);
+        wnn::OperandDescriptor inputDesc = {wnn::OperandType::Float32, shape.data(),
+                                            (uint32_t)shape.size()};
+        wnn::Operand a = mBuilder.Input("input", &inputDesc);
+        wnn::Operand relu = mBuilder.Relu(a);
     }
 }

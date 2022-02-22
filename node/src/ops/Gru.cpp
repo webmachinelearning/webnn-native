@@ -19,18 +19,18 @@
 
 namespace node { namespace op {
 
-    Napi::Value Gru::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Gru::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand gru(Operand input, Operand weight, Operand recurrentWeight, int32_t steps,
         // int32_t hiddenSize, options = {})
         WEBNN_NODE_ASSERT(info.Length() == 5 || info.Length() == 6,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
-        ml::Operand weight;
+        wnn::Operand weight;
         WEBNN_NODE_ASSERT(GetOperand(info[1], weight, args), "The weight parameter is invalid.");
-        ml::Operand recurrentWeight;
+        wnn::Operand recurrentWeight;
         WEBNN_NODE_ASSERT(GetOperand(info[2], recurrentWeight, args),
                           "The recurrentWeight parameter is invalid.");
         int32_t steps;
@@ -48,7 +48,7 @@ namespace node { namespace op {
         //     RecurrentNetworkWeightLayout layout = "zrn";
         //     sequence<MLOperator> activations;
         // };
-        ml::GruOptions options;
+        wnn::GruOptions options;
         if (info.Length() == 6 && !info[5].IsUndefined()) {
             WEBNN_NODE_ASSERT(info[5].IsObject(), "The options must be an object.");
             Napi::Object jsOptions = info[5].As<Napi::Object>();
@@ -90,7 +90,7 @@ namespace node { namespace op {
                     "The activations parameter is invalid.");
             }
         }
-        ml::OperandArray gruOutputs =
+        wnn::OperandArray gruOutputs =
             builder.Gru(input, weight, recurrentWeight, steps, hiddenSize, &options);
         size_t len = gruOutputs.Size();
         Napi::Array objectArray = Napi::Array::New(info.Env(), len);

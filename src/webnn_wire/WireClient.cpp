@@ -37,7 +37,7 @@ namespace webnn_wire {
         return mImpl->ReserveContext();
     }
 
-    ReservedNamedInputs WireClient::ReserveNamedInputs(MLContext context) {
+    ReservedNamedInputs WireClient::ReserveNamedInputs(WNNContext context) {
         return mImpl->ReserveNamedInputs(context);
     }
 

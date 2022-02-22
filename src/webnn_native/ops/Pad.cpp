@@ -23,7 +23,7 @@ namespace webnn_native { namespace op {
              OperandBase* padding,
              PadOptions const* options)
         : OperatorBase(builder, {input, padding}) {
-        mOptions.mode = options == nullptr ? ml::PaddingMode::Constant : options->mode;
+        mOptions.mode = options == nullptr ? wnn::PaddingMode::Constant : options->mode;
         mOptions.value = options == nullptr ? 0 : options->value;
     }
 

@@ -29,8 +29,8 @@ namespace webnn_wire { namespace client {
       public:
         using ObjectBase::ObjectBase;
 
-        void Set(char const* name, MLArrayBufferView const* resource);
-        void Get(size_t index, MLArrayBufferView const* resource);
+        void Set(char const* name, WNNArrayBufferView const* resource);
+        void Get(size_t index, WNNArrayBufferView const* resource);
         bool OutputResult(char const* name,
                           uint8_t const* buffer,
                           size_t byteLength,

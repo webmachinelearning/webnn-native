@@ -16,7 +16,7 @@
 
 class GruTests : public WebnnTest {
     void SetUp() override {
-        builder = ml::CreateGraphBuilder(GetContext());
+        builder = wnn::CreateGraphBuilder(GetContext());
     }
 
   protected:
@@ -32,20 +32,20 @@ class GruTests : public WebnnTest {
                  const int32_t steps,
                  const int32_t hiddenSize,
                  const std::vector<Tensor> expected,
-                 const ml::GruOptions* options = nullptr) {
-        const ml::Operand W = utils::BuildConstant(builder, weight.shape, weight.value.data(),
-                                                   weight.value.size() * sizeof(float));
-        const ml::Operand R =
+                 const wnn::GruOptions* options = nullptr) {
+        const wnn::Operand W = utils::BuildConstant(builder, weight.shape, weight.value.data(),
+                                                    weight.value.size() * sizeof(float));
+        const wnn::Operand R =
             utils::BuildConstant(builder, recurrentWeight.shape, recurrentWeight.value.data(),
                                  recurrentWeight.value.size() * sizeof(float));
-        const ml::Operand X = utils::BuildInput(builder, "a", input.shape);
-        const ml::OperandArray Y = builder.Gru(X, W, R, steps, hiddenSize, options);
+        const wnn::Operand X = utils::BuildInput(builder, "a", input.shape);
+        const wnn::OperandArray Y = builder.Gru(X, W, R, steps, hiddenSize, options);
         const size_t outputSize = Y.Size();
         std::vector<utils::NamedOperand> namedOperands;
         for (size_t i = 0; i < outputSize; ++i) {
             namedOperands.push_back({"gru" + std::to_string(i), Y.Get(i)});
         }
-        const ml::Graph graph = utils::Build(builder, namedOperands);
+        const wnn::Graph graph = utils::Build(builder, namedOperands);
         ASSERT_TRUE(graph);
 
         std::vector<utils::NamedOutput<float>> namedOutputs;
@@ -61,7 +61,7 @@ class GruTests : public WebnnTest {
             EXPECT_TRUE(utils::CheckValue(namedOutputs[i].resource, expected[i].value));
         }
     }
-    ml::GraphBuilder builder;
+    wnn::GraphBuilder builder;
 };
 
 TEST_F(GruTests, GruWith3BatchSize) {
@@ -83,20 +83,20 @@ TEST_F(GruTests, GruWith3BatchSize) {
     Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
     const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
     const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
-    const ml::Operand recurrentBias =
+    const wnn::Operand recurrentBias =
         utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
                              recurrentBiasData.size() * sizeof(float));
     const std::vector<int32_t> initialHiddenStateShape = {numDirections, batchSize, hiddenSize};
     const std::vector<float> initialHiddenStateData(numDirections * batchSize * hiddenSize, 0);
-    const ml::Operand initialHiddenState =
+    const wnn::Operand initialHiddenState =
         utils::BuildConstant(builder, initialHiddenStateShape, initialHiddenStateData.data(),
                              initialHiddenStateData.size() * sizeof(float));
 
-    ml::GruOptions options = {};
+    wnn::GruOptions options = {};
     options.bias = bias;
     options.recurrentBias = recurrentBias;
     options.initialHiddenState = initialHiddenState;
@@ -130,25 +130,25 @@ TEST_F(GruTests, GruWithMultiActivitions) {
     Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
     const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
     const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
-    const ml::Operand recurrentBias =
+    const wnn::Operand recurrentBias =
         utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
                              recurrentBiasData.size() * sizeof(float));
     const std::vector<int32_t> initialHiddenStateShape = {numDirections, batchSize, hiddenSize};
     const std::vector<float> initialHiddenStateData(numDirections * batchSize * hiddenSize, 0);
-    const ml::Operand initialHiddenState =
+    const wnn::Operand initialHiddenState =
         utils::BuildConstant(builder, initialHiddenStateShape, initialHiddenStateData.data(),
                              initialHiddenStateData.size() * sizeof(float));
 
-    ml::GruOptions options = {};
+    wnn::GruOptions options = {};
     options.bias = bias;
     options.recurrentBias = recurrentBias;
     options.initialHiddenState = initialHiddenState;
     options.resetAfter = false;
-    auto activations = ml::CreateOperatorArray();
+    auto activations = wnn::CreateOperatorArray();
     auto activationSigmoid =
         utils::CreateActivationOperator(builder, utils::FusedActivation::SIGMOID);
     activations.Set(activationSigmoid);
@@ -184,15 +184,15 @@ TEST_F(GruTests, GruWithoutInitialHiddenState) {
     Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
     const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
     const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
-    const ml::Operand recurrentBias =
+    const wnn::Operand recurrentBias =
         utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
                              recurrentBiasData.size() * sizeof(float));
 
-    ml::GruOptions options = {};
+    wnn::GruOptions options = {};
     options.bias = bias;
     options.recurrentBias = recurrentBias;
     options.resetAfter = false;
@@ -225,15 +225,15 @@ TEST_F(GruTests, GruWithReturnSequenceTrue) {
     Tensor recurrentWeight = {recurrentWeightShape, recurrentWeightData};
     const std::vector<int32_t> biasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> biasData(numDirections * 3 * hiddenSize, 0.1);
-    const ml::Operand bias =
+    const wnn::Operand bias =
         utils::BuildConstant(builder, biasShape, biasData.data(), biasData.size() * sizeof(float));
     const std::vector<int32_t> recurrentBiasShape = {numDirections, 3 * hiddenSize};
     const std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
-    const ml::Operand recurrentBias =
+    const wnn::Operand recurrentBias =
         utils::BuildConstant(builder, recurrentBiasShape, recurrentBiasData.data(),
                              recurrentBiasData.size() * sizeof(float));
 
-    ml::GruOptions options = {};
+    wnn::GruOptions options = {};
     options.bias = bias;
     options.recurrentBias = recurrentBias;
     options.resetAfter = false;

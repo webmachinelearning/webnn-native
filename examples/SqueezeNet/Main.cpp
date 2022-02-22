@@ -29,24 +29,24 @@ int main(int argc, const char* argv[]) {
     }
 
     // Create a graph with weights and biases from .npy files.
-    const ml::ContextOptions options =
+    const wnn::ContextOptions options =
         utils::CreateContextOptions(squeezenet.mDevicePreference, squeezenet.mPowerPreference);
-    ml::Context context = CreateCppContext(&options);
+    wnn::Context context = CreateCppContext(&options);
     context.SetUncapturedErrorCallback(
-        [](MLErrorType type, char const* message, void* userData) {
-            if (type != MLErrorType_NoError) {
+        [](WNNErrorType type, char const* message, void* userData) {
+            if (type != WNNErrorType_NoError) {
                 dawn::ErrorLog() << "Error type is " << type << ", message is " << message;
             }
         },
         &squeezenet);
-    ml::GraphBuilder builder = ml::CreateGraphBuilder(context);
-    ml::Operand output =
+    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
+    wnn::Operand output =
         squeezenet.mLayout == "nchw" ? squeezenet.LoadNCHW(builder) : squeezenet.LoadNHWC(builder);
 
     // Build the graph.
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
         std::chrono::high_resolution_clock::now();
-    ml::Graph graph = utils::Build(builder, {{"output", output}});
+    wnn::Graph graph = utils::Build(builder, {{"output", output}});
     if (!graph) {
         dawn::ErrorLog() << "Failed to build graph.";
         return -1;
@@ -60,18 +60,18 @@ int main(int argc, const char* argv[]) {
     std::vector<float> result(utils::SizeOfShape(squeezenet.mOutputShape));
     // Do the first inference for warming up if nIter > 1.
     if (squeezenet.mNIter > 1) {
-        ml::ComputeGraphStatus status =
+        wnn::ComputeGraphStatus status =
             utils::Compute(graph, {{"input", processedPixels}}, {{"output", result}});
-        DAWN_ASSERT(status == ml::ComputeGraphStatus::Success);
+        DAWN_ASSERT(status == wnn::ComputeGraphStatus::Success);
     }
 
     std::vector<TIME_TYPE> executionTime;
     for (int i = 0; i < squeezenet.mNIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        ml::ComputeGraphStatus status =
+        wnn::ComputeGraphStatus status =
             utils::Compute(graph, {{"input", processedPixels}}, {{"output", result}});
-        DAWN_ASSERT(status == ml::ComputeGraphStatus::Success);
+        DAWN_ASSERT(status == wnn::ComputeGraphStatus::Success);
         executionTime.push_back(std::chrono::high_resolution_clock::now() - executionStartTime);
     }
 

@@ -47,7 +47,7 @@ namespace webnn_native { namespace mlas {
             &onnxruntime::Env::Default(), options, nullptr, threadPoolSize, false);
     }
 
-    MLAS_THREADPOOL* Context::GetThreadPool() {
+    WNNAS_THREADPOOL* Context::GetThreadPool() {
         return mThreadPool;
     }
 

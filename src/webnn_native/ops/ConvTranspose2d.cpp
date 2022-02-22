@@ -53,7 +53,7 @@ namespace webnn_native { namespace op {
     MaybeError ConvTranspose2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto filterShape = mInputs[1]->Shape();
-        bool nchw = mOptions.inputLayout == ml::InputOperandLayout::Nchw;
+        bool nchw = mOptions.inputLayout == wnn::InputOperandLayout::Nchw;
         int32_t batchSize = inputShape[0];
         int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
         int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
@@ -61,19 +61,19 @@ namespace webnn_native { namespace op {
 
         int32_t filterHeight = 0, filterWidth = 0, outputChannels = 0, filterDepthIn = 0;
         switch (mOptions.filterLayout) {
-            case ml::ConvTranspose2dFilterOperandLayout::Iohw:
+            case wnn::ConvTranspose2dFilterOperandLayout::Iohw:
                 filterHeight = filterShape[2];
                 filterWidth = filterShape[3];
                 outputChannels = filterShape[1];
                 filterDepthIn = filterShape[0];
                 break;
-            case ml::ConvTranspose2dFilterOperandLayout::Hwoi:
+            case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
                 filterHeight = filterShape[0];
                 filterWidth = filterShape[1];
                 outputChannels = filterShape[2];
                 filterDepthIn = filterShape[3];
                 break;
-            case ml::ConvTranspose2dFilterOperandLayout::Ohwi:
+            case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
                 filterHeight = filterShape[1];
                 filterWidth = filterShape[2];
                 outputChannels = filterShape[0];

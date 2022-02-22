@@ -17,11 +17,11 @@
 class SubTests : public WebnnTest {};
 
 TEST_F(SubTests, SubTwoInputs) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
-    const ml::Operand c = builder.Sub(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
+    const wnn::Operand c = builder.Sub(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         1.7640524,   0.4001572,   0.978738,   2.2408931,   1.867558,    -0.9772779,  0.95008844,
@@ -60,11 +60,11 @@ TEST_F(SubTests, SubTwoInputs) {
 }
 
 TEST_F(SubTests, SubBroadcast) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
-    const ml::Operand b = utils::BuildInput(builder, "b", {5});
-    const ml::Operand c = builder.Sub(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::Operand b = utils::BuildInput(builder, "b", {5});
+    const wnn::Operand c = builder.Sub(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.37642553,  -1.0994008, 0.2982382,  1.3263859,   -0.69456786, -0.14963454, -0.43515354,

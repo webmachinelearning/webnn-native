@@ -17,13 +17,13 @@
 class PowTests : public WebnnTest {};
 
 TEST_F(PowTests, Sqrt1d) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3});
     const std::vector<float> bData = {0.5};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {1}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Pow(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Pow(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 4, 9};
     std::vector<float> result(utils::SizeOfShape({3}));
@@ -33,13 +33,13 @@ TEST_F(PowTests, Sqrt1d) {
 }
 
 TEST_F(PowTests, Sqrt3d) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const std::vector<float> bData = {0.5};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {1}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Pow(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Pow(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {
         0.33435354, 0.57139647, 0.03689031, 0.7820907,  0.7718887,  0.17709309, 1.05624,
@@ -67,13 +67,13 @@ TEST_F(PowTests, Sqrt3d) {
 }
 
 TEST_F(PowTests, Pow1d) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {3});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {3});
     const std::vector<float> bData = {2};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {1}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Pow(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Pow(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3};
     std::vector<float> result(utils::SizeOfShape({3}));
@@ -83,13 +83,13 @@ TEST_F(PowTests, Pow1d) {
 }
 
 TEST_F(PowTests, PowBroadcastScalar) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {2, 3});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3});
     const std::vector<float> bData = {2};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {1}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Pow(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Pow(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3, 4, 5, 6};
     std::vector<float> result(utils::SizeOfShape({2, 3}));
@@ -99,13 +99,13 @@ TEST_F(PowTests, PowBroadcastScalar) {
 }
 
 TEST_F(PowTests, PowBroadcast1d) {
-    const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-    const ml::Operand a = utils::BuildInput(builder, "a", {2, 3});
+    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3});
     const std::vector<float> bData = {1, 2, 3};
-    const ml::Operand b =
+    const wnn::Operand b =
         utils::BuildConstant(builder, {3}, bData.data(), bData.size() * sizeof(float));
-    const ml::Operand c = builder.Pow(a, b);
-    const ml::Graph graph = utils::Build(builder, {{"c", c}});
+    const wnn::Operand c = builder.Pow(a, b);
+    const wnn::Graph graph = utils::Build(builder, {{"c", c}});
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3, 4, 5, 6};
     std::vector<float> result(utils::SizeOfShape({2, 3}));

@@ -35,19 +35,19 @@ namespace webnn_wire {
     };
 
     struct ReservedInstance {
-        MLInstance instance;
+        WNNInstance instance;
         uint32_t id;
         uint32_t generation;
     };
 
     struct ReservedContext {
-        MLContext context;
+        WNNContext context;
         uint32_t id;
         uint32_t generation;
     };
 
     struct ReservedNamedInputs {
-        MLNamedInputs namedInputs;
+        WNNNamedInputs namedInputs;
         uint32_t id;
         uint32_t generation;
         uint32_t contextId;
@@ -55,13 +55,13 @@ namespace webnn_wire {
     };
 
     struct ReservedNamedOperands {
-        MLNamedOperands namedOperands;
+        WNNNamedOperands namedOperands;
         uint32_t id;
         uint32_t generation;
     };
 
     struct ReservedNamedOutputs {
-        MLNamedOutputs namedOutputs;
+        WNNNamedOutputs namedOutputs;
         uint32_t id;
         uint32_t generation;
     };
@@ -76,7 +76,7 @@ namespace webnn_wire {
 
         ReservedInstance ReserveInstance();
         ReservedContext ReserveContext();
-        ReservedNamedInputs ReserveNamedInputs(MLContext context);
+        ReservedNamedInputs ReserveNamedInputs(WNNContext context);
         ReservedNamedOperands ReserveNamedOperands();
         ReservedNamedOutputs ReserveNamedOutputs();
 

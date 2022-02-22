@@ -23,47 +23,47 @@ class MobileNetV2 : public ExampleBase {
     ~MobileNetV2() override = default;
 
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
-    const ml::Operand LoadNCHW(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand LoadNHWC(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand LoadBatchNormNCHW(const ml::GraphBuilder& builder, bool softmax = true);
-    const ml::Operand BuildConstantFromNpy(const ml::GraphBuilder& builder,
-                                           const std::string& path);
-    const ml::Operand BuildConv(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                int32_t convIndex,
-                                bool relu6,
-                                utils::Conv2dOptions* options = nullptr,
-                                const std::string& biasName = "");
-    const ml::Operand BuildConvBatchNorm(const ml::GraphBuilder& builder,
-                                         const ml::Operand& input,
-                                         int32_t nameIndex,
-                                         bool relu,
-                                         utils::Conv2dOptions* options = nullptr,
-                                         int32_t subNameIndex = -1);
-    const ml::Operand BuildFire(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                const std::vector<int32_t>& convIndexes,
-                                int32_t groups,
-                                bool strides = false,
-                                bool shouldAdd = true);
-    const ml::Operand BuildBatchNormFire(const ml::GraphBuilder& builder,
-                                         const ml::Operand& input,
-                                         int32_t subNameIndex,
-                                         utils::Conv2dOptions* options);
-    const ml::Operand BuildLinearBottleneck(const ml::GraphBuilder& builder,
-                                            const ml::Operand& input,
-                                            const std::vector<int32_t>& convIndexes,
-                                            int32_t biasIndex,
-                                            utils::Conv2dOptions* dwiseOptions,
-                                            bool shouldAdd = true);
-    const ml::Operand BuildFireMore(const ml::GraphBuilder& builder,
-                                    const ml::Operand& input,
-                                    const std::vector<int32_t>& convIndexes,
-                                    const std::vector<int32_t> groups,
-                                    bool strides = true);
-    const ml::Operand BuildGemm(const ml::GraphBuilder& builder,
-                                const ml::Operand& input,
-                                int32_t gemmIndex);
+    const wnn::Operand LoadNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNHWC(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadBatchNormNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
+                                            const std::string& path);
+    const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 int32_t convIndex,
+                                 bool relu6,
+                                 utils::Conv2dOptions* options = nullptr,
+                                 const std::string& biasName = "");
+    const wnn::Operand BuildConvBatchNorm(const wnn::GraphBuilder& builder,
+                                          const wnn::Operand& input,
+                                          int32_t nameIndex,
+                                          bool relu,
+                                          utils::Conv2dOptions* options = nullptr,
+                                          int32_t subNameIndex = -1);
+    const wnn::Operand BuildFire(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 const std::vector<int32_t>& convIndexes,
+                                 int32_t groups,
+                                 bool strides = false,
+                                 bool shouldAdd = true);
+    const wnn::Operand BuildBatchNormFire(const wnn::GraphBuilder& builder,
+                                          const wnn::Operand& input,
+                                          int32_t subNameIndex,
+                                          utils::Conv2dOptions* options);
+    const wnn::Operand BuildLinearBottleneck(const wnn::GraphBuilder& builder,
+                                             const wnn::Operand& input,
+                                             const std::vector<int32_t>& convIndexes,
+                                             int32_t biasIndex,
+                                             utils::Conv2dOptions* dwiseOptions,
+                                             bool shouldAdd = true);
+    const wnn::Operand BuildFireMore(const wnn::GraphBuilder& builder,
+                                     const wnn::Operand& input,
+                                     const std::vector<int32_t>& convIndexes,
+                                     const std::vector<int32_t> groups,
+                                     bool strides = true);
+    const wnn::Operand BuildGemm(const wnn::GraphBuilder& builder,
+                                 const wnn::Operand& input,
+                                 int32_t gemmIndex);
 
   private:
     std::vector<SHARED_DATA_TYPE> mConstants;

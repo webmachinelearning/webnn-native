@@ -22,12 +22,12 @@ class GraphValidationTest : public ValidationTest {
     void SetUp() override {
         ValidationTest::SetUp();
         std::vector<int32_t> shape = {2, 2};
-        ml::OperandDescriptor inputDesc = {ml::OperandType::Float32, shape.data(),
-                                           (uint32_t)shape.size()};
-        ml::Operand a = mBuilder.Input("input", &inputDesc);
+        wnn::OperandDescriptor inputDesc = {wnn::OperandType::Float32, shape.data(),
+                                            (uint32_t)shape.size()};
+        wnn::Operand a = mBuilder.Input("input", &inputDesc);
         std::vector<float> data(4, 1);
-        ml::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
-        ml::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
+        wnn::ArrayBufferView arrayBuffer = {data.data(), data.size() * sizeof(float)};
+        wnn::Operand b = mBuilder.Constant(&inputDesc, &arrayBuffer);
         mOutput = mBuilder.Add(a, b);
     }
 
@@ -35,18 +35,18 @@ class GraphValidationTest : public ValidationTest {
         ValidationTest::TearDown();
     }
 
-    ml::Operand mOutput;
+    wnn::Operand mOutput;
 };
 
 // Test the simple success case.
 TEST_F(GraphValidationTest, BuildGraphSuccess) {
-    ml::NamedOperands namedOperands = ml::CreateNamedOperands();
+    wnn::NamedOperands namedOperands = wnn::CreateNamedOperands();
     namedOperands.Set("output", mOutput);
     mBuilder.Build(namedOperands);
 }
 
 // Create model with null nameOperands
 TEST_F(GraphValidationTest, BuildGraphError) {
-    ml::NamedOperands namedOperands = ml::CreateNamedOperands();
+    wnn::NamedOperands namedOperands = wnn::CreateNamedOperands();
     DAWN_ASSERT(mBuilder.Build(namedOperands) == nullptr);
 }

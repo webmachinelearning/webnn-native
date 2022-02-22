@@ -43,11 +43,11 @@ class ValidationTest : public testing::Test {
 
   protected:
     std::unique_ptr<webnn_native::Instance> instance;
-    ml::Context mContext;
-    ml::GraphBuilder mBuilder;
+    wnn::Context mContext;
+    wnn::GraphBuilder mBuilder;
 
   private:
-    static void ErrorCallback(MLErrorType type, const char* message, void* userdata);
+    static void ErrorCallback(WNNErrorType type, const char* message, void* userdata);
     std::string mErrorMessage;
     bool mExpectError = false;
     bool mError = false;

@@ -125,9 +125,9 @@ namespace webnn_native {
         return CompileImpl();
     }
 
-    MLComputeGraphStatus GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    WNNComputeGraphStatus GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         if (inputs == nullptr || outputs == nullptr) {
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
         return ComputeImpl(inputs, outputs);

@@ -55,8 +55,8 @@ namespace webnn_native { namespace mlas {
 
       private:
         MaybeError CompileImpl() override;
-        MLComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                         NamedOutputsBase* outputs) override;
+        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                          NamedOutputsBase* outputs) override;
 
         std::unordered_map<std::string, Ref<Memory>> mInputs;
         std::unordered_map<std::string, Ref<Memory>> mOutputs;

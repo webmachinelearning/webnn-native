@@ -101,11 +101,11 @@ typedef void (*WebnnProc)(void);
 
 #if !defined(WEBNN_SKIP_PROCS)
 
-typedef MLGraphBuilder (*WebnnProcCreateGraphBuilder)(MLContext context);
-typedef MLNamedInputs (*WebnnProcCreateNamedInputs)();
-typedef MLNamedOperands (*WebnnProcCreateNamedOperands)();
-typedef MLNamedOutputs (*WebnnProcCreateNamedOutputs)();
-typedef MLOperatorArray (*WebnnProcCreateOperatorArray)();
+typedef WNNGraphBuilder (*WebnnProcCreateGraphBuilder)(WNNContext context);
+typedef WNNNamedInputs (*WebnnProcCreateNamedInputs)();
+typedef WNNNamedOperands (*WebnnProcCreateNamedOperands)();
+typedef WNNNamedOutputs (*WebnnProcCreateNamedOutputs)();
+typedef WNNOperatorArray (*WebnnProcCreateOperatorArray)();
 
 {% for type in by_category["object"] if len(c_methods(type)) > 0 %}
     // Procs of {{type.name.CamelCase()}}
@@ -123,11 +123,11 @@ typedef MLOperatorArray (*WebnnProcCreateOperatorArray)();
 
 #if !defined(WEBNN_SKIP_DECLARATIONS)
 
-WEBNN_EXPORT MLGraphBuilder webnnCreateGraphBuilder(MLContext context);
-WEBNN_EXPORT MLNamedInputs webnnCreateNamedInputs();
-WEBNN_EXPORT MLNamedOperands webnnCreateNamedOperands();
-WEBNN_EXPORT MLNamedOutputs webnnCreateNamedOutputs();
-WEBNN_EXPORT MLOperatorArray webnnCreateOperatorArray();
+WEBNN_EXPORT WNNGraphBuilder webnnCreateGraphBuilder(WNNContext context);
+WEBNN_EXPORT WNNNamedInputs webnnCreateNamedInputs();
+WEBNN_EXPORT WNNNamedOperands webnnCreateNamedOperands();
+WEBNN_EXPORT WNNNamedOutputs webnnCreateNamedOutputs();
+WEBNN_EXPORT WNNOperatorArray webnnCreateOperatorArray();
 
 {% for type in by_category["object"] if len(c_methods(type)) > 0 %}
     // Methods of {{type.name.CamelCase()}}

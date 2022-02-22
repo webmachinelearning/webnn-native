@@ -27,7 +27,7 @@ namespace webnn_wire { namespace server {
             return false;
         }
 
-        MLArrayBufferView value;
+        WNNArrayBufferView value;
         value.buffer = const_cast<void*>(static_cast<const void*>(buffer));
         value.byteLength = byteLength;
         value.byteOffset = byteOffset;

@@ -16,7 +16,7 @@
 
 class ConvTranspose2dTests : public WebnnTest {
     void SetUp() override {
-        builder = ml::CreateGraphBuilder(GetContext());
+        builder = wnn::CreateGraphBuilder(GetContext());
     }
 
   protected:
@@ -33,11 +33,11 @@ class ConvTranspose2dTests : public WebnnTest {
                               utils::FusedActivation activation = utils::FusedActivation::NONE,
                               bool fusion = false,
                               void* activationOptions = nullptr) {
-        const ml::Operand x = utils::BuildInput(builder, "input", input.shape);
-        const ml::Operand w = utils::BuildConstant(builder, filter.shape, filter.value.data(),
-                                                   filter.value.size() * sizeof(float));
+        const wnn::Operand x = utils::BuildInput(builder, "input", input.shape);
+        const wnn::Operand w = utils::BuildConstant(builder, filter.shape, filter.value.data(),
+                                                    filter.value.size() * sizeof(float));
 
-        ml::Operand b;
+        wnn::Operand b;
         if (!bias.value.empty()) {
             b = utils::BuildConstant(builder, bias.shape, bias.value.data(),
                                      bias.value.size() * sizeof(float));
@@ -52,11 +52,11 @@ class ConvTranspose2dTests : public WebnnTest {
                     utils::CreateActivationOperator(builder, activation, activationOptions);
             }
         }
-        ml::Operand y = builder.ConvTranspose2d(x, w, options.AsPtr());
+        wnn::Operand y = builder.ConvTranspose2d(x, w, options.AsPtr());
 
         if (!fusion) {
             if (!bias.value.empty()) {
-                if (options.inputLayout == ml::InputOperandLayout::Nchw) {
+                if (options.inputLayout == wnn::InputOperandLayout::Nchw) {
                     std::vector<int32_t> newShape = std::vector<int32_t>({1, -1, 1, 1});
                     b = builder.Reshape(b, newShape.data(), newShape.size());
                 }
@@ -67,14 +67,14 @@ class ConvTranspose2dTests : public WebnnTest {
             }
         }
 
-        const ml::Graph graph = utils::Build(builder, {{"output", y}});
+        const wnn::Graph graph = utils::Build(builder, {{"output", y}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expected.shape));
         utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expected.value));
     }
 
-    ml::GraphBuilder builder;
+    wnn::GraphBuilder builder;
 };
 
 TEST_F(ConvTranspose2dTests, Conv2dTransposeDefault) {
@@ -100,8 +100,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeNchwHwoi) {
          7.,  9.,  21., 36., 27., 15., 9.,  20., 33., 24., 13., 6.,  13., 21., 15., 8.},
     };
     utils::ConvTranspose2dOptions options;
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -115,8 +115,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeNchwOhwi) {
          7.,  9.,  21., 36., 27., 15., 9.,  20., 33., 24., 13., 6.,  13., 21., 15., 8.},
     };
     utils::ConvTranspose2dOptions options;
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -130,8 +130,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeNhwcIohw) {
          33., 33., 24., 24., 13., 13., 6.,  6.,  13., 13., 21., 21., 15., 15., 8.,  8.},
     };
     utils::ConvTranspose2dOptions options;
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Iohw;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Iohw;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -145,8 +145,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeNhwcHwoi) {
          33., 33., 24., 24., 13., 13., 6.,  6.,  13., 13., 21., 21., 15., 15., 8.,  8.},
     };
     utils::ConvTranspose2dOptions options;
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -160,8 +160,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeNhwcOhwi) {
          33., 33., 24., 24., 13., 13., 6.,  6.,  13., 13., 21., 21., 15., 15., 8.,  8.},
     };
     utils::ConvTranspose2dOptions options;
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -202,8 +202,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputShapeNchwHwoi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputSizes = {10, 8};
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -224,8 +224,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputShapeNchwOhwi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputSizes = {10, 8};
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -245,8 +245,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputShapeNhwcIohw) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputSizes = {10, 8};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Iohw;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Iohw;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -266,8 +266,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputShapeNhwcHwoi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputSizes = {10, 8};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -287,8 +287,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputShapeNhwcOhwi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputSizes = {10, 8};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -329,8 +329,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNchwHwoi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -352,8 +352,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNchwOhwi) {
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
 
-    options.inputLayout = ml::InputOperandLayout::Nchw;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nchw;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -373,8 +373,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNhwcIohw) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Iohw;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Iohw;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -394,8 +394,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNhwcHwoi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Hwoi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Hwoi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -415,8 +415,8 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithOutputPaddingNhwcOhwi) {
     utils::ConvTranspose2dOptions options;
     options.strides = {3, 2};
     options.outputPadding = {1, 1};
-    options.inputLayout = ml::InputOperandLayout::Nhwc;
-    options.filterLayout = ml::ConvTranspose2dFilterOperandLayout::Ohwi;
+    options.inputLayout = wnn::InputOperandLayout::Nhwc;
+    options.filterLayout = wnn::ConvTranspose2dFilterOperandLayout::Ohwi;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -432,7 +432,7 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithAutoPadSameUpperDefault) {
     };
     utils::ConvTranspose2dOptions options;
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::SameUpper;
+    options.autoPad = wnn::AutoPad::SameUpper;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -448,7 +448,7 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithAutoPadExplicitDefault) {
     utils::ConvTranspose2dOptions options;
     options.strides = {2, 2};
     options.padding = {0, 1, 0, 1};
-    options.autoPad = ml::AutoPad::Explicit;
+    options.autoPad = wnn::AutoPad::Explicit;
     CheckConvTranspose2d(input, filter, expected, options);
 }
 
@@ -464,6 +464,6 @@ TEST_F(ConvTranspose2dTests, Conv2dTransposeWithAutoPadSameLowerDefault) {
     };
     utils::ConvTranspose2dOptions options;
     options.strides = {2, 2};
-    options.autoPad = ml::AutoPad::SameLower;
+    options.autoPad = wnn::AutoPad::SameLower;
     CheckConvTranspose2d(input, filter, expected, options);
 }

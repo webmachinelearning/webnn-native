@@ -19,7 +19,7 @@ namespace node { namespace op {
     struct Reduce {
         static Napi::Value Build(ReduceType opType,
                                  const Napi::CallbackInfo& info,
-                                 ml::GraphBuilder builder);
+                                 wnn::GraphBuilder builder);
     };
 
 }}  // namespace node::op

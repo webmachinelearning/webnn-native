@@ -224,7 +224,7 @@ namespace webnn_wire { namespace client {
         return result;
     }
 
-    MLGraphBuilder ClientCreateGraphBuilder(MLContext context) {
+    WNNGraphBuilder ClientCreateGraphBuilder(WNNContext context) {
         auto self = reinterpret_cast<Context*>(context);
         CreateGraphBuilderCmd cmd;
 
@@ -235,25 +235,25 @@ namespace webnn_wire { namespace client {
 
         self->client->SerializeCommand(cmd);
 
-        return reinterpret_cast<MLGraphBuilder>(allocation->object.get());
+        return reinterpret_cast<WNNGraphBuilder>(allocation->object.get());
     }
 
-    MLNamedInputs ClientCreateNamedInputs() {
+    WNNNamedInputs ClientCreateNamedInputs() {
         UNREACHABLE();
         return nullptr;
     }
 
-    MLNamedOperands ClientCreateNamedOperands() {
+    WNNNamedOperands ClientCreateNamedOperands() {
         UNREACHABLE();
         return nullptr;
     }
 
-    MLNamedOutputs ClientCreateNamedOutputs() {
+    WNNNamedOutputs ClientCreateNamedOutputs() {
         UNREACHABLE();
         return nullptr;
     }
 
-    MLOperatorArray ClientCreateOperatorArray() {
+    WNNOperatorArray ClientCreateOperatorArray() {
         UNREACHABLE();
         return nullptr;
     }

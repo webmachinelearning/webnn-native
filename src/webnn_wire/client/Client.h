@@ -39,7 +39,7 @@ namespace webnn_wire { namespace client {
 
         ReservedInstance ReserveInstance();
         ReservedContext ReserveContext();
-        ReservedNamedInputs ReserveNamedInputs(MLContext context);
+        ReservedNamedInputs ReserveNamedInputs(WNNContext context);
         ReservedNamedOperands ReserveNamedOperands();
         ReservedNamedOutputs ReserveNamedOutputs();
 

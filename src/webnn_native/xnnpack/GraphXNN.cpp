@@ -78,10 +78,10 @@ const char* xnn_status2str(xnn_status v) {
             COMPLAIN_XNN_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-#define COMPUTE_ERROR(what)                \
-    do {                                   \
-        dawn::ErrorLog() << what;          \
-        return MLComputeGraphStatus_Error; \
+#define COMPUTE_ERROR(what)                 \
+    do {                                    \
+        dawn::ErrorLog() << what;           \
+        return WNNComputeGraphStatus_Error; \
     } while (0)
 
 #define COMPUTE_TRY(f)                                                                     \
@@ -97,8 +97,8 @@ const char* xnn_status2str(xnn_status v) {
 namespace webnn_native { namespace xnnpack {
 
     namespace {
-        xnn_status GetXnnDataType(ml::OperandType operandType, xnn_datatype& xnnDataType) {
-            if (operandType == ml::OperandType::Float32) {
+        xnn_status GetXnnDataType(wnn::OperandType operandType, xnn_datatype& xnnDataType) {
+            if (operandType == wnn::OperandType::Float32) {
                 xnnDataType = xnn_datatype_fp32;
             } else {
                 return xnn_status_invalid_parameter;
@@ -396,7 +396,7 @@ namespace webnn_native { namespace xnnpack {
             mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
         }
         const Pool2dOptions* options = pool2d->GetOptions();
-        if (options->layout != ml::InputOperandLayout::Nhwc) {
+        if (options->layout != wnn::InputOperandLayout::Nhwc) {
             dawn::ErrorLog() << "XNNPACK only supports input layout nhwc.";
             return xnn_status_invalid_parameter;
         }
@@ -419,7 +419,7 @@ namespace webnn_native { namespace xnnpack {
 
         size_t outputHeight, outputWidth;
         uint32_t padTop, padBottom, padLeft, padRight;
-        if (options->autoPad == ml::AutoPad::Explicit) {
+        if (options->autoPad == wnn::AutoPad::Explicit) {
             // WebNN padding: [beginning_height, ending_height, beginning_width, ending_width]
             padTop = options->padding[0];
             padBottom = options->padding[1];
@@ -436,7 +436,7 @@ namespace webnn_native { namespace xnnpack {
                 std::max(size_t(0), (outputHeight - 1) * strideHeight + filterHeight - inputHeight);
             size_t padAlongWidth =
                 std::max(size_t(0), (outputWidth - 1) * strideWidth + filterWidth - inputWidth);
-            if (options->autoPad == ml::AutoPad::SameUpper) {
+            if (options->autoPad == wnn::AutoPad::SameUpper) {
                 padTop = floor(padAlongHeight / 2);
                 padBottom = padAlongHeight - padTop;
                 padLeft = floor(padAlongWidth / 2);
@@ -511,14 +511,14 @@ namespace webnn_native { namespace xnnpack {
         size_t inputHeight, inputWidth;
         uint32_t filterHeight, filterWidth;
         size_t inputChannels, outputChannels;
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             inputHeight = inputInfo->dims[1];
             inputWidth = inputInfo->dims[2];
             inputChannels = inputInfo->dims[3];
             if (groups != 1 && groups == inputChannels) {
                 // For depthwiseConv2d, xnn pack expects the weights layout hwio
                 //   [filter_height, filter_width, input_channels, channel_multiplier]
-                if (options->filterLayout != ml::FilterOperandLayout::Hwio) {
+                if (options->filterLayout != wnn::FilterOperandLayout::Hwio) {
                     dawn::ErrorLog()
                         << "XNNPACK only supports filter layout hwio for depthwise conv2d.";
                     return xnn_status_invalid_parameter;
@@ -533,7 +533,7 @@ namespace webnn_native { namespace xnnpack {
             } else {
                 // For regular conv2d, xnn pack expects weights layed out like:
                 //   [output_channels, filter_height, filter_width, input_channels]
-                if (options->filterLayout != ml::FilterOperandLayout::Ohwi) {
+                if (options->filterLayout != wnn::FilterOperandLayout::Ohwi) {
                     dawn::ErrorLog() << "XNNPACK only supports filter layout ohwi for conv2d.";
                     return xnn_status_invalid_parameter;
                 }
@@ -569,7 +569,7 @@ namespace webnn_native { namespace xnnpack {
 
         size_t outputHeight, outputWidth;
         uint32_t padTop, padBottom, padLeft, padRight;
-        if (options->autoPad == ml::AutoPad::Explicit) {
+        if (options->autoPad == wnn::AutoPad::Explicit) {
             // WebNN padding: [beginning_height, ending_height, beginning_width, ending_width]
             padTop = options->padding[0];
             padBottom = options->padding[1];
@@ -586,7 +586,7 @@ namespace webnn_native { namespace xnnpack {
                 std::max(size_t(0), (outputHeight - 1) * strideHeight + filterHeight - inputHeight);
             size_t padAlongWidth =
                 std::max(size_t(0), (outputWidth - 1) * strideWidth + filterWidth - inputWidth);
-            if (options->autoPad == ml::AutoPad::SameUpper) {
+            if (options->autoPad == wnn::AutoPad::SameUpper) {
                 padTop = floor(padAlongHeight / 2);
                 padBottom = padAlongHeight - padTop;
                 padLeft = floor(padAlongWidth / 2);
@@ -692,7 +692,7 @@ namespace webnn_native { namespace xnnpack {
         return {};
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         std::vector<const void*> inputBuffers(mInputs.size(), nullptr);
         for (size_t i = 0; i < mInputs.size(); ++i) {
             if (mInputs[i]->opType == OperandType::CONSTANT) {
@@ -794,7 +794,7 @@ namespace webnn_native { namespace xnnpack {
 
         COMPUTE_TRY(xnn_run_operator(mXnnOperator, GetThreadpool()));
 
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 
 }}  // namespace webnn_native::xnnpack

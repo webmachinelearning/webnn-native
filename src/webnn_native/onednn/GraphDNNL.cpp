@@ -80,7 +80,7 @@ const char* dnnl_status2str(dnnl_status_t v) {
         std::string message = std::string(what) + std::string(" returns oneDNN error: ") + \
                               std::string(dnnl_status2str(s_));                            \
         dawn::ErrorLog() << message;                                                       \
-        return MLComputeGraphStatus_Error;                                                 \
+        return WNNComputeGraphStatus_Error;                                                \
     } while (0)
 
 #define COMPUTE_TRY(f)                  \
@@ -93,12 +93,13 @@ const char* dnnl_status2str(dnnl_status_t v) {
 namespace webnn_native { namespace onednn {
 
     namespace {
-        dnnl_status_t GetDnnlDataType(ml::OperandType operandType, dnnl_data_type_t& dnnlDataType) {
-            if (operandType == ml::OperandType::Float32) {
+        dnnl_status_t GetDnnlDataType(wnn::OperandType operandType,
+                                      dnnl_data_type_t& dnnlDataType) {
+            if (operandType == wnn::OperandType::Float32) {
                 dnnlDataType = dnnl_f32;
-            } else if (operandType == ml::OperandType::Float16) {
+            } else if (operandType == wnn::OperandType::Float16) {
                 dnnlDataType = dnnl_f16;
-            } else if (operandType == ml::OperandType::Int32) {
+            } else if (operandType == wnn::OperandType::Int32) {
                 dnnlDataType = dnnl_s32;
             } else {
                 return dnnl_invalid_arguments;
@@ -550,7 +551,7 @@ namespace webnn_native { namespace onednn {
         const Conv2dOptions* options = conv2d->GetOptions();
         const dnnl_memory_desc_t* actualInputMemoryDesc;
         dnnl_memory_desc_t transposedInputMemoryDesc;
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             const int permute[] = {0, 2, 3, 1};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedInputMemoryDesc, inputMemoryDesc,
                                                    permute));
@@ -576,7 +577,7 @@ namespace webnn_native { namespace onednn {
         std::vector<dnnl_dim_t> groupFilterDims;
         const dnnl_memory_desc_t* actualFilterMemoryDesc;
         dnnl_memory_desc_t transposedFilterMemoryDesc;
-        if (options->filterLayout == ml::Conv2dFilterOperandLayout::Hwio) {
+        if (options->filterLayout == wnn::Conv2dFilterOperandLayout::Hwio) {
             const int permute[] = {2, 3, 1, 0};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -589,7 +590,7 @@ namespace webnn_native { namespace onednn {
                                                   dnnl_hwio));
 
             actualFilterMemoryDesc = &transposedFilterMemoryDesc;
-        } else if (options->filterLayout == ml::Conv2dFilterOperandLayout::Ohwi) {
+        } else if (options->filterLayout == wnn::Conv2dFilterOperandLayout::Ohwi) {
             const int permute[] = {0, 2, 3, 1};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -599,7 +600,7 @@ namespace webnn_native { namespace onednn {
                                                   filterDims.data(), filterMemoryDesc->data_type,
                                                   dnnl_ohwi));
             actualFilterMemoryDesc = &transposedFilterMemoryDesc;
-        } else if (options->filterLayout == ml::Conv2dFilterOperandLayout::Ihwo) {
+        } else if (options->filterLayout == wnn::Conv2dFilterOperandLayout::Ihwo) {
             const int permute[] = {1, 2, 3, 0};
             DNNL_TRY(dnnl_memory_desc_permute_axes(&transposedFilterMemoryDesc, filterMemoryDesc,
                                                    permute));
@@ -620,22 +621,22 @@ namespace webnn_native { namespace onednn {
             groupFilterDims = {options->groups, filterDims[0] / options->groups, filterDims[1],
                                filterDims[2], filterDims[3]};
             switch (options->filterLayout) {
-                case ml::Conv2dFilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_goihw));
                     break;
-                case ml::Conv2dFilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_hwigo));
                     break;
-                case ml::Conv2dFilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_gohwi));
                     break;
-                case ml::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     DNNL_TRY(dnnl_memory_desc_init_by_tag(
                         &newFilterMemoryDesc, groupFilterDims.size(), groupFilterDims.data(),
                         filterMemoryDesc->data_type, dnnl_idhwo));
@@ -671,7 +672,7 @@ namespace webnn_native { namespace onednn {
         int32_t paddingLeft = options->padding[2];
         int32_t paddingRight = options->padding[3];
 
-        if (options->autoPad != ml::AutoPad::Explicit) {
+        if (options->autoPad != wnn::AutoPad::Explicit) {
             utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0],
                                                     inputDims[2], filterDims[2], strides[0],
                                                     paddingTop, paddingBottom);
@@ -782,7 +783,7 @@ namespace webnn_native { namespace onednn {
             add ? reinterpret_cast<const OperandBase*>(add->PrimaryOutput())
                 : reinterpret_cast<const OperandBase*>(conv2d->PrimaryOutput());
 
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             // reorder the output from primitive query layout to nhwc
             dnnl_memory_desc_t finalOutputMemoryDesc;
             DNNL_TRY(dnnl_memory_desc_init_by_tag(&finalOutputMemoryDesc, outputDims.size(),
@@ -827,7 +828,7 @@ namespace webnn_native { namespace onednn {
                                           inputMemoryDesc->dims + inputMemoryDesc->ndims);
         dnnl_data_type_t dataType = inputMemoryDesc->data_type;
         const Pool2dOptions* options = pool2d->GetOptions();
-        if (options->layout != ml::InputOperandLayout::Nchw) {
+        if (options->layout != wnn::InputOperandLayout::Nchw) {
             // FIXME(nhu): implement the nhwc layout.
             return dnnl_unimplemented;
         }
@@ -989,7 +990,7 @@ namespace webnn_native { namespace onednn {
         return {};
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& input : inputs->GetRecords()) {
             dnnl_memory_t inputMemory = mInputMemoryMap.at(input.first);
             COMPUTE_TRY(
@@ -1025,7 +1026,7 @@ namespace webnn_native { namespace onednn {
                        bufferLength);
             }
         }
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 
     dnnl_engine_t Graph::GetEngine() {

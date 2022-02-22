@@ -23,10 +23,10 @@ namespace node {
 
     struct Input {
       public:
-        ml::ArrayBufferView bufferView;
+        wnn::ArrayBufferView bufferView;
         std::vector<int32_t> dimensions;
 
-        const ml::Input* AsPtr() {
+        const wnn::Input* AsPtr() {
             mInput.resource = bufferView;
             if (!dimensions.empty()) {
                 mInput.dimensions = dimensions.data();
@@ -36,7 +36,7 @@ namespace node {
         }
 
       private:
-        ml::Input mInput;
+        wnn::Input mInput;
     };
 
     bool GetNamedInputs(const Napi::Value& jsValue, std::map<std::string, Input>& namedInputs) {
@@ -88,7 +88,7 @@ namespace node {
     }
 
     bool GetNamedOutputs(const Napi::Value& jsValue,
-                         std::map<std::string, ml::ArrayBufferView>& namedOutputs) {
+                         std::map<std::string, wnn::ArrayBufferView>& namedOutputs) {
         if (!jsValue.IsObject()) {
             return false;
         }
@@ -100,7 +100,7 @@ namespace node {
         // typedef (MLBufferView or WebGLTexture or GPUTexture) MLResource;
         // typedef record<DOMString, MLResource> MLNamedOutputs;
         for (size_t i = 0; i < names.Length(); ++i) {
-            ml::ArrayBufferView arrayBuffer = {};
+            wnn::ArrayBufferView arrayBuffer = {};
             std::string name = names.Get(i).As<Napi::String>().Utf8Value();
             if (!GetArrayBufferView(jsNamedOutputs.Get(name), arrayBuffer)) {
                 return false;
@@ -121,18 +121,18 @@ namespace node {
         std::map<std::string, Input> inputs;
         WEBNN_NODE_ASSERT(GetNamedInputs(info[0], inputs), "The inputs parameter is invalid.");
 
-        std::map<std::string, ml::ArrayBufferView> outputs;
+        std::map<std::string, wnn::ArrayBufferView> outputs;
         WEBNN_NODE_ASSERT(GetNamedOutputs(info[1], outputs), "The outputs parameter is invalid.");
 
-        ml::NamedInputs namedInputs = ml::CreateNamedInputs();
+        wnn::NamedInputs namedInputs = wnn::CreateNamedInputs();
         for (auto& input : inputs) {
             namedInputs.Set(input.first.data(), input.second.AsPtr());
         }
-        ml::NamedOutputs namedOutputs = ml::CreateNamedOutputs();
+        wnn::NamedOutputs namedOutputs = wnn::CreateNamedOutputs();
         for (auto& output : outputs) {
             namedOutputs.Set(output.first.data(), &output.second);
         }
-        ml::ComputeGraphStatus status = mImpl.Compute(namedInputs, namedOutputs);
+        wnn::ComputeGraphStatus status = mImpl.Compute(namedInputs, namedOutputs);
 
         return Napi::Number::New(info.Env(), static_cast<uint32_t>(status));
     }

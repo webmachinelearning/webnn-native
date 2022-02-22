@@ -18,10 +18,10 @@
 namespace webnn_native {
 
     {% for type in by_category["enum"] %}
-        MaybeError Validate{{type.name.CamelCase()}}(ml::{{as_cppType(type.name)}} value) {
+        MaybeError Validate{{type.name.CamelCase()}}(wnn::{{as_cppType(type.name)}} value) {
             switch (value) {
                 {% for value in type.values if value.valid %}
-                    case ml::{{as_cppType(type.name)}}::{{as_cppEnum(value.name)}}:
+                    case wnn::{{as_cppType(type.name)}}::{{as_cppEnum(value.name)}}:
                         return {};
                 {% endfor %}
                 default:
@@ -32,8 +32,8 @@ namespace webnn_native {
     {% endfor %}
 
     {% for type in by_category["bitmask"] %}
-        MaybeError Validate{{type.name.CamelCase()}}(ml::{{as_cppType(type.name)}} value) {
-            if ((value & static_cast<ml::{{as_cppType(type.name)}}>(~{{type.full_mask}})) == 0) {
+        MaybeError Validate{{type.name.CamelCase()}}(wnn::{{as_cppType(type.name)}} value) {
+            if ((value & static_cast<wnn::{{as_cppType(type.name)}}>(~{{type.full_mask}})) == 0) {
                 return {};
             }
             return DAWN_VALIDATION_ERROR("Invalid value for {{as_cType(type.name)}}");

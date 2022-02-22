@@ -95,16 +95,16 @@ namespace webnn_native { namespace ie {
             }
             tensorDesc.dims.ranks = desc->dimensionsCount;
             switch (desc->type) {
-                case ml::OperandType::Float32:
+                case wnn::OperandType::Float32:
                     tensorDesc.precision = precision_e::FP32;
                     break;
-                case ml::OperandType::Int32:
+                case wnn::OperandType::Int32:
                     tensorDesc.precision = precision_e::I32;
                     break;
-                case ml::OperandType::Float16:
+                case wnn::OperandType::Float16:
                     tensorDesc.precision = precision_e::FP16;
                     break;
-                case ml::OperandType::Uint32:
+                case wnn::OperandType::Uint32:
                     tensorDesc.precision = precision_e::U32;
                     break;
                 default:
@@ -234,18 +234,18 @@ namespace webnn_native { namespace ie {
 
         // Conv2dFilterOperandLayout => oihw
         ngraph_node_t* TransposeConv2dFilterLayout(const ngraph_node_t* node,
-                                                   ml::Conv2dFilterOperandLayout layout) {
+                                                   wnn::Conv2dFilterOperandLayout layout) {
             std::vector<int64_t> order;
             switch (layout) {
-                case ml::Conv2dFilterOperandLayout::Oihw:
+                case wnn::Conv2dFilterOperandLayout::Oihw:
                     return const_cast<ngraph_node_t*>(node);
-                case ml::Conv2dFilterOperandLayout::Hwio:
+                case wnn::Conv2dFilterOperandLayout::Hwio:
                     order = std::vector<int64_t>{3, 2, 0, 1};
                     break;
-                case ml::Conv2dFilterOperandLayout::Ohwi:
+                case wnn::Conv2dFilterOperandLayout::Ohwi:
                     order = std::vector<int64_t>{0, 3, 1, 2};
                     break;
-                case ml::Conv2dFilterOperandLayout::Ihwo:
+                case wnn::Conv2dFilterOperandLayout::Ihwo:
                     order = std::vector<int64_t>{3, 0, 1, 2};
                     break;
                 default:
@@ -265,15 +265,15 @@ namespace webnn_native { namespace ie {
         // ConvTranspose2dFilterOperandLayout => iohw
         ngraph_node_t* TransposeConvTranspose2dFilterLayout(
             const ngraph_node_t* node,
-            ml::ConvTranspose2dFilterOperandLayout layout) {
+            wnn::ConvTranspose2dFilterOperandLayout layout) {
             std::vector<int64_t> order;
             switch (layout) {
-                case ml::ConvTranspose2dFilterOperandLayout::Iohw:
+                case wnn::ConvTranspose2dFilterOperandLayout::Iohw:
                     return const_cast<ngraph_node_t*>(node);
-                case ml::ConvTranspose2dFilterOperandLayout::Hwoi:
+                case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
                     order = std::vector<int64_t>{3, 2, 0, 1};
                     break;
-                case ml::ConvTranspose2dFilterOperandLayout::Ohwi:
+                case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
                     order = std::vector<int64_t>{3, 0, 1, 2};
                     break;
                 default:
@@ -394,7 +394,7 @@ namespace webnn_native { namespace ie {
         auto axesNode = AddConstantWithGraph<int64_t>(precision_e::I64, {axes.size()}, axes);
         auto options = instanceNorm->GetOptions();
         auto input = mGraphNodeMap[inputs[0].Get()];
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         ngraph_node_t* meanNode = nullptr;
@@ -463,7 +463,7 @@ namespace webnn_native { namespace ie {
         status = ngraph_add(instanceNormNode, biasNode, &instanceNormNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph add"));
 
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             instanceNormNode = TransposeInputLayout(instanceNormNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[instanceNorm->PrimaryOutput()] = instanceNormNode;
@@ -627,7 +627,7 @@ namespace webnn_native { namespace ie {
         DAWN_ASSERT(dilations.size() == 2);
 
         auto input = mGraphNodeMap[conv2d->Inputs()[0].Get()];
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         auto filterNode = const_cast<ngraph_node_t*>(mGraphNodeMap[conv2d->Inputs()[1].Get()]);
@@ -676,7 +676,7 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* activationNode;
         status = AddActivationNode(conv2dNode, options->activation, &activationNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode;
@@ -707,7 +707,7 @@ namespace webnn_native { namespace ie {
         }
 
         auto input = mGraphNodeMap[convTranspose2d->Inputs()[0].Get()];
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         auto filterNode =
@@ -761,7 +761,7 @@ namespace webnn_native { namespace ie {
         ngraph_node_t* activationNode;
         status = AddActivationNode(conv2dNode, options->activation, &activationNode);
         DAWN_TRY(CheckStatusCode(status, "ngraph activation"));
-        if (options->inputLayout == ml::InputOperandLayout::Nhwc) {
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
             activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[convTranspose2d->PrimaryOutput()] = activationNode;
@@ -852,7 +852,7 @@ namespace webnn_native { namespace ie {
             }
         }
         // TODO: layout
-        if (options->layout == ml::RecurrentNetworkWeightLayout::Rzn) {
+        if (options->layout == wnn::RecurrentNetworkWeightLayout::Rzn) {
             return DAWN_INTERNAL_ERROR("Not support 'layout = rzn' now.");
         }
         std::vector<const char*> activations = GetGruActivations(gru->GetActivations());
@@ -930,7 +930,7 @@ namespace webnn_native { namespace ie {
     MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         auto options = pool2d->GetOptions();
         auto input = mGraphNodeMap[pool2d->Inputs()[0].Get()];
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             input = TransposeInputLayout(input, TransposeType::NhwcToNchw);
         }
         std::vector<size_t> strides(options->strides, options->strides + options->stridesCount);
@@ -984,7 +984,7 @@ namespace webnn_native { namespace ie {
                 DAWN_ASSERT(0);
         }
         DAWN_TRY(CheckStatusCode(status, "ngraph pool"));
-        if (options->layout == ml::InputOperandLayout::Nhwc) {
+        if (options->layout == wnn::InputOperandLayout::Nhwc) {
             poolNode = TransposeInputLayout(poolNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[pool2d->PrimaryOutput()] = poolNode;
@@ -1304,8 +1304,8 @@ namespace webnn_native { namespace ie {
     }
 
     MaybeError Graph::CompileImpl() {
-        ml::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
-        const char* deviceName = devicePreference == ml::DevicePreference::Gpu ? "GPU" : "CPU";
+        wnn::DevicePreference devicePreference = GetContext()->GetContextOptions().devicePreference;
+        const char* deviceName = devicePreference == wnn::DevicePreference::Gpu ? "GPU" : "CPU";
 
         ie_config_t config = {NULL, NULL, NULL};
         ie_executable_network_t* executableNetwork;
@@ -1318,13 +1318,13 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-    MLComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& input : mInputIdMap) {
             // All the inputs must be set.
             if (namedInputs.find(input.first) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input isn't set";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             ie_blob_t* blob;
             char* inputName = nullptr;
@@ -1332,18 +1332,18 @@ namespace webnn_native { namespace ie {
                 ie_network_get_input_name(mInferEngineNetwork, input.second, &inputName);
             if (status != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to ie_network_get_input_name";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             status = ie_infer_request_get_blob(mInferEngineRequest, inputName, &blob);
             if (status != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to ie_infer_request_get_blob";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             ie_blob_buffer_t buffer;
             status = ie_blob_get_buffer(blob, &buffer);
             if (status != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to ie_blob_get_buffer";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             auto& resource = namedInputs[input.first].resource;
             memcpy(buffer.buffer, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
@@ -1354,7 +1354,7 @@ namespace webnn_native { namespace ie {
         IEStatusCode code = ie_infer_request_infer(mInferEngineRequest);
         if (code != IEStatusCode::OK) {
             dawn::ErrorLog() << "IE Failed to compute model";
-            return MLComputeGraphStatus_Error;
+            return WNNComputeGraphStatus_Error;
         }
 
         // Get Data from nGraph with output.
@@ -1365,7 +1365,7 @@ namespace webnn_native { namespace ie {
             auto originalName = mOutputNameMap[namedOutput.first];
             if (mOriginalNameMap.find(originalName) == mOriginalNameMap.end()) {
                 dawn::ErrorLog() << "IE Failed to compute model";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             char* sinkingName;
             IEStatusCode status = ie_network_get_output_name(
@@ -1374,7 +1374,7 @@ namespace webnn_native { namespace ie {
             status = ie_infer_request_get_blob(mInferEngineRequest, sinkingName, &outputBlob);
             if (status != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to ie_infer_request_get_blob";
-                return MLComputeGraphStatus_Error;
+                return WNNComputeGraphStatus_Error;
             }
             ie_blob_buffer_t outputBuffer;
             status = ie_blob_get_cbuffer(outputBlob, &outputBuffer);
@@ -1386,6 +1386,6 @@ namespace webnn_native { namespace ie {
             }
         }
 
-        return MLComputeGraphStatus_Success;
+        return WNNComputeGraphStatus_Success;
     }
 }}  // namespace webnn_native::ie

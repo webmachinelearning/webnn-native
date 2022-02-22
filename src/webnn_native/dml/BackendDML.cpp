@@ -20,7 +20,7 @@
 namespace webnn_native { namespace dml {
 
     Backend::Backend(InstanceBase* instance)
-        : BackendConnection(instance, ml::BackendType::DirectML) {
+        : BackendConnection(instance, wnn::BackendType::DirectML) {
     }
 
     MaybeError Backend::Initialize() {

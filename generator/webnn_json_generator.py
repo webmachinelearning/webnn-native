@@ -42,7 +42,7 @@ def as_varName(*names):
         [name.CamelCase() for name in names[1:]])
     # Avoid to use C++ keyword 'operator', probably check for others on demand.
     if varName == 'operator':
-        varName = 'mlOperator'
+        varName = 'wnnOperator'
     return varName
 
 
@@ -50,7 +50,7 @@ def as_cType(name):
     if name.native:
         return name.concatcase()
     else:
-        return 'ML' + name.CamelCase()
+        return 'WNN' + name.CamelCase()
 
 
 def as_cTypeDawn(name):
@@ -123,7 +123,7 @@ def annotated(typ, arg):
 
 def as_cEnum(type_name, value_name):
     assert not type_name.native and not value_name.native
-    return 'ML' + type_name.CamelCase() + '_' + value_name.CamelCase()
+    return 'WNN' + type_name.CamelCase() + '_' + value_name.CamelCase()
 
 
 def as_cEnumDawn(type_name, value_name):
@@ -141,7 +141,7 @@ def as_cppEnum(value_name):
 
 def as_cMethod(type_name, method_name):
     assert not type_name.native and not method_name.native
-    return 'ml' + type_name.CamelCase() + method_name.CamelCase()
+    return 'wnn' + type_name.CamelCase() + method_name.CamelCase()
 
 
 def as_cMethodDawn(type_name, method_name):
@@ -168,7 +168,7 @@ def as_frontendType(typ):
     if typ.category == 'object':
         return typ.name.CamelCase() + 'Base*'
     elif typ.category in ['bitmask', 'enum']:
-        return 'ml::' + typ.name.CamelCase()
+        return 'wnn::' + typ.name.CamelCase()
     elif typ.category == 'structure':
         return as_cppType(typ.name)
     else:
@@ -178,7 +178,7 @@ def as_wireType(typ):
     if typ.category == 'object':
         return typ.name.CamelCase() + '*'
     elif typ.category in ['bitmask', 'enum']:
-        return 'ML' + typ.name.CamelCase()
+        return 'WNN' + typ.name.CamelCase()
     else:
         return as_cppType(typ.name)
 

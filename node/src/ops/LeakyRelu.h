@@ -21,7 +21,7 @@
 namespace node { namespace op {
 
     struct LeakyRelu {
-        static Napi::Value Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder);
+        static Napi::Value Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder);
     };
 
 }}  // namespace node::op

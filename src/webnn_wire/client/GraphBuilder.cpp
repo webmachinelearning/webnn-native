@@ -20,8 +20,8 @@
 
 namespace webnn_wire { namespace client {
 
-    MLOperand GraphBuilder::Constant(MLOperandDescriptor const* desc,
-                                     MLArrayBufferView const* value) {
+    WNNOperand GraphBuilder::Constant(WNNOperandDescriptor const* desc,
+                                      WNNArrayBufferView const* value) {
         GraphBuilderConstantInternalCmd cmd;
         cmd.graphBuilderId = this->id;
         cmd.desc = desc;

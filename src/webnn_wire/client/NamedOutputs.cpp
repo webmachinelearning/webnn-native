@@ -25,7 +25,7 @@ namespace webnn_wire { namespace client {
     static size_t s_byteLength;
     static size_t s_byteOffset;
 
-    void NamedOutputs::Set(char const* name, MLArrayBufferView const* resource) {
+    void NamedOutputs::Set(char const* name, WNNArrayBufferView const* resource) {
         NamedOutputsSetCmd cmd;
         cmd.namedOutputsId = this->id;
         cmd.name = name;
@@ -41,7 +41,7 @@ namespace webnn_wire { namespace client {
         s_byteOffset = resource->byteOffset;
     }
 
-    void NamedOutputs::Get(size_t index, MLArrayBufferView const* resource) {
+    void NamedOutputs::Get(size_t index, WNNArrayBufferView const* resource) {
         UNREACHABLE();
     }
 

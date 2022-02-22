@@ -57,10 +57,10 @@ namespace webnn_native { namespace op {
         mOptions.dilations = mDilations.data();
         mOptions.dilationsCount = mDilations.size();
 
-        mOptions.autoPad = options == nullptr ? ml::AutoPad::Explicit : options->autoPad;
-        mOptions.layout = options == nullptr ? ml::InputOperandLayout::Nchw : options->layout;
+        mOptions.autoPad = options == nullptr ? wnn::AutoPad::Explicit : options->autoPad;
+        mOptions.layout = options == nullptr ? wnn::InputOperandLayout::Nchw : options->layout;
         mOptions.roundingType =
-            options == nullptr ? ml::RoundingType::Floor : options->roundingType;
+            options == nullptr ? wnn::RoundingType::Floor : options->roundingType;
 
         if (options != nullptr && options->outputSizes != nullptr) {
             mOutputSizes.assign(options->outputSizes,
@@ -84,7 +84,7 @@ namespace webnn_native { namespace op {
 
     MaybeError Pool2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
-        bool nchw = mOptions.layout == ml::InputOperandLayout::Nchw;
+        bool nchw = mOptions.layout == wnn::InputOperandLayout::Nchw;
         int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
         int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
         int32_t windowHeight =
@@ -94,7 +94,7 @@ namespace webnn_native { namespace op {
 
         int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
                 paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
-        if (mOptions.autoPad != ml::AutoPad::Explicit) {
+        if (mOptions.autoPad != wnn::AutoPad::Explicit) {
             utils::ComputeImplicitPaddingForAutoPad(mOptions.autoPad, mOptions.dilations[0],
                                                     inputHeight, windowHeight, mOptions.strides[0],
                                                     paddingBeginningHeight, paddingEndingHeight);
@@ -118,19 +118,19 @@ namespace webnn_native { namespace op {
             ceil(1 + 1.0 * (inputWidth - windowWidth + paddingBeginningWidth + paddingEndingWidth) /
                          mStride[1]);
         if (mOptions.outputSizes == nullptr) {
-            outputHeight = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputHeight
-                                                                            : ceilOutputHeight;
-            outputWidth = mOptions.roundingType == ml::RoundingType::Floor ? floorOutputWidth
-                                                                           : ceilOutputWidth;
+            outputHeight = mOptions.roundingType == wnn::RoundingType::Floor ? floorOutputHeight
+                                                                             : ceilOutputHeight;
+            outputWidth = mOptions.roundingType == wnn::RoundingType::Floor ? floorOutputWidth
+                                                                            : ceilOutputWidth;
         } else {
             outputHeight = mOptions.outputSizes[0];
             outputWidth = mOptions.outputSizes[1];
             // Predict and reset the implicit rounding type by the explicitly specified outputSizes
             // which should match either floor or ceil rounding type.
             if (outputHeight == floorOutputHeight && outputWidth == floorOutputWidth) {
-                mOptions.roundingType = ml::RoundingType::Floor;
+                mOptions.roundingType = wnn::RoundingType::Floor;
             } else if (outputHeight == ceilOutputHeight && outputWidth == ceilOutputWidth) {
-                mOptions.roundingType = ml::RoundingType::Ceil;
+                mOptions.roundingType = wnn::RoundingType::Ceil;
             } else {
                 return DAWN_VALIDATION_ERROR("Invalid output sizes.");
             }

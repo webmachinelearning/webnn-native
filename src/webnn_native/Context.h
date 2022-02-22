@@ -39,10 +39,10 @@ namespace webnn_native {
         GraphBase* CreateGraph();
 
         // Dawn API
-        void InjectError(ml::ErrorType type, const char* message);
-        void PushErrorScope(ml::ErrorFilter filter);
-        bool PopErrorScope(ml::ErrorCallback callback, void* userdata);
-        void SetUncapturedErrorCallback(ml::ErrorCallback callback, void* userdata);
+        void InjectError(wnn::ErrorType type, const char* message);
+        void PushErrorScope(wnn::ErrorFilter filter);
+        bool PopErrorScope(wnn::ErrorCallback callback, void* userdata);
+        void SetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata);
         ContextOptions GetContextOptions() {
             return mContextOptions;
         }

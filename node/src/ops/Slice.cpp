@@ -23,7 +23,7 @@ namespace node { namespace op {
       public:
         std::vector<int32_t> axes;
 
-        const ml::SliceOptions* AsPtr() {
+        const wnn::SliceOptions* AsPtr() {
             if (!axes.empty()) {
                 mOptions.axesCount = axes.size();
                 mOptions.axes = axes.data();
@@ -32,17 +32,17 @@ namespace node { namespace op {
         }
 
       private:
-        ml::SliceOptions mOptions;
+        wnn::SliceOptions mOptions;
     };
 
-    Napi::Value Slice::Build(const Napi::CallbackInfo& info, ml::GraphBuilder builder) {
+    Napi::Value Slice::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand slice(Operand input, sequence<long> starts, sequence<long> sizes,
         // MLSliceOptions options = {})
         WEBNN_NODE_ASSERT(info.Length() == 3 || info.Length() == 4,
                           "The number of arguments is invalid.");
 
         std::vector<napi_value> args;
-        ml::Operand input;
+        wnn::Operand input;
         WEBNN_NODE_ASSERT(GetOperand(info[0], input, args), "The input parameter is invalid.");
 
         std::vector<int32_t> starts;
@@ -66,8 +66,8 @@ namespace node { namespace op {
             }
         }
 
-        ml::Operand slice = builder.Slice(input, starts.data(), starts.size(), sizes.data(),
-                                          sizes.size(), options.AsPtr());
+        wnn::Operand slice = builder.Slice(input, starts.data(), starts.size(), sizes.data(),
+                                           sizes.size(), options.AsPtr());
         Napi::Object object = Operand::constructor.New(args);
         Operand* operand = Napi::ObjectWrap<Operand>::Unwrap(object);
         operand->SetImpl(slice);

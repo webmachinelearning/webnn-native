@@ -29,16 +29,16 @@ class SplitTests : public WebnnTest {
                    const std::vector<uint32_t>& splits,
                    const std::vector<expected>& expectedArray,
                    int32_t axis = 0) {
-        const ml::GraphBuilder builder = ml::CreateGraphBuilder(GetContext());
-        const ml::Operand input = utils::BuildInput(builder, "input", inputShape);
-        ml::SplitOptions options = {axis};
-        const ml::OperandArray splittedOperands =
+        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::Operand input = utils::BuildInput(builder, "input", inputShape);
+        wnn::SplitOptions options = {axis};
+        const wnn::OperandArray splittedOperands =
             builder.Split(input, splits.data(), splits.size(), &options);
         std::vector<utils::NamedOperand> namedOperands;
         for (size_t i = 0; i < splittedOperands.Size(); ++i) {
             namedOperands.push_back({"split" + std::to_string(i), splittedOperands.Get(i)});
         }
-        const ml::Graph graph = utils::Build(builder, namedOperands);
+        const wnn::Graph graph = utils::Build(builder, namedOperands);
         ASSERT_TRUE(graph);
         std::vector<utils::NamedOutput<float>> namedOutputs;
         std::vector<std::vector<float>> results;

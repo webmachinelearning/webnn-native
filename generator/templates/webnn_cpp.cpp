@@ -14,7 +14,7 @@
 //* limitations under the License.
 #include "webnn/webnn_cpp.h"
 
-namespace ml {
+namespace wnn {
     {% for type in by_category["enum"] %}
         {% set CppType = as_cppType(type.name) %}
         {% set CType = as_cType(type.name) %}

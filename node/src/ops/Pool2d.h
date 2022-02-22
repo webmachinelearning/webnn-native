@@ -28,7 +28,7 @@ namespace node { namespace op {
 
     struct Pool2d {
         static Napi::Value Build(const Napi::CallbackInfo& info,
-                                 ml::GraphBuilder builder,
+                                 wnn::GraphBuilder builder,
                                  Pool2dType type);
     };
 
