@@ -16,7 +16,7 @@ Example Options:
     -l "<layout>"             Optional. Specify the layout: "nchw" or "nhwc". The default value is "nchw".
     -n "<integer>"            Optional. Number of iterations. The default value is 1, and should not be less than 1.
     -d "<device preference>"  Optional. Specify a preferred kind of device: "default" or "gpu" or "cpu" to infer on. The default value is "default".
-    -p "<power preference>"   Optional. Specify a preference as related to power consumption: "default" or "high-performance" or "lower-power". The default value is "default".
+    -p "<power preference>"   Optional. Specify a preference as related to power consumption: "default" or "high-performance" or "low-power". The default value is "default".
 
 ```
 
