@@ -422,7 +422,7 @@ namespace utils {
         std::cout << "    -p \"<power preference>\"   "
                   << "Optional. Specify a preference as related to power consumption: \"default\" "
                      "or \"high-performance\" or "
-                     "\"lower-power\". The default value is \"default\"."
+                     "\"low-power\". The default value is \"default\"."
                   << std::endl;
     }
 
