@@ -28,12 +28,12 @@ namespace webnn_native { namespace mlas {
 
         void CreateThreadPool();
 
-        WNNAS_THREADPOOL* GetThreadPool();
+        MLAS_THREADPOOL* GetThreadPool();
 
       private:
         GraphBase* CreateGraphImpl() override;
 
-        WNNAS_THREADPOOL* mThreadPool;
+        MLAS_THREADPOOL* mThreadPool;
     };
 
 }}  // namespace webnn_native::mlas

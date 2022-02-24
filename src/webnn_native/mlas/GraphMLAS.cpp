@@ -129,7 +129,7 @@ namespace webnn_native { namespace mlas {
         Kernel() = default;
         virtual ~Kernel() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) = 0;
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) = 0;
     };
 
     class Clamp : public Kernel {
@@ -137,12 +137,12 @@ namespace webnn_native { namespace mlas {
         Clamp(const Ref<Memory>& input,
               const Ref<Memory>& output,
               size_t elementNum,
-              WNNAS_ACTIVATION actition)
+              MLAS_ACTIVATION actition)
             : mInput(input), mOutput(output), mElementNum(elementNum), mActivation(actition) {
         }
         virtual ~Clamp() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             float* output = reinterpret_cast<float*>(mOutput->GetBuffer());
             memcpy(output, input, mElementNum * sizeof(float));
@@ -153,7 +153,7 @@ namespace webnn_native { namespace mlas {
         Ref<Memory> mInput;
         Ref<Memory> mOutput;
         size_t mElementNum;
-        WNNAS_ACTIVATION mActivation;
+        MLAS_ACTIVATION mActivation;
     };
 
     class Unary : public Kernel {
@@ -162,7 +162,7 @@ namespace webnn_native { namespace mlas {
               const Ref<Memory>& input,
               const Ref<Memory>& output,
               size_t elementNum,
-              WNNAS_ACTIVATION activation)
+              MLAS_ACTIVATION activation)
             : mOpType(opType),
               mInput(input),
               mOutput(output),
@@ -171,7 +171,7 @@ namespace webnn_native { namespace mlas {
         }
         virtual ~Unary() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             float* output = reinterpret_cast<float*>(mOutput->GetBuffer());
             if (mOpType == op::UnaryOpType::kSigmoid) {
@@ -198,7 +198,7 @@ namespace webnn_native { namespace mlas {
         Ref<Memory> mInput;
         Ref<Memory> mOutput;
         size_t mElementNum;
-        WNNAS_ACTIVATION mActivation;
+        MLAS_ACTIVATION mActivation;
     };
 
     class ReorderInput : public Kernel {
@@ -214,7 +214,7 @@ namespace webnn_native { namespace mlas {
 
         virtual ~ReorderInput() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             float* output = reinterpret_cast<float*>(mOutput->GetBuffer());
 #if (VERBOSE)
@@ -243,7 +243,7 @@ namespace webnn_native { namespace mlas {
 
         virtual ~ReorderOutput() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             float* output = reinterpret_cast<float*>(mOutput->GetBuffer());
 #if (VERBOSE)
@@ -275,7 +275,7 @@ namespace webnn_native { namespace mlas {
                const std::vector<int64_t>& strideShape,
                const std::vector<int64_t>& outputShape,
                size_t groupCount,
-               WNNAS_ACTIVATION activation)
+               MLAS_ACTIVATION activation)
             : nchwcConv(nchwcConv),
               mInput(input),
               mFilter(filter),
@@ -294,7 +294,7 @@ namespace webnn_native { namespace mlas {
 
         virtual ~Conv2d() = default;
 
-        bool Prepare(WNNAS_THREADPOOL* threadPool = nullptr) {
+        bool Prepare(MLAS_THREADPOOL* threadPool = nullptr) {
             DAWN_ASSERT(!nchwcConv);
             size_t workingBufferSize;
             size_t dimensions = 2;
@@ -319,7 +319,7 @@ namespace webnn_native { namespace mlas {
             return true;
         }
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             const float* filter = reinterpret_cast<const float*>(mFilter->GetBuffer());
             const float* bias =
@@ -359,7 +359,7 @@ namespace webnn_native { namespace mlas {
         Ref<Memory> mBias;
         Ref<Memory> mWorkingBuffer;
         Ref<Memory> mOutput;
-        WNNAS_CONV_PARAMETERS mParameters;
+        MLAS_CONV_PARAMETERS mParameters;
         std::vector<int64_t> mInputShape;
         std::vector<int64_t> mKernelShape;
         std::vector<int64_t> mDilationShape;
@@ -367,13 +367,13 @@ namespace webnn_native { namespace mlas {
         std::vector<int64_t> mStrideShape;
         std::vector<int64_t> mOutputShape;
         size_t mGroupCount;
-        WNNAS_ACTIVATION mActivation;
+        MLAS_ACTIVATION mActivation;
         bool mZeroMode;
     };
 
     class Pool2d : public Kernel {
       public:
-        Pool2d(WNNAS_POOLING_KIND kind,
+        Pool2d(MLAS_POOLING_KIND kind,
                bool global,
                const Ref<Memory>& input,
                const Ref<Memory>& output,
@@ -397,7 +397,7 @@ namespace webnn_native { namespace mlas {
 
         virtual ~Pool2d() = default;
 
-        virtual void Compute(WNNAS_THREADPOOL* threadPool = nullptr) {
+        virtual void Compute(MLAS_THREADPOOL* threadPool = nullptr) {
             const float* input = reinterpret_cast<const float*>(mInput->GetBuffer());
             float* output = reinterpret_cast<float*>(mOutput->GetBuffer());
             MlasNchwcPool(mKind, mInputShape.data(), mGlobal ? nullptr : mKernelShape.data(),
@@ -421,7 +421,7 @@ namespace webnn_native { namespace mlas {
 
       private:
         friend class Graph;
-        WNNAS_POOLING_KIND mKind;
+        MLAS_POOLING_KIND mKind;
         bool mGlobal;
         Ref<Memory> mInput;
         Ref<Memory> mOutput;
@@ -508,7 +508,7 @@ namespace webnn_native { namespace mlas {
         std::vector<int32_t> dimensions = inputOperand->Shape();
         size_t elementNum = std::accumulate(dimensions.begin(), dimensions.end(), (size_t)1,
                                             std::multiplies<size_t>{});
-        WNNAS_ACTIVATION activation;
+        MLAS_ACTIVATION activation;
         activation.ActivationKind = MlasClipActivation;
         activation.Parameters.Clip.minimum = clamp->GetMinValue();
         activation.Parameters.Clip.maximum = clamp->GetMaxValue();
@@ -597,7 +597,7 @@ namespace webnn_native { namespace mlas {
         if (options->inputLayout != wnn::InputOperandLayout::Nchw) {
             return DAWN_INTERNAL_ERROR("Only support nchw input layout");
         }
-        if (options->filterLayout != wnn::FilterOperandLayout::Oihw) {
+        if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Oihw) {
             return DAWN_INTERNAL_ERROR("Only support iohw filter layout");
         }
         const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
@@ -752,7 +752,7 @@ namespace webnn_native { namespace mlas {
             }
         }
 
-        WNNAS_ACTIVATION activation;
+        MLAS_ACTIVATION activation;
         activation.ActivationKind = MlasIdentityActivation;
         if (options->activation) {
             switch (options->activation->GetFusionType()) {
@@ -829,7 +829,7 @@ namespace webnn_native { namespace mlas {
         size_t nchwcBlockSize = MlasNchwcGetBlockSize();
         bool nchwcPool = nchwcBlockSize > 1 ? true : false;
 
-        WNNAS_POOLING_KIND kind;
+        MLAS_POOLING_KIND kind;
         if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {
             kind = MlasAveragePoolingIncludePad;
         } else if (pool2d->GetType() == op::Pool2dType::kMaxPool2d) {
@@ -950,7 +950,7 @@ namespace webnn_native { namespace mlas {
             std::vector<int32_t> dimensions = inputOperand->Shape();
             size_t elementNum = std::accumulate(dimensions.begin(), dimensions.end(), (size_t)1,
                                                 std::multiplies<size_t>{});
-            WNNAS_ACTIVATION activation;
+            MLAS_ACTIVATION activation;
             if (opType == op::UnaryOpType::kRelu) {
                 activation.ActivationKind = MlasReluActivation;
             } else if (opType == op::UnaryOpType::kHardSwish) {
@@ -981,14 +981,14 @@ namespace webnn_native { namespace mlas {
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& input : inputs->GetRecords()) {
             Ref<Memory> inputMemory = mInputs.at(input.first);
-            if (inputMemory->GetByteLength() < input.second->resource.byteLength) {
+            if (inputMemory->GetByteLength() < input.second.resource.byteLength) {
                 dawn::ErrorLog() << "The size of input memory is less than input buffer.";
                 return WNNComputeGraphStatus_Error;
             }
             memcpy(inputMemory->GetBuffer(),
-                   static_cast<int8_t*>(input.second->resource.buffer) +
-                       input.second->resource.byteOffset,
-                   input.second->resource.byteLength);
+                   static_cast<int8_t*>(input.second.resource.buffer) +
+                       input.second.resource.byteOffset,
+                   input.second.resource.byteLength);
         }
 
         for (auto& kernel : mKernels) {
@@ -1003,13 +1003,13 @@ namespace webnn_native { namespace mlas {
         for (size_t i = 0; i < outputNames.size(); ++i) {
             std::string outputName = outputNames[i];
             Ref<Memory> outputMemory = mOutputs.at(outputName);
-            const ArrayBufferView* output = outputs->GetRecords().at(outputName);
-            if (output->byteLength < outputMemory->GetByteLength()) {
+            const ArrayBufferView& output = outputs->GetRecords().at(outputName);
+            if (output.byteLength < outputMemory->GetByteLength()) {
                 dawn::ErrorLog() << "The size of output buffer is less than output memory.";
                 return WNNComputeGraphStatus_Error;
             }
-            memcpy(static_cast<int8_t*>(output->buffer) + output->byteOffset,
-                   outputMemory->GetBuffer(), output->byteLength);
+            memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset,
+                   outputMemory->GetBuffer(), output.byteLength);
         }
         return WNNComputeGraphStatus_Success;
     }
