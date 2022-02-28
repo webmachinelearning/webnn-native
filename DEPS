@@ -24,11 +24,11 @@ deps = {
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@d358fe623be5236736ebc2d896cfbba2af4fd348',
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@d6e843c134f4fa9eabecda91684d7d2e50d711a2',
     'condition': 'checkout_samples'
   },
   'node/third_party/webnn-samples/test-data': {
-    'url': '{github_git}/webmachinelearning/test-data.git@b6f1565fefc103705a6ff580067eae7bb9d3b351',
+    'url': '{github_git}/webmachinelearning/test-data.git@d9f1537096b0fcbbef0889b540bf8ce6c8833969',
     'condition': 'checkout_samples'
   },
   'third_party/stb': {

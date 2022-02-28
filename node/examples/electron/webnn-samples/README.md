@@ -27,6 +27,11 @@ npm start sample=image_classification
 npm start numRuns=100
 ```
 
+- `powerPreference`: typeof `string`, one of the array ["default", "low-power", "high-performance"], used for set `MLPowerPreference`, e.g.:
+```bash
+npm start powerPreference=high-performance
+```
+
 ### Package
 
 Bundles source code with a renamed Electron executable and supporting files into `out` folder ready for distribution.
