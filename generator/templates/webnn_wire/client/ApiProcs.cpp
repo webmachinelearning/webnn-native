@@ -102,10 +102,10 @@ namespace webnn_wire { namespace client {
                     , {{as_annotated_cType(arg)}}
                 {%- endfor -%}
             ) {
+                auto self = reinterpret_cast<{{as_wireType(type)}}>(cSelf);
                 {% if len(method.arguments) > 0 %}
                     {
                         bool sameClient = true;
-                        auto self = reinterpret_cast<{{as_wireType(type)}}>(cSelf);
                         Client* client = self->client;
                         DAWN_UNUSED(client);
 
@@ -133,7 +133,6 @@ namespace webnn_wire { namespace client {
                                 // Allocate an object without registering it on the server. This is backed by a real allocation on
                                 // the client so commands can be sent with it. But because it's not allocated on the server, it will
                                 // be a fatal error to use it.
-                                auto self = reinterpret_cast<{{as_wireType(type)}}>(cSelf);
                                 auto* allocation = self->client->{{method.return_type.name.CamelCase()}}Allocator().New(self->client);
                                 return reinterpret_cast<{{as_cType(method.return_type.name)}}>(allocation->object.get());
                             {% elif method.return_type.name.canonical_case() == "void" %}
@@ -145,7 +144,6 @@ namespace webnn_wire { namespace client {
                     }
                 {% endif %}
 
-                auto self = reinterpret_cast<{{as_wireType(type)}}>(cSelf);
                 {% if Suffix not in client_handwritten_commands %}
                     {{Suffix}}Cmd cmd;
 
