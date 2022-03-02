@@ -93,10 +93,6 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddUnary");
     }
 
-    MaybeError GraphBase::AddLeakyRelu(const op::LeakyRelu* leakyRelu) {
-        return DAWN_UNIMPLEMENTED_ERROR("AddLeakyRelu");
-    }
-
     MaybeError GraphBase::AddConcat(const op::Concat* concat) {
         return DAWN_UNIMPLEMENTED_ERROR("AddConcat");
     }
@@ -110,7 +106,7 @@ namespace webnn_native {
     }
 
     MaybeError GraphBase::AddPad(const op::Pad* pad) {
-        UNREACHABLE();
+        return DAWN_UNIMPLEMENTED_ERROR("AddPad");
     }
 
     MaybeError GraphBase::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
@@ -118,7 +114,7 @@ namespace webnn_native {
     }
 
     MaybeError GraphBase::Finish() {
-        UNREACHABLE();
+        return DAWN_UNIMPLEMENTED_ERROR("Finish");
     }
 
     MaybeError GraphBase::Compile() {
