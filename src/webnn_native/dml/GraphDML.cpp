@@ -1472,11 +1472,13 @@ namespace webnn_native { namespace dml {
             // Expand dimensions to DML_TENSOR_DIMENSION_COUNT_MAX if needed.
             if (inputDims.size() < DML_TENSOR_DIMENSION_COUNT_MAX) {
                 auto newDims = ExpandDimensions(inputDims, DML_TENSOR_DIMENSION_COUNT_MAX);
-                axis = concat->GetAxis() + (DML_TENSOR_DIMENSION_COUNT_MAX - inputDims.size());
                 input = ::dml::Reinterpret(input, newDims, ::dml::NullOpt);
             }
             inputs.push_back(input);
         }
+
+        // Update the axis to align with the DML_TENSOR_DIMENSION_COUNT_MAX.
+        axis += DML_TENSOR_DIMENSION_COUNT_MAX - primaryDims.size();
         ::dml::Expression output = ::dml::Join(inputs, axis);
         ::dml::TensorDimensions outputDims = output.GetOutputDesc().sizes;
         // Reshape back according to output rank if needed.
