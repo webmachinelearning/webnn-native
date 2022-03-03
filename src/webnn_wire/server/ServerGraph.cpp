@@ -41,4 +41,53 @@ namespace webnn_wire { namespace server {
         return true;
     }
 
+    bool Server::DoGraphComputeAsync(ObjectId graphId,
+                                     uint64_t requestSerial,
+                                     ObjectId inputsId,
+                                     ObjectId outputsId) {
+        auto* graph = GraphObjects().Get(graphId);
+        auto* namedInputs = NamedInputsObjects().Get(inputsId);
+        auto* namedOutputs = NamedOutputsObjects().Get(outputsId);
+        if (graph == nullptr || namedInputs == nullptr || namedOutputs == nullptr) {
+            return false;
+        }
+
+        auto userdata = MakeUserdata<ComputeAsyncUserdata>();
+        userdata->requestSerial = requestSerial;
+        userdata->graph = ObjectHandle{graphId, graph->generation};
+        userdata->namedOutputsObjectID = outputsId;
+
+        mProcs.graphComputeAsync(
+            graph->handle, namedInputs->handle, namedOutputs->handle,
+            ForwardToServer<decltype(&Server::OnGraphComputeAsyncCallback)>::Func<
+                &Server::OnGraphComputeAsyncCallback>(),
+            userdata.release());
+        return true;
+    }
+
+    void Server::OnGraphComputeAsyncCallback(WNNComputeGraphStatus status,
+                                             const char* message,
+                                             ComputeAsyncUserdata* userdata) {
+        if (status == WNNComputeGraphStatus_Success) {
+            WNNArrayBufferView arrayBuffer = {};
+            auto* namedOutputs = NamedOutputsObjects().Get(userdata->namedOutputsObjectID);
+            mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
+            // Return the result.
+            ReturnGraphComputeResultCmd cmd;
+            cmd.name = "TODO: use the name getting from namedOutputs";
+            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
+            cmd.byteLength = arrayBuffer.byteLength;
+            cmd.byteOffset = arrayBuffer.byteOffset;
+
+            SerializeCommand(cmd);
+        }
+        ReturnGraphComputeAsyncCallbackCmd cmd;
+        cmd.graph = userdata->graph;
+        cmd.requestSerial = userdata->requestSerial;
+        cmd.status = status;
+        cmd.message = message;
+
+        SerializeCommand(cmd);
+    }
+
 }}  // namespace webnn_wire::server

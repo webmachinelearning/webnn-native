@@ -29,6 +29,21 @@ namespace webnn_wire { namespace client {
         using ObjectBase::ObjectBase;
 
         WNNComputeGraphStatus Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs);
+        void ComputeAsync(WNNNamedInputs inputs,
+                          WNNNamedOutputs outputs,
+                          WNNComputeAsyncCallback callback,
+                          void* userdata);
+        bool OnComputeAsyncCallback(uint64_t requestSerial,
+                                    WNNComputeGraphStatus status,
+                                    const char* message);
+
+      private:
+        struct ComputeAsyncRequest {
+            WNNComputeAsyncCallback callback = nullptr;
+            void* userdata = nullptr;
+        };
+        std::map<uint64_t, ComputeAsyncRequest> mComputeAsyncRequests;
+        uint64_t mComputeAsyncRequestSerial = 0;
     };
 
 }}  // namespace webnn_wire::client

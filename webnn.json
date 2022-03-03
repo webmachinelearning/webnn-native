@@ -30,6 +30,13 @@
         ]
       },
       {
+        "name": "create graph builder",
+        "returns": "graph builder",
+        "args": [
+          {"name": "context", "type": "context"}
+        ]
+      },
+      {
         "name": "create named inputs",
         "returns": "named inputs",
         "args": []
@@ -1002,6 +1009,14 @@
         {"value": 3, "name": "unknown"}
     ]
   },
+  "compute async callback": {
+    "category": "callback",
+    "args": [
+        {"name": "status", "type": "compute graph status"},
+        {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
+        {"name": "userdata", "type": "void", "annotation": "*"}
+    ]
+  },
   "graph": {
     "category": "object",
     "methods": [
@@ -1011,6 +1026,16 @@
         "args": [
           {"name": "inputs", "type": "named inputs"},
           {"name": "outputs", "type": "named outputs"}
+        ]
+      },
+      {
+        "name": "compute async",
+        "returns": "void",
+        "args": [
+          {"name": "inputs", "type": "named inputs"},
+          {"name": "outputs", "type": "named outputs"},
+          {"name": "callback", "type": "compute async callback"},
+          {"name": "userdata", "type": "void", "annotation": "*"}
         ]
       }
     ]

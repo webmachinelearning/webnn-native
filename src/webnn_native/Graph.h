@@ -83,6 +83,13 @@ namespace webnn_native {
 
         // Webnn API
         WNNComputeGraphStatus Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
+        void ComputeAsync(NamedInputsBase* inputs,
+                          NamedOutputsBase* outputs,
+                          WNNComputeAsyncCallback callback,
+                          void* userdata);
+
+        GraphBase(ContextBase* context, ObjectBase::ErrorTag tag);
+        static GraphBase* MakeError(ContextBase* context);
 
       private:
         virtual MaybeError CompileImpl() = 0;

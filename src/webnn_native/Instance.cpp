@@ -18,6 +18,7 @@
 #include "common/Assert.h"
 #include "common/Log.h"
 #include "webnn_native/ErrorData.h"
+#include "webnn_native/GraphBuilder.h"
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOperands.h"
 #include "webnn_native/NamedOutputs.h"
@@ -158,6 +159,10 @@ namespace webnn_native {
         }
         UNREACHABLE();
         return nullptr;
+    }
+
+    GraphBuilderBase* InstanceBase::CreateGraphBuilder(ContextBase* context) {
+        return new GraphBuilderBase(context);
     }
 
     NamedInputsBase* InstanceBase::CreateNamedInputs() {

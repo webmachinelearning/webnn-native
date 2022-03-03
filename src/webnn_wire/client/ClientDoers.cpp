@@ -36,4 +36,11 @@ namespace webnn_wire { namespace client {
         return namedOutputs->OutputResult(name, buffer, byteLength, byteOffset);
     }
 
+    bool Client::DoGraphComputeAsyncCallback(Graph* graph,
+                                             uint64_t requestSerial,
+                                             WNNComputeGraphStatus status,
+                                             const char* message) {
+        return graph->OnComputeAsyncCallback(requestSerial, status, message);
+    }
+
 }}  // namespace webnn_wire::client

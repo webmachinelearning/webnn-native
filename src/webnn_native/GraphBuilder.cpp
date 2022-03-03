@@ -331,46 +331,37 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Transpose(this, input, options));
     }
 
-    GraphBase* GraphBuilderBase::Build(NamedOperandsBase const* namedOperands) {
-        if (DAWN_UNLIKELY(this->IsError())) {
-            dawn::ErrorLog() << "This Graph object is an error";
-            return nullptr;
-        }
+    ResultOrError<Ref<GraphBase>> GraphBuilderBase::BuildImpl(
+        NamedOperandsBase const* namedOperands) {
+        DAWN_INVALID_IF(this->IsError(), "The GraphBuilderBase is an error object.");
+        DAWN_INVALID_IF(namedOperands->GetRecords().empty(), "The namedOperands are empty.");
 
         std::vector<const OperandBase*> outputs;
-        if (namedOperands->GetRecords().empty()) {
-            dawn::ErrorLog() << "The output named operands are empty.";
-            return nullptr;
-        }
         for (auto& namedOutput : namedOperands->GetRecords()) {
             outputs.push_back(namedOutput.second);
         }
         std::vector<const OperatorBase*> sorted_operands = TopologicalSort(outputs);
         Ref<GraphBase> graph = AcquireRef(GetContext()->CreateGraph());
         for (auto& op : sorted_operands) {
-            if (op->IsError() || GetContext()->ConsumedError(op->AddToGraph(graph.Get()))) {
-                dawn::ErrorLog() << "Failed to add the operand when building graph.";
-                return nullptr;
-            }
+            DAWN_INVALID_IF(op->IsError(), "The operand is an error object.");
+            DAWN_TRY(op->AddToGraph(graph.Get()));
         }
         for (auto& namedOutput : namedOperands->GetRecords()) {
-            if (GetContext()->ConsumedError(
-                    graph->AddOutput(namedOutput.first, namedOutput.second))) {
-                dawn::ErrorLog() << "Failed to add output when building graph.";
-                return nullptr;
-            }
+            DAWN_TRY(graph->AddOutput(namedOutput.first, namedOutput.second));
         }
-        if (GetContext()->ConsumedError(graph->Finish())) {
-            dawn::ErrorLog() << "Failed to finish building graph.";
-            return nullptr;
-        }
+        DAWN_TRY(graph->Finish());
+        DAWN_TRY(graph->Compile());
 
-        if (GetContext()->ConsumedError(graph->Compile())) {
-            dawn::ErrorLog() << "Failed to compile the graph.";
-            return nullptr;
-        }
+        return std::move(graph);
+    }
 
-        return graph.Detach();
+    GraphBase* GraphBuilderBase::Build(NamedOperandsBase const* namedOperands) {
+        Ref<GraphBase> result = nullptr;
+        if (GetContext()->ConsumedError(BuildImpl(namedOperands), &result)) {
+            ASSERT(result == nullptr);
+            return GraphBase::MakeError(this->GetContext());
+        }
+        return result.Detach();
     }
 
     // The implementation derives from nGraph topological_sort in

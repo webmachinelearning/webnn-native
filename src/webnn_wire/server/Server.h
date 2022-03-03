@@ -111,6 +111,14 @@ namespace webnn_wire { namespace server {
         uint64_t requestSerial;
     };
 
+    struct ComputeAsyncUserdata : CallbackUserdata {
+        using CallbackUserdata::CallbackUserdata;
+
+        ObjectHandle graph;
+        uint64_t requestSerial;
+        ObjectId namedOutputsObjectID;
+    };
+
     class Server : public ServerBase {
       public:
         Server(const WebnnProcTable& procs, CommandSerializer* serializer);
@@ -157,7 +165,9 @@ namespace webnn_wire { namespace server {
         void OnContextPopErrorScope(WNNErrorType type,
                                     const char* message,
                                     ErrorScopeUserdata* userdata);
-
+        void OnGraphComputeAsyncCallback(WNNComputeGraphStatus status,
+                                         const char* message,
+                                         ComputeAsyncUserdata* userdata);
 #include "webnn_wire/server/ServerPrototypes_autogen.inc"
 
         WireDeserializeAllocator mAllocator;
