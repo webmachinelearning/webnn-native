@@ -765,6 +765,7 @@ namespace webnn_native { namespace ie {
             activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[convTranspose2d->PrimaryOutput()] = activationNode;
+        // TODO(Miao Bin): There is some confusion for calculating the output shape.
         DAWN_ASSERT(CheckShape(activationNode, convTranspose2d));
         return {};
     }
