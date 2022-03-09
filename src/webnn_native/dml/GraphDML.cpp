@@ -330,6 +330,25 @@ namespace webnn_native { namespace dml {
             return true;
         }
 
+        DML_RECURRENT_NETWORK_DIRECTION getRecurrentSequenceDirection(
+            wnn::RecurrentNetworkDirection direction) {
+            DML_RECURRENT_NETWORK_DIRECTION dml_direction;
+            switch (direction) {
+                case wnn::RecurrentNetworkDirection::Forward:
+                    dml_direction = DML_RECURRENT_NETWORK_DIRECTION_FORWARD;
+                    break;
+                case wnn::RecurrentNetworkDirection::Backward:
+                    dml_direction = DML_RECURRENT_NETWORK_DIRECTION_BACKWARD;
+                    break;
+                case wnn::RecurrentNetworkDirection::Both:
+                    dml_direction = DML_RECURRENT_NETWORK_DIRECTION_BIDIRECTIONAL;
+                    break;
+                default:
+                    assert(0);
+            }
+            return dml_direction;
+        }
+
         std::string OpTypeToString(op::BinaryOpType type) {
             if (type == op::BinaryOpType::kAdd) {
                 return "add";
@@ -535,6 +554,9 @@ namespace webnn_native { namespace dml {
                 break;
             case FusionType::Sigmoid:
                 dmlActivation = ::dml::FusedActivation::Sigmoid();
+                break;
+            case FusionType::Tanh:
+                dmlActivation = ::dml::FusedActivation::Tanh();
                 break;
             case FusionType::LeakyRelu:
                 dmlActivation = ::dml::FusedActivation::LeakyRelu(
@@ -830,10 +852,6 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
         return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
-    }
-
-    MaybeError Graph::AddGru(const op::Gru* gru) {
-        return DAWN_UNIMPLEMENTED_ERROR("Gru hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddPad(const op::Pad* pad) {
@@ -1559,6 +1577,126 @@ namespace webnn_native { namespace dml {
         output = ::dml::Reinterpret(output, shrinkDims, ::dml::NullOpt);
         mExpression.insert(std::make_pair(gemm->PrimaryOutput(), output));
         DAWN_ASSERT(CheckShape(output, gemm));
+        return {};
+    }
+
+    MaybeError Graph::AddGru(const op::Gru* gru) {
+        auto inputs = gru->Inputs();
+        auto options = gru->GetOptions();
+        DAWN_ASSERT(inputs.size() >= 3 && inputs.size() <= 6);
+
+        DAWN_ASSERT(mExpression.find(inputs[0].Get()) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputs[0].Get());
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        // Reshape input from 3-D to 4-D layout.
+        ::dml::TensorDimensions expandInputDimens = ExpandDimensions(inputDims, 4);
+        input = ::dml::Reinterpret(input, expandInputDimens, ::dml::NullOpt);
+
+        DAWN_ASSERT(mExpression.find(inputs[1].Get()) != mExpression.end());
+        ::dml::Expression weight = mExpression.at(inputs[1].Get());
+        ::dml::TensorDimensions weightDims = weight.GetOutputDesc().sizes;
+        // Reshape weight from 3-D to 4-D layout.
+        ::dml::TensorDimensions expandWeightDimens = ExpandDimensions(weightDims, 4);
+        weight = ::dml::ActivationIdentity(
+            ::dml::Reinterpret(weight, expandWeightDimens, ::dml::NullOpt));
+
+        DAWN_ASSERT(mExpression.find(inputs[2].Get()) != mExpression.end());
+        ::dml::Expression recurrentWeight = mExpression.at(inputs[2].Get());
+        ::dml::TensorDimensions recurrentWeightDims = recurrentWeight.GetOutputDesc().sizes;
+        // Reshape recurrentWeight from 3-D to 4-D layout.
+        ::dml::TensorDimensions expandRecurrentWeightDimens =
+            ExpandDimensions(recurrentWeightDims, 4);
+        recurrentWeight = ::dml::ActivationIdentity(
+            ::dml::Reinterpret(recurrentWeight, expandRecurrentWeightDimens, ::dml::NullOpt));
+
+        int n = 3;
+        ::dml::Optional<::dml::Expression> bias = ::dml::NullOpt;
+        ::dml::Expression normalBias;
+        ::dml::Expression recurrentBias;
+        ::dml::TensorDimensions halfBiasDimens = {1, 1, weightDims[0], weightDims[1]};
+        if (options->bias != nullptr) {
+            DAWN_ASSERT(mExpression.find(inputs[n].Get()) != mExpression.end());
+            normalBias = mExpression.at(inputs[n++].Get());
+            ::dml::TensorDimensions normalBiasDims = normalBias.GetOutputDesc().sizes;
+            // Reshape normal bias from 2-D to 4-D layout.
+            normalBias = ::dml::Reinterpret(normalBias, halfBiasDimens, ::dml::NullOpt);
+        } else {
+            uint32_t length = SizeOfShape(halfBiasDimens);
+            std::vector<float> constant(length, 0);
+            normalBias = BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, halfBiasDimens,
+                                         constant.data(), sizeof(float) * length);
+        }
+        if (options->recurrentBias != nullptr) {
+            DAWN_ASSERT(mExpression.find(inputs[n].Get()) != mExpression.end());
+            recurrentBias = mExpression.at(inputs[n++].Get());
+            ::dml::TensorDimensions recurrentBiasDims = recurrentBias.GetOutputDesc().sizes;
+            // Reshape recurrent bias from 2-D to 4-D layout.
+            recurrentBias = ::dml::Reinterpret(recurrentBias, halfBiasDimens, ::dml::NullOpt);
+        } else {
+            uint32_t length = SizeOfShape(halfBiasDimens);
+            std::vector<float> constant(length, 0);
+            recurrentBias = BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, halfBiasDimens,
+                                            constant.data(), sizeof(float) * length);
+        }
+        std::vector<::dml::Expression> biasExpressions = {normalBias, recurrentBias};
+        bias = ::dml::Join(biasExpressions, 3);
+
+        ::dml::Optional<::dml::Expression> initialHiddenState = ::dml::NullOpt;
+        if (options->initialHiddenState != nullptr) {
+            DAWN_ASSERT(mExpression.find(inputs[n].Get()) != mExpression.end());
+            initialHiddenState = mExpression.at(inputs[n++].Get());
+            ::dml::TensorDimensions initialHiddenStateDims =
+                initialHiddenState->GetOutputDesc().sizes;
+            // Reshape initialHiddenState from 3-D to 4-D layout.
+            ::dml::TensorDimensions expandInitialHiddenStateDimens =
+                ExpandDimensions(initialHiddenStateDims, 4);
+            initialHiddenState = ::dml::Reinterpret(*initialHiddenState,
+                                                    expandInitialHiddenStateDimens, ::dml::NullOpt);
+            initialHiddenState = ::dml::ActivationIdentity(initialHiddenState->Impl());
+        }
+
+        ::dml::Optional<::dml::Expression> SequenceLength = ::dml::NullOpt;
+        DML_RECURRENT_NETWORK_DIRECTION direction =
+            getRecurrentSequenceDirection(options->direction);
+
+        // TODO: layout
+        if (options->layout == wnn::RecurrentNetworkWeightLayout::Rzn) {
+            return DAWN_INTERNAL_ERROR(
+                "layout defaults to 'zrn'. Only 'zrn' is currently supported.");
+        }
+
+        ::dml::FusedActivation fActivation, gActivation;
+        if (options->activations == nullptr) {
+            fActivation = ::dml::FusedActivation::Sigmoid();
+            gActivation = ::dml::FusedActivation::Tanh();
+        } else {
+            fActivation = CreateFusedActivation(options->activations->Get(0));
+            gActivation = CreateFusedActivation(options->activations->Get(1));
+        }
+        std::vector<::dml::FusedActivation> activations;
+        if (direction ==
+            DML_RECURRENT_NETWORK_DIRECTION::DML_RECURRENT_NETWORK_DIRECTION_BIDIRECTIONAL) {
+            activations = {fActivation, gActivation, fActivation, gActivation};
+        } else {
+            activations = {fActivation, gActivation};
+        }
+        ::dml::Span<const ::dml::FusedActivation> activationDescs(activations);
+        bool linearBeforeReset = options->resetAfter;
+        ::dml::GRUOutputOptions outputOption = ::dml::GRUOutputOptions::Both;
+
+        ::dml::GRUOutputs outputs =
+            ::dml::GRU(input, weight, recurrentWeight, bias, initialHiddenState, SequenceLength,
+                       activationDescs, direction, linearBeforeReset, outputOption);
+        ::dml::Expression singleOutput = outputs.single;
+        ::dml::TensorDimensions singleOutputDims = singleOutput.GetOutputDesc().sizes;
+        // Reshape initialHiddenState from 4-D to 3-D layout.
+        ::dml::TensorDimensions shrinkDimens = ShrinkDimensions(singleOutputDims, 3);
+        singleOutput = ::dml::Reinterpret(singleOutput, shrinkDimens, ::dml::NullOpt);
+        mExpression.insert(std::make_pair(gru->Outputs()[0].Get(), singleOutput));
+        if (options->returnSequence) {
+            ::dml::Expression sequenceOutput = outputs.sequence;
+            mExpression.insert(std::make_pair(gru->Outputs()[1].Get(), sequenceOutput));
+        }
         return {};
     }
 
