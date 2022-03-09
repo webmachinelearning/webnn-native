@@ -43,6 +43,10 @@ namespace webnn_native { namespace dml {
             DAWN_ASSERT(index < operatorBase->Outputs().size());
             auto expectedShape = operatorBase->Outputs()[index]->Shape();
             ::dml::TensorDimensions dmlShape = expression.GetOutputDesc().sizes;
+            // Shape {1} equals to shape {} for a scalar.
+            if (dmlShape == std::vector<uint32_t>{1} && expectedShape.size() == 0) {
+                return true;
+            }
             if (expectedShape.size() != dmlShape.size()) {
                 dawn::ErrorLog() << "The size of output shape is expected as "
                                  << expectedShape.size() << ", but got " << dmlShape.size();
@@ -919,6 +923,10 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
+    //  DirectMlX.h hasn't supported setting correct outputSizes which need to match the specified
+    //  roundingType, then pool2d always performs as specifying floor roundingType. Track this by
+    //  issue: https://github.com/microsoft/DirectML/issues/205 and
+    //  https://github.com/webmachinelearning/webnn-native/issues/217.
     MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
         DAWN_ASSERT(pool2d->Inputs().size() == 1);
         const OperandBase* inputOperand = pool2d->Inputs()[0].Get();
@@ -982,6 +990,8 @@ namespace webnn_native { namespace dml {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
         mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
+        // TODO(mingming): There is some confusion for calculating the output shape of the pool2d
+        // with dilations.
         DAWN_ASSERT(CheckShape(output, pool2d));
         return {};
     }
