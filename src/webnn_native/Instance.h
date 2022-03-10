@@ -38,6 +38,7 @@ namespace webnn_native {
 
         // WebNN API
         ContextBase* CreateContext(const ContextOptions* options);
+        GraphBuilderBase* CreateGraphBuilder(ContextBase* context);
         NamedInputsBase* CreateNamedInputs();
         NamedOperandsBase* CreateNamedOperands();
         NamedOutputsBase* CreateNamedOutputs();

@@ -36,6 +36,16 @@ namespace webnn_native {
             return false;
         }
 
+        template <typename T>
+        bool ConsumedError(ResultOrError<T> resultOrError, T* result) {
+            if (DAWN_UNLIKELY(resultOrError.IsError())) {
+                HandleError(resultOrError.AcquireError());
+                return true;
+            }
+            *result = resultOrError.AcquireSuccess();
+            return false;
+        }
+
         GraphBase* CreateGraph();
 
         // Dawn API

@@ -22,6 +22,23 @@
 
 namespace webnn_native {
 
+    namespace {
+        class ErrorGraph final : public GraphBase {
+          public:
+            ErrorGraph(ContextBase* context) : GraphBase(context, ObjectBase::kError) {
+            }
+
+          private:
+            MaybeError CompileImpl() override {
+                UNREACHABLE();
+            }
+            WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
+                                              NamedOutputsBase* outputs) override {
+                return WNNComputeGraphStatus_Error;
+            }
+        };
+    }  // namespace
+
     GraphBase::GraphBase(ContextBase* context) : ObjectBase(context) {
     }
 
@@ -127,6 +144,30 @@ namespace webnn_native {
         }
 
         return ComputeImpl(inputs, outputs);
+    }
+
+    void GraphBase::ComputeAsync(NamedInputsBase* inputs,
+                                 NamedOutputsBase* outputs,
+                                 WNNComputeAsyncCallback callback,
+                                 void* userdata) {
+        if (inputs == nullptr || outputs == nullptr) {
+            callback(WNNComputeGraphStatus_Error, "named inputs or outputs is empty.", userdata);
+        }
+        // TODO: Get error message from implemenation, ComputeImpl should return MaybeError,
+        // which is tracked with issues-959.
+        WNNComputeGraphStatus status = ComputeImpl(inputs, outputs);
+        std::string messages = status != WNNComputeGraphStatus_Success ? "Failed to async compute"
+                                                                       : "Success async compute";
+        callback(status, messages.c_str(), userdata);
+    }
+
+    GraphBase::GraphBase(ContextBase* context, ObjectBase::ErrorTag tag)
+        : ObjectBase(context, tag) {
+    }
+
+    // static
+    GraphBase* GraphBase::MakeError(ContextBase* context) {
+        return new ErrorGraph(context);
     }
 
 }  // namespace webnn_native
