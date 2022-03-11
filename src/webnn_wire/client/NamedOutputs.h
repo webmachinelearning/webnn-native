@@ -37,10 +37,9 @@ namespace webnn_wire { namespace client {
                           size_t byteOffset);
 
       private:
-        // std::string mName;
-        // uint8_t* mBuffer;
-        // size_t mByteLength;
-        // size_t mByteOffset;
+        uint8_t* mBuffer;
+        size_t mByteLength;
+        size_t mByteOffset;
     };
 
 }}  // namespace webnn_wire::client
