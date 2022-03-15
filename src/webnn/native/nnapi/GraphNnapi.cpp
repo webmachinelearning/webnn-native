@@ -809,7 +809,114 @@ namespace webnn::native::nnapi {
     }
 
     MaybeError Graph::AddGemm(const op::Gemm* gemm) {
-        DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED, "nnapi gemm"));
+        auto inputs = gemm->Inputs();
+        const GemmOptions* options = gemm->GetOptions();
+
+        // inputs
+        auto inputAOpIndex = mGraphNodeMap[gemm->Inputs()[0].Get()];  // A
+        auto inputANodeInfo = mGraphOperandInfo[inputAOpIndex];
+        auto inputBOpIndex = mGraphNodeMap[gemm->Inputs()[1].Get()];  // B
+        auto inputBNodeInfo = mGraphOperandInfo[inputBOpIndex];
+
+        // output
+        auto outputDims = gemm->PrimaryOutput()->Shape();
+
+        if (options->aTranspose) {
+            NodeInfo transposedNodeA;
+            memInt32Vec.emplace_back(new int(2));
+            int32_t* permute = memInt32Vec.back().get();
+            permute[0] = 1;
+            permute[1] = 0;
+            DAWN_TRY(AddTransposeImpl(inputANodeInfo, transposedNodeA, permute, 2));
+            mGraphOperandInfo[transposedNodeA.opIndex] = transposedNodeA;
+            inputANodeInfo = mGraphOperandInfo[transposedNodeA.opIndex];
+        }
+        if (options->bTranspose) {
+            NodeInfo transposedNodeB;
+            memInt32Vec.emplace_back(new int(2));
+            int32_t* permute = memInt32Vec.back().get();
+            permute[0] = 1;
+            permute[1] = 0;
+            DAWN_TRY(AddTransposeImpl(inputBNodeInfo, transposedNodeB, permute, 2));
+            mGraphOperandInfo[transposedNodeB.opIndex] = transposedNodeB;
+            inputBNodeInfo = mGraphOperandInfo[transposedNodeB.opIndex];
+        }
+
+        // operation: gemm = alpha*A*B + beta*C
+        // matMulNode = A*B
+        NodeInfo matMulNode;
+        matMulNode.type = inputANodeInfo.type;
+        matMulNode.dimensions.resize(outputDims.size());
+        DAWN_TRY(AddMatMulImpl(inputANodeInfo, inputBNodeInfo, matMulNode, outputDims,
+                               matMulNode.opIndex));
+
+        uint32_t outputOpIndex = 0;
+        int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
+        uint32_t fuseCodeOpIndex = 0;
+        DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, fuseCodeOpIndex));
+
+        if (options->alpha == 1)
+            outputOpIndex = matMulNode.opIndex;
+        else {
+            float alpha = options->alpha;
+            std::vector<float> alphaVec(1, alpha);
+            NodeInfo alphaNode;
+            alphaNode.type = ml::OperandType::Float32;
+            alphaNode.dimensions = {1};
+            DAWN_TRY(mNnapiMgr->CreateOperandAndSetMemory("alpha", &alphaNode, &alphaVec[0]));
+
+            // mulNode0 = alpha*matMulNode
+            NodeInfo mulNode0;
+            DAWN_TRY(CreateNode(mulNode0, matMulNode.type, gemm->PrimaryOutput()->Shape()));
+            std::vector<uint32_t> inputList = {alphaNode.opIndex, matMulNode.opIndex,
+                                               fuseCodeOpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputList.size(),
+                                             inputList.data(), 1, &mulNode0.opIndex));
+            mGraphOperandInfo[mulNode0.opIndex] = mulNode0;
+
+            outputOpIndex = mulNode0.opIndex;
+        }
+
+        if (inputs.size() > 2) {  // Check for C
+            auto inputCOpIndex = mGraphNodeMap[gemm->Inputs()[2].Get()];
+            auto inputCNodeInfo = mGraphOperandInfo[inputCOpIndex];
+
+            NodeInfo outputNode;
+            DAWN_TRY(CreateNode(outputNode, inputANodeInfo.type, gemm->PrimaryOutput()->Shape()));
+
+            if (options->beta == 1) {
+                // output = mulNode0 + NodeC
+                std::vector<uint32_t> inputList4 = {outputOpIndex, inputCNodeInfo.opIndex,
+                                                    fuseCodeOpIndex};
+                DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList4.size(),
+                                                 inputList4.data(), 1, &outputNode.opIndex));
+            } else {
+                // mulNode1 = beta*C
+                float beta = options->beta;
+                std::vector<float> betaVec(1, beta);
+                NodeInfo betaNode;
+                betaNode.type = ml::OperandType::Float32;
+                betaNode.dimensions = {1};
+                DAWN_TRY(mNnapiMgr->CreateOperandAndSetMemory("beta", &betaNode, &betaVec[0]));
+
+                NodeInfo mulNode1;
+                DAWN_TRY(CreateNode(mulNode1, inputCNodeInfo.type, gemm->Inputs()[2]->Shape()));
+                std::vector<uint32_t> inputList2 = {betaNode.opIndex, inputCNodeInfo.opIndex,
+                                                    fuseCodeOpIndex};
+                DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputList2.size(),
+                                                 inputList2.data(), 1, &mulNode1.opIndex));
+
+                // output = mulNode0 + mulNode1
+                std::vector<uint32_t> inputList3 = {outputOpIndex, mulNode1.opIndex,
+                                                    fuseCodeOpIndex};
+                DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList3.size(),
+                                                 inputList3.data(), 1, &outputNode.opIndex));
+            }
+            mGraphOperandInfo[outputNode.opIndex] = outputNode;
+            mGraphNodeMap[gemm->PrimaryOutput()] = outputNode.opIndex;
+        } else {
+            mGraphNodeMap[gemm->PrimaryOutput()] = outputOpIndex;
+        }
         return {};
     }
 
