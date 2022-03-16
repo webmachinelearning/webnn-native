@@ -36,21 +36,34 @@ function createWindow() {
   for (let argv of process.argv) {
     const argvName = argv.split('=')[0];
     const argvValue = argv.split('=')[1];
-    if (argvName === "sample" && sampleNames.includes(argvValue)) {
-      // Directly enter the entry of specified sample via '--sample' option.
-      url = url.replace('index.html', `${argvValue}/index.html`);
-      break
-    }
-  }
-
-  for (let argv of process.argv) {
-    if (argv.startsWith("numRuns=")) {
+    if (argvName === "numRuns") {
       // Load the index.html with 'numRuns' to run inference multiple times.
-      url += '?' + argv
-      break
+      if (url.includes("?powerPreference=")) {
+        url += '&' + argv
+      } else {
+        url += '?' + argv
+      }
+      continue
+    }
+
+    if (argvName === "powerPreference") {
+      // Load the index.html with 'powerPreference' to set `MLPowerPreference` option.
+      if (url.includes("?numRuns=")) {
+        url += '&' + argv
+      } else {
+        url += '?' + argv
+      }
+      continue
+    }
+
+    if (argvName === "sample" && sampleNames.includes(argvValue)) {
+      // Directly enter the entry of specified sample via 'sample' option.
+      url = url.replace('index.html', `${argvValue}/index.html`);
+      continue
     }
   }
 
+  console.log(`Loading url: ${url}`);
   mainWindow.loadURL(url)
 
   // Emitted when the window is closed.
