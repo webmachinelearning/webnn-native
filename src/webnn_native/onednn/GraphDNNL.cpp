@@ -522,9 +522,9 @@ namespace webnn_native { namespace onednn {
         mMemories.push_back(cMemory);
         mOperandMemoryMap.insert(std::make_pair(binary->PrimaryOutput(), cMemory));
         if (cRank != 0 && cRank < cMemoryDesc->ndims) {
-            std::vector<dnnl_dim_t> cDims(cMemoryDesc->dims,
+            std::vector<dnnl_dim_t> dims(cMemoryDesc->dims,
                                           cMemoryDesc->dims + cMemoryDesc->ndims);
-            std::vector<dnnl_dim_t> cNewDims = ShrinkDimensions(cDims, cRank);
+            std::vector<dnnl_dim_t> cNewDims = ShrinkDimensions(dims, cRank);
             dnnl_memory_desc_t cNewMemoryDesc;
             DNNL_TRY(dnnl_memory_desc_reshape(&cNewMemoryDesc, cMemoryDesc, cNewDims.size(),
                                               cNewDims.data()));

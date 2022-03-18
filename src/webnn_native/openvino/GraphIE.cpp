@@ -814,14 +814,8 @@ namespace webnn_native { namespace ie {
             std::vector<float> biasData(numDirections * 3 * hiddenSize, 0);
             biasNode = AddConstantWithGraph<float>(precision_e::FP32, biasShape, biasData);
         }
-        ngraph_node_t* recurrentBiasNode = nullptr;
-        if (options->recurrentBias != nullptr) {
-            recurrentBiasNode = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[n++].Get()]);
-        } else {
-            std::vector<size_t> recurrentBiasShape{numDirections, 3 * hiddenSize};
-            std::vector<float> recurrentBiasData(numDirections * 3 * hiddenSize, 0);
-            recurrentBiasNode = AddConstantWithGraph<float>(precision_e::FP32, recurrentBiasShape,
-                                                            recurrentBiasData);
+	if (options->recurrentBias != nullptr) {
+            n++;
         }
         ngraph_node_t* initialHiddenStateNode = nullptr;
         if (options->initialHiddenState != nullptr) {

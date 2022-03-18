@@ -103,7 +103,11 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
             clientInstance = wnn::Instance(instanceReservation.instance);
             return clientInstance.CreateContext(options);
 #endif
-        } break;
+        }
+        default:
+            dawn::ErrorLog() << "Invaild CmdBufType";
+            DAWN_ASSERT(0);
+
     }
     webnnProcSetProcs(&procs);
 
