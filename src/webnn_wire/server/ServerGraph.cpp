@@ -30,14 +30,15 @@ namespace webnn_wire::server {
 
         WNNArrayBufferView arrayBuffer = {};
         mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
-        // Return the result.
-        ReturnGraphComputeResultCmd cmd;
-        cmd.name = "TODO: use the name getting from namedOutputs";
-        cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
-        cmd.byteLength = arrayBuffer.byteLength;
-        cmd.byteOffset = arrayBuffer.byteOffset;
-
-        SerializeCommand(cmd);
+        if (arrayBuffer.buffer != nullptr) {
+            // Return the result.
+            ReturnGraphComputeResultCmd cmd;
+            cmd.name = "TODO: use the name getting from namedOutputs";
+            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
+            cmd.byteLength = arrayBuffer.byteLength;
+            cmd.byteOffset = arrayBuffer.byteOffset;
+            SerializeCommand(cmd);
+        }
         return true;
     }
 

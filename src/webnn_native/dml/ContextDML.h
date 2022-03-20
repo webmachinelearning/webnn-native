@@ -17,13 +17,15 @@
 
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
-#include "webnn_native/dml/deps/src/precomp.h"
+
+#include <webgpu/webgpu.h>
 
 namespace webnn_native::dml {
 
     class Context : public ContextBase {
       public:
         explicit Context(ContextOptions const* options);
+        explicit Context(WGPUDevice device);
         ~Context() override = default;
 
       private:

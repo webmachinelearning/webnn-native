@@ -27,6 +27,10 @@ namespace webnn_native::null {
         ContextBase* CreateContext(ContextOptions const* options) {
             return new Context(options);
         }
+
+        ContextBase* CreateContextWithGpuDevice(WGPUDevice device) {
+            return new Context(device);
+        }
     };
 
     BackendConnection* Connect(InstanceBase* instance) {
@@ -39,6 +43,9 @@ namespace webnn_native::null {
     }
 
     Context::Context(ContextOptions const* options) {
+    }
+
+    Context::Context(WGPUDevice device) {
     }
 
     GraphBase* Context::CreateGraphImpl() {

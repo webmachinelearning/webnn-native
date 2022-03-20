@@ -24,27 +24,42 @@
 
 namespace webnn_native {
 
-    // TODO::Use WebGPUBuffer instead of ArrayBufferView
     class NamedInputsBase : public RefCounted {
       public:
         NamedInputsBase() = default;
-        virtual ~NamedInputsBase() = default;
+        virtual ~NamedInputsBase() {
+            for (auto& input : mInputs) {
+                WGPUBuffer gpuBuffer =
+                    reinterpret_cast<WGPUBuffer>(input.second.resource.gpuBufferView.buffer);
+                if (gpuBuffer != nullptr) {
+                    wgpuBufferRelease(gpuBuffer);
+                }
+            }
+        }
 
         // WebNN API
         void Set(char const* name, const Input* input) {
             mInputs[std::string(name)] = *input;
 #if defined(WEBNN_ENABLE_WIRE)
+            // Input data type is Arrary Buffer View.
+            const ArrayBufferView arrayBufferView = input->resource.arrayBufferView;
+            if (arrayBufferView.buffer != nullptr) {
+                std::unique_ptr<char> buffer(new char[arrayBufferView.byteLength]);
+                memcpy(buffer.get(), arrayBufferView.buffer, arrayBufferView.byteLength);
+
+                mInputs[std::string(name)].resource.arrayBufferView.buffer = buffer.get();
+                mInputsBuffer.push_back(std::move(buffer));
+            } else if (input->resource.gpuBufferView.buffer != nullptr) {
+                GpuBufferView gpuBufferView = input->resource.gpuBufferView;
+                WGPUBuffer gpuBuffer =
+                    reinterpret_cast<WGPUBuffer>(input->resource.gpuBufferView.buffer);
+                wgpuBufferReference(gpuBuffer);
+                mInputs[std::string(name)].resource.gpuBufferView = gpuBufferView;
+            }
             std::vector<int32_t> dimensions;
             dimensions.assign(input->dimensions, input->dimensions + input->dimensionsCount);
-
-            std::unique_ptr<char> buffer(new char[input->resource.byteLength]);
-            memcpy(buffer.get(), input->resource.buffer, input->resource.byteLength);
-
             // Prevent destroy from allocator memory after hanlding the command.
             mInputs[std::string(name)].dimensions = dimensions.data();
-            mInputs[std::string(name)].resource.buffer = buffer.get();
-
-            mInputsBuffer.push_back(std::move(buffer));
             mInputsDimensions.push_back(std::move(dimensions));
 #endif  // defined(WEBNN_ENABLE_WIRE)
         }

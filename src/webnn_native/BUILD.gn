@@ -213,16 +213,17 @@ source_set("webnn_native_sources") {
   }
 
   if (webnn_enable_dml) {
-    sources += [
-      "dml/deps/src/device.cpp",
-      "dml/deps/src/device.h",
-      "dml/deps/src/model.h",
-      "dml/deps/src/precomp.h",
-      "dml/deps/src/typeconvert.h",
-      "dml/deps/src/util.cpp",
-      "dml/deps/src/util.h",
-    ]
-
+    if (webnn_enable_gpu_buffer == false) {
+      sources += [
+        "dml/deps/src/device.cpp",
+        "dml/deps/src/device.h",
+        "dml/deps/src/model.h",
+        "dml/deps/src/precomp.h",
+        "dml/deps/src/typeconvert.h",
+        "dml/deps/src/util.cpp",
+        "dml/deps/src/util.h",
+      ]
+    }
     sources += [
       "dml/BackendDML.cpp",
       "dml/BackendDML.h",
@@ -244,6 +245,9 @@ source_set("webnn_native_sources") {
       "dxgi.lib",
       "d3d12.lib",
       "directml.lib",
+      "dawn_proc.dll.lib",
+      "dawn_native.dll.lib",
+      "dawn_wire.dll.lib",
     ]
 
     cflags = [
@@ -254,8 +258,8 @@ source_set("webnn_native_sources") {
     ]
 
     data_deps += [ ":copy_dml_dll" ]
-
     deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
+    deps += [ "${webnn_dawn_root}/src/dawn_native" ]
   }
 
   if (webnn_enable_onednn) {

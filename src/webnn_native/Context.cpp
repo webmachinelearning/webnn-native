@@ -14,14 +14,16 @@
 
 #include "webnn_native/Context.h"
 
-#include <sstream>
-
 #include "webnn_native/ValidationUtils_autogen.h"
 #include "webnn_native/webnn_platform.h"
 
+#include <dawn/dawn_proc.h>
+#include <dawn_native/DawnNative.h>
+#include <sstream>
+
 namespace webnn_native {
 
-    ContextBase::ContextBase(ContextOptions const* options) {
+    ContextBase::ContextBase(ContextOptions const* options) : mWGPUDevice(nullptr) {
         if (options != nullptr) {
             mContextOptions = *options;
         }
@@ -29,8 +31,26 @@ namespace webnn_native {
         mCurrentErrorScope = mRootErrorScope.Get();
     }
 
+    ContextBase::ContextBase(WGPUDevice wgpuDevice) {
+        DawnProcTable backend_procs = dawn_native::GetProcs();
+        dawnProcSetProcs(&backend_procs);
+        mWGPUDevice = wgpuDevice;
+        wgpuDeviceReference(mWGPUDevice);
+        mRootErrorScope = AcquireRef(new ErrorScope());
+        mCurrentErrorScope = mRootErrorScope.Get();
+    }
+
+    ContextBase::~ContextBase() {
+        if (mWGPUDevice)
+            wgpuDeviceRelease(mWGPUDevice);
+    }
+
     GraphBase* ContextBase::CreateGraph() {
         return CreateGraphImpl();
+    }
+
+    WGPUDevice ContextBase::GetWGPUDevice() {
+        return mWGPUDevice;
     }
 
     void ContextBase::InjectError(wnn::ErrorType type, const char* message) {

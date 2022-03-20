@@ -28,6 +28,23 @@
       {"name": "byte offset", "type": "size_t", "default": 0},
       {"name": "result", "type": "ObjectHandle", "handle_type": "operand"}
     ],
+    "graph builder constant with gpu buffer internal": [
+      {"name": "graph builder id", "type": "ObjectId"},
+      {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
+      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "optional": true},
+      {"name": "id", "type": "uint32_t", "default": 0},
+      {"name": "generation", "type": "uint32_t", "default": 0},
+      {"name": "byte length", "type": "size_t"},
+      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "result", "type": "ObjectHandle", "handle_type": "operand"}
+    ],
+    "instance create context with gpu device internal": [
+      {"name": "instance id", "type": "ObjectId"},
+      {"name": "device", "type": "uint8_t", "annotation": "const*", "optional": true},
+      {"name": "id", "type": "uint32_t", "default": 0},
+      {"name": "generation", "type": "uint32_t", "default": 0},
+      {"name": "result", "type": "ObjectHandle", "handle_type": "context"}
+    ],
     "graph compute": [
       {"name": "graph id", "type": "ObjectId"},
       {"name": "inputs id", "type": "ObjectId"},
@@ -48,18 +65,22 @@
     "named inputs set": [
       {"name": "named inputs id", "type": "ObjectId"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "optional": true},
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "gpu buffer id", "type": "uint32_t", "default": 0},
+      {"name": "gpu buffer generation", "type": "uint32_t", "default": 0},
       {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
       {"name": "dimensions count", "type": "uint32_t", "default": 0}
     ],
     "named outputs set": [
       {"name": "named outputs id", "type": "ObjectId"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "optional": true},
       {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0}
+      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "gpu buffer id", "type": "uint32_t", "default": 0},
+      {"name": "gpu buffer generation", "type": "uint32_t", "default": 0}
     ],
     "named outputs get": [
       {"name": "named outputs id", "type": "ObjectId"},
@@ -100,13 +121,18 @@
   },
   "special items": {
     "client_side_structures": [
+      "Resource",
       "ArrayBufferView",
+      "GpuBufferView",
+      "GpuDevice",
       "Input"
     ],
     "client_side_commands": [
       "ContextPopErrorScope",
       "ContextSetUncapturedErrorCallback",
       "GraphBuilderConstant",
+      "GraphBuilderConstantWithGpuBuffer",
+      "InstanceCreateContextWithGpuDevice",
       "NamedInputsSet",
       "NamedOutputsSet",
       "NamedOutputsGet",
@@ -125,7 +151,8 @@
       "NamedInputs",
       "NamedOutputs",
       "OperandArray",
-      "OperatorArray"
+      "OperatorArray",
+      "Instance"
     ],
     "server_custom_pre_handler_commands": [],
     "server_handwritten_commands": [],

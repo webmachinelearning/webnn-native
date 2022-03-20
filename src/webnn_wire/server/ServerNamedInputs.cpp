@@ -22,6 +22,8 @@ namespace webnn_wire::server {
                                   uint8_t const* buffer,
                                   size_t byteLength,
                                   size_t byteOffset,
+                                  uint32_t gpuBufferId,
+                                  uint32_t gpuBufferGeneration,
                                   int32_t const* dimensions,
                                   uint32_t dimensionsCount) {
         auto* namedInputs = NamedInputsObjects().Get(namedInputsId);
@@ -29,14 +31,23 @@ namespace webnn_wire::server {
             return false;
         }
 
-        WNNArrayBufferView value;
-        value.buffer = const_cast<void*>(static_cast<const void*>(buffer));
-        value.byteLength = byteLength;
-        value.byteOffset = byteOffset;
-        WNNInput input;
+        // The type of output data is ArrayBufferView
+        WNNInput input = {};
+        if (buffer != nullptr) {
+            WNNArrayBufferView value = {};
+            value.buffer = const_cast<void*>(static_cast<const void*>(buffer));
+            value.byteLength = byteLength;
+            value.byteOffset = byteOffset;
+            input.resource.arrayBufferView = value;
+        } else {
+            WNNGpuBufferView value = {};
+            value.buffer = GetWGPUBuffer(gpuBufferId, gpuBufferGeneration);
+            value.id = gpuBufferId;
+            value.generation = gpuBufferGeneration;
+            input.resource.gpuBufferView = value;
+        }
         input.dimensions = dimensions;
         input.dimensionsCount = dimensionsCount;
-        input.resource = value;
         mProcs.namedInputsSet(namedInputs->handle, name, &input);
         return true;
     }

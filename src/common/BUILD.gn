@@ -17,6 +17,7 @@ import("../../scripts/webnn_overrides_with_defaults.gni")
 
 import("//build_overrides/build.gni")
 import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${webnn_dawn_root}/scripts/dawn_overrides_with_defaults.gni")
 import("${webnn_root}/build_overrides/webnn_features.gni")
 
 # Use Chromium's dcheck_always_on when available so that we respect it when
@@ -41,7 +42,21 @@ config("dawn_public_include_dirs") {
   include_dirs = [
     "${target_gen_dir}/../../src/include",
     "${webnn_root}/src/include",
+    "${webnn_dawn_root}/include",
+    "${dawn_gen_root}/include",
   ]
+  if (build_with_chromium) {
+    include_dirs += [
+      "${webnn_dawn_root}/include",
+      "${dawn_gen_root}/include",
+    ]
+  } else {
+    # TODO: Remove after upgrading webnn infranstructure align with dawn.
+    include_dirs += [
+      "${webnn_dawn_root}/src/include",
+      "${dawn_gen_root}/src/include",
+    ]
+  }
 }
 
 config("dawn_internal") {
@@ -51,6 +66,13 @@ config("dawn_internal") {
     "${webnn_dawn_root}/src",
     "${webnn_root}",
   ]
+
+  if (build_with_chromium) {
+    include_dirs += [ "${webnn_dawn_root}/src/dawn" ]
+  } else {
+    # TODO: Remove after upgrading webnn infranstructure align with dawn.
+    include_dirs += [ "${webnn_dawn_root}/src" ]
+  }
 
   defines = []
   if (dawn_always_assert || dcheck_always_on || is_debug ||
@@ -65,6 +87,10 @@ config("dawn_internal") {
 
   if (webnn_enable_wire) {
     defines += [ "WEBNN_ENABLE_WIRE" ]
+  }
+
+  if (webnn_enable_gpu_buffer) {
+    defines += [ "WEBNN_ENABLE_GPU_BUFFER" ]
   }
 
   if (webnn_enable_null) {
@@ -187,22 +213,42 @@ config("dawn_internal") {
 # systems we know Dawn is able to compile on.
 if (is_win || is_linux || is_chromeos || is_mac || is_fuchsia || is_android) {
   static_library("common") {
-    sources = [
-      "//third_party/dawn/src/common/Assert.cpp",
-      "//third_party/dawn/src/common/Assert.h",
-      "//third_party/dawn/src/common/Compiler.h",
-      "//third_party/dawn/src/common/Log.cpp",
-      "//third_party/dawn/src/common/Log.h",
-      "//third_party/dawn/src/common/Math.cpp",
-      "//third_party/dawn/src/common/Math.h",
-      "//third_party/dawn/src/common/Platform.h",
-      "//third_party/dawn/src/common/RefCounted.cpp",
-      "//third_party/dawn/src/common/RefCounted.h",
-      "//third_party/dawn/src/common/Result.cpp",
-      "//third_party/dawn/src/common/Result.h",
-      "//third_party/dawn/src/common/SystemUtils.cpp",
-      "//third_party/dawn/src/common/SystemUtils.h",
-    ]
+    if (build_with_chromium) {
+      sources = [
+        "//third_party/dawn/src/dawn/common/Assert.cpp",
+        "//third_party/dawn/src/dawn/common/Assert.h",
+        "//third_party/dawn/src/dawn/common/Compiler.h",
+        "//third_party/dawn/src/dawn/common/Log.cpp",
+        "//third_party/dawn/src/dawn/common/Log.h",
+        "//third_party/dawn/src/dawn/common/Math.cpp",
+        "//third_party/dawn/src/dawn/common/Math.h",
+        "//third_party/dawn/src/dawn/common/Platform.h",
+        "//third_party/dawn/src/dawn/common/RefCounted.cpp",
+        "//third_party/dawn/src/dawn/common/RefCounted.h",
+        "//third_party/dawn/src/dawn/common/Result.cpp",
+        "//third_party/dawn/src/dawn/common/Result.h",
+        "//third_party/dawn/src/dawn/common/SystemUtils.cpp",
+        "//third_party/dawn/src/dawn/common/SystemUtils.h",
+      ]
+    } else {
+      # TODO: Remove after upgrading webnn infranstructure align with dawn.
+      sources = [
+        "//third_party/dawn/src/common/Assert.cpp",
+        "//third_party/dawn/src/common/Assert.h",
+        "//third_party/dawn/src/common/Compiler.h",
+        "//third_party/dawn/src/common/Log.cpp",
+        "//third_party/dawn/src/common/Log.h",
+        "//third_party/dawn/src/common/Math.cpp",
+        "//third_party/dawn/src/common/Math.h",
+        "//third_party/dawn/src/common/Platform.h",
+        "//third_party/dawn/src/common/RefCounted.cpp",
+        "//third_party/dawn/src/common/RefCounted.h",
+        "//third_party/dawn/src/common/Result.cpp",
+        "//third_party/dawn/src/common/Result.h",
+        "//third_party/dawn/src/common/SystemUtils.cpp",
+        "//third_party/dawn/src/common/SystemUtils.h",
+      ]
+    }
 
     public_configs = [ ":dawn_internal" ]
     deps = [ "${webnn_root}/src/webnn:webnn_headers" ]

@@ -46,6 +46,8 @@ namespace webnn_native {
         OperandBase* Ceil(OperandBase*);
         OperandBase* Concat(uint32_t inputsCount, OperandBase* const* inputs, uint32_t axis);
         OperandBase* Constant(OperandDescriptor const* desc, ArrayBufferView const* arrayBuffer);
+        OperandBase* ConstantWithGpuBuffer(OperandDescriptor const* desc,
+                                           GpuBufferView const* arrayBuffer);
         OperandBase* Conv2d(OperandBase*, OperandBase*, Conv2dOptions const* options);
         OperandBase* ConvTranspose2d(OperandBase*,
                                      OperandBase*,
@@ -75,8 +77,10 @@ namespace webnn_native {
         OperandBase* Min(OperandBase*, OperandBase*);
         OperandBase* Mul(OperandBase*, OperandBase*);
         OperandBase* Neg(OperandBase*);
-        OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
+        OperandBase* Pad(OperandBase*, uint32_t const*, size_t, PadOptions const*);
         OperandBase* Pow(OperandBase*, OperandBase*);
+        OperandBase* ReduceArgMax(OperandBase*, ReduceOptions const* options);
+        OperandBase* ReduceArgMin(OperandBase*, ReduceOptions const* options);
         OperandBase* ReduceL1(OperandBase*, ReduceOptions const* options);
         OperandBase* ReduceL2(OperandBase*, ReduceOptions const* options);
         OperandBase* ReduceMax(OperandBase*, ReduceOptions const* options);

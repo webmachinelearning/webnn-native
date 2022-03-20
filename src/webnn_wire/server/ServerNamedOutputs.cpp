@@ -21,17 +21,26 @@ namespace webnn_wire::server {
                                    char const* name,
                                    uint8_t const* buffer,
                                    size_t byteLength,
-                                   size_t byteOffset) {
+                                   size_t byteOffset,
+                                   uint32_t gpuBufferId,
+                                   uint32_t gpuBufferGeneration) {
         auto* namedOutputs = NamedOutputsObjects().Get(namedOutputsId);
         if (namedOutputs == nullptr) {
             return false;
         }
 
-        WNNArrayBufferView value;
-        value.buffer = const_cast<void*>(static_cast<const void*>(buffer));
-        value.byteLength = byteLength;
-        value.byteOffset = byteOffset;
-        mProcs.namedOutputsSet(namedOutputs->handle, name, &value);
+        // The type of output data is ArrayBufferView
+        WNNResource resource = {};
+        if (buffer != nullptr) {
+            resource.arrayBufferView.buffer = const_cast<void*>(static_cast<const void*>(buffer));
+            resource.arrayBufferView.byteLength = byteLength;
+            resource.arrayBufferView.byteOffset = byteOffset;
+        } else {
+            resource.gpuBufferView.buffer = GetWGPUBuffer(gpuBufferId, gpuBufferGeneration);
+            resource.gpuBufferView.id = gpuBufferId;
+            resource.gpuBufferView.generation = gpuBufferGeneration;
+        }
+        mProcs.namedOutputsSet(namedOutputs->handle, name, &resource);
         return true;
     }
 

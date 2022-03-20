@@ -20,13 +20,16 @@
 #include "webnn_native/ErrorScope.h"
 #include "webnn_native/webnn_platform.h"
 
+#include <webgpu/webgpu.h>
+
 class WebGLRenderingContext;
 namespace webnn_native {
 
     class ContextBase : public RefCounted {
       public:
         explicit ContextBase(ContextOptions const* options = nullptr);
-        virtual ~ContextBase() = default;
+        explicit ContextBase(WGPUDevice wgpuDevice);
+        virtual ~ContextBase();
 
         bool ConsumedError(MaybeError maybeError) {
             if (DAWN_UNLIKELY(maybeError.IsError())) {
@@ -47,6 +50,7 @@ namespace webnn_native {
         }
 
         GraphBase* CreateGraph();
+        WGPUDevice GetWGPUDevice();
 
         // Dawn API
         void InjectError(wnn::ErrorType type, const char* message);
@@ -67,6 +71,7 @@ namespace webnn_native {
         Ref<ErrorScope> mCurrentErrorScope;
 
         ContextOptions mContextOptions;
+        WGPUDevice mWGPUDevice;
     };
 
 }  // namespace webnn_native

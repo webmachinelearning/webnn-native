@@ -20,6 +20,9 @@
 
 #include "webnn_wire/Wire.h"
 
+namespace dawn::wire {
+  class WireServer;
+}
 struct WebnnProcTable;
 
 namespace webnn_wire {
@@ -43,6 +46,7 @@ namespace webnn_wire {
                                             size_t size) override final;
 
         bool InjectInstance(WNNInstance instance, uint32_t id, uint32_t generation);
+        bool InjectDawnWireServer(dawn::wire::WireServer* dawn_wire_server);
         bool InjectContext(WNNContext context, uint32_t id, uint32_t generation);
         bool InjectNamedInputs(WNNNamedInputs namedInputs,
                                uint32_t id,

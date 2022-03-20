@@ -31,6 +31,10 @@ namespace webnn_native::dml {
         return new Context(options);
     }
 
+    ContextBase* Backend::CreateContextWithGpuDevice(WGPUDevice device) {
+        return new Context(device);
+    }
+
     BackendConnection* Connect(InstanceBase* instance) {
         Backend* backend = new Backend(instance);
 

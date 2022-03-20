@@ -19,12 +19,15 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/GraphBuilder.h"
 
+#include <webgpu/webgpu.h>
+
 namespace webnn_native::null {
 
     // Context
     class Context : public ContextBase {
       public:
         explicit Context(ContextOptions const* options);
+        explicit Context(WGPUDevice device);
         ~Context() override = default;
 
       private:

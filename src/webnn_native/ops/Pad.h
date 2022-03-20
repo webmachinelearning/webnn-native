@@ -25,7 +25,8 @@ namespace webnn_native::op {
       public:
         Pad(GraphBuilderBase* builder,
             OperandBase* input,
-            OperandBase* padding,
+            uint32_t const* padding,
+            size_t paddingCount,
             PadOptions const* options);
         ~Pad() override = default;
 
@@ -38,8 +39,13 @@ namespace webnn_native::op {
             return &mOptions;
         }
 
+        const std::vector<uint32_t>& GetPadding() const {
+            return mPadding;
+        }
+
       private:
         MaybeError CalculateShape();
+        std::vector<uint32_t> mPadding;
         PadOptions mOptions;
     };
 

@@ -15,6 +15,7 @@
 #ifndef WEBNN_NATIVE_OPS_CONSTANT_H_
 #define WEBNN_NATIVE_OPS_CONSTANT_H_
 
+#include "common/Assert.h"
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
@@ -25,7 +26,7 @@ namespace webnn_native::op {
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  const ArrayBufferView* arrayBuffer)
-            : OperatorBase(builder) {
+            : OperatorBase(builder), mBuffer(nullptr), mWGPUBuffer(nullptr) {
             if (desc == nullptr || arrayBuffer == nullptr) {
                 return;
             }
@@ -43,8 +44,29 @@ namespace webnn_native::op {
 #endif  // defined(WEBNN_ENABLE_WIRE)
             mByteLength = arrayBuffer->byteLength;
         }
+
+        Constant(GraphBuilderBase* builder,
+                 const OperandDescriptor* desc,
+                 const GpuBufferView* view)
+            : OperatorBase(builder), mBuffer(nullptr), mWGPUBuffer(nullptr) {
+            if (desc == nullptr || view == nullptr) {
+                return;
+            }
+            mDimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
+            mDescriptor.dimensions = mDimensions.data();
+            mDescriptor.dimensionsCount = mDimensions.size();
+            mDescriptor.type = desc->type;
+            mWGPUBuffer = reinterpret_cast<WGPUBuffer>(view->buffer);
+            wgpuBufferReference(mWGPUBuffer);
+            mByteOffset = view->offset;
+            mByteLength = view->size;
+        }
+
         ~Constant() override {
-            free(mBuffer);
+            if (mBuffer)
+                free(mBuffer);
+            if (mWGPUBuffer)
+                wgpuBufferReference(mWGPUBuffer);
         }
 
         MaybeError AddToGraph(GraphBase* graph) const override {
@@ -52,9 +74,9 @@ namespace webnn_native::op {
         }
 
         MaybeError ValidateAndInferOutputInfo() override {
-            if (mBuffer == nullptr || mByteLength == 0) {
-                return DAWN_VALIDATION_ERROR("Constant array buffer is invalid.");
-            }
+            // if (mBuffer == nullptr || mByteLength == 0) {
+            //     return DAWN_VALIDATION_ERROR("Constant array buffer is invalid.");
+            // }
             mOutputs[0]->SetType(mDescriptor.type);
             mOutputs[0]->SetShape(mDimensions);
             return {};
@@ -68,15 +90,25 @@ namespace webnn_native::op {
             return mBuffer;
         }
 
+        WGPUBuffer GetWGPUBuffer() const {
+            return mWGPUBuffer;
+        }
+
         size_t GetByteLength() const {
             return mByteLength;
+        }
+
+        size_t GetByteOffset() const {
+            return mByteOffset;
         }
 
       private:
         OperandDescriptor mDescriptor;
         std::vector<int32_t> mDimensions;
         void* mBuffer;
+        WGPUBuffer mWGPUBuffer;
         size_t mByteLength;
+        size_t mByteOffset;
     };
 
 }  // namespace webnn_native::op

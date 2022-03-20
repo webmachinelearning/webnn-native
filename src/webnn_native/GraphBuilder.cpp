@@ -116,6 +116,11 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Constant(this, desc, arrayBuffer));
     }
 
+    OperandBase* GraphBuilderBase::ConstantWithGpuBuffer(OperandDescriptor const* desc,
+                                                         GpuBufferView const* gpuBuffer) {
+        VALIDATE_FOR_OPERAND(new op::Constant(this, desc, gpuBuffer));
+    }
+
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
                                           OperandBase* filter,
                                           Conv2dOptions const* options) {
@@ -218,13 +223,22 @@ namespace webnn_native {
     }
 
     OperandBase* GraphBuilderBase::Pad(OperandBase* input,
-                                       OperandBase* padding,
+                                       uint32_t const* padding,
+                                       size_t padding_count,
                                        PadOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, options));
+        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, padding_count, options));
     }
 
     OperandBase* GraphBuilderBase::Pow(OperandBase* a, OperandBase* b) {
         VALIDATE_FOR_OPERAND(new op::Binary(this, op::BinaryOpType::kPower, a, b));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceArgMax(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceArgMax, input, options));
+    }
+
+    OperandBase* GraphBuilderBase::ReduceArgMin(OperandBase* input, ReduceOptions const* options) {
+        VALIDATE_FOR_OPERAND(new op::Reduce(this, op::ReduceType::kReduceArgMin, input, options));
     }
 
     OperandBase* GraphBuilderBase::ReduceL2(OperandBase* input, ReduceOptions const* options) {
@@ -341,6 +355,7 @@ namespace webnn_native {
             outputs.push_back(namedOutput.second);
         }
         std::vector<const OperatorBase*> sorted_operands = TopologicalSort(outputs);
+        DAWN_INVALID_IF(sorted_operands.empty(), "The graph can't be built.");
         Ref<GraphBase> graph = AcquireRef(GetContext()->CreateGraph());
         for (auto& op : sorted_operands) {
             DAWN_INVALID_IF(op->IsError(), "The operand is an error object.");
@@ -389,6 +404,9 @@ namespace webnn_native {
         std::vector<const OperatorBase*> result;
 
         for (auto node : rootNodes) {
+            if (node->IsError()) {
+                return {};
+            }
             nodesToDo.push(const_cast<OperandBase*>(node)->Operator());
         }
         while (nodesToDo.size() > 0) {

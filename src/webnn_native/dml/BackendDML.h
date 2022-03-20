@@ -19,6 +19,7 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Error.h"
 
+#include <webgpu/webgpu.h>
 #include <memory>
 
 namespace webnn_native::dml {
@@ -29,6 +30,7 @@ namespace webnn_native::dml {
 
         MaybeError Initialize();
         ContextBase* CreateContext(ContextOptions const* options = nullptr) override;
+        ContextBase* CreateContextWithGpuDevice(WGPUDevice device) override;
 
       private:
     };

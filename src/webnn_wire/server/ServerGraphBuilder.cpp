@@ -48,4 +48,40 @@ namespace webnn_wire::server {
         return true;
     }
 
+    bool Server::DoGraphBuilderConstantWithGpuBufferInternal(ObjectId graphBuilderId,
+                                                             WNNOperandDescriptor const* desc,
+                                                             uint8_t const* buffer,
+                                                             uint32_t id,
+                                                             uint32_t generation,
+                                                             size_t size,
+                                                             size_t offset,
+                                                             ObjectHandle result) {
+        auto* graphBuilder = GraphBuilderObjects().Get(graphBuilderId);
+        if (graphBuilder == nullptr) {
+            return false;
+        }
+
+        // Create and register the operand object.
+        auto* resultData = OperandObjects().Allocate(result.id);
+        if (resultData == nullptr) {
+            return false;
+        }
+        resultData->generation = result.generation;
+        resultData->contextInfo = graphBuilder->contextInfo;
+        if (resultData->contextInfo != nullptr) {
+            if (!TrackContextChild(resultData->contextInfo, ObjectType::Operand, result.id)) {
+                return false;
+            }
+        }
+        WNNGpuBufferView value;
+        value.buffer = GetWGPUBuffer(id, generation);
+        value.id = id;
+        value.generation = generation;
+        value.size = size;
+        value.offset = offset;
+        resultData->handle =
+            mProcs.graphBuilderConstantWithGpuBuffer(graphBuilder->handle, desc, &value);
+        return true;
+    }
+
 }  // namespace webnn_wire::server

@@ -33,4 +33,5 @@ declare_args() {
   webnn_enable_null = true
 
   webnn_enable_wire = false
+  webnn_enable_gpu_buffer = false
 }

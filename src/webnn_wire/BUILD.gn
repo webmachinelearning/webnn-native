@@ -79,6 +79,8 @@ dawn_component("webnn_wire") {
     "client/Graph.h",
     "client/GraphBuilder.cpp",
     "client/GraphBuilder.h",
+    "client/Instance.cpp",
+    "client/Instance.h",
     "client/NamedInputs.cpp",
     "client/NamedInputs.h",
     "client/NamedOutputs.cpp",
@@ -95,11 +97,14 @@ dawn_component("webnn_wire") {
     "server/ServerContext.cpp",
     "server/ServerGraph.cpp",
     "server/ServerGraphBuilder.cpp",
+    "server/ServerInstance.cpp",
     "server/ServerNamedInputs.cpp",
     "server/ServerNamedOutputs.cpp",
     "server/ServerOperandArray.cpp",
     "server/ServerOperatorArray.cpp",
   ]
+
+  libs = [ "dawn_wire.dll.lib" ]
 
   # Make headers publicly visible
   public_deps = [ ":webnn_wire_headers" ]

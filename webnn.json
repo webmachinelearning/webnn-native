@@ -30,6 +30,13 @@
         ]
       },
       {
+        "name": "create context with gpu device",
+        "returns": "context",
+        "args": [
+          {"name": "gpu device", "type": "gpu device", "annotation": "const*"}
+        ]
+      },
+      {
         "name": "create graph builder",
         "returns": "graph builder",
         "args": [
@@ -526,6 +533,14 @@
         ]
       },
       {
+        "name": "constant with gpu buffer",
+        "returns": "operand",
+        "args": [
+          {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
+          {"name": "value", "type": "gpu buffer view", "annotation": "const*"}
+        ]
+      },
+      {
         "name": "matmul",
         "returns": "operand",
         "args": [
@@ -746,9 +761,26 @@
       "returns": "operand",
       "args": [
         {"name": "input", "type": "operand"},
-        {"name": "padding", "type": "operand"},
+        {"name": "padding", "type": "uint32_t", "annotation": "const*", "length": "padding count"},
+        {"name": "padding count", "type": "uint32_t"},
         {"name": "options", "type": "pad options", "annotation": "const*", "optional": true}
       ]
+      },
+      {
+        "name": "reduce arg max",
+        "returns": "operand",
+        "args": [
+            {"name": "input", "type": "operand"},
+            {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+        ]
+      },
+      {
+          "name": "reduce arg min",
+          "returns": "operand",
+          "args": [
+              {"name": "input", "type": "operand"},
+              {"name": "options", "type": "reduce options", "annotation": "const*", "optional": true}
+          ]
       },
       {
         "name": "reduce l1",
@@ -953,10 +985,17 @@
       }
     ]
   },
+  "resource": {
+    "category": "structure",
+    "members": [
+      {"name": "array buffer view", "type": "array buffer view"},
+      {"name": "gpu buffer view", "type": "gpu buffer view"}
+    ]
+  },
   "input": {
     "category": "structure",
     "members": [
-      {"name": "resource", "type": "array buffer view"},
+      {"name": "resource", "type": "resource"},
       {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
       {"name": "dimensions count", "type": "uint32_t", "default": 0}
     ]
@@ -967,6 +1006,24 @@
       {"name": "buffer", "type": "void", "annotation": "*", "length": "byte length"},
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0}
+    ]
+  },
+  "gpu buffer view": {
+    "category": "structure",
+    "members": [
+      {"name": "buffer", "type": "void", "annotation": "*", "optional": true, "_comment": "WGPUBuffer"},
+      {"name": "id", "type": "uint32_t", "default": 0},
+      {"name": "generation", "type": "uint32_t", "default": 0},
+      {"name": "size", "type": "size_t"},
+      {"name": "offset", "type": "size_t", "default": 0}
+    ]
+  },
+  "gpu device": {
+    "category": "structure",
+    "members": [
+      {"name": "device", "type": "void", "annotation": "*", "optional": true, "_comment": "WGPUDevice"},
+      {"name": "id", "type": "uint32_t", "default": 0},
+      {"name": "generation", "type": "uint32_t", "default": 0}
     ]
   },
   "named inputs": {
@@ -988,7 +1045,7 @@
         "name": "set",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-          {"name": "resource", "type": "array buffer view", "annotation": "const*"}
+          {"name": "resource", "type": "resource", "annotation": "const*"}
         ]
       },
       {

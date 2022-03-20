@@ -20,12 +20,19 @@
 namespace webnn_wire::client {
 
     void NamedInputs::Set(char const* name, WNNInput const* input) {
-        NamedInputsSetCmd cmd;
+        NamedInputsSetCmd cmd = {};
         cmd.namedInputsId = this->id;
         cmd.name = name;
-        cmd.buffer = static_cast<const uint8_t*>(input->resource.buffer);
-        cmd.byteLength = input->resource.byteLength;
-        cmd.byteOffset = input->resource.byteOffset;
+        // Input type is ArrayBufferView
+        WNNArrayBufferView arrayBufferView = input->resource.arrayBufferView;
+        if (arrayBufferView.buffer != nullptr) {
+            cmd.buffer = static_cast<const uint8_t*>(arrayBufferView.buffer);
+            cmd.byteLength = arrayBufferView.byteLength;
+            cmd.byteOffset = arrayBufferView.byteOffset;
+        } else {
+            cmd.gpuBufferId = input->resource.gpuBufferView.id;
+            cmd.gpuBufferGeneration = input->resource.gpuBufferView.generation;
+        }
         cmd.dimensions = input->dimensions;
         cmd.dimensionsCount = input->dimensionsCount;
 
