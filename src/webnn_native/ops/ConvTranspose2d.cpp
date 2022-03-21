@@ -50,6 +50,31 @@ namespace webnn_native::op {
         return &mOptions;
     }
 
+    void ConvTranspose2d::calculateOutputSize(int32_t inputHeight,
+                                              int32_t inputWidth,
+                                              int32_t filterHeight,
+                                              int32_t filterWidth,
+                                              int32_t outputPaddingHeight,
+                                              int32_t outputPaddingWidth,
+                                              int32_t& outputHeight,
+                                              int32_t& outputWidth) {
+        std::vector<int32_t> padding(mPadding);
+        if (mOptions.autoPad != wnn::AutoPad::Explicit) {
+            std::vector<int32_t> inputSize = {inputHeight, inputWidth};
+            std::vector<int32_t> filterSize = {filterHeight, filterWidth};
+            padding = utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(&mOptions, inputSize,
+                                                                             filterSize);
+        }
+        int32_t paddingBeginningHeight = padding[0], paddingEndingHeight = padding[1],
+                paddingBeginningWidth = padding[2], paddingEndingWidth = padding[3];
+        outputHeight = mStride[0] * (inputHeight - 1) + outputPaddingHeight +
+                       ((filterHeight - 1) * mDilations[0] + 1) - paddingBeginningHeight -
+                       paddingEndingHeight;
+        outputWidth = mStride[1] * (inputWidth - 1) + outputPaddingWidth +
+                      ((filterWidth - 1) * mDilations[1] + 1) - paddingBeginningWidth -
+                      paddingEndingWidth;
+    }
+
     MaybeError ConvTranspose2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto filterShape = mInputs[1]->Shape();
@@ -92,12 +117,9 @@ namespace webnn_native::op {
             outputHeight = mOptions.outputSizes[0];
             outputWidth = mOptions.outputSizes[1];
         } else {
-            calculateOutputSize(inputHeight, inputWidth, filterHeight, filterWidth, outputHeight,
+            calculateOutputSize(inputHeight, inputWidth, filterHeight, filterWidth,
+                                mOptions.outputPadding[0], mOptions.outputPadding[1], outputHeight,
                                 outputWidth);
-            if (mOptions.outputPadding != nullptr) {
-                outputHeight += mOptions.outputPadding[0];
-                outputWidth += mOptions.outputPadding[1];
-            }
         }
         std::vector<int32_t> outputShape;
         if (nchw) {

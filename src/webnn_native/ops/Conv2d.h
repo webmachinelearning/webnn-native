@@ -119,32 +119,6 @@ namespace webnn_native::op {
             return {};
         }
 
-        void calculateOutputSize(int32_t inputHeight,
-                                 int32_t inputWidth,
-                                 int32_t filterHeight,
-                                 int32_t filterWidth,
-                                 int32_t& outputHeight,
-                                 int32_t& outputWidth) {
-            int32_t paddingBeginningHeight = mPadding[0], paddingEndingHeight = mPadding[1],
-                    paddingBeginningWidth = mPadding[2], paddingEndingWidth = mPadding[3];
-            if (mOptions.autoPad != wnn::AutoPad::Explicit) {
-                utils::ComputeImplicitPaddingForAutoPad(
-                    mOptions.autoPad, mOptions.dilations[0], inputHeight, filterHeight,
-                    mOptions.strides[0], paddingBeginningHeight, paddingEndingHeight);
-                utils::ComputeImplicitPaddingForAutoPad(
-                    mOptions.autoPad, mOptions.dilations[1], inputWidth, filterWidth,
-                    mOptions.strides[1], paddingBeginningWidth, paddingEndingWidth);
-            }
-            auto dilatedFilterHeight = mDilations[0] * (filterHeight - 1) + 1;
-            auto dilatedFilterWidth = mDilations[1] * (filterWidth - 1) + 1;
-            outputHeight = 1 + (inputHeight - dilatedFilterHeight + paddingBeginningHeight +
-                                paddingEndingHeight) /
-                                   mStride[0];
-            outputWidth =
-                1 + (inputWidth - dilatedFilterWidth + paddingBeginningWidth + paddingEndingWidth) /
-                        mStride[1];
-        }
-
         OptionType mOptions;
         std::vector<int32_t> mPadding;
         std::vector<int32_t> mStride;
@@ -163,6 +137,12 @@ namespace webnn_native::op {
         MaybeError AddToGraph(GraphBase* graph) const override;
         Conv2dOptions const* GetOptions() const;
         MaybeError ValidateAndInferOutputInfo() override;
+        void calculateOutputSize(int32_t inputHeight,
+                                 int32_t inputWidth,
+                                 int32_t filterHeight,
+                                 int32_t filterWidth,
+                                 int32_t& outputHeight,
+                                 int32_t& outputWidth);
 
       private:
         MaybeError CalculateShape();
@@ -179,6 +159,14 @@ namespace webnn_native::op {
         MaybeError AddToGraph(GraphBase* graph) const override;
         ConvTranspose2dOptions const* GetOptions() const;
         MaybeError ValidateAndInferOutputInfo() override;
+        void calculateOutputSize(int32_t inputHeight,
+                                 int32_t inputWidth,
+                                 int32_t filterHeight,
+                                 int32_t filterWidth,
+                                 int32_t outputPaddingHeight,
+                                 int32_t outputPaddingWidth,
+                                 int32_t& outputHeight,
+                                 int32_t& outputWidth);
 
       private:
         MaybeError CalculateShape();

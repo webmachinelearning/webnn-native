@@ -35,6 +35,30 @@ namespace webnn_native::op {
         return &mOptions;
     }
 
+    void Conv2d::calculateOutputSize(int32_t inputHeight,
+                                     int32_t inputWidth,
+                                     int32_t filterHeight,
+                                     int32_t filterWidth,
+                                     int32_t& outputHeight,
+                                     int32_t& outputWidth) {
+        std::vector<int32_t> padding(mPadding);
+        if (mOptions.autoPad != wnn::AutoPad::Explicit) {
+            std::vector<int32_t> inputSize = {inputHeight, inputWidth};
+            std::vector<int32_t> filterSize = {filterHeight, filterWidth};
+            padding = utils::ComputeImplicitPaddingForAutoPad(&mOptions, inputSize, filterSize);
+        }
+        int32_t paddingBeginningHeight = padding[0], paddingEndingHeight = padding[1],
+                paddingBeginningWidth = padding[2], paddingEndingWidth = padding[3];
+        auto dilatedFilterHeight = mDilations[0] * (filterHeight - 1) + 1;
+        auto dilatedFilterWidth = mDilations[1] * (filterWidth - 1) + 1;
+        outputHeight =
+            1 + (inputHeight - dilatedFilterHeight + paddingBeginningHeight + paddingEndingHeight) /
+                    mStride[0];
+        outputWidth =
+            1 + (inputWidth - dilatedFilterWidth + paddingBeginningWidth + paddingEndingWidth) /
+                    mStride[1];
+    }
+
     MaybeError Conv2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         auto filterShape = mInputs[1]->Shape();
