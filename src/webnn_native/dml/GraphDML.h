@@ -51,14 +51,15 @@ namespace webnn_native { namespace dml {
 
     using namespace Microsoft::WRL;
 
-    //  Represent the DirectML tensor description.
+    // Represent the DirectML tensor description.
     struct DmlTensorDesc {
         std::vector<UINT> dimensions = {};
         std::vector<UINT> strides = {};
+        // Describes a tensor that will be stored in a Direct3D 12 buffer resource.
         DML_BUFFER_TENSOR_DESC bufferDesc = {};
     };
 
-    //  Represent the information of the graph's edges.
+    // Represent the information of the graph's edges.
     struct EdgeInfoBase {
         virtual ~EdgeInfoBase() = default;
         DML_TENSOR_DESC outputTensorDESC = {};
@@ -66,7 +67,7 @@ namespace webnn_native { namespace dml {
         bool isInputEdge = false;
     };
 
-    //  Only represent the information of the input edges.
+    // Only represent the information of the input edges.
     struct InputEdgeInfo final : public EdgeInfoBase {
         ~InputEdgeInfo() override = default;
         // Indicate the index of the graph's input.
@@ -78,7 +79,7 @@ namespace webnn_native { namespace dml {
         bool isConstantInput = false;
     };
 
-    //  Represent the information of the intermediate edges and output edges.
+    // Represent the information of the intermediate edges and output edges.
     struct EdgeInfo final : public EdgeInfoBase {
         ~EdgeInfo() override = default;
         // Indicate the index of the intermediate node from which this edge was produced.
@@ -117,6 +118,9 @@ namespace webnn_native { namespace dml {
         virtual MaybeError Finish() override;
 
         MaybeError AddEdgesToThisNode(std::vector<std::shared_ptr<EdgeInfoBase>> inputNodes);
+        void FillUploadResourceAndInputBindings(uint64_t uploadResourceSize,
+                                                std::vector<DML_BUFFER_BINDING>& inputBufferBinding,
+                                                std::map<std::string, Input> namedInputs = {});
 
       private:
         MaybeError CompileImpl() override;
@@ -157,7 +161,7 @@ namespace webnn_native { namespace dml {
         // by IDMLOperatorInitializer.
         ComPtr<IDMLCompiledOperator> mCompiledOperator;
 
-        std::map<const OperandBase*, std::shared_ptr<EdgeInfoBase>> mGraphNodesMap;
+        std::map<const OperandBase*, std::shared_ptr<EdgeInfoBase>> mGraphEdgesMap;
 
         // Keep intermediate nodes here to avoid releasing too early.
         std::map<uint32_t, ComPtr<IDMLOperator>> mIntermediateNodesMap;
