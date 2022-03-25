@@ -346,8 +346,8 @@ namespace webnn_native {
             DAWN_INVALID_IF(op->IsError(), "The operand is an error object.");
             DAWN_TRY(op->AddToGraph(graph.Get()));
         }
-        for (auto& namedOutput : namedOperands->GetRecords()) {
-            DAWN_TRY(graph->AddOutput(namedOutput.first, namedOutput.second));
+        for (auto& [name, output] : namedOperands->GetRecords()) {
+            DAWN_TRY(graph->AddOutput(name, output));
         }
         DAWN_TRY(graph->Finish());
         DAWN_TRY(graph->Compile());

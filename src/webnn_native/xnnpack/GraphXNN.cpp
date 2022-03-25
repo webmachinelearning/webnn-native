@@ -699,18 +699,18 @@ namespace webnn_native { namespace xnnpack {
                 inputBuffers[i] = mInputs[i]->buffer.get();
             }
         }
-        for (auto& input : inputs->GetRecords()) {
-            if (mExternalInputs.find(input.first) == mExternalInputs.end()) {
+        for (auto& [name, input] : inputs->GetRecords()) {
+            if (mExternalInputs.find(name) == mExternalInputs.end()) {
                 COMPUTE_ERROR("Invalid parameters.");
             }
-            size_t index = mExternalInputs.at(input.first);
-            inputBuffers[index] = static_cast<int8_t*>(input.second->resource.buffer) +
-                                  input.second->resource.byteOffset;
+            size_t index = mExternalInputs.at(name);
+            inputBuffers[index] =
+                static_cast<int8_t*>(input->resource.buffer) + input->resource.byteOffset;
         }
 
         std::vector<std::string> outputNames;
-        for (auto& output : outputs->GetRecords()) {
-            outputNames.push_back(output.first);
+        for (auto& [name, _] : outputs->GetRecords()) {
+            outputNames.push_back(name);
         }
 
         std::vector<void*> outputBuffers(mOutputs.size(), nullptr);

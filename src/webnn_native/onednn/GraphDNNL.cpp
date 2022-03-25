@@ -522,8 +522,7 @@ namespace webnn_native { namespace onednn {
         mMemories.push_back(cMemory);
         mOperandMemoryMap.insert(std::make_pair(binary->PrimaryOutput(), cMemory));
         if (cRank != 0 && cRank < cMemoryDesc->ndims) {
-            std::vector<dnnl_dim_t> dims(cMemoryDesc->dims,
-                                          cMemoryDesc->dims + cMemoryDesc->ndims);
+            std::vector<dnnl_dim_t> dims(cMemoryDesc->dims, cMemoryDesc->dims + cMemoryDesc->ndims);
             std::vector<dnnl_dim_t> cNewDims = ShrinkDimensions(dims, cRank);
             dnnl_memory_desc_t cNewMemoryDesc;
             DNNL_TRY(dnnl_memory_desc_reshape(&cNewMemoryDesc, cMemoryDesc, cNewDims.size(),
@@ -991,13 +990,11 @@ namespace webnn_native { namespace onednn {
     }
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        for (auto& input : inputs->GetRecords()) {
-            dnnl_memory_t inputMemory = mInputMemoryMap.at(input.first);
-            COMPUTE_TRY(
-                dnnl_memory_set_data_handle_v2(inputMemory,
-                                               static_cast<int8_t*>(input.second.resource.buffer) +
-                                                   input.second.resource.byteOffset,
-                                               mStream));
+        for (auto& [namem, input] : inputs->GetRecords()) {
+            dnnl_memory_t inputMemory = mInputMemoryMap.at(name);
+            COMPUTE_TRY(dnnl_memory_set_data_handle_v2(
+                inputMemory,
+                static_cast<int8_t*>(input.resource.buffer) + input.resource.byteOffset, mStream));
         }
 
         for (auto op : mOperations) {
@@ -1008,8 +1005,8 @@ namespace webnn_native { namespace onednn {
         COMPUTE_TRY(dnnl_stream_wait(mStream));
 
         std::vector<std::string> outputNames;
-        for (auto& output : outputs->GetRecords()) {
-            outputNames.push_back(output.first);
+        for (auto& [name, _] : outputs->GetRecords()) {
+            outputNames.push_back(name);
         }
 
         for (size_t i = 0; i < outputNames.size(); ++i) {

@@ -814,7 +814,7 @@ namespace webnn_native { namespace ie {
             std::vector<float> biasData(numDirections * 3 * hiddenSize, 0);
             biasNode = AddConstantWithGraph<float>(precision_e::FP32, biasShape, biasData);
         }
-	if (options->recurrentBias != nullptr) {
+        if (options->recurrentBias != nullptr) {
             n++;
         }
         ngraph_node_t* initialHiddenStateNode = nullptr;
@@ -1315,16 +1315,15 @@ namespace webnn_native { namespace ie {
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
-        for (auto& input : mInputIdMap) {
+        for (auto& [name, input] : mInputIdMap) {
             // All the inputs must be set.
-            if (namedInputs.find(input.first) == namedInputs.end()) {
+            if (namedInputs.find(name) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input isn't set";
                 return WNNComputeGraphStatus_Error;
             }
             ie_blob_t* blob;
             char* inputName = nullptr;
-            IEStatusCode status =
-                ie_network_get_input_name(mInferEngineNetwork, input.second, &inputName);
+            IEStatusCode status = ie_network_get_input_name(mInferEngineNetwork, input, &inputName);
             if (status != IEStatusCode::OK) {
                 dawn::ErrorLog() << "IE Failed to ie_network_get_input_name";
                 return WNNComputeGraphStatus_Error;
@@ -1340,7 +1339,7 @@ namespace webnn_native { namespace ie {
                 dawn::ErrorLog() << "IE Failed to ie_blob_get_buffer";
                 return WNNComputeGraphStatus_Error;
             }
-            auto& resource = namedInputs[input.first].resource;
+            auto& resource = namedInputs[name].resource;
             memcpy(buffer.buffer, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
                    resource.byteLength);
         }
@@ -1353,11 +1352,10 @@ namespace webnn_native { namespace ie {
         }
 
         // Get Data from nGraph with output.
-        for (auto namedOutput : outputs->GetRecords()) {
-            ArrayBufferView output = namedOutput.second;
+        for (auto [name, output] : outputs->GetRecords()) {
             DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
-            auto originalName = mOutputNameMap[namedOutput.first];
+            auto originalName = mOutputNameMap[name];
             if (mOriginalNameMap.find(originalName) == mOriginalNameMap.end()) {
                 dawn::ErrorLog() << "IE Failed to compute model";
                 return WNNComputeGraphStatus_Error;

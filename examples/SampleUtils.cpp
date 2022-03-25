@@ -107,7 +107,6 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
         default:
             dawn::ErrorLog() << "Invaild CmdBufType";
             DAWN_ASSERT(0);
-
     }
     webnnProcSetProcs(&procs);
 

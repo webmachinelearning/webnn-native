@@ -979,16 +979,15 @@ namespace webnn_native { namespace mlas {
     }
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        for (auto& input : inputs->GetRecords()) {
-            Ref<Memory> inputMemory = mInputs.at(input.first);
-            if (inputMemory->GetByteLength() < input.second.resource.byteLength) {
+        for (auto& [name, input] : inputs->GetRecords()) {
+            Ref<Memory> inputMemory = mInputs.at(name);
+            if (inputMemory->GetByteLength() < input.resource.byteLength) {
                 dawn::ErrorLog() << "The size of input memory is less than input buffer.";
                 return WNNComputeGraphStatus_Error;
             }
             memcpy(inputMemory->GetBuffer(),
-                   static_cast<int8_t*>(input.second.resource.buffer) +
-                       input.second.resource.byteOffset,
-                   input.second.resource.byteLength);
+                   static_cast<int8_t*>(input.resource.buffer) + input.resource.byteOffset,
+                   input.resource.byteLength);
         }
 
         for (auto& kernel : mKernels) {
@@ -996,8 +995,8 @@ namespace webnn_native { namespace mlas {
         }
 
         std::vector<std::string> outputNames;
-        for (auto& output : outputs->GetRecords()) {
-            outputNames.push_back(output.first);
+        for (auto& [name, _] : outputs->GetRecords()) {
+            outputNames.push_back(name);
         }
 
         for (size_t i = 0; i < outputNames.size(); ++i) {

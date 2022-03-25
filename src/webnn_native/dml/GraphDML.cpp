@@ -1751,15 +1751,14 @@ namespace webnn_native { namespace dml {
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
-        for (auto& input : mInputs) {
+        for (auto& [name, inputBinding] : mInputs) {
             // All the inputs must be set.
-            if (namedInputs.find(input.first) == namedInputs.end()) {
+            if (namedInputs.find(name) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input must be set.";
                 return WNNComputeGraphStatus_Error;
             }
 
-            ::pydml::Binding* inputBinding = input.second;
-            auto& resource = namedInputs[input.first].resource;
+            auto& resource = namedInputs[name].resource;
             inputBinding->data.buffer = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
             inputBinding->data.size = resource.byteLength;
         }
@@ -1769,9 +1768,9 @@ namespace webnn_native { namespace dml {
         }
         std::vector<::dml::Expression*> outputExpressions;
         std::vector<std::string> outputNames;
-        for (auto& output : mOutputs) {
-            outputNames.push_back(output.first);
-            outputExpressions.push_back(&(output.second));
+        for (auto& [name, output] : mOutputs) {
+            outputNames.push_back(name);
+            outputExpressions.push_back(&(output));
         }
         std::vector<pydml::TensorData*> outputTensors;
         std::lock_guard<std::mutex> lock(mMutex);
