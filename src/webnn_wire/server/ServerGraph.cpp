@@ -74,6 +74,8 @@ namespace webnn_wire { namespace server {
             mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
             // Return the result.
             ReturnGraphComputeResultCmd cmd;
+            cmd.namedOutputs =
+                ObjectHandle{userdata->namedOutputsObjectID, namedOutputs->generation};
             cmd.name = "TODO: use the name getting from namedOutputs";
             cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
             cmd.byteLength = arrayBuffer.byteLength;
