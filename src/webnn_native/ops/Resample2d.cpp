@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
     Resample2d::Resample2d(GraphBuilderBase* builder,
                            OperandBase* input,
                            Resample2dOptions const* options)
@@ -85,4 +85,4 @@ namespace webnn_native { namespace op {
         return CalculateShape();
     }
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op

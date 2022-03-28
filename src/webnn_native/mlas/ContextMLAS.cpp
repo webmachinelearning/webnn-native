@@ -20,7 +20,7 @@
 
 #include <core/platform/threadpool.h>
 
-namespace webnn_native { namespace mlas {
+namespace webnn_native::mlas {
 
     ContextBase* Create() {
         Ref<ContextBase> context = AcquireRef(new Context());
@@ -55,4 +55,4 @@ namespace webnn_native { namespace mlas {
         return new Graph(this);
     }
 
-}}  // namespace webnn_native::mlas
+}  // namespace webnn_native::mlas

@@ -16,7 +16,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     MaybeError BroadcastShape(std::vector<int32_t> shapeA,
                               std::vector<int32_t> shapeB,
@@ -110,4 +110,4 @@ namespace webnn_native { namespace op {
         }
     }
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op

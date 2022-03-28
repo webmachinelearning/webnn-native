@@ -20,7 +20,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     class ClampBase {
       public:
@@ -74,6 +74,6 @@ namespace webnn_native { namespace op {
         }
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_CLAMP_H_

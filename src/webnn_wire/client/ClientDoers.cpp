@@ -15,7 +15,7 @@
 
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     bool Client::DoContextPopErrorScopeCallback(Context* context,
                                                 uint64_t requestSerial,
@@ -43,4 +43,4 @@ namespace webnn_wire { namespace client {
         return graph->OnComputeAsyncCallback(requestSerial, status, message);
     }
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

@@ -19,7 +19,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/GraphBuilder.h"
 
-namespace webnn_native { namespace null {
+namespace webnn_native::null {
 
     // Context
     class Context : public ContextBase {
@@ -72,6 +72,6 @@ namespace webnn_native { namespace null {
                                           NamedOutputsBase* outputs) override;
     };
 
-}}  // namespace webnn_native::null
+}  // namespace webnn_native::null
 
 #endif  // WEBNN_NATIVE_NULL_CONTEXT_NULL_H_

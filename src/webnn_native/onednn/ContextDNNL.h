@@ -19,7 +19,7 @@
 
 #include <dnnl.h>
 
-namespace webnn_native { namespace onednn {
+namespace webnn_native::onednn {
 
     class Context : public ContextBase {
       public:
@@ -38,6 +38,6 @@ namespace webnn_native { namespace onednn {
         dnnl_engine_t mEngine;
     };
 
-}}  // namespace webnn_native::onednn
+}  // namespace webnn_native::onednn
 
 #endif  // WEBNN_NATIVE_ONEDNN_CONTEXT_DNNL_H_

@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Gru::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand gru(Operand input, Operand weight, Operand recurrentWeight, int32_t steps,
@@ -103,4 +103,4 @@ namespace node { namespace op {
 
         return objectArray;
     }
-}}  // namespace node::op
+}  // namespace node::op

@@ -16,7 +16,7 @@
 #include "webnn_wire/server/Server.h"
 #include "webnn_wire/WireServer.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     Server::Server(const WebnnProcTable& procs, CommandSerializer* serializer)
         : mSerializer(serializer), mProcs(procs), mIsAlive(std::make_shared<bool>(true)) {
@@ -193,4 +193,4 @@ namespace webnn_wire { namespace server {
         return true;
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

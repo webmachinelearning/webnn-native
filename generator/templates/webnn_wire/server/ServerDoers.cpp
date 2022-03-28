@@ -16,7 +16,7 @@
 #include "common/Assert.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
     //* Implementation of the command doers
     {% for command in cmd_records["command"] %}
         {% set type = command.derived_object %}
@@ -114,4 +114,4 @@ namespace webnn_wire { namespace server {
         }
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

@@ -20,7 +20,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     class BatchNorm final : public OperatorBase {
       public:
@@ -45,6 +45,6 @@ namespace webnn_native { namespace op {
         Ref<FusionOperatorBase> mActivation;
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_BATCHNORM_H_

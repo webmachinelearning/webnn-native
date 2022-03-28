@@ -25,7 +25,7 @@
 #include "webnn_native/dml/ContextDML.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 
-namespace webnn_native { namespace dml {
+namespace webnn_native::dml {
 
     namespace {
         enum TransposeType { NhwcToNchw, NchwToNhwc };
@@ -1799,4 +1799,4 @@ namespace webnn_native { namespace dml {
         return WNNComputeGraphStatus_Success;
     }
 
-}}  // namespace webnn_native::dml
+}  // namespace webnn_native::dml

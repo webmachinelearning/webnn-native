@@ -15,7 +15,7 @@
 
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     bool Server::DoOperatorArraySize(ObjectId operatorArrayId) {
         auto* operatorArray = OperatorArrayObjects().Get(operatorArrayId);
@@ -26,4 +26,4 @@ namespace webnn_wire { namespace server {
         return mProcs.operatorArraySize(operatorArray->handle);
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

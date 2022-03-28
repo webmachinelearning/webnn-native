@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value LeakyRelu::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand leakyRelu(Operand x, optional LeakyReluOptions options = {});
@@ -62,4 +62,4 @@ namespace node { namespace op {
             return object;
         }
     }
-}}  // namespace node::op
+}  // namespace node::op

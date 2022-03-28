@@ -4,7 +4,7 @@
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
 
-namespace node { namespace op {
+namespace node::op {
 
     enum ReduceType {
         kReduceL1 = 0,
@@ -22,6 +22,6 @@ namespace node { namespace op {
                                  wnn::GraphBuilder builder);
     };
 
-}}  // namespace node::op
+}  // namespace node::op
 
 #endif  // NODE_OPS_REDUCE_H_

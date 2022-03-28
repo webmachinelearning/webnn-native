@@ -21,7 +21,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     template <typename T>
     struct Conv2dBaseOptions {
@@ -102,6 +102,6 @@ namespace node { namespace op {
         static Napi::Value Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder);
     };
 
-}}  // namespace node::op
+}  // namespace node::op
 
 #endif  // NODE_OPS_CONV2D_H_

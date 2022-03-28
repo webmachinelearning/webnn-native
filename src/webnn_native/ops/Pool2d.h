@@ -18,7 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     enum Pool2dType {
         kAveragePool2d = 0,
@@ -51,6 +51,6 @@ namespace webnn_native { namespace op {
         Pool2dType mOpType;
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_POOL2d_H_

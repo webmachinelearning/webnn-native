@@ -15,7 +15,7 @@
 
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     bool Server::DoContextPopErrorScope(ObjectId contextId, uint64_t requestSerial) {
         auto* context = ContextObjects().Get(contextId);
@@ -51,4 +51,4 @@ namespace webnn_wire { namespace server {
         SerializeCommand(cmd);
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

@@ -19,7 +19,7 @@
 #include "webnn_wire/ChunkedCommandSerializer.h"
 #include "webnn_wire/server/ServerBase_autogen.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     // CallbackUserdata and its derived classes are intended to be created by
     // Server::MakeUserdata<T> and then passed as the userdata argument for Dawn
@@ -180,6 +180,6 @@ namespace webnn_wire { namespace server {
     bool TrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
     bool UntrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server
 
 #endif  // WEBNN_WIRE_SERVER_SERVER_H_

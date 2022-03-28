@@ -18,12 +18,12 @@
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
 
-namespace node { namespace op {
+namespace node::op {
 
     struct InstanceNorm {
         static Napi::Value Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder);
     };
 
-}}  // namespace node::op
+}  // namespace node::op
 
 #endif  // ___OPS_INSTANCENORM_H__

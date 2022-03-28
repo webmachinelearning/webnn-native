@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Reduce::Build(ReduceType opType,
                               const Napi::CallbackInfo& info,
@@ -82,4 +82,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

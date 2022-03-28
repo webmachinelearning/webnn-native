@@ -90,7 +90,7 @@ const char* dnnl_status2str(dnnl_status_t v) {
             COMPUTE_DNNL_ERROR(#f, s_); \
     } while (0)
 
-namespace webnn_native { namespace onednn {
+namespace webnn_native::onednn {
 
     namespace {
         dnnl_status_t GetDnnlDataType(wnn::OperandType operandType,
@@ -1088,4 +1088,4 @@ namespace webnn_native { namespace onednn {
         return dnnl_success;
     }
 
-}}  // namespace webnn_native::onednn
+}  // namespace webnn_native::onednn

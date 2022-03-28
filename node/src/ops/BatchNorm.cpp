@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value BatchNorm::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand batchNormalization(Operand input, Operand mean, Operand variance,
@@ -73,4 +73,4 @@ namespace node { namespace op {
         operand->SetImpl(builder.BatchNorm(input, mean, variance, &options));
         return object;
     }
-}}  // namespace node::op
+}  // namespace node::op

@@ -14,7 +14,7 @@
 
 #include "ops/Conv2d.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     template <typename T>
     Napi::Value GetConv2dBaseOptions(const Napi::CallbackInfo& info,
@@ -123,4 +123,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

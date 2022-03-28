@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace webnn_native { namespace onednn {
+namespace webnn_native::onednn {
 
     class Backend : public BackendConnection {
       public:
@@ -33,6 +33,6 @@ namespace webnn_native { namespace onednn {
       private:
     };
 
-}}  // namespace webnn_native::onednn
+}  // namespace webnn_native::onednn
 
 #endif  // WEBNN_NATIVE_DML_BACKENDDML_H_

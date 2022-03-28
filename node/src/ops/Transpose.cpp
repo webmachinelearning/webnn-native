@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Transpose::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand transpose(Operand input, optional TransposeOptions options = {});
@@ -49,4 +49,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

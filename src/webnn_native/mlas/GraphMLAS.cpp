@@ -28,7 +28,7 @@
 
 #define VERBOSE 0
 
-namespace webnn_native { namespace mlas {
+namespace webnn_native::mlas {
 
     void* AlignedAlloc(size_t size) {
         if (size <= 0)
@@ -1013,4 +1013,4 @@ namespace webnn_native { namespace mlas {
         return WNNComputeGraphStatus_Success;
     }
 
-}}  // namespace webnn_native::mlas
+}  // namespace webnn_native::mlas

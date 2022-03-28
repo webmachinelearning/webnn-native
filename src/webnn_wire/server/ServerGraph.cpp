@@ -16,7 +16,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     bool Server::DoGraphCompute(ObjectId graphId, ObjectId inputsId, ObjectId outputsId) {
         auto* graph = GraphObjects().Get(graphId);
@@ -92,4 +92,4 @@ namespace webnn_wire { namespace server {
         SerializeCommand(cmd);
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

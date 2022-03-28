@@ -20,7 +20,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Utils.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
     template <typename OptionType>
     class Conv2dBase : public OperatorBase {
       public:
@@ -185,6 +185,6 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mOutputPadding;
         std::vector<int32_t> mOutputSizes;
     };
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_CONV2D_H_

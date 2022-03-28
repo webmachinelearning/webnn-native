@@ -19,7 +19,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     enum ReduceType {
         kReduceL1 = 0,
@@ -60,6 +60,6 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mAxes;
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_REDUCE_H_

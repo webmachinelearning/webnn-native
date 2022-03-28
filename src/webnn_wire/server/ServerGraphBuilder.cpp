@@ -15,7 +15,7 @@
 
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     bool Server::DoGraphBuilderConstantInternal(ObjectId graphBuilderId,
                                                 WNNOperandDescriptor const* desc,
@@ -48,4 +48,4 @@ namespace webnn_wire { namespace server {
         return true;
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

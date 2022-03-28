@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Gemm::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand gemm(Operand a, Operand b, optional GemmOptions options = {});
@@ -67,4 +67,4 @@ namespace node { namespace op {
         operand->SetImpl(builder.Gemm(a, b, &options));
         return object;
     }
-}}  // namespace node::op
+}  // namespace node::op

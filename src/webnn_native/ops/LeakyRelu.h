@@ -18,7 +18,7 @@
 #include "webnn_native/Operator.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     class LeakyReluBase {
       public:
@@ -50,6 +50,6 @@ namespace webnn_native { namespace op {
         }
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_LEAKYRELU_H_

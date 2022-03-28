@@ -47,7 +47,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace dml {
+namespace webnn_native::dml {
 
     std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
     std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
@@ -107,6 +107,6 @@ namespace webnn_native { namespace dml {
         std::unique_ptr<pydml::CompiledModel> mCompiledModel;
     };
 
-}}  // namespace webnn_native::dml
+}  // namespace webnn_native::dml
 
 #endif  // WEBNN_NATIVE_DML_MODEL_DML_H_

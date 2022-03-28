@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class GraphBuilder final : public ObjectBase {
       public:
@@ -31,6 +31,6 @@ namespace webnn_wire { namespace client {
         WNNOperand Constant(WNNOperandDescriptor const* desc, WNNArrayBufferView const* value);
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_GRAPH_BUILDER_H_

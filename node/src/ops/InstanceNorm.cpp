@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value InstanceNorm::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand instanceNormalization(Operand input, optional InstanceNormOptions options = {})
@@ -60,4 +60,4 @@ namespace node { namespace op {
         operand->SetImpl(builder.InstanceNorm(input, &options));
         return object;
     }
-}}  // namespace node::op
+}  // namespace node::op

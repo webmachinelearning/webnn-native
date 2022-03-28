@@ -47,7 +47,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace ie {
+namespace webnn_native::ie {
 
     class Graph : public GraphBase {
       public:
@@ -103,6 +103,6 @@ namespace webnn_native { namespace ie {
         ie_infer_request_t* mInferEngineRequest;
     };
 
-}}  // namespace webnn_native::ie
+}  // namespace webnn_native::ie
 
 #endif  // WEBNN_NATIVE_IE_MODEL_IE_H_

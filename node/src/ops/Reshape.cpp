@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Reshape::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand reshape(Operand input, sequence<long> newShape);
@@ -37,4 +37,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op
