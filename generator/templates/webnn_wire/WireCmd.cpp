@@ -122,8 +122,8 @@
     };
 
     {% if is_cmd %}
-        static_assert(offsetof({{Return}}{{name}}Transfer, commandSize) == 0, "");
-        static_assert(offsetof({{Return}}{{name}}Transfer, commandId) == sizeof(CmdHeader), "");
+        static_assert(offsetof({{Return}}{{name}}Transfer, commandSize) == 0);
+        static_assert(offsetof({{Return}}{{name}}Transfer, commandId) == sizeof(CmdHeader));
     {% endif %}
 
     //* Returns the required transfer size for `record` in addition to the transfer structure.
