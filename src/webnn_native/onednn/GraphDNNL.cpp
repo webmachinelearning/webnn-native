@@ -990,7 +990,7 @@ namespace webnn_native::onednn {
     }
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        for (auto& [namem, input] : inputs->GetRecords()) {
+        for (auto& [name, input] : inputs->GetRecords()) {
             dnnl_memory_t inputMemory = mInputMemoryMap.at(name);
             COMPUTE_TRY(dnnl_memory_set_data_handle_v2(
                 inputMemory,
