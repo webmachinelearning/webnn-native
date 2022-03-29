@@ -610,10 +610,10 @@ namespace webnn_native::dml {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         DAWN_ASSERT(mExpression.find(output) != mExpression.end());
         ::dml::Expression dmlOutput = mExpression.at(output);
-        mOutputs.insert(std::make_pair(name, dmlOutput));
+        mOutputs.insert(std::make_pair(name.data(), dmlOutput));
         return {};
     }
 

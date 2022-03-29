@@ -69,7 +69,7 @@ namespace webnn_native::null {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         return {};
     }
 

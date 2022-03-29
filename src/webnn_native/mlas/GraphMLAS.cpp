@@ -467,7 +467,7 @@ namespace webnn_native::mlas {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         DAWN_ASSERT(mMemoryMap.find(output) != mMemoryMap.end());
         Ref<Memory> memory = mMemoryMap.at(output);
         if (memory->IsBlockedLayout()) {
@@ -487,7 +487,7 @@ namespace webnn_native::mlas {
             mKernels.push_back(AcquireRef(new ReorderOutput(memory, nchwMemory, outputShape)));
             memory = nchwMemory;
         }
-        mOutputs.insert(std::make_pair(name, memory));
+        mOutputs.insert(std::make_pair(name.data(), memory));
         return {};
     }
 

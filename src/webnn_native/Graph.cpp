@@ -50,7 +50,7 @@ namespace webnn_native {
         return DAWN_UNIMPLEMENTED_ERROR("AddInput");
     }
 
-    MaybeError GraphBase::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError GraphBase::AddOutput(std::string_view name, const OperandBase* output) {
         return DAWN_UNIMPLEMENTED_ERROR("AddOutput");
     }
 

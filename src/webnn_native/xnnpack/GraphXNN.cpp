@@ -194,12 +194,12 @@ namespace webnn_native::xnnpack {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* op) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* op) {
         std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(op);
         if (info->opType == OperandType::INPUT || info->opType == OperandType::CONSTANT) {
             return DAWN_INTERNAL_ERROR("There is no operator to be created.");
         }
-        info->name = std::move(name);
+        info->name = name.data();
         return {};
     }
 

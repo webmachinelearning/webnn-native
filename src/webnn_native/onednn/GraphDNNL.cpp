@@ -370,12 +370,12 @@ namespace webnn_native::onednn {
         return dnnl_success;
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         DAWN_TRY(BuildPrimitives());
         DAWN_ASSERT(mOperandMemoryMap.find(output) != mOperandMemoryMap.end());
         dnnl_memory_t plainOutputMemory;
         DAWN_TRY(ReorderToPlainFormat(mOperandMemoryMap.at(output), &plainOutputMemory));
-        mOutputMemoryMap.insert(std::make_pair(name, plainOutputMemory));
+        mOutputMemoryMap.insert(std::make_pair(name.data(), plainOutputMemory));
         return {};
     }
 

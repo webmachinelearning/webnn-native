@@ -58,7 +58,7 @@ namespace webnn_native {
 
         virtual MaybeError AddConstant(const op::Constant* constant);
         virtual MaybeError AddInput(const op::Input* input);
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* output);
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* output);
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm);
         virtual MaybeError AddBinary(const op::Binary* binary);
         virtual MaybeError AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d);

@@ -369,7 +369,7 @@ namespace webnn_native::ie {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         ngraph_node_t* graphOutput;
         IEStatusCode status = ngraph_output(mGraphNodeMap[output], &graphOutput);
         DAWN_TRY(CheckStatusCode(status, "ngraph add output"));
@@ -382,7 +382,7 @@ namespace webnn_native::ie {
         size_t index = 0;
         ngraph_get_index(mGraphNodeMap[output], &index);
         std::string suffix = number > 1 ? "." + std::to_string(index) : "";
-        mOutputNameMap[name] = std::string(originalName) + suffix;
+        mOutputNameMap[name.data()] = std::string(originalName) + suffix;
         ie_network_name_free(&originalName);
         return {};
     }
