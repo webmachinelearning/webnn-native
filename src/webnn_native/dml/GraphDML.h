@@ -172,6 +172,7 @@ namespace webnn_native { namespace dml {
         std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;
         std::vector<std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC>> mOutputEdgesDesc;
         std::vector<std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC>> mIntermediateEdgesDesc;
+        std::unique_ptr<int32_t> a = nullptr;
     };
 
 }}  // namespace webnn_native::dml
