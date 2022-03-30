@@ -27,15 +27,24 @@
 
 namespace webnn_native { namespace dml {
 
-#define CREATE_BINARY_OPERATOR(type, aTensorDesc, bTensorDesc, outputTensorDesc, dmlOperator) \
-    DML_ELEMENT_WISE_##type##_OPERATOR_DESC dmlOperatorTensorsDesc{};                         \
-    dmlOperatorTensorsDesc.ATensor = &aTensorDesc;                                            \
-    dmlOperatorTensorsDesc.BTensor = &bTensorDesc;                                            \
-    dmlOperatorTensorsDesc.OutputTensor = &outputTensorDesc;                                  \
-    DML_OPERATOR_DESC dmlOperatorDesc = {};                                                   \
-    dmlOperatorDesc.Type = DML_OPERATOR_ELEMENT_WISE_##type;                                  \
-    dmlOperatorDesc.Desc = &dmlOperatorTensorsDesc;                                           \
+#define CREATE_OPERATOR(type, dmlSpecificOperatorDesc) \
+    DML_OPERATOR_DESC dmlOperatorDesc = {};           \
+    dmlOperatorDesc.Type = DML_OPERATOR_##type;       \
+    dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;   \
     WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+
+#define CREATE_BINARY_OPERATOR(type, aTensorDesc, bTensorDesc, outputTensorDesc, dmlOperator) \
+    DML_ELEMENT_WISE_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};                         \
+    dmlSpecificOperatorDesc.ATensor = &aTensorDesc;                                            \
+    dmlSpecificOperatorDesc.BTensor = &bTensorDesc;                                            \
+    dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;                                  \
+    CREATE_OPERATOR(ELEMENT_WISE_##type, dmlSpecificOperatorDesc)
+
+#define CREATE_UNARY_OPERATOR(type, inputTensorDesc, dmlOperator) \
+    DML_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};          \
+    dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;        \
+    dmlSpecificOperatorDesc.OutputTensor = &inputTensorDesc;       \
+    CREATE_OPERATOR(type, dmlSpecificOperatorDesc)
 
     void CopyBufferRegion(ComPtr<ID3D12GraphicsCommandList> commandList,
                           ComPtr<ID3D12Resource> srcResource,
@@ -43,7 +52,6 @@ namespace webnn_native { namespace dml {
                           UINT64 resourceSize,
                           D3D12_RESOURCE_STATES state,
                           bool needBarrierEnd = true) {
-        srcResource->Unmap(0, nullptr);
         D3D12_RESOURCE_BARRIER resourceBarrier;
         if (state == D3D12_RESOURCE_STATE_COPY_DEST) {
             resourceBarrier.Transition.pResource = destResource.Get();
@@ -93,7 +101,7 @@ namespace webnn_native { namespace dml {
         return strides;
     }
 
-    std::vector<UINT> CalculateStridesForReshape(std::vector<UINT> targetDims) {
+    std::vector<UINT> CalculateStridesForReshape(const std::vector<UINT>& targetDims) {
         size_t rank = targetDims.size();
         std::vector<UINT> strides(rank);
         size_t elements = 1;
@@ -105,10 +113,20 @@ namespace webnn_native { namespace dml {
         return strides;
     }
 
+    uint32_t SizeOfShape(const std::vector<UINT>& dims) {
+        uint32_t prod = 1;
+        for (size_t i = 0; i < dims.size(); ++i)
+            prod *= dims[i];
+        return prod;
+    }
+
     std::vector<UINT> ConvertDimensions(const std::vector<int32_t>& dimensions) {
         std::vector<UINT> convertedDimensions;
         for (auto dim : dimensions) {
-            DAWN_ASSERT(dim > 0);
+            if (dim < 0) {
+                dawn::ErrorLog() << "DML doesn't support the negative dimension value";
+                DAWN_ASSERT(0);
+            }
             convertedDimensions.push_back(dim);
         }
         return convertedDimensions;
@@ -118,15 +136,6 @@ namespace webnn_native { namespace dml {
         DAWN_ASSERT(rank >= dims.size());
         std::vector<int32_t> newDims(rank, 1);
         for (size_t i = 0; i < dims.size(); ++i) {
-            newDims[newDims.size() - i - 1] = dims[dims.size() - i - 1];
-        }
-        return newDims;
-    }
-
-    std::vector<int32_t> ShrinkDimensions(const std::vector<int32_t>& dims, size_t rank) {
-        DAWN_ASSERT(rank <= dims.size());
-        std::vector<int32_t> newDims(rank);
-        for (size_t i = 0; i < rank; ++i) {
             newDims[newDims.size() - i - 1] = dims[dims.size() - i - 1];
         }
         return newDims;
@@ -145,14 +154,15 @@ namespace webnn_native { namespace dml {
     };
 
     bool CreateDmlTensorDesc(const std::unique_ptr<DmlTensorDesc>& dmlTensorDesc,
-                             const std::vector<UINT>& dimensions = {},
+                             const std::vector<UINT>& dimensions,
                              const std::vector<UINT>& strides = {},
                              DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT32,
                              DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAG_NONE) {
         dmlTensorDesc->dimensions = dimensions;
         dmlTensorDesc->strides = strides;
-        if (!strides.empty()) {
-            DAWN_ASSERT(dimensions.size() == strides.size());
+        if (!strides.empty() && dimensions.size() != strides.size()) {
+            dawn::ErrorLog() << "Dimension size should be equal to strides size.";
+            return false;
         }
 
         size_t typeLength = 4;
@@ -165,7 +175,8 @@ namespace webnn_native { namespace dml {
                 typeLength = 2;
                 break;
             default:
-                DAWN_ASSERT(0);
+                dawn::ErrorLog() << "This data type is not supported";
+                return false;
         }
 
         size_t elementsCount = 1;
@@ -180,11 +191,7 @@ namespace webnn_native { namespace dml {
             dmlTensorDesc->dimensions[0] = 1;
         } else {
             for (uint32_t i = 0; i < dmlTensorDesc->dimensions.size(); ++i) {
-                int32_t dim = dmlTensorDesc->dimensions[i];
-                if (dim < 0) {
-                    dawn::ErrorLog() << "DML doesn't support the negative dimension value";
-                    return false;
-                }
+                auto dim = dmlTensorDesc->dimensions[i];
                 if (strides.empty()) {
                     elementsCount *= dim;
                 } else {
@@ -213,6 +220,12 @@ namespace webnn_native { namespace dml {
         DAWN_ASSERT(desc != nullptr);
         std::vector<UINT> dimensions;
         DML_TENSOR_DATA_TYPE dataType;
+        for (uint32_t i = 0; i < desc->dimensionsCount; ++i) {
+            if (desc->dimensions[i] < 0) {
+                dawn::ErrorLog() << "DML doesn't support the negative dimension value";
+                return false;
+            }
+        }
         dimensions.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
         if (desc->type == wnn::OperandType::Float32) {
             dataType = DML_TENSOR_DATA_TYPE_FLOAT32;
@@ -223,6 +236,7 @@ namespace webnn_native { namespace dml {
         } else if (desc->type == wnn::OperandType::Uint32) {
             dataType = DML_TENSOR_DATA_TYPE_UINT32;
         } else {
+            dawn::ErrorLog() << "This data type is not supported";
             return false;
         }
 
@@ -333,8 +347,39 @@ namespace webnn_native { namespace dml {
         std::shared_ptr<EdgeInfoBase> edge(inputEdgeInfo);
 
         mGraphEdgesMap[constant->PrimaryOutput()] = edge;
-        mInputs.push_back(*inputEdgeInfo);
+        mInputs.push_back(inputEdgeInfo);
         mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
+        return {};
+    }
+
+    MaybeError Graph::createConstantInput(DML_TENSOR_DESC& tensorDESC,
+                                          void const* value,
+                                          size_t size,
+                                          const std::vector<UINT>& dmlTensorDims,
+                                          const std::vector<UINT>& strides,
+                                          DML_TENSOR_DATA_TYPE dataType,
+                                          DML_TENSOR_FLAGS tensorFlag) {
+        std::unique_ptr<char> buffer(new char[size]);
+        memcpy(buffer.get(), value, size);
+
+        std::unique_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(dmlTensorDesc, dmlTensorDims, strides, dataType, tensorFlag)) {
+            return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+        }
+        tensorDESC = {DML_TENSOR_TYPE_BUFFER, &(dmlTensorDesc->bufferDesc)};
+
+        std::shared_ptr<InputEdgeInfo> inputEdgeInfo(new InputEdgeInfo());
+        inputEdgeInfo->outputTensorDESC = tensorDESC;
+        inputEdgeInfo->name = "Input_Constant_" + std::to_string(mInputs.size());
+        inputEdgeInfo->isInputEdge = true;
+        inputEdgeInfo->inputIndex = mInputs.size();
+        inputEdgeInfo->buffer = static_cast<void*>(buffer.get());
+        inputEdgeInfo->byteLength = size;
+        inputEdgeInfo->isConstantInput = true;
+
+        mInputs.push_back(inputEdgeInfo);
+        mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
+        mConstantsBuffer.push_back(std::move(buffer));
         return {};
     }
 
@@ -354,7 +399,7 @@ namespace webnn_native { namespace dml {
         std::shared_ptr<EdgeInfoBase> edge(inputEdgeInfo);
 
         mGraphEdgesMap[input->PrimaryOutput()] = edge;
-        mInputs.push_back(*inputEdgeInfo);
+        mInputs.push_back(inputEdgeInfo);
         mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         return {};
     }
@@ -362,7 +407,10 @@ namespace webnn_native { namespace dml {
     std::vector<bool> GetBroadcastFlags(const std::vector<int32_t>& inputShape,
                                         const std::vector<int32_t>& outputShape,
                                         size_t skipAxes = 0) {
-        DAWN_ASSERT(inputShape.size() >= skipAxes && inputShape.size() <= outputShape.size());
+        if (inputShape.size() < skipAxes || inputShape.size() > outputShape.size()) {
+            dawn::ErrorLog() << "Shapes are incompatible, broadcasting failed.";
+            DAWN_ASSERT(0);
+        }
         std::vector<bool> BroadcastFlags(outputShape.size(), false);
         auto aCount = outputShape.size() - inputShape.size();
         for (size_t i = 0; i < aCount; ++i) {
@@ -481,24 +529,24 @@ namespace webnn_native { namespace dml {
                                        dmlOperator);
             } break;
             case op::BinaryOpType::kPower: {
-                DML_ELEMENT_WISE_POW_OPERATOR_DESC dmlOperatorTensorsDesc{};
-                dmlOperatorTensorsDesc.InputTensor = &aTensorDesc;
-                dmlOperatorTensorsDesc.ExponentTensor = &bTensorDesc;
-                dmlOperatorTensorsDesc.OutputTensor = &outputTensorDesc;
+                DML_ELEMENT_WISE_POW_OPERATOR_DESC dmlSpecificOperatorDesc{};
+                dmlSpecificOperatorDesc.InputTensor = &aTensorDesc;
+                dmlSpecificOperatorDesc.ExponentTensor = &bTensorDesc;
+                dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;
                 DML_OPERATOR_DESC dmlOperatorDesc = {};
                 dmlOperatorDesc.Type = DML_OPERATOR_ELEMENT_WISE_POW;
-                dmlOperatorDesc.Desc = &dmlOperatorTensorsDesc;
+                dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;
                 WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
             } break;
             case op::BinaryOpType::kMatMul: {
-                DML_GEMM_OPERATOR_DESC dmlOperatorTensorsDesc{};
-                dmlOperatorTensorsDesc.ATensor = &aTensorDesc;
-                dmlOperatorTensorsDesc.BTensor = &bTensorDesc;
-                dmlOperatorTensorsDesc.OutputTensor = &outputTensorDesc;
-                dmlOperatorTensorsDesc.Alpha = 1.0;
+                DML_GEMM_OPERATOR_DESC dmlSpecificOperatorDesc{};
+                dmlSpecificOperatorDesc.ATensor = &aTensorDesc;
+                dmlSpecificOperatorDesc.BTensor = &bTensorDesc;
+                dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;
+                dmlSpecificOperatorDesc.Alpha = 1.0;
                 DML_OPERATOR_DESC dmlOperatorDesc = {};
                 dmlOperatorDesc.Type = DML_OPERATOR_GEMM;
-                dmlOperatorDesc.Desc = &dmlOperatorTensorsDesc;
+                dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;
                 WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
             } break;
             default:
@@ -509,44 +557,211 @@ namespace webnn_native { namespace dml {
                 return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
             }
         }
-
-        mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
         mDmlTensorsDesc.push_back(std::move(outputDmlTensorDesc));
         mDmlTensorsDesc.push_back(std::move(aDmlTensorDesc));
         mDmlTensorsDesc.push_back(std::move(bDmlTensorDesc));
 
+        mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
         mGraphEdgesMap[binary->PrimaryOutput()] =
             CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
         return AddEdgesToThisNode({aEdge, bEdge});
     }
 
     MaybeError Graph::AddUnary(const op::Unary* unary) {
+        auto input = unary->Inputs()[0].Get();
+        DAWN_ASSERT(mGraphEdgesMap.find(input) != mGraphEdgesMap.end());
+        auto inputDims = input->Shape();
+        auto inputEdge = mGraphEdgesMap[unary->Inputs()[0].Get()];
+        std::vector<std::shared_ptr<EdgeInfoBase>> inputEdges = {inputEdge};
+        DML_TENSOR_DESC inputTensorDesc = inputEdge->outputTensorDESC;
+        ComPtr<IDMLOperator> dmlOperator;
         switch (unary->GetType()) {
+            case op::UnaryOpType::kAbs: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_ABS, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kCeil: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_CEIL, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kCos: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_COS, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kExp: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_EXP, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kFloor: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_FLOOR, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kHardSwish: {
+                dawn::WarningLog() << "The hardSwish is emulated from other operations, maybe the "
+                                      "performance isn't best";
+                std::shared_ptr<EdgeInfoBase> createdOutputEdge;
+                std::shared_ptr<EdgeInfoBase> intermediateEdge;
+                auto constantDims = ConvertDimensions(inputDims);
+                uint32_t length = SizeOfShape(constantDims);
+                DML_TENSOR_DESC constantInputTensorDesc, constantSixInputTensorDesc,
+                    intermediateTensorDesc;
+                std::vector<float> constant(length, 3);
+                size_t initialInputIndex = mInputs.size() - 1;
+                // x+3
+                {
+                    // Create the first constant input.
+                    if (createConstantInput(constantInputTensorDesc, constant.data(),
+                                            length * sizeof(float), constantDims, {},
+                                            DML_TENSOR_DATA_TYPE_FLOAT32)
+                            .IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                    };
+                    CREATE_BINARY_OPERATOR(ADD, inputTensorDesc, constantInputTensorDesc,
+                                           inputTensorDesc, dmlOperator);
+                    mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+                    createdOutputEdge =
+                        CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
+                    if (AddEdgesToThisNode({inputEdge, mInputs.back()}).IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
+                    };
+                }
+
+                // min(6, (x + 3))
+                {
+                    ComPtr<IDMLOperator> dmlOperator;
+                    intermediateTensorDesc = createdOutputEdge->outputTensorDESC;
+                    intermediateEdge = createdOutputEdge;
+                    constant = std::vector<float>(length, 6);
+                    // Create the second constant input.
+                    if (createConstantInput(constantSixInputTensorDesc, constant.data(),
+                                            length * sizeof(float), constantDims, {},
+                                            DML_TENSOR_DATA_TYPE_FLOAT32)
+                            .IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                    };
+                    CREATE_BINARY_OPERATOR(MIN, intermediateTensorDesc, constantInputTensorDesc,
+                                           intermediateTensorDesc, dmlOperator);
+                    mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+                    createdOutputEdge =
+                        CreateEdgeFromThisNode(intermediateTensorDesc, mIntermediateNodes.size());
+                    if (AddEdgesToThisNode({intermediateEdge, mInputs.back()}).IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
+                    };
+                }
+
+                // max(0, min(6, (x + 3)))
+                {
+                    ComPtr<IDMLOperator> dmlOperator;
+                    intermediateTensorDesc = createdOutputEdge->outputTensorDESC;
+                    intermediateEdge = createdOutputEdge;
+                    constant = std::vector<float>(length, 0);
+                    // Create the third constant input.
+                    if (createConstantInput(constantInputTensorDesc, constant.data(),
+                                            length * sizeof(float), constantDims, {},
+                                            DML_TENSOR_DATA_TYPE_FLOAT32)
+                            .IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                    };
+                    CREATE_BINARY_OPERATOR(MAX, intermediateTensorDesc, constantInputTensorDesc,
+                                           intermediateTensorDesc, dmlOperator);
+                    mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+                    createdOutputEdge =
+                        CreateEdgeFromThisNode(intermediateTensorDesc, mIntermediateNodes.size());
+                    if (AddEdgesToThisNode({intermediateEdge, mInputs.back()}).IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
+                    };
+                }
+
+                // x * max(0, min(6, (x + 3)))
+                {
+                    ComPtr<IDMLOperator> dmlOperator;
+                    intermediateTensorDesc = createdOutputEdge->outputTensorDESC;
+                    intermediateEdge = createdOutputEdge;
+                    CREATE_BINARY_OPERATOR(MULTIPLY, inputTensorDesc, intermediateTensorDesc,
+                                           inputTensorDesc, dmlOperator);
+                    mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+                    createdOutputEdge =
+                        CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
+                    if (AddEdgesToThisNode({inputEdge, intermediateEdge}).IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
+                    };
+                }
+
+                // x * max(0, min(6, (x + 3))) / 6
+                {
+                    ComPtr<IDMLOperator> dmlOperator;
+                    intermediateTensorDesc = createdOutputEdge->outputTensorDESC;
+                    intermediateEdge = createdOutputEdge;
+                    CREATE_BINARY_OPERATOR(DIVIDE, intermediateTensorDesc,
+                                           constantSixInputTensorDesc, intermediateTensorDesc,
+                                           dmlOperator);
+                    mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+                    mGraphEdgesMap[unary->PrimaryOutput()] =
+                        CreateEdgeFromThisNode(intermediateTensorDesc, mIntermediateNodes.size());
+                    // Reuse the second constant input we created above.
+                    return AddEdgesToThisNode({intermediateEdge, mInputs[initialInputIndex + 2]});
+                }
+            } break;
+            case op::UnaryOpType::kLog: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_LOG, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kLeakyRelu: {
+                DML_ACTIVATION_LEAKY_RELU_OPERATOR_DESC dmlSpecificOperatorDesc{};
+                dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;
+                dmlSpecificOperatorDesc.OutputTensor = &inputTensorDesc;
+                dmlSpecificOperatorDesc.Alpha =
+                    reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha();
+                CREATE_OPERATOR(ACTIVATION_LEAKY_RELU, dmlSpecificOperatorDesc)
+            } break;
+            // DML doesn't support element-wise negative, emulated it from multiplying input by -1.
+            case op::UnaryOpType::kNeg: {
+                auto constantDims = ConvertDimensions(inputDims);
+                uint32_t length = SizeOfShape(constantDims);
+                DML_TENSOR_DESC constantInputTensorDesc;
+                if (input->Type() == wnn::OperandType::Float32) {
+                    std::vector<float> constant(length, -1);
+                    if (createConstantInput(constantInputTensorDesc, constant.data(),
+                                            length * sizeof(float), constantDims, {},
+                                            DML_TENSOR_DATA_TYPE_FLOAT32)
+                            .IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                    };
+                } else if (input->Type() == wnn::OperandType::Int32) {
+                    std::vector<int32_t> constant(length, -1);
+                    if (createConstantInput(constantInputTensorDesc, constant.data(),
+                                            length * sizeof(int32_t), constantDims, {},
+                                            DML_TENSOR_DATA_TYPE_INT32)
+                            .IsError()) {
+                        return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                    };
+                } else {
+                    return DAWN_UNIMPLEMENTED_ERROR("This data type is not supported for neg.");
+                }
+
+                CREATE_BINARY_OPERATOR(MULTIPLY, inputTensorDesc, constantInputTensorDesc,
+                                       inputTensorDesc, dmlOperator);
+                inputEdges.push_back(mInputs.back());
+            } break;
+            case op::UnaryOpType::kRelu: {
+                CREATE_UNARY_OPERATOR(ACTIVATION_RELU, inputTensorDesc, dmlOperator);
+            } break;
             case op::UnaryOpType::kSigmoid: {
-                ComPtr<IDMLOperator> dmlOperator;
-                DAWN_ASSERT(mGraphEdgesMap.find(unary->Inputs()[0].Get()) != mGraphEdgesMap.end());
-                auto edge = mGraphEdgesMap[unary->Inputs()[0].Get()];
-                DML_TENSOR_DESC inputTensorDesc = edge->outputTensorDESC;
-                DML_ACTIVATION_SIGMOID_OPERATOR_DESC dmlSigmoidOperatorDesc{};
-                dmlSigmoidOperatorDesc.InputTensor = &inputTensorDesc;
-                dmlSigmoidOperatorDesc.OutputTensor = &inputTensorDesc;
-
-                DML_OPERATOR_DESC dmlOperatorDesc = {};
-                dmlOperatorDesc.Type = DML_OPERATOR_ACTIVATION_SIGMOID;
-                dmlOperatorDesc.Desc = &dmlSigmoidOperatorDesc;
-
-                WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
-                mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
-
-                mGraphEdgesMap[unary->PrimaryOutput()] =
-                    CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
-                return AddEdgesToThisNode({edge});
-                break;
-            }
+                CREATE_UNARY_OPERATOR(ACTIVATION_SIGMOID, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kSin: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_SIN, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kSoftmax: {
+                CREATE_UNARY_OPERATOR(ACTIVATION_SOFTMAX, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kTan: {
+                CREATE_UNARY_OPERATOR(ELEMENT_WISE_TAN, inputTensorDesc, dmlOperator);
+            } break;
+            case op::UnaryOpType::kTanh: {
+                CREATE_UNARY_OPERATOR(ACTIVATION_TANH, inputTensorDesc, dmlOperator);
+            } break;
             default:
-                return DAWN_UNIMPLEMENTED_ERROR(" Unary op is not implemented.");
+                return DAWN_UNIMPLEMENTED_ERROR("This Unary op is not implemented.");
         }
-        return {};
+        mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+        mGraphEdgesMap[unary->PrimaryOutput()] =
+            CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
+        return AddEdgesToThisNode(inputEdges);
     }
 
     MaybeError Graph::AddSplit(const op::Split* split) {
@@ -729,21 +944,21 @@ namespace webnn_native { namespace dml {
         for (size_t i = 0; i < mInputs.size(); ++i) {
             auto input = mInputs[i];
             if (namedInputs.empty()) {
-                if (input.isConstantInput) {
+                if (input->isConstantInput) {
                     uint32_t requiredAlignment = DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT;
                     offset = utils::RoundUpToMultiple(offset, (uint64_t)requiredAlignment);
                     inputBufferBinding[i].Buffer = mInputResource.Get();
                     inputBufferBinding[i].Offset = offset;
-                    inputBufferBinding[i].SizeInBytes = input.byteLength;
-                    memcpy(uploadBuffer + offset, input.buffer,
-                           static_cast<size_t>(input.byteLength));
-                    offset = offset + input.byteLength;
+                    inputBufferBinding[i].SizeInBytes = input->byteLength;
+                    memcpy(uploadBuffer + offset, input->buffer,
+                           static_cast<size_t>(input->byteLength));
+                    offset = offset + input->byteLength;
                 }
             } else {
-                if (!input.isConstantInput) {
+                if (!input->isConstantInput) {
                     uint32_t requiredAlignment = DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT;
                     offset = utils::RoundUpToMultiple(offset, (uint64_t)requiredAlignment);
-                    auto resource = namedInputs[input.name].resource;
+                    auto resource = namedInputs[input->name].resource;
                     inputBufferBinding[i].Buffer = mInputResource.Get();
                     inputBufferBinding[i].Offset = offset;
                     inputBufferBinding[i].SizeInBytes = resource.byteLength;
@@ -754,6 +969,7 @@ namespace webnn_native { namespace dml {
                 }
             }
         }
+        mUploadResource->Unmap(0, nullptr);
     }
 
     MaybeError Graph::CompileImpl() {
@@ -833,10 +1049,10 @@ namespace webnn_native { namespace dml {
         // Initialize constant inputs.
         uint64_t constantInputsResourceSize = 0;
         for (auto& input : mInputs) {
-            if (input.isConstantInput) {
+            if (input->isConstantInput) {
                 uint64_t offset = utils::RoundUpToMultiple(
                     constantInputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
-                constantInputsResourceSize = offset + input.byteLength;
+                constantInputsResourceSize = offset + input->byteLength;
             }
         }
 
@@ -891,13 +1107,13 @@ namespace webnn_native { namespace dml {
         uint64_t inputsResourceSize = 0;
         for (auto& input : mInputs) {
             // All the inputs must be set.
-            if (!input.isConstantInput && namedInputs.find(input.name) == namedInputs.end()) {
+            if (!input->isConstantInput && namedInputs.find(input->name) == namedInputs.end()) {
                 dawn::ErrorLog() << "The input must be set.";
                 return WNNComputeGraphStatus_Error;
             }
 
-            if (!input.isConstantInput) {
-                auto& resource = namedInputs[input.name].resource;
+            if (!input->isConstantInput) {
+                auto& resource = namedInputs[input->name].resource;
                 uint64_t offset = utils::RoundUpToMultiple(
                     inputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
                 inputsResourceSize = offset + resource.byteLength;

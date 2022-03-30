@@ -121,6 +121,13 @@ namespace webnn_native { namespace dml {
         void FillUploadResourceAndInputBindings(uint64_t uploadResourceSize,
                                                 std::vector<DML_BUFFER_BINDING>& inputBufferBinding,
                                                 std::map<std::string, Input> namedInputs = {});
+        MaybeError createConstantInput(DML_TENSOR_DESC& inputTensorDESC,
+                                       void const* value,
+                                       size_t size,
+                                       const std::vector<UINT>& dmlTensorDims,
+                                       const std::vector<UINT>& strides = {},
+                                       DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT32,
+                                       DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAG_OWNED_BY_DML);
 
       private:
         MaybeError CompileImpl() override;
@@ -150,7 +157,7 @@ namespace webnn_native { namespace dml {
         ComPtr<ID3D12Resource> mPersistentResource;
 
         // Describe a graph of DirectML operators used to compile a combined, optimized operator.
-        std::vector<InputEdgeInfo> mInputs;
+        std::vector<std::shared_ptr<InputEdgeInfo>> mInputs;
         std::vector<EdgeInfo> mOutputs;
         std::vector<DML_GRAPH_NODE_DESC> mIntermediateNodes;
         std::vector<DML_GRAPH_EDGE_DESC> mInputEdges;
@@ -172,7 +179,7 @@ namespace webnn_native { namespace dml {
         std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;
         std::vector<std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC>> mOutputEdgesDesc;
         std::vector<std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC>> mIntermediateEdgesDesc;
-        std::unique_ptr<int32_t> a = nullptr;
+        std::vector<std::unique_ptr<char>> mConstantsBuffer;
     };
 
 }}  // namespace webnn_native::dml
