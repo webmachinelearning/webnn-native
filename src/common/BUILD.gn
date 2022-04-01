@@ -161,7 +161,10 @@ config("dawn_internal") {
     cflags += [
       # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
       "-Wno-extra-semi",
-
+      
+      # workaroud for compile error for DirectMLX.h
+      "-Wno-unused-but-set-variable",
+      
       # Allow the use of DMLX_THROW(_hr); in DirectMLX.h
       "-Wno-extra-semi-stmt",
 

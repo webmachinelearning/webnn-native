@@ -59,15 +59,14 @@ namespace webnn_wire::server {
 
         mProcs.graphComputeAsync(
             graph->handle, namedInputs->handle, namedOutputs->handle,
-            ForwardToServer<decltype(&Server::OnGraphComputeAsyncCallback)>::Func<
-                &Server::OnGraphComputeAsyncCallback>(),
+            ForwardToServer<&Server::OnGraphComputeAsyncCallback>,
             userdata.release());
         return true;
     }
 
-    void Server::OnGraphComputeAsyncCallback(WNNComputeGraphStatus status,
-                                             const char* message,
-                                             ComputeAsyncUserdata* userdata) {
+    void Server::OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata, 
+                                             WNNComputeGraphStatus status,
+                                             const char* message) {
         if (status == WNNComputeGraphStatus_Success) {
             WNNArrayBufferView arrayBuffer = {};
             auto* namedOutputs = NamedOutputsObjects().Get(userdata->namedOutputsObjectID);

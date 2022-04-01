@@ -30,8 +30,7 @@ namespace webnn_wire::server {
         ErrorScopeUserdata* unownedUserdata = userdata.release();
         bool success = mProcs.contextPopErrorScope(
             context->handle,
-            ForwardToServer<decltype(
-                &Server::OnContextPopErrorScope)>::Func<&Server::OnContextPopErrorScope>(),
+            ForwardToServer<&Server::OnContextPopErrorScope>,
             unownedUserdata);
         if (!success) {
             delete unownedUserdata;
@@ -39,9 +38,9 @@ namespace webnn_wire::server {
         return success;
     }
 
-    void Server::OnContextPopErrorScope(WNNErrorType type,
-                                        const char* message,
-                                        ErrorScopeUserdata* userdata) {
+    void Server::OnContextPopErrorScope(ErrorScopeUserdata* userdata,
+                                        WNNErrorType type,
+                                        const char* message) {
         ReturnContextPopErrorScopeCallbackCmd cmd;
         cmd.context = userdata->context;
         cmd.requestSerial = userdata->requestSerial;
