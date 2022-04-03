@@ -28,9 +28,11 @@ namespace webnn_native::null {
             return new Context(options);
         }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         ContextBase* CreateContextWithGpuDevice(WGPUDevice device) {
             return new Context(device);
         }
+#endif
     };
 
     BackendConnection* Connect(InstanceBase* instance) {
@@ -45,8 +47,10 @@ namespace webnn_native::null {
     Context::Context(ContextOptions const* options) {
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
     Context::Context(WGPUDevice device) {
     }
+#endif
 
     GraphBase* Context::CreateGraphImpl() {
         return new Graph(this);

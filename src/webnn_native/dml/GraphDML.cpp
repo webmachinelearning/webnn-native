@@ -40,26 +40,25 @@ namespace webnn_native::dml {
         bool CheckShape(const ::dml::Expression& expression,
                         const OperatorBase* operatorBase,
                         size_t index = 0) {
-            // DAWN_ASSERT(index < operatorBase->Outputs().size());
-            // auto expectedShape = operatorBase->Outputs()[index]->Shape();
-            // ::dml::TensorDimensions dmlShape = expression.GetOutputDesc().sizes;
-            // // Shape {1} equals to shape {} for a scalar.
-            // if (dmlShape == std::vector<uint32_t>{1} && expectedShape.size() == 0) {
-            //     return true;
-            // }
-            // if (expectedShape.size() != dmlShape.size()) {
-            //     dawn::ErrorLog() << "The size of output shape is expected as "
-            //                      << expectedShape.size() << ", but got " << dmlShape.size();
-            //     return false;
-            // }
-            // for (size_t i = 0; i < dmlShape.size(); ++i) {
-            //     if (expectedShape[i] < 0 || static_cast<size_t>(expectedShape[i]) != dmlShape[i])
-            //     {
-            //         dawn::ErrorLog() << "The output shape at index " << i << " is expected as "
-            //                          << expectedShape[i] << ", but got " << dmlShape[i];
-            //         return false;
-            //     }
-            // }
+            DAWN_ASSERT(index < operatorBase->Outputs().size());
+            auto expectedShape = operatorBase->Outputs()[index]->Shape();
+            ::dml::TensorDimensions dmlShape = expression.GetOutputDesc().sizes;
+            // Shape {1} equals to shape {} for a scalar.
+            if (dmlShape == std::vector<uint32_t>{1} && expectedShape.size() == 0) {
+                return true;
+            }
+            if (expectedShape.size() != dmlShape.size()) {
+                dawn::ErrorLog() << "The size of output shape is expected as "
+                                 << expectedShape.size() << ", but got " << dmlShape.size();
+                return false;
+            }
+            for (size_t i = 0; i < dmlShape.size(); ++i) {
+                if (expectedShape[i] < 0 || static_cast<size_t>(expectedShape[i]) != dmlShape[i]) {
+                    dawn::ErrorLog() << "The output shape at index " << i << " is expected as "
+                                     << expectedShape[i] << ", but got " << dmlShape[i];
+                    return false;
+                }
+            }
             return true;
         }
 
@@ -1775,11 +1774,16 @@ namespace webnn_native::dml {
         if (mOutputExpressionMap.size() == 1) {
             std::string name = mOutputExpressionMap.begin()->first;
             auto outputExp = mOutputExpressionMap.begin()->second;
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             auto builder = outputExp.Impl()->GetGraphBuilder();
+#endif
             auto node = outputExp.Impl()->GetNode();
-            if (node.type == ::dml::detail::NodeType::Reinterpret &&
-                builder->m_reinterpretNodes[node.index].input->GetNode().type ==
-                    ::dml::detail::NodeType::Input) {
+            if (node.type == ::dml::detail::NodeType::Reinterpret
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+                && builder->m_reinterpretNodes[node.index].input->GetNode().type ==
+                       ::dml::detail::NodeType::Input
+#endif
+            ) {
                 // Deal with a graph with single reshape node.
                 // https://github.com/microsoft/DirectML/issues/71
                 mOutputExpressionMap[name] = ::dml::ActivationIdentity(outputExp);

@@ -17,13 +17,19 @@
 #include "webnn_native/ValidationUtils_autogen.h"
 #include "webnn_native/webnn_platform.h"
 
-#include <dawn/dawn_proc.h>
-#include <dawn_native/DawnNative.h>
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+#    include <dawn/dawn_proc.h>
+#    include <dawn_native/DawnNative.h>
+#endif
 #include <sstream>
 
 namespace webnn_native {
 
-    ContextBase::ContextBase(ContextOptions const* options) : mWGPUDevice(nullptr) {
+    ContextBase::ContextBase(ContextOptions const* options)
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+        : mWGPUDevice(nullptr)
+#endif
+    {
         if (options != nullptr) {
             mContextOptions = *options;
         }
@@ -31,6 +37,7 @@ namespace webnn_native {
         mCurrentErrorScope = mRootErrorScope.Get();
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
     ContextBase::ContextBase(WGPUDevice wgpuDevice) {
         DawnProcTable backend_procs = dawn_native::GetProcs();
         dawnProcSetProcs(&backend_procs);
@@ -39,19 +46,24 @@ namespace webnn_native {
         mRootErrorScope = AcquireRef(new ErrorScope());
         mCurrentErrorScope = mRootErrorScope.Get();
     }
+#endif
 
     ContextBase::~ContextBase() {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         if (mWGPUDevice)
             wgpuDeviceRelease(mWGPUDevice);
+#endif
     }
 
     GraphBase* ContextBase::CreateGraph() {
         return CreateGraphImpl();
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
     WGPUDevice ContextBase::GetWGPUDevice() {
         return mWGPUDevice;
     }
+#endif
 
     void ContextBase::InjectError(wnn::ErrorType type, const char* message) {
         if (ConsumedError(ValidateErrorType(type))) {

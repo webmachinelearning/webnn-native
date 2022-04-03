@@ -73,6 +73,8 @@ namespace webnn_wire::server {
                 return false;
             }
         }
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WNNGpuBufferView value;
         value.buffer = GetWGPUBuffer(id, generation);
         value.id = id;
@@ -81,6 +83,7 @@ namespace webnn_wire::server {
         value.offset = offset;
         resultData->handle =
             mProcs.graphBuilderConstantWithGpuBuffer(graphBuilder->handle, desc, &value);
+#endif
         return true;
     }
 

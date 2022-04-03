@@ -118,7 +118,11 @@ namespace webnn_native {
 
     OperandBase* GraphBuilderBase::ConstantWithGpuBuffer(OperandDescriptor const* desc,
                                                          GpuBufferView const* gpuBuffer) {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         VALIDATE_FOR_OPERAND(new op::Constant(this, desc, gpuBuffer));
+#endif
+        UNREACHABLE();
+        return nullptr;
     }
 
     OperandBase* GraphBuilderBase::Conv2d(OperandBase* input,
@@ -222,11 +226,16 @@ namespace webnn_native {
         VALIDATE_FOR_OPERAND(new op::Unary(this, op::UnaryOpType::kNeg, input));
     }
 
+    // OperandBase* GraphBuilderBase::Pad(OperandBase* input,
+    //                                    uint32_t const* padding,
+    //                                    size_t padding_count,
+    //                                    PadOptions const* options) {
+    //     VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, padding_count, options));
+    // }
     OperandBase* GraphBuilderBase::Pad(OperandBase* input,
-                                       uint32_t const* padding,
-                                       size_t padding_count,
+                                       OperandBase* padding,
                                        PadOptions const* options) {
-        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, padding_count, options));
+        VALIDATE_FOR_OPERAND(new op::Pad(this, input, padding, options));
     }
 
     OperandBase* GraphBuilderBase::Pow(OperandBase* a, OperandBase* b) {

@@ -28,6 +28,10 @@ namespace webnn_native::op {
             uint32_t const* padding,
             size_t paddingCount,
             PadOptions const* options);
+        Pad(GraphBuilderBase* builder,
+            OperandBase* input,
+            OperandBase* padding,
+            PadOptions const* options);
         ~Pad() override = default;
 
         MaybeError AddToGraph(GraphBase* graph) const override {

@@ -39,11 +39,14 @@ namespace webnn_wire { namespace server {
                 return false;
             }
         }
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WNNGpuDevice value;
         value.device = GetWGPUDevice(id, generation);
         value.id = id;
         value.generation = generation;
         resultData->handle = mProcs.instanceCreateContextWithGpuDevice(instance->handle, &value);
+#endif
         return true;
     }
 

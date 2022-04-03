@@ -31,9 +31,11 @@ namespace webnn_native::dml {
         return new Context(options);
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
     ContextBase* Backend::CreateContextWithGpuDevice(WGPUDevice device) {
         return new Context(device);
     }
+#endif
 
     BackendConnection* Connect(InstanceBase* instance) {
         Backend* backend = new Backend(instance);

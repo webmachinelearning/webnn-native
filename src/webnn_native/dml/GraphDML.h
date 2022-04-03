@@ -48,18 +48,18 @@
 
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
 // Support DirectMLX
-#include <initguid.h>
-#include <wrl/client.h>
-#include <wrl/implements.h>
+#    include <initguid.h>
+#    include <wrl/client.h>
+#    include <wrl/implements.h>
 
-#include <Windows.h>
-#include <d3d12.h>
+#    include <Windows.h>
+#    include <d3d12.h>
 
-#define DML_TARGET_VERSION_USE_LATEST 1
-#include <DirectML.h>
-#include "DirectMLX.h"
+#    define DML_TARGET_VERSION_USE_LATEST 1
+#    include <DirectML.h>
+#    include "DirectMLX.h"
 
-#include "dawn/native/dml/deps/src/dmldevice.h"
+#    include "dawn/native/dml/deps/src/dmldevice.h"
 #else
 #    include "webnn_native/dml/deps/src/precomp.h"
 #endif

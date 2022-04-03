@@ -200,7 +200,7 @@ hooks = [
   {
     'name': 'clang_format_win',
     'pattern': '.',
-    'condition': 'host_os == "win"',
+    'condition': 'host_os == "win" and dawn_standalone',
     'action': [ 'download_from_google_storage',
                 '--no_resume',
                 '--no_auth',

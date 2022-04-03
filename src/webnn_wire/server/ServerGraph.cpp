@@ -33,6 +33,7 @@ namespace webnn_wire::server {
         if (arrayBuffer.buffer != nullptr) {
             // Return the result.
             ReturnGraphComputeResultCmd cmd;
+            cmd.namedOutputs = ObjectHandle{outputsId, namedOutputs->generation};
             cmd.name = "TODO: use the name getting from namedOutputs";
             cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
             cmd.byteLength = arrayBuffer.byteLength;

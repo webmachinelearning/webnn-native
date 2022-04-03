@@ -77,7 +77,8 @@ namespace webnn_native {
         OperandBase* Min(OperandBase*, OperandBase*);
         OperandBase* Mul(OperandBase*, OperandBase*);
         OperandBase* Neg(OperandBase*);
-        OperandBase* Pad(OperandBase*, uint32_t const*, size_t, PadOptions const*);
+        // OperandBase* Pad(OperandBase*, uint32_t const*, size_t, PadOptions const*);
+        OperandBase* Pad(OperandBase*, OperandBase*, PadOptions const* options);
         OperandBase* Pow(OperandBase*, OperandBase*);
         OperandBase* ReduceArgMax(OperandBase*, ReduceOptions const* options);
         OperandBase* ReduceArgMin(OperandBase*, ReduceOptions const* options);

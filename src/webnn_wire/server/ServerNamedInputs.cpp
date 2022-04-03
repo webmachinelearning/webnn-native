@@ -40,11 +40,13 @@ namespace webnn_wire::server {
             value.byteOffset = byteOffset;
             input.resource.arrayBufferView = value;
         } else {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             WNNGpuBufferView value = {};
             value.buffer = GetWGPUBuffer(gpuBufferId, gpuBufferGeneration);
             value.id = gpuBufferId;
             value.generation = gpuBufferGeneration;
             input.resource.gpuBufferView = value;
+#endif
         }
         input.dimensions = dimensions;
         input.dimensionsCount = dimensionsCount;

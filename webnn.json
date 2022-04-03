@@ -757,14 +757,13 @@
         ]
       },
       {
-      "name": "pad",
-      "returns": "operand",
-      "args": [
-        {"name": "input", "type": "operand"},
-        {"name": "padding", "type": "uint32_t", "annotation": "const*", "length": "padding count"},
-        {"name": "padding count", "type": "uint32_t"},
-        {"name": "options", "type": "pad options", "annotation": "const*", "optional": true}
-      ]
+        "name": "pad",
+        "returns": "operand",
+        "args": [
+          {"name": "input", "type": "operand"},
+          {"name": "padding", "type": "operand"},
+          {"name": "options", "type": "pad options", "annotation": "const*", "optional": true}
+        ]
       },
       {
         "name": "reduce arg max",

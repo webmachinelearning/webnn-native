@@ -20,7 +20,9 @@
 #include "webnn_native/ErrorScope.h"
 #include "webnn_native/webnn_platform.h"
 
-#include <webgpu/webgpu.h>
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+#    include <webgpu/webgpu.h>
+#endif
 
 class WebGLRenderingContext;
 namespace webnn_native {
@@ -28,7 +30,9 @@ namespace webnn_native {
     class ContextBase : public RefCounted {
       public:
         explicit ContextBase(ContextOptions const* options = nullptr);
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         explicit ContextBase(WGPUDevice wgpuDevice);
+#endif
         virtual ~ContextBase();
 
         bool ConsumedError(MaybeError maybeError) {
@@ -50,7 +54,9 @@ namespace webnn_native {
         }
 
         GraphBase* CreateGraph();
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUDevice GetWGPUDevice();
+#endif
 
         // Dawn API
         void InjectError(wnn::ErrorType type, const char* message);
@@ -71,7 +77,9 @@ namespace webnn_native {
         Ref<ErrorScope> mCurrentErrorScope;
 
         ContextOptions mContextOptions;
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUDevice mWGPUDevice;
+#endif
     };
 
 }  // namespace webnn_native

@@ -53,10 +53,12 @@ namespace webnn_wire::server {
         return true;
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
     bool Server::InjectDawnWireServer(dawn_wire::WireServer* dawn_wire_server) {
         mDawnWireServer = dawn_wire_server;
         return true;
     }
+#endif
 
     bool Server::InjectContext(WNNContext context, uint32_t id, uint32_t generation) {
         ASSERT(context != nullptr);

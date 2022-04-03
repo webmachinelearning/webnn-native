@@ -28,6 +28,7 @@ namespace webnn_native {
       public:
         NamedInputsBase() = default;
         virtual ~NamedInputsBase() {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             for (auto& input : mInputs) {
                 WGPUBuffer gpuBuffer =
                     reinterpret_cast<WGPUBuffer>(input.second.resource.gpuBufferView.buffer);
@@ -35,6 +36,7 @@ namespace webnn_native {
                     wgpuBufferRelease(gpuBuffer);
                 }
             }
+#endif
         }
 
         // WebNN API
@@ -50,11 +52,15 @@ namespace webnn_native {
                 mInputs[std::string(name)].resource.arrayBufferView.buffer = buffer.get();
                 mInputsBuffer.push_back(std::move(buffer));
             } else if (input->resource.gpuBufferView.buffer != nullptr) {
+#    if defined(WEBNN_ENABLE_GPU_BUFFER)
                 GpuBufferView gpuBufferView = input->resource.gpuBufferView;
                 WGPUBuffer gpuBuffer =
                     reinterpret_cast<WGPUBuffer>(input->resource.gpuBufferView.buffer);
                 wgpuBufferReference(gpuBuffer);
                 mInputs[std::string(name)].resource.gpuBufferView = gpuBufferView;
+#    else
+                UNREACHABLE();
+#    endif
             }
             std::vector<int32_t> dimensions;
             dimensions.assign(input->dimensions, input->dimensions + input->dimensionsCount);

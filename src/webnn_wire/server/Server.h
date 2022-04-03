@@ -20,8 +20,8 @@
 #include "webnn_wire/server/ServerBase_autogen.h"
 
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
-#include <webgpu/webgpu.h>
-#include <dawn/wire/WireServer.h>
+#    include <dawn/wire/WireServer.h>
+#    include <webgpu/webgpu.h>
 #endif
 
 namespace webnn_wire::server {
@@ -148,10 +148,10 @@ namespace webnn_wire::server {
 
         void ClearContextCallbacks(WNNContext context);
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUDevice GetWGPUDevice(uint32_t id, uint32_t generation);
-
         WGPUBuffer GetWGPUBuffer(uint32_t id, uint32_t generation);
-
+#endif
         // Error callbacks
         void OnUncapturedError(WNNErrorType type, const char* message);
         void OnContextLost(const char* message);

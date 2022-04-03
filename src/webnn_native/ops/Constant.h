@@ -26,7 +26,7 @@ namespace webnn_native::op {
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  const ArrayBufferView* arrayBuffer)
-            : OperatorBase(builder), mBuffer(nullptr), mWGPUBuffer(nullptr) {
+            : OperatorBase(builder), mBuffer(nullptr) {
             if (desc == nullptr || arrayBuffer == nullptr) {
                 return;
             }
@@ -45,6 +45,7 @@ namespace webnn_native::op {
             mByteLength = arrayBuffer->byteLength;
         }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         Constant(GraphBuilderBase* builder,
                  const OperandDescriptor* desc,
                  const GpuBufferView* view)
@@ -61,12 +62,15 @@ namespace webnn_native::op {
             mByteOffset = view->offset;
             mByteLength = view->size;
         }
+#endif
 
         ~Constant() override {
             if (mBuffer)
                 free(mBuffer);
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             if (mWGPUBuffer)
                 wgpuBufferReference(mWGPUBuffer);
+#endif
         }
 
         MaybeError AddToGraph(GraphBase* graph) const override {
@@ -90,9 +94,11 @@ namespace webnn_native::op {
             return mBuffer;
         }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUBuffer GetWGPUBuffer() const {
             return mWGPUBuffer;
         }
+#endif
 
         size_t GetByteLength() const {
             return mByteLength;
@@ -106,7 +112,9 @@ namespace webnn_native::op {
         OperandDescriptor mDescriptor;
         std::vector<int32_t> mDimensions;
         void* mBuffer;
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUBuffer mWGPUBuffer;
+#endif
         size_t mByteLength;
         size_t mByteOffset;
     };

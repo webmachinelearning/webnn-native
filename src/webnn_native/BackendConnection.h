@@ -35,7 +35,10 @@ namespace webnn_native {
         InstanceBase* GetInstance() const;
 
         virtual ContextBase* CreateContext(ContextOptions const* options = nullptr) = 0;
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
         virtual ContextBase* CreateContextWithGpuDevice(WGPUDevice device) = 0;
+#endif
 
       private:
         InstanceBase* mInstance = nullptr;

@@ -245,10 +245,15 @@ source_set("webnn_native_sources") {
       "dxgi.lib",
       "d3d12.lib",
       "directml.lib",
-      "dawn_proc.dll.lib",
-      "dawn_native.dll.lib",
-      "dawn_wire.dll.lib",
     ]
+    if (build_with_chromium) {
+      libs += [
+        "dawn_proc.dll.lib",
+        "dawn_native.dll.lib",
+        "dawn_wire.dll.lib",
+      ]
+      deps += [ "${webnn_dawn_root}/src/dawn_native" ]
+    }
 
     cflags = [
       "/std:c++17",
@@ -259,7 +264,6 @@ source_set("webnn_native_sources") {
 
     data_deps += [ ":copy_dml_dll" ]
     deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
-    deps += [ "${webnn_dawn_root}/src/dawn_native" ]
   }
 
   if (webnn_enable_onednn) {

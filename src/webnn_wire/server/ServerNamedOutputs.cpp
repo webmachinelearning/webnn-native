@@ -36,9 +36,11 @@ namespace webnn_wire::server {
             resource.arrayBufferView.byteLength = byteLength;
             resource.arrayBufferView.byteOffset = byteOffset;
         } else {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             resource.gpuBufferView.buffer = GetWGPUBuffer(gpuBufferId, gpuBufferGeneration);
             resource.gpuBufferView.id = gpuBufferId;
             resource.gpuBufferView.generation = gpuBufferGeneration;
+#endif
         }
         mProcs.namedOutputsSet(namedOutputs->handle, name, &resource);
         return true;

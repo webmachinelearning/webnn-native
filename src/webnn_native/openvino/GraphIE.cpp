@@ -1339,7 +1339,7 @@ namespace webnn_native::ie {
                 dawn::ErrorLog() << "IE Failed to ie_blob_get_buffer";
                 return WNNComputeGraphStatus_Error;
             }
-            auto& resource = namedInputs[name].resource;
+            auto& resource = namedInputs[name].resource.arrayBufferView;
             memcpy(buffer.buffer, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
                    resource.byteLength);
         }
@@ -1353,6 +1353,7 @@ namespace webnn_native::ie {
 
         // Get Data from nGraph with output.
         for (auto [name, output] : outputs->GetRecords()) {
+            ArrayBufferView output = output.arrayBufferView;
             DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
             auto originalName = mOutputNameMap[name];

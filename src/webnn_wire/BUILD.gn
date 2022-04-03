@@ -104,7 +104,9 @@ dawn_component("webnn_wire") {
     "server/ServerOperatorArray.cpp",
   ]
 
-  libs = [ "dawn_wire.dll.lib" ]
+  if (build_with_chromium) {
+    libs = [ "dawn_wire.dll.lib" ]
+  }
 
   # Make headers publicly visible
   public_deps = [ ":webnn_wire_headers" ]

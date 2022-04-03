@@ -29,6 +29,7 @@ namespace webnn_native {
       public:
         NamedOutputsBase() = default;
         virtual ~NamedOutputsBase() {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
             for (auto& output : mOutputs) {
                 WGPUBuffer gpuBuffer =
                     reinterpret_cast<WGPUBuffer>(output.second.gpuBufferView.buffer);
@@ -36,6 +37,7 @@ namespace webnn_native {
                     wgpuBufferRelease(gpuBuffer);
                 }
             }
+#endif
         }
 
         // WebNN API
@@ -50,9 +52,13 @@ namespace webnn_native {
                 mOutputs[std::string(name)].arrayBufferView.buffer = buffer.get();
                 mOutputsBuffer.push_back(std::move(buffer));
             } else {
+#    if defined(WEBNN_ENABLE_GPU_BUFFER)
                 WGPUBuffer gpuBuffer = reinterpret_cast<WGPUBuffer>(resource->gpuBufferView.buffer);
                 wgpuBufferReference(gpuBuffer);
                 mOutputs[std::string(name)].gpuBufferView = resource->gpuBufferView;
+#    else
+                UNREACHABLE();
+#    endif
             }
 #endif  // defined(WEBNN_ENABLE_WIRE)
         }
