@@ -39,6 +39,7 @@ namespace webnn_native { namespace op {
 
         Pool2dOptions const* GetOptions() const;
         Pool2dType GetType() const;
+        const std::vector<int32_t>& GetOutputSizes() const;
 
       private:
         MaybeError CalculateShape();

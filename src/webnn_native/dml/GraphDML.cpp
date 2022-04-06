@@ -961,12 +961,16 @@ namespace webnn_native { namespace dml {
         std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
         ::dml::Span<const uint32_t> endPadding(endPaddingVector);
         ::dml::Expression output;
+        auto outputSizes = pool2d->GetOutputSizes();
+        ::dml::TensorDimensions outputShape = {inputDims[0], inputDims[1],
+                                               static_cast<uint32_t>(outputSizes[0]),
+                                               static_cast<uint32_t>(outputSizes[1])};
         if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {
             if (dilations[0] != 1 || dilations[1] != 1) {
                 return DAWN_INTERNAL_ERROR("The dilations of average pool2d are not supported.");
             }
-            output =
-                ::dml::AveragePooling(input, strides, windowSizes, startPadding, endPadding, false);
+            output = ::dml::AveragePooling(input, strides, windowSizes, startPadding, endPadding,
+                                           false, outputShape);
         }
         // L2Pool2d is not supported, emulate it by referring to
         // https://github.com/tensorflow/tfjs/issues/5539.
@@ -975,12 +979,22 @@ namespace webnn_native { namespace dml {
             std::vector<float> constant(length, 2);
             auto pow = ::dml::Pow(input, BindingConstant(DML_TENSOR_DATA_TYPE_FLOAT32, inputDims,
                                                          constant.data(), sizeof(float) * length));
-            auto avgPool2d =
-                ::dml::AveragePooling(pow, strides, windowSizes, startPadding, endPadding, false);
+            auto avgPool2d = ::dml::AveragePooling(pow, strides, windowSizes, startPadding,
+                                                   endPadding, false, outputShape);
             output = ::dml::Sqrt(avgPool2d);
         } else if (pool2d->GetType() == op::Pool2dType::kMaxPool2d) {
+            if (dilations[0] != 1 || dilations[1] != 1) {
+                for (size_t i = 0; i < windowSizes.size(); ++i) {
+                    uint32_t paddedInputSize = inputDims[2 + i] + startPadding[i] + endPadding[i];
+                    uint32_t dilatedWindowSize = 1 + (windowSizes[i] - 1) * dilations[i];
+                    outputShape[2 + i] =
+                        (dilatedWindowSize >= paddedInputSize)
+                            ? 1
+                            : (paddedInputSize - dilatedWindowSize) / strides[i] + 1;
+                }
+            }
             output = ::dml::MaxPooling(input, windowSizes, strides, startPadding, endPadding,
-                                       dilations, false)
+                                       dilations, false, outputShape)
                          .values;
         } else {
             return DAWN_INTERNAL_ERROR("This pool2d type is not supported.");
@@ -990,8 +1004,6 @@ namespace webnn_native { namespace dml {
             output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
         }
         mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
-        // TODO(mingming): There is some confusion for calculating the output shape of the pool2d
-        // with dilations.
         DAWN_ASSERT(CheckShape(output, pool2d));
         return {};
     }

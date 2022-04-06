@@ -82,6 +82,10 @@ namespace webnn_native { namespace op {
         return mOpType;
     }
 
+    const std::vector<int32_t>& Pool2d::GetOutputSizes() const {
+        return mOutputSizes;
+    }
+
     MaybeError Pool2d::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
         bool nchw = mOptions.layout == wnn::InputOperandLayout::Nchw;
@@ -145,6 +149,7 @@ namespace webnn_native { namespace op {
             outputShape = {batches, outputHeight, outputWidth, channels};
         }
         mOutputs[0]->SetShape(std::move(outputShape));
+        mOutputSizes = {outputHeight, outputWidth};
         return {};
     }
 
