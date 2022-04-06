@@ -28,22 +28,22 @@
 namespace webnn_native { namespace dml {
 
 #define CREATE_OPERATOR(type, dmlSpecificOperatorDesc) \
-    DML_OPERATOR_DESC dmlOperatorDesc = {};           \
-    dmlOperatorDesc.Type = DML_OPERATOR_##type;       \
+    DML_OPERATOR_DESC dmlOperatorDesc = {};            \
+    dmlOperatorDesc.Type = DML_OPERATOR_##type;        \
     dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;   \
     WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
 
 #define CREATE_BINARY_OPERATOR(type, aTensorDesc, bTensorDesc, outputTensorDesc, dmlOperator) \
-    DML_ELEMENT_WISE_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};                         \
-    dmlSpecificOperatorDesc.ATensor = &aTensorDesc;                                            \
-    dmlSpecificOperatorDesc.BTensor = &bTensorDesc;                                            \
-    dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;                                  \
+    DML_ELEMENT_WISE_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};                        \
+    dmlSpecificOperatorDesc.ATensor = &aTensorDesc;                                           \
+    dmlSpecificOperatorDesc.BTensor = &bTensorDesc;                                           \
+    dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;                                 \
     CREATE_OPERATOR(ELEMENT_WISE_##type, dmlSpecificOperatorDesc)
 
 #define CREATE_UNARY_OPERATOR(type, inputTensorDesc, dmlOperator) \
-    DML_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};          \
-    dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;        \
-    dmlSpecificOperatorDesc.OutputTensor = &inputTensorDesc;       \
+    DML_##type##_OPERATOR_DESC dmlSpecificOperatorDesc{};         \
+    dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;       \
+    dmlSpecificOperatorDesc.OutputTensor = &inputTensorDesc;      \
     CREATE_OPERATOR(type, dmlSpecificOperatorDesc)
 
     void CopyBufferRegion(ComPtr<ID3D12GraphicsCommandList> commandList,
@@ -73,6 +73,26 @@ namespace webnn_native { namespace dml {
             resourceBarrier.Transition.StateAfter = D3D12_RESOURCE_STATE_UNORDERED_ACCESS;
             commandList->ResourceBarrier(1, &resourceBarrier);
         }
+    }
+
+    std::vector<bool> GetBroadcastFlags(const std::vector<int32_t>& inputShape,
+                                        const std::vector<int32_t>& outputShape,
+                                        size_t skipAxes = 0) {
+        if (inputShape.size() < skipAxes || inputShape.size() > outputShape.size()) {
+            dawn::ErrorLog() << "Shapes are incompatible, broadcasting failed.";
+            DAWN_ASSERT(0);
+        }
+        std::vector<bool> BroadcastFlags(outputShape.size(), false);
+        auto aCount = outputShape.size() - inputShape.size();
+        for (size_t i = 0; i < aCount; ++i) {
+            BroadcastFlags[i] = true;
+        }
+        for (size_t i = 0; i < inputShape.size() - skipAxes; ++i) {
+            if (inputShape[i] == 1 && outputShape[aCount + i] != 1) {
+                BroadcastFlags[aCount + i] = true;
+            }
+        }
+        return BroadcastFlags;
     }
 
     // Strides are used to express broadcasting (by specifying a stride of 0) as well as
@@ -256,11 +276,13 @@ namespace webnn_native { namespace dml {
 
     std::shared_ptr<EdgeInfoBase> CreateEdgeFromThisNode(const DML_TENSOR_DESC& outputTensorDesc,
                                                          const uint32_t nodeIndex,
-                                                         const uint32_t outputNodeIndex = 0) {
+                                                         const uint32_t outputNodeIndex = 0,
+                                                         bool isInputEdge = false) {
         std::shared_ptr<EdgeInfo> edgeInfo(new EdgeInfo());
         edgeInfo->outputTensorDESC = outputTensorDesc;
         edgeInfo->nodeIndex = nodeIndex;
         edgeInfo->outputNodeIndex = outputNodeIndex;
+        edgeInfo->isInputEdge = isInputEdge;
         std::shared_ptr<EdgeInfoBase> edge(edgeInfo);
         return edge;
     }
@@ -404,32 +426,13 @@ namespace webnn_native { namespace dml {
         return {};
     }
 
-    std::vector<bool> GetBroadcastFlags(const std::vector<int32_t>& inputShape,
-                                        const std::vector<int32_t>& outputShape,
-                                        size_t skipAxes = 0) {
-        if (inputShape.size() < skipAxes || inputShape.size() > outputShape.size()) {
-            dawn::ErrorLog() << "Shapes are incompatible, broadcasting failed.";
-            DAWN_ASSERT(0);
-        }
-        std::vector<bool> BroadcastFlags(outputShape.size(), false);
-        auto aCount = outputShape.size() - inputShape.size();
-        for (size_t i = 0; i < aCount; ++i) {
-            BroadcastFlags[i] = true;
-        }
-        for (size_t i = 0; i < inputShape.size() - skipAxes; ++i) {
-            if (inputShape[i] == 1 && outputShape[aCount + i] != 1) {
-                BroadcastFlags[aCount + i] = true;
-            }
-        }
-        return BroadcastFlags;
-    }
-
     MaybeError Graph::AddBinary(const op::Binary* binary) {
+        DAWN_ASSERT(binary->Inputs().size() == 2);
         DAWN_ASSERT(mGraphEdgesMap.find(binary->Inputs()[0].Get()) != mGraphEdgesMap.end());
         DAWN_ASSERT(mGraphEdgesMap.find(binary->Inputs()[1].Get()) != mGraphEdgesMap.end());
+
         auto aEdge = mGraphEdgesMap[binary->Inputs()[0].Get()];
         auto bEdge = mGraphEdgesMap[binary->Inputs()[1].Get()];
-
         auto aDims = binary->Inputs()[0].Get()->Shape();
         auto bDims = binary->Inputs()[1].Get()->Shape();
         auto outputDims = binary->Outputs()[0].Get()->Shape();
@@ -568,10 +571,12 @@ namespace webnn_native { namespace dml {
     }
 
     MaybeError Graph::AddUnary(const op::Unary* unary) {
-        auto input = unary->Inputs()[0].Get();
-        DAWN_ASSERT(mGraphEdgesMap.find(input) != mGraphEdgesMap.end());
-        auto inputDims = input->Shape();
-        auto inputEdge = mGraphEdgesMap[unary->Inputs()[0].Get()];
+        DAWN_ASSERT(unary->Inputs().size() == 1);
+        const OperandBase* inputOperand = unary->Inputs()[0].Get();
+        DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+        auto inputEdge = mGraphEdgesMap[inputOperand];
+        auto inputDims = inputOperand->Shape();
         std::vector<std::shared_ptr<EdgeInfoBase>> inputEdges = {inputEdge};
         DML_TENSOR_DESC inputTensorDesc = inputEdge->outputTensorDESC;
         ComPtr<IDMLOperator> dmlOperator;
@@ -713,7 +718,7 @@ namespace webnn_native { namespace dml {
                 auto constantDims = ConvertDimensions(inputDims);
                 uint32_t length = SizeOfShape(constantDims);
                 DML_TENSOR_DESC constantInputTensorDesc;
-                if (input->Type() == wnn::OperandType::Float32) {
+                if (inputOperand->Type() == wnn::OperandType::Float32) {
                     std::vector<float> constant(length, -1);
                     if (createConstantInput(constantInputTensorDesc, constant.data(),
                                             length * sizeof(float), constantDims, {},
@@ -721,7 +726,7 @@ namespace webnn_native { namespace dml {
                             .IsError()) {
                         return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
                     };
-                } else if (input->Type() == wnn::OperandType::Int32) {
+                } else if (inputOperand->Type() == wnn::OperandType::Int32) {
                     std::vector<int32_t> constant(length, -1);
                     if (createConstantInput(constantInputTensorDesc, constant.data(),
                                             length * sizeof(int32_t), constantDims, {},
@@ -765,9 +770,9 @@ namespace webnn_native { namespace dml {
     }
 
     MaybeError Graph::AddSplit(const op::Split* split) {
-        ComPtr<IDMLOperator> dmlOperator;
         DAWN_ASSERT(split->Inputs().size() == 1);
-        OperandBase* inputOperand = split->Inputs()[0].Get();
+        auto inputOperand = split->Inputs()[0].Get();
+        DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
 
         auto inputDims = inputOperand->Shape();
         int32_t axis = split->GetAxis();
@@ -792,7 +797,6 @@ namespace webnn_native { namespace dml {
             mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         }
 
-        DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
         auto edge = mGraphEdgesMap[inputOperand];
         DML_TENSOR_DESC inputTensorDesc = edge->outputTensorDESC;
 
@@ -806,6 +810,7 @@ namespace webnn_native { namespace dml {
         dmlOperatorDesc.Type = DML_OPERATOR_SPLIT;
         dmlOperatorDesc.Desc = &dmlSplitOperatorDesc;
 
+        ComPtr<IDMLOperator> dmlOperator;
         WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
         mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
 
@@ -816,14 +821,47 @@ namespace webnn_native { namespace dml {
         return AddEdgesToThisNode({edge});
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
-        auto edge = mGraphEdgesMap[output];
-        if (edge->isInputEdge) {
-            return DAWN_INTERNAL_ERROR("Graph for input = output is invalid.");
+    MaybeError Graph::AddReshape(const op::Reshape* reshape) {
+        DAWN_ASSERT(reshape->Inputs().size() == 1);
+        const OperandBase* inputOperand = reshape->Inputs()[0].Get();
+        DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+        auto outputDims = reshape->Outputs()[0].Get()->Shape();
+        if (outputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+            return DAWN_INTERNAL_ERROR("The size of target new shape is not supported by DML.");
         }
-        edge->name = name;
+        std::unique_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+        // Reshape needn't new strides, because the layout has not been changed.
+        if (!CreateDmlTensorDesc(outputDmlTensorDesc, ConvertDimensions(outputDims))) {
+            return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+        }
+        DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                            &outputDmlTensorDesc->bufferDesc};
+        // Reshape is not a real node in DML, just need to update the edge.
+        mGraphEdgesMap[reshape->PrimaryOutput()] =
+            CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size(), 0,
+                                   mGraphEdgesMap[inputOperand]->isInputEdge);
+        return {};
+    }
+
+    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+        auto outputEdge = mGraphEdgesMap[output];
+        if (outputEdge->isInputEdge) {
+            // Deal with a graph with single Reshape node.
+            // https://github.com/microsoft/DirectML/issues/71
+            ComPtr<IDMLOperator> dmlOperator;
+            auto edge = outputEdge;
+            auto inputTensorDesc = outputEdge->outputTensorDESC;
+            CREATE_UNARY_OPERATOR(ACTIVATION_IDENTITY, inputTensorDesc, dmlOperator);
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+            auto outputEdge = CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
+            if (AddEdgesToThisNode({edge}).IsError()) {
+                return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
+            };
+        }
+        outputEdge->name = name;
         std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC> outputEdgeDesc(new DML_OUTPUT_GRAPH_EDGE_DESC);
-        auto outputEdgeInfo = reinterpret_cast<EdgeInfo*>(edge.get());
+        auto outputEdgeInfo = reinterpret_cast<EdgeInfo*>(outputEdge.get());
         outputEdgeDesc->FromNodeIndex = outputEdgeInfo->nodeIndex;
         outputEdgeDesc->FromNodeOutputIndex = outputEdgeInfo->outputNodeIndex;
         outputEdgeDesc->GraphOutputIndex = mOutputs.size();
@@ -868,10 +906,6 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddResample2d(const op::Resample2d* resample) {
         return DAWN_UNIMPLEMENTED_ERROR("Resample2d hasn't been supported on DirectML.");
-    }
-
-    MaybeError Graph::AddReshape(const op::Reshape* reshape) {
-        return DAWN_UNIMPLEMENTED_ERROR("Reshape hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddSlice(const op::Slice* slice) {
