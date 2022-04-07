@@ -173,7 +173,7 @@ namespace webnn_native { namespace dml {
         // Keep intermediate nodes here to avoid releasing too early.
         std::map<uint32_t, ComPtr<IDMLOperator>> mIntermediateNodesMap;
         // Keep the input tensors description here to avoid releasing too early.
-        std::vector<std::unique_ptr<DmlTensorDesc>> mDmlTensorsDesc;
+        std::vector<std::shared_ptr<DmlTensorDesc>> mDmlTensorsDesc;
         // Keep the descriptions of nodes and edges here to avoid releasing too early.
         std::vector<std::unique_ptr<DML_OPERATOR_GRAPH_NODE_DESC>> mIntermediateNodesDesc;
         std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;

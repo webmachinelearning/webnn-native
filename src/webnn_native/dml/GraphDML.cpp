@@ -173,7 +173,8 @@ namespace webnn_native { namespace dml {
                 D3D12_TEXTURE_LAYOUT_ROW_MAJOR,  flags};
     };
 
-    bool CreateDmlTensorDesc(const std::unique_ptr<DmlTensorDesc>& dmlTensorDesc,
+    bool CreateDmlTensorDesc(std::vector<std::shared_ptr<DmlTensorDesc>>& dmlTensorsDesc,
+                             const std::shared_ptr<DmlTensorDesc>& dmlTensorDesc,
                              const std::vector<UINT>& dimensions,
                              const std::vector<UINT>& strides = {},
                              DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT32,
@@ -231,10 +232,13 @@ namespace webnn_native { namespace dml {
         dmlTensorDesc->bufferDesc.GuaranteedBaseOffsetAlignment = 0;
         dmlTensorDesc->bufferDesc.DataType = dataType;
         dmlTensorDesc->bufferDesc.Flags = tensorFlag;
+
+        dmlTensorsDesc.push_back(dmlTensorDesc);
         return true;
     }
 
-    bool CreateDmlTensorDesc(const std::unique_ptr<DmlTensorDesc>& dmlTensorDesc,
+    bool CreateDmlTensorDesc(std::vector<std::shared_ptr<DmlTensorDesc>>& dmlTensorsDesc,
+                             const std::shared_ptr<DmlTensorDesc>& dmlTensorDesc,
                              OperandDescriptor const* desc,
                              DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAGS::DML_TENSOR_FLAG_NONE) {
         DAWN_ASSERT(desc != nullptr);
@@ -260,18 +264,20 @@ namespace webnn_native { namespace dml {
             return false;
         }
 
-        return CreateDmlTensorDesc(dmlTensorDesc, dimensions, {}, dataType, tensorFlag);
+        return CreateDmlTensorDesc(dmlTensorsDesc, dmlTensorDesc, dimensions, {}, dataType,
+                                   tensorFlag);
     }
 
-    bool CreateDmlTensorDesc(const std::unique_ptr<DmlTensorDesc>& dmlTensorDesc,
+    bool CreateDmlTensorDesc(std::vector<std::shared_ptr<DmlTensorDesc>>& dmlTensorsDesc,
+                             const std::shared_ptr<DmlTensorDesc>& dmlTensorDesc,
                              DML_TENSOR_DESC* tensorDESC,
                              const std::vector<UINT>& dimensions = {},
                              const std::vector<UINT>& strides = {}) {
         DAWN_ASSERT(tensorDESC != nullptr);
         const DML_BUFFER_TENSOR_DESC* bufferTensorDesc =
             reinterpret_cast<const DML_BUFFER_TENSOR_DESC*>(tensorDESC->Desc);
-        return CreateDmlTensorDesc(dmlTensorDesc, dimensions, strides, bufferTensorDesc->DataType,
-                                   bufferTensorDesc->Flags);
+        return CreateDmlTensorDesc(dmlTensorsDesc, dmlTensorDesc, dimensions, strides,
+                                   bufferTensorDesc->DataType, bufferTensorDesc->Flags);
     }
 
     std::shared_ptr<EdgeInfoBase> CreateEdgeFromThisNode(const DML_TENSOR_DESC& outputTensorDesc,
@@ -352,8 +358,9 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddConstant(const op::Constant* constant) {
         const OperandDescriptor* desc = constant->GetOperandDescriptor();
-        std::unique_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(dmlTensorDesc, desc, DML_TENSOR_FLAG_OWNED_BY_DML)) {
+        std::shared_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, dmlTensorDesc, desc,
+                                 DML_TENSOR_FLAG_OWNED_BY_DML)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC outputTensorDESC = {DML_TENSOR_TYPE_BUFFER, &(dmlTensorDesc->bufferDesc)};
@@ -370,7 +377,6 @@ namespace webnn_native { namespace dml {
 
         mGraphEdgesMap[constant->PrimaryOutput()] = edge;
         mInputs.push_back(inputEdgeInfo);
-        mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         return {};
     }
 
@@ -384,8 +390,9 @@ namespace webnn_native { namespace dml {
         std::unique_ptr<char> buffer(new char[size]);
         memcpy(buffer.get(), value, size);
 
-        std::unique_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(dmlTensorDesc, dmlTensorDims, strides, dataType, tensorFlag)) {
+        std::shared_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, dmlTensorDesc, dmlTensorDims, strides, dataType,
+                                 tensorFlag)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         tensorDESC = {DML_TENSOR_TYPE_BUFFER, &(dmlTensorDesc->bufferDesc)};
@@ -400,15 +407,14 @@ namespace webnn_native { namespace dml {
         inputEdgeInfo->isConstantInput = true;
 
         mInputs.push_back(inputEdgeInfo);
-        mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         mConstantsBuffer.push_back(std::move(buffer));
         return {};
     }
 
     MaybeError Graph::AddInput(const op::Input* input) {
         const OperandDescriptor* desc = input->GetOperandDescriptor();
-        std::unique_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(dmlTensorDesc, desc)) {
+        std::shared_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, dmlTensorDesc, desc)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC outputTensorDESC = {DML_TENSOR_TYPE_BUFFER, &(dmlTensorDesc->bufferDesc)};
@@ -422,7 +428,6 @@ namespace webnn_native { namespace dml {
 
         mGraphEdgesMap[input->PrimaryOutput()] = edge;
         mInputs.push_back(inputEdgeInfo);
-        mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         return {};
     }
 
@@ -481,8 +486,8 @@ namespace webnn_native { namespace dml {
         auto aBroadcastFlags = GetBroadcastFlags(aDims, aNewDims, broadcastSkipAxis);
         auto aNewStrides =
             CalculateStridesForBroadcast(ConvertDimensions(aNewDims), aBroadcastFlags);
-        std::unique_ptr<DmlTensorDesc> aDmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(aDmlTensorDesc, &aEdge->outputTensorDESC,
+        std::shared_ptr<DmlTensorDesc> aDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, aDmlTensorDesc, &aEdge->outputTensorDESC,
                                  ConvertDimensions(aNewDims), aNewStrides)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
@@ -491,15 +496,16 @@ namespace webnn_native { namespace dml {
         auto bBroadcastFlags = GetBroadcastFlags(bDims, bNewDims, broadcastSkipAxis);
         auto bNewStrides =
             CalculateStridesForBroadcast(ConvertDimensions(bNewDims), bBroadcastFlags);
-        std::unique_ptr<DmlTensorDesc> bDmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(bDmlTensorDesc, &bEdge->outputTensorDESC,
+        std::shared_ptr<DmlTensorDesc> bDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, bDmlTensorDesc, &bEdge->outputTensorDESC,
                                  ConvertDimensions(bNewDims), bNewStrides)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC bTensorDesc = {DML_TENSOR_TYPE_BUFFER, &bDmlTensorDesc->bufferDesc};
 
-        std::unique_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
-        if (!CreateDmlTensorDesc(outputDmlTensorDesc, ConvertDimensions(outputNewDims))) {
+        std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &aEdge->outputTensorDESC,
+                                 ConvertDimensions(outputNewDims))) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
@@ -556,13 +562,11 @@ namespace webnn_native { namespace dml {
                 return DAWN_UNIMPLEMENTED_ERROR(" Binary op is not implemented.");
         }
         if (outputDims != outputNewDims) {
-            if (!CreateDmlTensorDesc(outputDmlTensorDesc, ConvertDimensions(outputDims))) {
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &aEdge->outputTensorDESC,
+                                     ConvertDimensions(outputDims))) {
                 return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
             }
         }
-        mDmlTensorsDesc.push_back(std::move(outputDmlTensorDesc));
-        mDmlTensorsDesc.push_back(std::move(aDmlTensorDesc));
-        mDmlTensorsDesc.push_back(std::move(bDmlTensorDesc));
 
         mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
         mGraphEdgesMap[binary->PrimaryOutput()] =
@@ -784,21 +788,19 @@ namespace webnn_native { namespace dml {
 
         size_t outputNum = split->Outputs().size();
 
+        auto edge = mGraphEdgesMap[inputOperand];
+        DML_TENSOR_DESC inputTensorDesc = edge->outputTensorDESC;
         std::vector<DML_TENSOR_DESC> outputTensorsDesc;
         outputTensorsDesc.reserve(outputNum);
         for (size_t i = 0; i < outputNum; ++i) {
-            std::unique_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
-            if (!CreateDmlTensorDesc(dmlTensorDesc,
+            std::shared_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, dmlTensorDesc, &inputTensorDesc,
                                      ConvertDimensions(split->Outputs()[i].Get()->Shape()))) {
                 return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
             }
             DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER, &dmlTensorDesc->bufferDesc};
             outputTensorsDesc.push_back(outputTensorDesc);
-            mDmlTensorsDesc.push_back(std::move(dmlTensorDesc));
         }
-
-        auto edge = mGraphEdgesMap[inputOperand];
-        DML_TENSOR_DESC inputTensorDesc = edge->outputTensorDESC;
 
         DML_SPLIT_OPERATOR_DESC dmlSplitOperatorDesc{};
         dmlSplitOperatorDesc.Axis = axis;
@@ -826,34 +828,100 @@ namespace webnn_native { namespace dml {
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();
         DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
 
-        auto outputDims = reshape->Outputs()[0].Get()->Shape();
+        auto edge = mGraphEdgesMap[inputOperand];
+        auto outputDims = ConvertDimensions(reshape->Outputs()[0].Get()->Shape());
         if (outputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
             return DAWN_INTERNAL_ERROR("The size of target new shape is not supported by DML.");
         }
-        std::unique_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+        std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
         // Reshape needn't new strides, because the layout has not been changed.
-        if (!CreateDmlTensorDesc(outputDmlTensorDesc, ConvertDimensions(outputDims))) {
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &edge->outputTensorDESC,
+                                 outputDims)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
                                             &outputDmlTensorDesc->bufferDesc};
-        // Reshape is not a real node in DML, just need to update the edge.
-        mGraphEdgesMap[reshape->PrimaryOutput()] =
-            CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size(), 0,
-                                   mGraphEdgesMap[inputOperand]->isInputEdge);
+        // Reshape is not a real node in DML, just need to update the edge created from it.
+        mGraphEdgesMap[reshape->PrimaryOutput()] = CreateEdgeFromThisNode(
+            outputTensorDesc, mIntermediateNodes.size(), 0, edge->isInputEdge);
         return {};
     }
 
+    MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
+        DAWN_ASSERT(transpose->Inputs().size() == 1);
+        const OperandBase* inputOperand = transpose->Inputs()[0].Get();
+        DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+        auto inputDims = ConvertDimensions(transpose->Inputs()[0].Get()->Shape());
+        auto outputDims = ConvertDimensions(transpose->Outputs()[0].Get()->Shape());
+        if (outputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+            return DAWN_INTERNAL_ERROR("The size of target new shape is not supported by DML.");
+        }
+        std::vector<int32_t> permutation = transpose->GetPermutation();
+        if (permutation.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+            return DAWN_INTERNAL_ERROR("The size of permutation is not supported by DML.");
+        }
+
+        // Transpose need new strides, because the layout has been changed.
+        std::vector<UINT> strides(outputDims.size()), transposedStrides;
+        uint32_t stride = 1;
+        for (size_t i = strides.size(); i-- > 0;) {
+            strides[i] = stride;
+            stride *= inputDims[i];
+        }
+        // Permute the strides.
+        for (auto dimPermuted : permutation) {
+            transposedStrides.push_back(strides[dimPermuted]);
+        }
+
+        auto edge = mGraphEdgesMap[inputOperand];
+        // Transpose is not a real node in DML, just need to update the edge.
+        std::shared_ptr<DmlTensorDesc> inputDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, inputDmlTensorDesc, &edge->outputTensorDESC,
+                                 outputDims, transposedStrides)) {
+            return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+        }
+
+        std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &edge->outputTensorDESC,
+                                 outputDims)) {
+            return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+        }
+
+        DML_TENSOR_DESC inputTensorDesc = {DML_TENSOR_TYPE_BUFFER, &inputDmlTensorDesc->bufferDesc};
+
+        DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                            &outputDmlTensorDesc->bufferDesc};
+
+        ComPtr<IDMLOperator> dmlOperator;
+        DML_ELEMENT_WISE_IDENTITY_OPERATOR_DESC dmlSpecificOperatorDesc{};
+        dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;
+        dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;
+        DML_OPERATOR_DESC dmlOperatorDesc = {};
+        dmlOperatorDesc.Type = DML_OPERATOR_ELEMENT_WISE_IDENTITY;
+        dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;
+        WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+
+        mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+        mGraphEdgesMap[transpose->PrimaryOutput()] =
+            CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+        return AddEdgesToThisNode({edge});
+    }
+
     MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+        DAWN_ASSERT(mGraphEdgesMap.find(output) != mGraphEdgesMap.end());
         auto outputEdge = mGraphEdgesMap[output];
+        DAWN_ASSERT(outputEdge != nullptr);
         if (outputEdge->isInputEdge) {
-            // Deal with a graph with single Reshape node.
+            // Deal with a graph with a single reshape node.
             // https://github.com/microsoft/DirectML/issues/71
             ComPtr<IDMLOperator> dmlOperator;
             auto edge = outputEdge;
             auto inputTensorDesc = outputEdge->outputTensorDESC;
             CREATE_UNARY_OPERATOR(ACTIVATION_IDENTITY, inputTensorDesc, dmlOperator);
             mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
             auto outputEdge = CreateEdgeFromThisNode(inputTensorDesc, mIntermediateNodes.size());
             if (AddEdgesToThisNode({edge}).IsError()) {
                 return DAWN_INTERNAL_ERROR("Failed to create input edges for this node.");
@@ -914,10 +982,6 @@ namespace webnn_native { namespace dml {
 
     MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
         return DAWN_UNIMPLEMENTED_ERROR("Squeeze hasn't been supported on DirectML.");
-    }
-
-    MaybeError Graph::AddTranspose(const op::Transpose* transpose) {
-        return DAWN_UNIMPLEMENTED_ERROR("Transpose hasn't been supported on DirectML.");
     }
 
     MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
