@@ -117,7 +117,7 @@ namespace webnn_native { namespace dml {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
-        MaybeError AddEdgesToThisNode(std::vector<std::shared_ptr<EdgeInfoBase>> inputNodes);
+        void AddEdgesToThisNode(std::vector<std::shared_ptr<EdgeInfoBase>> inputNodes);
         void FillUploadResourceAndInputBindings(uint64_t uploadResourceSize,
                                                 std::vector<DML_BUFFER_BINDING>& inputBufferBinding,
                                                 std::map<std::string, Input> namedInputs = {});
@@ -128,6 +128,13 @@ namespace webnn_native { namespace dml {
                                        const std::vector<UINT>& strides = {},
                                        DML_TENSOR_DATA_TYPE dataType = DML_TENSOR_DATA_TYPE_FLOAT32,
                                        DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAG_OWNED_BY_DML);
+        std::shared_ptr<EdgeInfoBase> Clamp(const op::ClampBase* clamp,
+                                            std::shared_ptr<EdgeInfoBase> inputEdge);
+        MaybeError HardSwish(std::shared_ptr<EdgeInfoBase>& inputEdge,
+                             const std::vector<UINT>& inputDims);
+        MaybeError EmulateFusedOperator(FusionOperatorBase* activation,
+                                        std::shared_ptr<EdgeInfoBase>& inputEdge,
+                                        const std::vector<UINT>& inputDims);
 
       private:
         MaybeError CompileImpl() override;
