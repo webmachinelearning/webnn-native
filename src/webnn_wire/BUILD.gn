@@ -105,7 +105,7 @@ dawn_component("webnn_wire") {
   ]
 
   if (build_with_chromium) {
-    libs = [ "dawn_wire.dll.lib" ]
+    deps += [ "${webnn_dawn_root}/src/dawn_wire" ]
   }
 
   # Make headers publicly visible

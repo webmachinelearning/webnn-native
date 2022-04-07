@@ -179,10 +179,10 @@ config("dawn_internal") {
     cflags += [
       # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
       "-Wno-extra-semi",
-      
+
       # workaroud for compile error for DirectMLX.h
       "-Wno-unused-but-set-variable",
-      
+
       # Allow the use of DMLX_THROW(_hr); in DirectMLX.h
       "-Wno-extra-semi-stmt",
 
@@ -192,9 +192,6 @@ config("dawn_internal") {
       # Allow third_party/onnxruntime/include/onnxruntime/core/common/status.h(115,9):
       # use of the 'nodiscard' attribute is a C++17 extension
       "-Wno-c++17-extensions",
-
-      # workaroud for compile error for DirectMLX.h
-      "-Wno-unused-but-set-variable",
     ]
   }
 }

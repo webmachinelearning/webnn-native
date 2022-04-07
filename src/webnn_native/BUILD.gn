@@ -233,10 +233,13 @@ source_set("webnn_native_sources") {
       "dml/GraphDML.h",
     ]
 
-    include_dirs += [
-      "${webnn_root}/third_party/DirectML/Libraries",
-      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include",
-    ]
+    include_dirs +=
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include" ]
+    if (build_with_chromium) {
+      include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
+    } else {
+      include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
+    }
 
     lib_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
@@ -247,11 +250,6 @@ source_set("webnn_native_sources") {
       "directml.lib",
     ]
     if (build_with_chromium) {
-      libs += [
-        "dawn_proc.dll.lib",
-        "dawn_native.dll.lib",
-        "dawn_wire.dll.lib",
-      ]
       deps += [ "${webnn_dawn_root}/src/dawn_native" ]
     }
 

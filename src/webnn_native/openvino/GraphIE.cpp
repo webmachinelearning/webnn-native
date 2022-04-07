@@ -1352,8 +1352,8 @@ namespace webnn_native::ie {
         }
 
         // Get Data from nGraph with output.
-        for (auto [name, output] : outputs->GetRecords()) {
-            ArrayBufferView output = output.arrayBufferView;
+        for (auto [name, resource] : outputs->GetRecords()) {
+            ArrayBufferView output = resource.arrayBufferView;
             DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
             // Get output id with friendly name.
             auto originalName = mOutputNameMap[name];
