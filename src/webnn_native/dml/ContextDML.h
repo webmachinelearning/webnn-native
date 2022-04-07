@@ -19,7 +19,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/dml/deps/src/precomp.h"
 
-namespace webnn_native { namespace dml {
+namespace webnn_native::dml {
 
     class Context : public ContextBase {
       public:
@@ -30,6 +30,6 @@ namespace webnn_native { namespace dml {
         GraphBase* CreateGraphImpl() override;
     };
 
-}}  // namespace webnn_native::dml
+}  // namespace webnn_native::dml
 
 #endif  // WEBNN_NATIVE_DML_CONTEXT_DML_H_

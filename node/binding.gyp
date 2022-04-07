@@ -21,7 +21,8 @@
             'VCCLCompilerTool': {
               'ExceptionHandling': 1,
               'RuntimeTypeInfo': 'true',
-              'RuntimeLibrary': 3 # MultiThreadedDebugDLL (/MDd)
+              'RuntimeLibrary': 3, # MultiThreadedDebugDLL (/MDd),
+              'AdditionalOptions': [ '-std:c++17' ]
             },
           },
         },
@@ -30,7 +31,8 @@
             'VCCLCompilerTool': { 
               'ExceptionHandling': 1,
               'RuntimeTypeInfo': 'true',
-              'RuntimeLibrary': 2 # MultiThreadedDLL (/MD)
+              'RuntimeLibrary': 2, # MultiThreadedDLL (/MD),
+              'AdditionalOptions': [ '-std:c++17' ]
             },
           },
         }

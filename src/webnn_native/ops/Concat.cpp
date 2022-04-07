@@ -16,7 +16,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
     MaybeError Concat::CalculateShape() {
         auto outputShape = mInputs[0]->Shape();
         // The size of the dimension along axis is computed as the sum of all the input sizes of
@@ -69,4 +69,4 @@ namespace webnn_native { namespace op {
         return CalculateShape();
     }
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op

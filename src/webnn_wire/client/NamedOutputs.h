@@ -23,7 +23,7 @@
 #include <map>
 #include <string>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class NamedOutputs final : public ObjectBase {
       public:
@@ -42,6 +42,6 @@ namespace webnn_wire { namespace client {
         size_t mByteOffset;
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_NAMED_OUTPUTS_H_

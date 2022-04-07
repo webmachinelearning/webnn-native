@@ -19,12 +19,12 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native { namespace ie {
+namespace webnn_native::ie {
 
     MaybeError CheckStatusCodeImpl(IEStatusCode code, const char* context);
 
 #define CheckStatusCode(code, context) CheckStatusCodeImpl(code, context)
 
-}}  // namespace webnn_native::ie
+}  // namespace webnn_native::ie
 
 #endif  // WEBNN_NATIVE_IE_ERROR_IE_H_

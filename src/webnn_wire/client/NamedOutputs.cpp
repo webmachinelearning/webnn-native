@@ -17,7 +17,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     void NamedOutputs::Set(char const* name, WNNArrayBufferView const* resource) {
         NamedOutputsSetCmd cmd;
@@ -47,4 +47,4 @@ namespace webnn_wire { namespace client {
         return true;
     }
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

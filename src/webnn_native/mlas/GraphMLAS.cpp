@@ -28,7 +28,7 @@
 
 #define VERBOSE 0
 
-namespace webnn_native { namespace mlas {
+namespace webnn_native::mlas {
 
     void* AlignedAlloc(size_t size) {
         if (size <= 0)
@@ -467,7 +467,7 @@ namespace webnn_native { namespace mlas {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         DAWN_ASSERT(mMemoryMap.find(output) != mMemoryMap.end());
         Ref<Memory> memory = mMemoryMap.at(output);
         if (memory->IsBlockedLayout()) {
@@ -487,7 +487,7 @@ namespace webnn_native { namespace mlas {
             mKernels.push_back(AcquireRef(new ReorderOutput(memory, nchwMemory, outputShape)));
             memory = nchwMemory;
         }
-        mOutputs.insert(std::make_pair(name, memory));
+        mOutputs.insert(std::make_pair(name.data(), memory));
         return {};
     }
 
@@ -979,16 +979,15 @@ namespace webnn_native { namespace mlas {
     }
 
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        for (auto& input : inputs->GetRecords()) {
-            Ref<Memory> inputMemory = mInputs.at(input.first);
-            if (inputMemory->GetByteLength() < input.second.resource.byteLength) {
+        for (auto& [name, input] : inputs->GetRecords()) {
+            Ref<Memory> inputMemory = mInputs.at(name);
+            if (inputMemory->GetByteLength() < input.resource.byteLength) {
                 dawn::ErrorLog() << "The size of input memory is less than input buffer.";
                 return WNNComputeGraphStatus_Error;
             }
             memcpy(inputMemory->GetBuffer(),
-                   static_cast<int8_t*>(input.second.resource.buffer) +
-                       input.second.resource.byteOffset,
-                   input.second.resource.byteLength);
+                   static_cast<int8_t*>(input.resource.buffer) + input.resource.byteOffset,
+                   input.resource.byteLength);
         }
 
         for (auto& kernel : mKernels) {
@@ -996,8 +995,8 @@ namespace webnn_native { namespace mlas {
         }
 
         std::vector<std::string> outputNames;
-        for (auto& output : outputs->GetRecords()) {
-            outputNames.push_back(output.first);
+        for (auto& [name, _] : outputs->GetRecords()) {
+            outputNames.push_back(name);
         }
 
         for (size_t i = 0; i < outputNames.size(); ++i) {
@@ -1014,4 +1013,4 @@ namespace webnn_native { namespace mlas {
         return WNNComputeGraphStatus_Success;
     }
 
-}}  // namespace webnn_native::mlas
+}  // namespace webnn_native::mlas

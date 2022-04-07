@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Resample2d::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand Resample2d(Operand input, optional Resample2dOptions options = {});
@@ -73,4 +73,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

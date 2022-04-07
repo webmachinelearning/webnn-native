@@ -17,7 +17,7 @@
 #include <sstream>
 #include <string>
 
-namespace webnn_native { namespace ie {
+namespace webnn_native::ie {
 
     MaybeError CheckStatusCodeImpl(IEStatusCode code, const char* context) {
         std::ostringstream errorMessage;
@@ -37,4 +37,4 @@ namespace webnn_native { namespace ie {
         return {};
     }
 
-}}  // namespace webnn_native::ie
+}  // namespace webnn_native::ie

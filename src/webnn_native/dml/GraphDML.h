@@ -47,7 +47,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace dml {
+namespace webnn_native::dml {
 
     std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
     std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
@@ -59,7 +59,7 @@ namespace webnn_native { namespace dml {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* output) override;
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* output) override;
         virtual MaybeError AddBatchNorm(const op::BatchNorm* batchNorm) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
@@ -107,6 +107,6 @@ namespace webnn_native { namespace dml {
         std::unique_ptr<pydml::CompiledModel> mCompiledModel;
     };
 
-}}  // namespace webnn_native::dml
+}  // namespace webnn_native::dml
 
 #endif  // WEBNN_NATIVE_DML_MODEL_DML_H_

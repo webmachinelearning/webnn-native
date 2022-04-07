@@ -16,7 +16,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     bool Server::DoGraphCompute(ObjectId graphId, ObjectId inputsId, ObjectId outputsId) {
         auto* graph = GraphObjects().Get(graphId);
@@ -59,15 +59,14 @@ namespace webnn_wire { namespace server {
 
         mProcs.graphComputeAsync(
             graph->handle, namedInputs->handle, namedOutputs->handle,
-            ForwardToServer<decltype(&Server::OnGraphComputeAsyncCallback)>::Func<
-                &Server::OnGraphComputeAsyncCallback>(),
+            ForwardToServer<&Server::OnGraphComputeAsyncCallback>,
             userdata.release());
         return true;
     }
 
-    void Server::OnGraphComputeAsyncCallback(WNNComputeGraphStatus status,
-                                             const char* message,
-                                             ComputeAsyncUserdata* userdata) {
+    void Server::OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata, 
+                                             WNNComputeGraphStatus status,
+                                             const char* message) {
         if (status == WNNComputeGraphStatus_Success) {
             WNNArrayBufferView arrayBuffer = {};
             auto* namedOutputs = NamedOutputsObjects().Get(userdata->namedOutputsObjectID);
@@ -92,4 +91,4 @@ namespace webnn_wire { namespace server {
         SerializeCommand(cmd);
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

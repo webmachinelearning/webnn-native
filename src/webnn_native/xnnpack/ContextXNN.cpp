@@ -20,7 +20,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/xnnpack/GraphXNN.h"
 
-namespace webnn_native { namespace xnnpack {
+namespace webnn_native::xnnpack {
 
     ContextBase* Create() {
         Ref<ContextBase> context = AcquireRef(new Context());
@@ -71,4 +71,4 @@ namespace webnn_native { namespace xnnpack {
         return new Graph(this);
     }
 
-}}  // namespace webnn_native::xnnpack
+}  // namespace webnn_native::xnnpack

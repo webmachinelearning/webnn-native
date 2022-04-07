@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Split::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand Split(Operand input, (unsigned long or sequence<unsigned long>) splits,
@@ -62,4 +62,4 @@ namespace node { namespace op {
         return objectArray;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

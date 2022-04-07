@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class NamedInputs final : public ObjectBase {
       public:
@@ -31,6 +31,6 @@ namespace webnn_wire { namespace client {
         void Set(char const* name, WNNInput const* input);
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_NAMED_INPUTS_H_

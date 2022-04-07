@@ -18,7 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
 
     class Resample2d final : public OperatorBase {
       public:
@@ -51,6 +51,6 @@ namespace webnn_native { namespace op {
         std::vector<int32_t> mAxes;
     };
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op
 
 #endif  // WEBNN_NATIVE_OPS_RESAMPLE2D_H_

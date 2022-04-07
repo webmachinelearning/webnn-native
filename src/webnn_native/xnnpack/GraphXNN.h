@@ -34,7 +34,7 @@
 #include "webnn_native/ops/Unary.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
 
-namespace webnn_native { namespace xnnpack {
+namespace webnn_native::xnnpack {
 
     class Graph : public GraphBase {
       public:
@@ -43,7 +43,7 @@ namespace webnn_native { namespace xnnpack {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* output) override;
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* output) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
@@ -102,6 +102,6 @@ namespace webnn_native { namespace xnnpack {
         std::map<const OperandBase*, std::shared_ptr<OperandInfo>> mOperandInfoMap;
     };
 
-}}  // namespace webnn_native::xnnpack
+}  // namespace webnn_native::xnnpack
 
 #endif  // WEBNN_NATIVE_XNNPACK_GRAPH_XNN_H_

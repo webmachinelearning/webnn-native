@@ -18,7 +18,7 @@
 #include "webnn_wire/client/ApiObjects_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     WNNComputeGraphStatus Graph::Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs) {
         NamedInputs* namedInputs = FromAPI(inputs);
@@ -75,4 +75,4 @@ namespace webnn_wire { namespace client {
         return true;
     }
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

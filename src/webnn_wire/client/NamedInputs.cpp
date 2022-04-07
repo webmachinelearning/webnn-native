@@ -17,7 +17,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     void NamedInputs::Set(char const* name, WNNInput const* input) {
         NamedInputsSetCmd cmd;
@@ -32,4 +32,4 @@ namespace webnn_wire { namespace client {
         client->SerializeCommand(cmd);
     }
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

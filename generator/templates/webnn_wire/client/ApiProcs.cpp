@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
     namespace {
 
         //* Outputs an rvalue that's the number of elements a pointer member points to.
@@ -271,4 +271,4 @@ namespace webnn_wire { namespace client {
     const WebnnProcTable& GetProcs() {
         return gProcTable;
     }
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

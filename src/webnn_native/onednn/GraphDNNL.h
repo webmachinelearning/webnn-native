@@ -33,7 +33,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace onednn {
+namespace webnn_native::onednn {
 
     class Graph : public GraphBase {
       public:
@@ -42,7 +42,7 @@ namespace webnn_native { namespace onednn {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* output) override;
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* output) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
@@ -97,6 +97,6 @@ namespace webnn_native { namespace onednn {
         dnnl_stream_t mStream;
     };
 
-}}  // namespace webnn_native::onednn
+}  // namespace webnn_native::onednn
 
 #endif  // WEBNN_NATIVE_ONEDNN_MODEL_DNNL_H_

@@ -16,7 +16,7 @@
 #include "common/Assert.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
     //* Implementation of the command doers
     {% for command in cmd_records["command"] %}
         {% set type = command.derived_object %}
@@ -92,9 +92,7 @@ namespace webnn_wire { namespace server {
                         //* Dawn native that makes all child objects internally null if their
                         //* Device is destroyed.
                         while (data->info->childObjectTypesAndIds.size() > 0) {
-                            ObjectType childObjectType;
-                            ObjectId childObjectId;
-                            std::tie(childObjectType, childObjectId) = UnpackObjectTypeAndId(
+                            auto [childObjectType, childObjectId] = UnpackObjectTypeAndId(
                                 *data->info->childObjectTypesAndIds.begin());
                             DoDestroyObject(childObjectType, childObjectId);
                         }
@@ -116,4 +114,4 @@ namespace webnn_wire { namespace server {
         }
     }
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server

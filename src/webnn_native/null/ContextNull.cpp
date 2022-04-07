@@ -17,7 +17,7 @@
 #include "webnn_native/BackendConnection.h"
 #include "webnn_native/Instance.h"
 
-namespace webnn_native { namespace null {
+namespace webnn_native::null {
 
     class Backend : public BackendConnection {
       public:
@@ -69,7 +69,7 @@ namespace webnn_native { namespace null {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* output) {
         return {};
     }
 
@@ -149,4 +149,4 @@ namespace webnn_native { namespace null {
         return {};
     }
 
-}}  // namespace webnn_native::null
+}  // namespace webnn_native::null

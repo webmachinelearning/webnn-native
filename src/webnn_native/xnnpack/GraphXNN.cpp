@@ -94,7 +94,7 @@ const char* xnn_status2str(xnn_status v) {
         }                                                                                  \
     } while (0)
 
-namespace webnn_native { namespace xnnpack {
+namespace webnn_native::xnnpack {
 
     namespace {
         xnn_status GetXnnDataType(wnn::OperandType operandType, xnn_datatype& xnnDataType) {
@@ -194,12 +194,12 @@ namespace webnn_native { namespace xnnpack {
         return {};
     }
 
-    MaybeError Graph::AddOutput(const std::string& name, const OperandBase* op) {
+    MaybeError Graph::AddOutput(std::string_view name, const OperandBase* op) {
         std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(op);
         if (info->opType == OperandType::INPUT || info->opType == OperandType::CONSTANT) {
             return DAWN_INTERNAL_ERROR("There is no operator to be created.");
         }
-        info->name = std::move(name);
+        info->name = name.data();
         return {};
     }
 
@@ -699,18 +699,18 @@ namespace webnn_native { namespace xnnpack {
                 inputBuffers[i] = mInputs[i]->buffer.get();
             }
         }
-        for (auto& input : inputs->GetRecords()) {
-            if (mExternalInputs.find(input.first) == mExternalInputs.end()) {
+        for (auto& [name, input] : inputs->GetRecords()) {
+            if (mExternalInputs.find(name) == mExternalInputs.end()) {
                 COMPUTE_ERROR("Invalid parameters.");
             }
-            size_t index = mExternalInputs.at(input.first);
-            inputBuffers[index] = static_cast<int8_t*>(input.second->resource.buffer) +
-                                  input.second->resource.byteOffset;
+            size_t index = mExternalInputs.at(name);
+            inputBuffers[index] =
+                static_cast<int8_t*>(input->resource.buffer) + input->resource.byteOffset;
         }
 
         std::vector<std::string> outputNames;
-        for (auto& output : outputs->GetRecords()) {
-            outputNames.push_back(output.first);
+        for (auto& [name, _] : outputs->GetRecords()) {
+            outputNames.push_back(name);
         }
 
         std::vector<void*> outputBuffers(mOutputs.size(), nullptr);
@@ -797,4 +797,4 @@ namespace webnn_native { namespace xnnpack {
         return WNNComputeGraphStatus_Success;
     }
 
-}}  // namespace webnn_native::xnnpack
+}  // namespace webnn_native::xnnpack

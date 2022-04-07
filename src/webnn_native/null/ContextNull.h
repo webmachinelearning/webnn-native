@@ -19,7 +19,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/GraphBuilder.h"
 
-namespace webnn_native { namespace null {
+namespace webnn_native::null {
 
     // Context
     class Context : public ContextBase {
@@ -45,7 +45,7 @@ namespace webnn_native { namespace null {
         ~Graph() override = default;
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* ouput) override;
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* ouput) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
         virtual MaybeError AddGru(const op::Gru* gru) override;
@@ -72,6 +72,6 @@ namespace webnn_native { namespace null {
                                           NamedOutputsBase* outputs) override;
     };
 
-}}  // namespace webnn_native::null
+}  // namespace webnn_native::null
 
 #endif  // WEBNN_NATIVE_NULL_CONTEXT_NULL_H_

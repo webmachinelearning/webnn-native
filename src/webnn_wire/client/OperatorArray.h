@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class OperatorArray final : public ObjectBase {
       public:
@@ -31,6 +31,6 @@ namespace webnn_wire { namespace client {
         size_t Size();
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_OPERATOR_ARRAY_H_

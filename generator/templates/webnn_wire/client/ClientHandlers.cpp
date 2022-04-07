@@ -18,7 +18,7 @@
 
 #include <string>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
     {% for command in cmd_records["return command"] %}
         bool Client::Handle{{command.name.CamelCase()}}(const volatile char** commands, size_t* size) {
             Return{{command.name.CamelCase()}}Cmd cmd;
@@ -92,4 +92,4 @@ namespace webnn_wire { namespace client {
 
         return commands;
     }
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client

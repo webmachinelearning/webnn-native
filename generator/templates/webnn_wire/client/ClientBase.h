@@ -21,7 +21,7 @@
 #include "webnn_wire/client/ApiObjects.h"
 #include "webnn_wire/client/ObjectAllocator.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class ClientBase : public ChunkedCommandHandler, public ObjectIdProvider {
       public:
@@ -66,6 +66,6 @@ namespace webnn_wire { namespace client {
         {% endfor %}
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // DAWNWIRE_CLIENT_CLIENTBASE_AUTOGEN_H_

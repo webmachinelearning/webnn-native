@@ -23,7 +23,7 @@
 #include <unordered_set>
 
 // TODO: Refactor the file that fork from dawn Repo.
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     struct ContextInfo {
         std::unordered_set<uint64_t> childObjectTypesAndIds;
@@ -72,8 +72,8 @@ namespace webnn_wire { namespace server {
     // an std::unordered_set. This lets us avoid providing our own hash and
     // equality comparison operators.
     inline uint64_t PackObjectTypeAndId(ObjectType type, ObjectId id) {
-        static_assert(sizeof(ObjectType) * 8 <= 32, "");
-        static_assert(sizeof(ObjectId) * 8 <= 32, "");
+        static_assert(sizeof(ObjectType) * 8 <= 32);
+        static_assert(sizeof(ObjectId) * 8 <= 32);
         return (static_cast<uint64_t>(type) << 32) + id;
     }
 
@@ -224,6 +224,6 @@ namespace webnn_wire { namespace server {
         std::map<T, ObjectId> mTable;
     };
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server
 
 #endif  // WEBNN_WIRE_SERVER_OBJECTSTORAGE_H_

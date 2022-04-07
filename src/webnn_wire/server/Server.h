@@ -19,7 +19,7 @@
 #include "webnn_wire/ChunkedCommandSerializer.h"
 #include "webnn_wire/server/ServerBase_autogen.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn_wire::server {
 
     // CallbackUserdata and its derived classes are intended to be created by
     // Server::MakeUserdata<T> and then passed as the userdata argument for Dawn
@@ -40,10 +40,8 @@ namespace webnn_wire { namespace server {
     // auto userdata = MakeUserdata<MyUserdata>();
     // userdata->foo = 2;
     //
-    // // TODO(enga): Make the template inference for ForwardToServer cleaner with C++17
     // callMyCallbackHandler(
-    //      ForwardToServer<decltype(&Server::MyCallbackHandler)>::Func<
-    //                      &Server::MyCallbackHandler>(),
+    //      ForwardToServer<&Server::MyCallbackHandler>;
     //      userdata.release());
     //
     // void Server::MyCallbackHandler(MyUserdata* userdata) { }
@@ -57,52 +55,35 @@ namespace webnn_wire { namespace server {
         }
     };
 
-    template <typename F>
-    class ForwardToServer;
+    template <auto F>
+    struct ForwardToServerHelper {
+        template <typename _>
+        struct ExtractedTypes;
 
-    template <typename R, typename... Args>
-    class ForwardToServer<R (Server::*)(Args...)> {
-      private:
-        // Get the type T of the last argument. It has CallbackUserdata as its base.
-        using UserdataT = typename std::remove_pointer<typename std::decay<decltype(
-            std::get<sizeof...(Args) - 1>(std::declval<std::tuple<Args...>>()))>::type>::type;
+        // An internal structure used to unpack the various types that compose the type of F
+        template <typename Return, typename Class, typename Userdata, typename... Args>
+        struct ExtractedTypes<Return (Class::*)(Userdata*, Args...)> {
+            using UntypedCallback = Return (*)(Args..., void*);
+            static Return Callback(Args... args, void* userdata) {
 
-        static_assert(std::is_base_of<CallbackUserdata, UserdataT>::value,
-                      "Last argument of callback handler should derive from CallbackUserdata.");
-
-        template <class T, class... Ts>
-        struct UntypedCallbackImpl;
-
-        template <std::size_t... I, class... Ts>
-        struct UntypedCallbackImpl<std::index_sequence<I...>, Ts...> {
-            template <R (Server::*Func)(Args...)>
-            static auto ForwardToServer(
-                // Unpack and forward the types of the parameter pack.
-                // Append void* as the last argument.
-                typename std::tuple_element<I, std::tuple<Ts...>>::type... args,
-                void* userdata) {
                 // Acquire the userdata, and cast it to UserdataT.
-                std::unique_ptr<UserdataT> data(static_cast<UserdataT*>(userdata));
+                std::unique_ptr<Userdata> data(static_cast<Userdata*>(userdata));
                 if (data->serverIsAlive.expired()) {
-                    // Do nothing if the server has already been destroyed.
-                    return;
+                   // Do nothing if the server has already been destroyed.
+                  return;
                 }
                 // Forward the arguments and the typed userdata to the Server:: member function.
-                (data->server->*Func)(std::forward<decltype(args)>(args)..., data.get());
+                (data->server->*F)(data.get(), std::forward<decltype(args)>(args)...);
             }
         };
 
-        // Generate a free function which has all of the same arguments, except the last
-        // userdata argument is void* instead of UserdataT*. Dawn's userdata args are void*.
-        using UntypedCallback =
-            UntypedCallbackImpl<std::make_index_sequence<sizeof...(Args) - 1>, Args...>;
-
-      public:
-        template <R (Server::*F)(Args...)>
-        static auto Func() {
-            return UntypedCallback::template ForwardToServer<F>;
+        static constexpr typename ExtractedTypes<decltype(F)>::UntypedCallback Create() {
+            return ExtractedTypes<decltype(F)>::Callback;
         }
     };
+
+    template <auto F>
+    constexpr auto ForwardToServer = ForwardToServerHelper<F>::Create();
 
     struct ErrorScopeUserdata : CallbackUserdata {
         using CallbackUserdata::CallbackUserdata;
@@ -162,12 +143,12 @@ namespace webnn_wire { namespace server {
         // Error callbacks
         void OnUncapturedError(WNNErrorType type, const char* message);
         void OnContextLost(const char* message);
-        void OnContextPopErrorScope(WNNErrorType type,
-                                    const char* message,
-                                    ErrorScopeUserdata* userdata);
-        void OnGraphComputeAsyncCallback(WNNComputeGraphStatus status,
-                                         const char* message,
-                                         ComputeAsyncUserdata* userdata);
+        void OnContextPopErrorScope(ErrorScopeUserdata* userdata,
+                                    WNNErrorType type,
+                                    const char* message);
+        void OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata,
+                                         WNNComputeGraphStatus status,
+                                         const char* message);
 #include "webnn_wire/server/ServerPrototypes_autogen.inc"
 
         WireDeserializeAllocator mAllocator;
@@ -180,6 +161,6 @@ namespace webnn_wire { namespace server {
     bool TrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
     bool UntrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
 
-}}  // namespace webnn_wire::server
+}  // namespace webnn_wire::server
 
 #endif  // WEBNN_WIRE_SERVER_SERVER_H_

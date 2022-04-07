@@ -18,7 +18,7 @@
 #include "webnn_native/Instance.h"
 #include "webnn_native/onednn/ContextDNNL.h"
 
-namespace webnn_native { namespace onednn {
+namespace webnn_native::onednn {
 
     Backend::Backend(InstanceBase* instance)
         : BackendConnection(instance, wnn::BackendType::OneDNN) {
@@ -62,4 +62,4 @@ namespace webnn_native { namespace onednn {
         return backend;
     }
 
-}}  // namespace webnn_native::onednn
+}  // namespace webnn_native::onednn

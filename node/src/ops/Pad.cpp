@@ -16,7 +16,7 @@
 
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Pad::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand pad(Operand input, Operand padding, optional PadOptions options = {});
@@ -53,4 +53,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

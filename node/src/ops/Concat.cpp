@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Concat::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand concat(sequence<Operand> inputs, long axis);
@@ -34,4 +34,4 @@ namespace node { namespace op {
         operand->SetImpl(builder.Concat(inputs.size(), inputs.data(), axis));
         return object;
     }
-}}  // namespace node::op
+}  // namespace node::op

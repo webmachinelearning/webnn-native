@@ -19,7 +19,7 @@
 #include "webnn_native/Error.h"
 #include "webnn_native/FusionOperator.h"
 
-namespace webnn_native { namespace op {
+namespace webnn_native::op {
     Gru::Gru(GraphBuilderBase* builder,
              OperandBase* input,
              OperandBase* weight,
@@ -115,4 +115,4 @@ namespace webnn_native { namespace op {
         return CalculateShape();
     }
 
-}}  // namespace webnn_native::op
+}  // namespace webnn_native::op

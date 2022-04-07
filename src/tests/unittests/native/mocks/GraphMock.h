@@ -31,7 +31,7 @@ namespace webnn_native {
         MOCK_METHOD(MaybeError, AddInput, (const op::Input* input), (override));
         MOCK_METHOD(MaybeError,
                     AddOutput,
-                    (const std::string& name, const OperandBase* output),
+                    (std::string_view name, const OperandBase* output),
                     (override));
         MOCK_METHOD(MaybeError, AddBatchNorm, (const op::BatchNorm* batchNorm), (override));
         MOCK_METHOD(MaybeError, AddBinary, (const op::Binary* binary), (override));

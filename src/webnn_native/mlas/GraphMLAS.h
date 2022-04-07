@@ -32,7 +32,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native { namespace mlas {
+namespace webnn_native::mlas {
 
     class Memory;
     class Kernel;
@@ -45,7 +45,7 @@ namespace webnn_native { namespace mlas {
 
         virtual MaybeError AddConstant(const op::Constant* constant) override;
         virtual MaybeError AddInput(const op::Input* input) override;
-        virtual MaybeError AddOutput(const std::string& name, const OperandBase* output) override;
+        virtual MaybeError AddOutput(std::string_view name, const OperandBase* output) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
@@ -65,6 +65,6 @@ namespace webnn_native { namespace mlas {
         std::vector<Ref<Kernel>> mKernels;
     };
 
-}}  // namespace webnn_native::mlas
+}  // namespace webnn_native::mlas
 
 #endif  // WEBNN_NATIVE_MLAS_GRAPH_MLAS_H_

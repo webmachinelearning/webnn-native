@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     class Context final : public ObjectBase {
       public:
@@ -46,6 +46,6 @@ namespace webnn_wire { namespace client {
         uint64_t mErrorScopeStackSize = 0;
     };
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_CONTEXT_H_

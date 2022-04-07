@@ -18,7 +18,7 @@
 #include "Operator.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     Napi::Value Clamp::Build(const Napi::CallbackInfo& info, wnn::GraphBuilder builder) {
         // Operand clamp(Operand x, optional ClampOptions options = {});
@@ -70,4 +70,4 @@ namespace node { namespace op {
         }
     }
 
-}}  // namespace node::op
+}  // namespace node::op

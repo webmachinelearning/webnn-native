@@ -17,7 +17,7 @@
 #include "Operand.h"
 #include "Utils.h"
 
-namespace node { namespace op {
+namespace node::op {
 
     struct SliceOptions {
       public:
@@ -74,4 +74,4 @@ namespace node { namespace op {
         return object;
     }
 
-}}  // namespace node::op
+}  // namespace node::op

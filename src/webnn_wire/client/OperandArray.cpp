@@ -17,7 +17,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire { namespace client {
+namespace webnn_wire::client {
 
     size_t OperandArray::Size() {
         OperandArraySizeCmd cmd;
@@ -30,4 +30,4 @@ namespace webnn_wire { namespace client {
         return 0;
     }
 
-}}  // namespace webnn_wire::client
+}  // namespace webnn_wire::client
