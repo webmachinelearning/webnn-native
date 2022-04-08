@@ -19,12 +19,20 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/GraphBuilder.h"
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+#    include <webgpu/webgpu.h>
+#endif
+
 namespace webnn_native::null {
 
     // Context
     class Context : public ContextBase {
       public:
         explicit Context(ContextOptions const* options);
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+        explicit Context(WGPUDevice device);
+#endif
         ~Context() override = default;
 
       private:

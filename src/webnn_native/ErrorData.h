@@ -34,7 +34,7 @@ namespace dawn {
 namespace webnn_native {
     enum class InternalErrorType : uint32_t;
 
-    class [[nodiscard]] ErrorData {
+    class ErrorData {
       public:
         [[nodiscard]] static std::unique_ptr<ErrorData> Create(InternalErrorType type,
                                                                  std::string message,

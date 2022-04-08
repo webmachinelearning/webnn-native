@@ -19,6 +19,7 @@
 #include "webnn_wire/client/Context.h"
 #include "webnn_wire/client/Graph.h"
 #include "webnn_wire/client/GraphBuilder.h"
+#include "webnn_wire/client/Instance.h"
 #include "webnn_wire/client/NamedInputs.h"
 #include "webnn_wire/client/NamedOutputs.h"
 #include "webnn_wire/client/ObjectBase.h"

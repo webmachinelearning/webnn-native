@@ -704,8 +704,8 @@ namespace webnn_native::xnnpack {
                 COMPUTE_ERROR("Invalid parameters.");
             }
             size_t index = mExternalInputs.at(name);
-            inputBuffers[index] =
-                static_cast<int8_t*>(input->resource.buffer) + input->resource.byteOffset;
+            auto& resource = input.resource.arrayBufferView;
+            inputBuffers[index] = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
         }
 
         std::vector<std::string> outputNames;
@@ -721,7 +721,8 @@ namespace webnn_native::xnnpack {
             std::vector<int32_t> dimensions(outputInfo->dims.begin(), outputInfo->dims.end());
             size_t bufferLength = SizeOfOperandInfo(outputInfo);
             if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
-                const ArrayBufferView* output = outputs->GetRecords().at(outputName);
+                const ArrayBufferView* output =
+                    outputs->GetRecords().at(outputName).arrayBufferView;
                 DAWN_ASSERT(output->byteLength >= bufferLength);
                 outputBuffers[outputIndex] =
                     static_cast<int8_t*>(output->buffer) + output->byteOffset;

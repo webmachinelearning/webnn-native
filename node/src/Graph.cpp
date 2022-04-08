@@ -27,7 +27,8 @@ namespace node {
         std::vector<int32_t> dimensions;
 
         const wnn::Input* AsPtr() {
-            mInput.resource = bufferView;
+            mInput.resource.arrayBufferView = bufferView;
+            mInput.resource.gpuBufferView = {};
             if (!dimensions.empty()) {
                 mInput.dimensions = dimensions.data();
                 mInput.dimensionsCount = dimensions.size();
@@ -88,7 +89,7 @@ namespace node {
     }
 
     bool GetNamedOutputs(const Napi::Value& jsValue,
-                         std::map<std::string, wnn::ArrayBufferView>& namedOutputs) {
+                         std::map<std::string, wnn::Resource>& namedOutputs) {
         if (!jsValue.IsObject()) {
             return false;
         }
@@ -105,7 +106,7 @@ namespace node {
             if (!GetArrayBufferView(jsNamedOutputs.Get(name), arrayBuffer)) {
                 return false;
             }
-            namedOutputs[name] = arrayBuffer;
+            namedOutputs[name] = {arrayBuffer, {}};
         }
         return true;
     }
@@ -121,7 +122,7 @@ namespace node {
         std::map<std::string, Input> inputs;
         WEBNN_NODE_ASSERT(GetNamedInputs(info[0], inputs), "The inputs parameter is invalid.");
 
-        std::map<std::string, wnn::ArrayBufferView> outputs;
+        std::map<std::string, wnn::Resource> outputs;
         WEBNN_NODE_ASSERT(GetNamedOutputs(info[1], outputs), "The outputs parameter is invalid.");
 
         wnn::NamedInputs namedInputs = wnn::CreateNamedInputs();

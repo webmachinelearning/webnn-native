@@ -39,7 +39,8 @@ namespace webnn_native {
             _CrtSetReportFile(_CRT_ERROR, _CRTDBG_FILE_STDOUT);
             _CrtSetReportMode(_CRT_ASSERT, _CRTDBG_MODE_FILE);
             _CrtSetReportFile(_CRT_ASSERT, _CRTDBG_FILE_STDOUT);
-            // Perform automatic leak checking at program exit through a call to _CrtDumpMemoryLeaks
+            // Perform automatic leak checking at program exit through a call to
+            // _CrtDumpMemoryLeaks
             // and generate an error report if the application failed to free all the memory it
             // allocated.
             _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);

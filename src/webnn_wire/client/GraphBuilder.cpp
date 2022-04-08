@@ -38,4 +38,24 @@ namespace webnn_wire::client {
         return ToAPI(operand);
     }
 
+    WNNOperand GraphBuilder::ConstantWithGpuBuffer(WNNOperandDescriptor const* desc,
+                                                   WNNGpuBufferView const* value) {
+        GraphBuilderConstantWithGpuBufferInternalCmd cmd;
+        cmd.graphBuilderId = this->id;
+        cmd.desc = desc;
+        cmd.buffer = static_cast<const uint8_t*>(value->buffer);
+        cmd.id = value->id;
+        cmd.generation = value->generation;
+        cmd.byteLength = value->size;
+        cmd.byteOffset = value->offset;
+
+        // Create the Operand and send the building constant command.
+        auto* allocation = client->OperandAllocator().New(client);
+        Operand* operand = allocation->object.get();
+        cmd.result = ObjectHandle{operand->id, allocation->generation};
+        client->SerializeCommand(cmd);
+
+        return ToAPI(operand);
+    }
+
 }  // namespace webnn_wire::client

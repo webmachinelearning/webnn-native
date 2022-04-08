@@ -53,6 +53,13 @@ namespace webnn_wire::server {
         return true;
     }
 
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+    bool Server::InjectDawnWireServer(dawn_wire::WireServer* dawn_wire_server) {
+        mDawnWireServer = dawn_wire_server;
+        return true;
+    }
+#endif
+
     bool Server::InjectContext(WNNContext context, uint32_t id, uint32_t generation) {
         ASSERT(context != nullptr);
         ObjectData<WNNContext>* data = ContextObjects().Allocate(id);
@@ -172,6 +179,16 @@ namespace webnn_wire::server {
         resultData->handle = mProcs.createGraphBuilder(context->handle);
         return true;
     }
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+    WGPUDevice Server::GetWGPUDevice(uint32_t id, uint32_t generation) {
+        return mDawnWireServer->GetDevice(id, generation);
+    }
+
+    WGPUBuffer Server::GetWGPUBuffer(uint32_t id, uint32_t generation) {
+        return mDawnWireServer->GetBuffer(id, generation);
+    }
+#endif
 
     bool TrackContextChild(ContextInfo* info, ObjectType type, ObjectId id) {
         auto it = info->childObjectTypesAndIds.insert(PackObjectTypeAndId(type, id));

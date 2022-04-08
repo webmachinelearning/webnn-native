@@ -38,6 +38,7 @@ namespace webnn_native {
 
         // WebNN API
         ContextBase* CreateContext(const ContextOptions* options);
+        ContextBase* CreateContextWithGpuDevice(const GpuDevice* device);
         GraphBuilderBase* CreateGraphBuilder(ContextBase* context);
         NamedInputsBase* CreateNamedInputs();
         NamedOperandsBase* CreateNamedOperands();

@@ -19,20 +19,27 @@
 
 namespace webnn_wire::client {
 
-    void NamedOutputs::Set(char const* name, WNNArrayBufferView const* resource) {
-        NamedOutputsSetCmd cmd;
+    void NamedOutputs::Set(char const* name, WNNResource const* resource) {
+        // The type of output data is WNNArrayBufferView.
+        NamedOutputsSetCmd cmd = {};
         cmd.namedOutputsId = this->id;
         cmd.name = name;
-        cmd.buffer = static_cast<const uint8_t*>(resource->buffer);
-        cmd.byteLength = resource->byteLength;
-        cmd.byteOffset = resource->byteOffset;
+        WNNArrayBufferView arrayBufferView = resource->arrayBufferView;
+        if (arrayBufferView.buffer != nullptr) {
+            cmd.buffer = static_cast<const uint8_t*>(arrayBufferView.buffer);
+            cmd.byteLength = arrayBufferView.byteLength;
+            cmd.byteOffset = arrayBufferView.byteOffset;
+
+            // Save the pointer in order to be copied after computing from server.
+            mBuffer = static_cast<uint8_t*>(arrayBufferView.buffer);
+            mByteLength = arrayBufferView.byteLength;
+            mByteOffset = arrayBufferView.byteOffset;
+        } else {
+            cmd.gpuBufferId = resource->gpuBufferView.id;
+            cmd.gpuBufferGeneration = resource->gpuBufferView.generation;
+        }
 
         client->SerializeCommand(cmd);
-
-        // Save the pointer in order to be copied after computing from server.
-        mBuffer = static_cast<uint8_t*>(resource->buffer);
-        mByteLength = resource->byteLength;
-        mByteOffset = resource->byteOffset;
     }
 
     void NamedOutputs::Get(size_t index, WNNArrayBufferView const* resource) {
@@ -43,7 +50,9 @@ namespace webnn_wire::client {
                                     uint8_t const* buffer,
                                     size_t byteLength,
                                     size_t byteOffset) {
-        memcpy(mBuffer + mByteOffset, buffer + byteOffset, byteLength);
+        if (buffer != nullptr) {
+            memcpy(mBuffer + mByteOffset, buffer + byteOffset, byteLength);
+        }
         return true;
     }
 

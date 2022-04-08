@@ -256,19 +256,21 @@ namespace utils {
         mlInputs.reserve(inputs.size());
         wnn::NamedInputs namedInputs = CreateCppNamedInputs();
         for (auto& input : inputs) {
-            const wnn::ArrayBufferView resource = {(void*)input.resource.data(),
-                                                   input.resource.size() * sizeof(float)};
-            mlInputs.push_back({resource});
+            wnn::Input wnninput = {};
+            wnninput.resource.arrayBufferView = {(void*)input.resource.data(),
+                                                 input.resource.size() * sizeof(float)};
+            mlInputs.push_back(wnninput);
             namedInputs.Set(input.name.c_str(), &mlInputs.back());
         }
         DAWN_ASSERT(outputs.size() > 0);
         // The `mlOutputs` local variable to hold the output data util computing the graph.
-        std::vector<wnn::ArrayBufferView> mlOutputs;
+        std::vector<wnn::Resource> mlOutputs;
         mlOutputs.reserve(outputs.size());
         wnn::NamedOutputs namedOutputs = CreateCppNamedOutputs();
         for (auto& output : outputs) {
-            const wnn::ArrayBufferView resource = {output.resource.data(),
-                                                   output.resource.size() * sizeof(float)};
+            wnn::Resource resource = {};
+            resource.arrayBufferView.buffer = output.resource.data();
+            resource.arrayBufferView.byteLength = output.resource.size() * sizeof(float);
             mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }

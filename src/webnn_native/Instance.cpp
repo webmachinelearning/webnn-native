@@ -161,6 +161,23 @@ namespace webnn_native {
         return nullptr;
     }
 
+    ContextBase* InstanceBase::CreateContextWithGpuDevice(const GpuDevice* wnn_device) {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+        WGPUDevice device = reinterpret_cast<WGPUDevice>(wnn_device->device);
+        if (mBackends.find(wnn::BackendType::DirectML) != mBackends.end()) {
+            return mBackends[wnn::BackendType::DirectML]->CreateContextWithGpuDevice(device);
+        } else if (mBackends.find(wnn::BackendType::OpenVINO) != mBackends.end()) {
+            return mBackends[wnn::BackendType::OpenVINO]->CreateContextWithGpuDevice(device);
+        } else if (mBackends.find(wnn::BackendType::OneDNN) != mBackends.end()) {
+            return mBackends[wnn::BackendType::OneDNN]->CreateContextWithGpuDevice(device);
+        } else if (mBackends.find(wnn::BackendType::MLAS) != mBackends.end()) {
+            return mBackends[wnn::BackendType::MLAS]->CreateContextWithGpuDevice(device);
+        }
+        UNREACHABLE();
+#endif
+        return nullptr;
+    }
+
     GraphBuilderBase* InstanceBase::CreateGraphBuilder(ContextBase* context) {
         return new GraphBuilderBase(context);
     }

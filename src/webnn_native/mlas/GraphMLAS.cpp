@@ -981,13 +981,14 @@ namespace webnn_native::mlas {
     WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& [name, input] : inputs->GetRecords()) {
             Ref<Memory> inputMemory = mInputs.at(name);
-            if (inputMemory->GetByteLength() < input.resource.byteLength) {
+            auto& resource = input.resource.arrayBufferView;
+            if (inputMemory->GetByteLength() < resource.byteLength) {
                 dawn::ErrorLog() << "The size of input memory is less than input buffer.";
                 return WNNComputeGraphStatus_Error;
             }
             memcpy(inputMemory->GetBuffer(),
-                   static_cast<int8_t*>(input.resource.buffer) + input.resource.byteOffset,
-                   input.resource.byteLength);
+                   static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
+                   resource.byteLength);
         }
 
         for (auto& kernel : mKernels) {
@@ -1002,7 +1003,7 @@ namespace webnn_native::mlas {
         for (size_t i = 0; i < outputNames.size(); ++i) {
             std::string outputName = outputNames[i];
             Ref<Memory> outputMemory = mOutputs.at(outputName);
-            const ArrayBufferView& output = outputs->GetRecords().at(outputName);
+            const ArrayBufferView& output = outputs->GetRecords().at(outputName).arrayBufferView;
             if (output.byteLength < outputMemory->GetByteLength()) {
                 dawn::ErrorLog() << "The size of output buffer is less than output memory.";
                 return WNNComputeGraphStatus_Error;
