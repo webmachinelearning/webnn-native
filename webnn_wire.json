@@ -125,7 +125,7 @@
     "graph compute async callback": [
       { "name": "graph", "type": "ObjectHandle", "handle_type": "graph" },
       { "name": "request serial", "type": "uint64_t" },
-      { "name": "status", "type": "compute graph status" },
+      { "name": "type", "type": "error type"},
       { "name": "message", "type": "char", "annotation": "const*", "length": "strlen" }
     ]
   },
@@ -150,10 +150,10 @@
       "NamedOutputsGet",
       "OperandArraySize",
       "OperatorArraySize",
-      "GraphComputeAsync"
+      "GraphComputeAsync",
+      "GraphCompute"
     ],
     "client_handwritten_commands": [
-      "GraphCompute",
       "ContextPushErrorScope"
     ],
     "client_special_objects": [

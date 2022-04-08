@@ -53,8 +53,7 @@ namespace webnn_native::xnnpack {
 
       private:
         MaybeError CompileImpl() override;
-        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                          NamedOutputsBase* outputs) override;
+        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
         enum OperandType { INPUT, CONSTANT, BINARY, CLAMP, CONV2D, POOL2D, UNARY };
         struct OperandInfo {

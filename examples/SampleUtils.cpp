@@ -290,9 +290,9 @@ namespace utils {
         return builder.Build(namedOperands);
     }
 
-    wnn::ComputeGraphStatus Compute(const wnn::Graph& graph,
-                                    const std::vector<NamedInput<float>>& inputs,
-                                    const std::vector<NamedOutput<float>>& outputs) {
+    void Compute(const wnn::Graph& graph,
+                 const std::vector<NamedInput<float>>& inputs,
+                 const std::vector<NamedOutput<float>>& outputs) {
         return Compute<float>(graph, inputs, outputs);
     }
 

@@ -87,9 +87,7 @@ int main(int argc, const char* argv[]) {
     for (int i = 0; i < nIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        wnn::ComputeGraphStatus status =
-            utils::Compute(graph, {{"input", input}}, {{"output", result}});
-        DAWN_ASSERT(status == wnn::ComputeGraphStatus::Success);
+        utils::Compute(graph, {{"input", input}}, {{"output", result}});
         executionTimeVector.push_back(std::chrono::high_resolution_clock::now() -
                                       executionStartTime);
     }

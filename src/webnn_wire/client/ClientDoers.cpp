@@ -38,9 +38,9 @@ namespace webnn_wire::client {
 
     bool Client::DoGraphComputeAsyncCallback(Graph* graph,
                                              uint64_t requestSerial,
-                                             WNNComputeGraphStatus status,
+                                             WNNErrorType type,
                                              const char* message) {
-        return graph->OnComputeAsyncCallback(requestSerial, status, message);
+        return graph->OnComputeAsyncCallback(requestSerial, type, message);
     }
 
 }  // namespace webnn_wire::client

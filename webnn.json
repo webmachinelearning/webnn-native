@@ -1061,19 +1061,10 @@
       }
     ]
   },
-  "compute graph status": {
-    "category": "enum",
-    "values": [
-        {"value": 0, "name": "success"},
-        {"value": 1, "name": "error"},
-        {"value": 2, "name": "context lost"},
-        {"value": 3, "name": "unknown"}
-    ]
-  },
   "compute async callback": {
     "category": "callback",
     "args": [
-        {"name": "status", "type": "compute graph status"},
+	      {"name": "type", "type": "error type"},
         {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
         {"name": "userdata", "type": "void", "annotation": "*"}
     ]
@@ -1083,7 +1074,7 @@
     "methods": [
       {
         "name": "compute",
-        "returns": "compute graph status",
+        "returns": "void",
         "args": [
           {"name": "inputs", "type": "named inputs"},
           {"name": "outputs", "type": "named outputs"}

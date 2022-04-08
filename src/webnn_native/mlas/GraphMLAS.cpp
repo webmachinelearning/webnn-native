@@ -978,14 +978,12 @@ namespace webnn_native::mlas {
         return {};
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& [name, input] : inputs->GetRecords()) {
             Ref<Memory> inputMemory = mInputs.at(name);
             auto& resource = input.resource.arrayBufferView;
-            if (inputMemory->GetByteLength() < resource.byteLength) {
-                dawn::ErrorLog() << "The size of input memory is less than input buffer.";
-                return WNNComputeGraphStatus_Error;
-            }
+            DAWN_INVALID_IF(inputMemory->GetByteLength() < resource.byteLength,
+                            "The size of input memory is less than input buffer.");
             memcpy(inputMemory->GetBuffer(),
                    static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
                    resource.byteLength);
@@ -1004,14 +1002,12 @@ namespace webnn_native::mlas {
             std::string outputName = outputNames[i];
             Ref<Memory> outputMemory = mOutputs.at(outputName);
             const ArrayBufferView& output = outputs->GetRecords().at(outputName).arrayBufferView;
-            if (output.byteLength < outputMemory->GetByteLength()) {
-                dawn::ErrorLog() << "The size of output buffer is less than output memory.";
-                return WNNComputeGraphStatus_Error;
-            }
+            DAWN_INVALID_IF(output.byteLength < outputMemory->GetByteLength(),
+                            "The size of output buffer is less than output memory.");
             memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset,
                    outputMemory->GetBuffer(), output.byteLength);
         }
-        return WNNComputeGraphStatus_Success;
+        return {};
     }
 
 }  // namespace webnn_native::mlas

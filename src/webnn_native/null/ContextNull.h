@@ -76,8 +76,7 @@ namespace webnn_native::null {
 
       private:
         MaybeError CompileImpl() override;
-        WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                          NamedOutputsBase* outputs) override;
+        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
     };
 
 }  // namespace webnn_native::null

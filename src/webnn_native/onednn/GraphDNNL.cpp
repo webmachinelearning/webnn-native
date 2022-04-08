@@ -75,21 +75,6 @@ const char* dnnl_status2str(dnnl_status_t v) {
             COMPLAIN_DNNL_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-#define COMPUTE_DNNL_ERROR(what, status)                                                   \
-    do {                                                                                   \
-        std::string message = std::string(what) + std::string(" returns oneDNN error: ") + \
-                              std::string(dnnl_status2str(s_));                            \
-        dawn::ErrorLog() << message;                                                       \
-        return WNNComputeGraphStatus_Error;                                                \
-    } while (0)
-
-#define COMPUTE_TRY(f)                  \
-    do {                                \
-        dnnl_status_t s_ = f;           \
-        if (s_ != dnnl_success)         \
-            COMPUTE_DNNL_ERROR(#f, s_); \
-    } while (0)
-
 namespace webnn_native::onednn {
 
     namespace {
@@ -989,20 +974,19 @@ namespace webnn_native::onednn {
         return {};
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         for (auto& [name, input] : inputs->GetRecords()) {
             dnnl_memory_t inputMemory = mInputMemoryMap.at(name);
             auto& resource = input.resource.arrayBufferView;
-            COMPUTE_TRY(dnnl_memory_set_data_handle_v2(
+            DAWN_TRY(dnnl_memory_set_data_handle_v2(
                 inputMemory, static_cast<int8_t*>(resource.buffer) + resource.byteOffset, mStream));
         }
 
         for (auto op : mOperations) {
-            COMPUTE_TRY(
-                dnnl_primitive_execute(op.primitive, mStream, op.args.size(), op.args.data()));
+            DAWN_TRY(dnnl_primitive_execute(op.primitive, mStream, op.args.size(), op.args.data()));
         }
 
-        COMPUTE_TRY(dnnl_stream_wait(mStream));
+        DAWN_TRY(dnnl_stream_wait(mStream));
 
         std::vector<std::string> outputNames;
         for (auto& [name, _] : outputs->GetRecords()) {
@@ -1013,17 +997,17 @@ namespace webnn_native::onednn {
             std::string outputName = outputNames[i];
             dnnl_memory_t outputMemory = mOutputMemoryMap.at(outputName);
             const dnnl_memory_desc_t* outputMemoryDesc;
-            COMPUTE_TRY(GetMemoryDesc(outputMemory, &outputMemoryDesc));
+            DAWN_TRY(GetMemoryDesc(outputMemory, &outputMemoryDesc));
             size_t bufferLength = dnnl_memory_desc_get_size(outputMemoryDesc);
             void* outputBuffer = malloc(bufferLength);
-            COMPUTE_TRY(ReadFromMemory(outputBuffer, bufferLength, outputMemory));
+            DAWN_TRY(ReadFromMemory(outputBuffer, bufferLength, outputMemory));
             ArrayBufferView output = outputs->GetRecords().at(outputName).arrayBufferView;
             if (output.byteLength >= bufferLength) {
                 memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset, outputBuffer,
                        bufferLength);
             }
         }
-        return WNNComputeGraphStatus_Success;
+        return {};
     }
 
     dnnl_engine_t Graph::GetEngine() {
