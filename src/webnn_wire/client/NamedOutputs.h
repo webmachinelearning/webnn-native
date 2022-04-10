@@ -30,16 +30,14 @@ namespace webnn_wire::client {
         using ObjectBase::ObjectBase;
 
         void Set(char const* name, WNNResource const* resource);
-        void Get(size_t index, WNNArrayBufferView const* resource);
+        void Get(char const* name, WNNArrayBufferView const* resource);
         bool OutputResult(char const* name,
                           uint8_t const* buffer,
                           size_t byteLength,
                           size_t byteOffset);
 
       private:
-        uint8_t* mBuffer;
-        size_t mByteLength;
-        size_t mByteOffset;
+        std::map<std::string, WNNArrayBufferView> mNamedOutputMap;
     };
 
 }  // namespace webnn_wire::client

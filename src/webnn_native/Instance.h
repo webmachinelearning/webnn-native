@@ -19,6 +19,8 @@
 #include "common/RefCounted.h"
 #include "common/ityp_bitset.h"
 #include "webnn_native/BackendConnection.h"
+#include "webnn_native/FusionOperator.h"
+#include "webnn_native/OperatorArray.h"
 #include "webnn_native/webnn_platform.h"
 
 #include <array>
@@ -43,6 +45,7 @@ namespace webnn_native {
         NamedInputsBase* CreateNamedInputs();
         NamedOperandsBase* CreateNamedOperands();
         NamedOutputsBase* CreateNamedOutputs();
+        OperatorArrayBase* CreateOperatorArray();
 
         ContextBase* CreateTestContext(const ContextOptions* options);
 

@@ -57,6 +57,11 @@
         "name": "create named outputs",
         "returns": "named outputs",
         "args": []
+      },
+      {
+        "name": "create operator array",
+        "returns": "operator array",
+        "args": []
       }
     ]
   },
@@ -1050,8 +1055,8 @@
       {
         "name": "get",
         "args": [
-          {"name": "index", "type": "size_t"},
-          {"name": "resource", "type": "array buffer view", "annotation": "const*"}
+          {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+          {"name": "resource", "type": "array buffer view", "annotation": "*"}
         ]
       }
     ]

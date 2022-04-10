@@ -26,14 +26,12 @@ namespace webnn_wire::client {
         cmd.name = name;
         WNNArrayBufferView arrayBufferView = resource->arrayBufferView;
         if (arrayBufferView.buffer != nullptr) {
-            cmd.buffer = static_cast<const uint8_t*>(arrayBufferView.buffer);
+            // The output array buffer is nullptr so that it isn't serialized across process.
             cmd.byteLength = arrayBufferView.byteLength;
             cmd.byteOffset = arrayBufferView.byteOffset;
 
-            // Save the pointer in order to be copied after computing from server.
-            mBuffer = static_cast<uint8_t*>(arrayBufferView.buffer);
-            mByteLength = arrayBufferView.byteLength;
-            mByteOffset = arrayBufferView.byteOffset;
+            // Save the WNNArrayBufferView in order to be copied after computing from server.
+            mNamedOutputMap.insert(std::make_pair(std::string(name), arrayBufferView));
         } else {
             cmd.gpuBufferId = resource->gpuBufferView.id;
             cmd.gpuBufferGeneration = resource->gpuBufferView.generation;
@@ -42,7 +40,7 @@ namespace webnn_wire::client {
         client->SerializeCommand(cmd);
     }
 
-    void NamedOutputs::Get(size_t index, WNNArrayBufferView const* resource) {
+    void NamedOutputs::Get(char const* name, WNNArrayBufferView const* resource) {
         UNREACHABLE();
     }
 
@@ -50,9 +48,15 @@ namespace webnn_wire::client {
                                     uint8_t const* buffer,
                                     size_t byteLength,
                                     size_t byteOffset) {
-        if (buffer != nullptr) {
-            memcpy(mBuffer + mByteOffset, buffer + byteOffset, byteLength);
+        if (buffer == nullptr || name == nullptr) {
+            return false;
         }
+        if (mNamedOutputMap.find(std::string(name)) == mNamedOutputMap.end()) {
+            return false;
+        }
+        WNNArrayBufferView arrayBufferView = mNamedOutputMap[std::string(name)];
+        memcpy(static_cast<uint8_t*>(arrayBufferView.buffer) + arrayBufferView.byteOffset,
+               buffer + byteOffset, byteLength);
         return true;
     }
 

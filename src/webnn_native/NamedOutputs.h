@@ -43,37 +43,29 @@ namespace webnn_native {
         // WebNN API
         void Set(char const* name, const Resource* resource) {
             mOutputs[std::string(name)] = *resource;
+            if (resource->gpuBufferView.buffer != nullptr) {
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+                WGPUBuffer gpuBuffer = reinterpret_cast<WGPUBuffer>(resource->gpuBufferView.buffer);
+                wgpuBufferReference(gpuBuffer);
+#else
+                UNREACHABLE();
+#endif
+            } else {
 #if defined(WEBNN_ENABLE_WIRE)
-            ArrayBufferView arrayBufferView = resource->arrayBufferView;
-            if (arrayBufferView.buffer != nullptr) {
                 // malloc a memory to host the result of computing.
-                std::unique_ptr<char> buffer(new char[arrayBufferView.byteLength]);
+                std::unique_ptr<char> buffer(new char[resource->arrayBufferView.byteLength]);
                 // Prevent destroy from allocator memory after hanlding the command.
                 mOutputs[std::string(name)].arrayBufferView.buffer = buffer.get();
                 mOutputsBuffer.push_back(std::move(buffer));
-            } else {
-#    if defined(WEBNN_ENABLE_GPU_BUFFER)
-                WGPUBuffer gpuBuffer = reinterpret_cast<WGPUBuffer>(resource->gpuBufferView.buffer);
-                wgpuBufferReference(gpuBuffer);
-                mOutputs[std::string(name)].gpuBufferView = resource->gpuBufferView;
-#    else
-                UNREACHABLE();
-#    endif
-            }
 #endif  // defined(WEBNN_ENABLE_WIRE)
+            }
         }
 
-        // It's not support char** type in webnn.json to get name.
-        void Get(size_t index, ArrayBufferView const* arrayBuffer) const {
-            size_t i = 0;
-            for (auto& namedOutput : mOutputs) {
-                if (index == i) {
-                    *const_cast<ArrayBufferView*>(arrayBuffer) = namedOutput.second.arrayBufferView;
-                    return;
-                }
-                ++i;
+        void Get(char const* name, ArrayBufferView* arrayBuffer) {
+            if (mOutputs.find(std::string(name)) == mOutputs.end()) {
+                return;
             }
-            UNREACHABLE();
+            *arrayBuffer = mOutputs[std::string(name)].arrayBufferView;
         }
 
         Resource Get(char const* name) const {

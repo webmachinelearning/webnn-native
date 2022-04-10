@@ -38,6 +38,24 @@
       {"name": "byte offset", "type": "size_t", "default": 0},
       {"name": "result", "type": "ObjectHandle", "handle_type": "operand"}
     ],
+    "graph builder gru internal": [
+      {"name": "graph builder id", "type": "ObjectId"},
+      {"name": "input id", "type": "ObjectId"},
+      {"name": "weight id", "type": "ObjectId"},
+      {"name": "recurrent weight id", "type": "ObjectId"},
+      {"name": "steps", "type": "int32_t", "default": 0},
+      {"name": "hidden size", "type": "int32_t", "default": 0},
+      {"name": "options", "type": "gru options", "annotation": "const*"},
+      {"name": "result", "type": "ObjectHandle", "handle_type": "operand array"}
+    ],
+    "graph builder split internal": [
+      {"name": "graph builder id", "type": "ObjectId"},
+      {"name": "input id", "type": "ObjectId"},
+      {"name": "splits", "type": "uint32_t", "annotation": "const*", "length": "splits count"},
+      {"name": "splits count", "type": "uint32_t", "default": 0},
+      {"name": "options", "type": "split options", "annotation": "const*"},
+      {"name": "result", "type": "ObjectHandle", "handle_type": "operand array"}
+    ],
     "instance create context with gpu device internal": [
       {"name": "instance id", "type": "ObjectId"},
       {"name": "device", "type": "uint8_t", "annotation": "const*", "optional": true},
@@ -76,18 +94,10 @@
     "named outputs set": [
       {"name": "named outputs id", "type": "ObjectId"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "optional": true},
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0},
       {"name": "gpu buffer id", "type": "uint32_t", "default": 0},
       {"name": "gpu buffer generation", "type": "uint32_t", "default": 0}
-    ],
-    "named outputs get": [
-      {"name": "named outputs id", "type": "ObjectId"},
-      {"name": "index", "type": "size_t"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0}
     ],
     "destroy object": [
       {"name": "object type", "type": "ObjectType"},
@@ -132,6 +142,8 @@
       "ContextSetUncapturedErrorCallback",
       "GraphBuilderConstant",
       "GraphBuilderConstantWithGpuBuffer",
+      "GraphBuilderGru",
+      "GraphBuilderSplit",
       "InstanceCreateContextWithGpuDevice",
       "NamedInputsSet",
       "NamedOutputsSet",

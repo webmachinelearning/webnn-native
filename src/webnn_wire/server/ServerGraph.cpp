@@ -18,6 +18,32 @@
 
 namespace webnn_wire::server {
 
+    bool Server::SerializeComputeResult(ObjectId outputsId) {
+        auto* namedOutputs = NamedOutputsObjects().Get(outputsId);
+        if (mOutputNamesMap.find(outputsId) == mOutputNamesMap.end()) {
+            return false;
+        }
+        for (auto& name : mOutputNamesMap[outputsId]) {
+            WNNArrayBufferView arrayBuffer = {};
+            mProcs.namedOutputsGet(namedOutputs->handle, name.data(), &arrayBuffer);
+            if (arrayBuffer.buffer == nullptr) {
+                return false;
+            }
+
+            // Return the result.
+            ReturnGraphComputeResultCmd cmd;
+            cmd.namedOutputs = ObjectHandle{outputsId, namedOutputs->generation};
+            cmd.name = name.data();
+            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
+            cmd.byteLength = arrayBuffer.byteLength;
+            cmd.byteOffset = arrayBuffer.byteOffset;
+            SerializeCommand(cmd);
+        }
+        // Reset the mOutputNamesMap which host in the server.
+        mOutputNamesMap.erase(outputsId);
+        return true;
+    }
+
     bool Server::DoGraphCompute(ObjectId graphId, ObjectId inputsId, ObjectId outputsId) {
         auto* graph = GraphObjects().Get(graphId);
         auto* namedInputs = NamedInputsObjects().Get(inputsId);
@@ -27,20 +53,7 @@ namespace webnn_wire::server {
         }
 
         mProcs.graphCompute(graph->handle, namedInputs->handle, namedOutputs->handle);
-
-        WNNArrayBufferView arrayBuffer = {};
-        mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
-        if (arrayBuffer.buffer != nullptr) {
-            // Return the result.
-            ReturnGraphComputeResultCmd cmd;
-            cmd.namedOutputs = ObjectHandle{outputsId, namedOutputs->generation};
-            cmd.name = "TODO: use the name getting from namedOutputs";
-            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
-            cmd.byteLength = arrayBuffer.byteLength;
-            cmd.byteOffset = arrayBuffer.byteOffset;
-            SerializeCommand(cmd);
-        }
-        return true;
+        return SerializeComputeResult(outputsId);
     }
 
     bool Server::DoGraphComputeAsync(ObjectId graphId,
@@ -59,30 +72,17 @@ namespace webnn_wire::server {
         userdata->graph = ObjectHandle{graphId, graph->generation};
         userdata->namedOutputsObjectID = outputsId;
 
-        mProcs.graphComputeAsync(
-            graph->handle, namedInputs->handle, namedOutputs->handle,
-            ForwardToServer<&Server::OnGraphComputeAsyncCallback>,
-            userdata.release());
+        mProcs.graphComputeAsync(graph->handle, namedInputs->handle, namedOutputs->handle,
+                                 ForwardToServer<&Server::OnGraphComputeAsyncCallback>,
+                                 userdata.release());
         return true;
     }
 
-    void Server::OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata, 
+    void Server::OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata,
                                              WNNComputeGraphStatus status,
                                              const char* message) {
         if (status == WNNComputeGraphStatus_Success) {
-            WNNArrayBufferView arrayBuffer = {};
-            auto* namedOutputs = NamedOutputsObjects().Get(userdata->namedOutputsObjectID);
-            mProcs.namedOutputsGet(namedOutputs->handle, 0, &arrayBuffer);
-            // Return the result.
-            ReturnGraphComputeResultCmd cmd;
-            cmd.namedOutputs =
-                ObjectHandle{userdata->namedOutputsObjectID, namedOutputs->generation};
-            cmd.name = "TODO: use the name getting from namedOutputs";
-            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
-            cmd.byteLength = arrayBuffer.byteLength;
-            cmd.byteOffset = arrayBuffer.byteOffset;
-
-            SerializeCommand(cmd);
+            SerializeComputeResult(userdata->namedOutputsObjectID);
         }
         ReturnGraphComputeAsyncCallbackCmd cmd;
         cmd.graph = userdata->graph;
