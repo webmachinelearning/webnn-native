@@ -53,7 +53,12 @@ namespace webnn_wire::server {
         }
 
         mProcs.graphCompute(graph->handle, namedInputs->handle, namedOutputs->handle);
+
+#if defined(WEBNN_ENABLE_GPU_BUFFER)
+        return true;
+#else
         return SerializeComputeResult(outputsId);
+#endif
     }
 
     bool Server::DoGraphComputeAsync(ObjectId graphId,
