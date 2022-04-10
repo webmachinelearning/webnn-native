@@ -250,6 +250,13 @@ source_set("webnn_native_sources") {
       "directml.lib",
     ]
     if (build_with_chromium) {
+      if (is_component_build) {
+        libs += [
+          "dawn_proc.dll.lib",
+          "dawn_native.dll.lib",
+          "dawn_wire.dll.lib",
+        ]
+      }
       deps += [ "${webnn_dawn_root}/src/dawn_native" ]
     }
 
