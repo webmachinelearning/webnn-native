@@ -29,6 +29,11 @@ namespace webnn_wire::client {
         using ObjectBase::ObjectBase;
 
         size_t Size();
+        // Set the size of operand array from client.
+        void SetSize(size_t size);
+
+      private:
+        size_t mSize = 0;
     };
 
 }  // namespace webnn_wire::client

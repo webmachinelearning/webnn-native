@@ -19,6 +19,8 @@
 #include "webnn_wire/ChunkedCommandSerializer.h"
 #include "webnn_wire/server/ServerBase_autogen.h"
 
+#include <string>
+
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
 #    include <dawn/wire/WireServer.h>
 #    include <webgpu/webgpu.h>
@@ -170,6 +172,10 @@ namespace webnn_wire::server {
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
         dawn::wire::WireServer* mDawnWireServer;
 #endif
+        // Save the output names in server because char** type isn't supported in webnn.json to get
+        // name.
+        std::map<ObjectId, std::vector<std::string>> mOutputNamesMap;
+        bool SerializeComputeResult(ObjectId outputsId);
 
         std::shared_ptr<bool> mIsAlive;
     };

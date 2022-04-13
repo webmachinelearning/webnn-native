@@ -20,14 +20,11 @@
 namespace webnn_wire::client {
 
     size_t OperandArray::Size() {
-        OperandArraySizeCmd cmd;
-        cmd.operandArrayId = this->id;
+        return mSize;
+    }
 
-        client->SerializeCommand(cmd);
-
-        // TODO: Implement return command to get the size from wire server.
-        DAWN_ASSERT(0);
-        return 0;
+    void OperandArray::SetSize(size_t size) {
+        mSize = size;
     }
 
 }  // namespace webnn_wire::client

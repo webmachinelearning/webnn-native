@@ -58,4 +58,56 @@ namespace webnn_wire::client {
         return ToAPI(operand);
     }
 
+    // Override GraphBuilderGruCmd to set the size of result OperandArray in client,
+    // otherwise WNNOperandArray.Size() need to wait Server return a command with the size.
+    WNNOperandArray GraphBuilder::Gru(WNNOperand input,
+                                      WNNOperand weight,
+                                      WNNOperand recurrentWeight,
+                                      int32_t steps,
+                                      int32_t hiddenSize,
+                                      WNNGruOptions const* options) {
+        GraphBuilderGruInternalCmd cmd;
+        cmd.graphBuilderId = this->id;
+
+        auto* allocation = client->OperandArrayAllocator().New(client);
+        OperandArray* operandArray = allocation->object.get();
+        operandArray->SetSize(options->returnSequence ? 2 : 1);
+
+        cmd.result = ObjectHandle{operandArray->id, allocation->generation};
+        cmd.inputId = FromAPI(input)->id;
+        cmd.weightId = FromAPI(weight)->id;
+        cmd.recurrentWeightId = FromAPI(recurrentWeight)->id;
+        cmd.steps = steps;
+        cmd.hiddenSize = hiddenSize;
+        cmd.options = options;
+
+        client->SerializeCommand(cmd);
+
+        return ToAPI(operandArray);
+    }
+
+    // Override GraphBuilderSplitCmd to set the size of result OperandArray in client,
+    // otherwise WNNOperandArray.Size() need to wait Server return a command with the size.
+    WNNOperandArray GraphBuilder::Split(WNNOperand input,
+                                        uint32_t const* splits,
+                                        uint32_t splitsCount,
+                                        WNNSplitOptions const* options) {
+        GraphBuilderSplitInternalCmd cmd;
+        cmd.graphBuilderId = this->id;
+
+        auto* allocation = client->OperandArrayAllocator().New(client);
+        OperandArray* operandArray = allocation->object.get();
+        operandArray->SetSize(splitsCount == 1 ? splits[0] : splitsCount);
+
+        cmd.result = ObjectHandle{operandArray->id, allocation->generation};
+        cmd.inputId = FromAPI(input)->id;
+        cmd.splits = splits;
+        cmd.splitsCount = splitsCount;
+        cmd.options = options;
+
+        client->SerializeCommand(cmd);
+
+        return ToAPI(operandArray);
+    }
+
 }  // namespace webnn_wire::client

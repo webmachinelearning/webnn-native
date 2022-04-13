@@ -194,6 +194,10 @@ namespace webnn_native {
         return new NamedOutputsBase();
     }
 
+    OperatorArrayBase* InstanceBase::CreateOperatorArray() {
+        return new OperatorArrayBase();
+    }
+
     bool InstanceBase::ConsumedError(MaybeError maybeError) {
         if (maybeError.IsError()) {
             std::unique_ptr<ErrorData> error = maybeError.AcquireError();

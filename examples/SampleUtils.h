@@ -56,6 +56,7 @@ class ExampleBase {
 wnn::Context CreateCppContext(wnn::ContextOptions const* options = nullptr);
 wnn::NamedInputs CreateCppNamedInputs();
 wnn::NamedOutputs CreateCppNamedOutputs();
+wnn::OperatorArray CreateCppOperatorArray();
 void DoFlush();
 
 bool Expected(float output, float expected);

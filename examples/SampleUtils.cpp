@@ -146,6 +146,14 @@ wnn::NamedOutputs CreateCppNamedOutputs() {
 #endif  // defined(WEBNN_ENABLE_WIRE)
 }
 
+wnn::OperatorArray CreateCppOperatorArray() {
+#if defined(WEBNN_ENABLE_WIRE)
+    return clientInstance.CreateOperatorArray();
+#else
+    return wnn::CreateOperatorArray();
+#endif  // defined(WEBNN_ENABLE_WIRE)
+}
+
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         if (strcmp("-h", argv[i]) == 0) {

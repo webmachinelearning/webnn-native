@@ -100,7 +100,7 @@ jobs:
         set "PATH=%CD%\..\depot_tools;%PATH%"
         set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
         cd update
-        gn gen out\Release --args="webnn_enable_dml=true is_debug=false"
+        gn gen out\Release --args="webnn_enable_dml=true webnn_enable_wire=true is_debug=false"
 
     - name: Build for update branch
       shell: cmd

@@ -31,6 +31,16 @@ namespace webnn_wire::client {
         WNNOperand Constant(WNNOperandDescriptor const* desc, WNNArrayBufferView const* value);
         WNNOperand ConstantWithGpuBuffer(WNNOperandDescriptor const* desc,
                                          WNNGpuBufferView const* value);
+        WNNOperandArray Gru(WNNOperand input,
+                            WNNOperand weight,
+                            WNNOperand recurrentWeight,
+                            int32_t steps,
+                            int32_t hiddenSize,
+                            WNNGruOptions const* options);
+        WNNOperandArray Split(WNNOperand input,
+                              uint32_t const* splits,
+                              uint32_t splitsCount,
+                              WNNSplitOptions const* options);
     };
 
 }  // namespace webnn_wire::client

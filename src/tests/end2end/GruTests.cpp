@@ -148,7 +148,7 @@ TEST_F(GruTests, GruWithMultiActivitions) {
     options.recurrentBias = recurrentBias;
     options.initialHiddenState = initialHiddenState;
     options.resetAfter = false;
-    auto activations = wnn::CreateOperatorArray();
+    auto activations = CreateCppOperatorArray();
     auto activationSigmoid =
         utils::CreateActivationOperator(builder, utils::FusedActivation::SIGMOID);
     activations.Set(activationSigmoid);

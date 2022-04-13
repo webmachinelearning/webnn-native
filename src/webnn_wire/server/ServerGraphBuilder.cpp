@@ -87,4 +87,68 @@ namespace webnn_wire::server {
         return true;
     }
 
+    bool Server::DoGraphBuilderGruInternal(ObjectId graphBuilderId,
+                                           ObjectId inputId,
+                                           ObjectId weightId,
+                                           ObjectId recurrentWeightId,
+                                           int32_t steps,
+                                           int32_t hiddenSize,
+                                           WNNGruOptions const* options,
+                                           ObjectHandle result) {
+        auto* graphBuilder = GraphBuilderObjects().Get(graphBuilderId);
+        auto* input = OperandObjects().Get(inputId);
+        auto* weight = OperandObjects().Get(weightId);
+        auto* recurrentWeight = OperandObjects().Get(recurrentWeightId);
+        if (graphBuilder == nullptr || input == nullptr || weight == nullptr ||
+            recurrentWeight == nullptr) {
+            return false;
+        }
+
+        // Create and register the operandArray object.
+        auto* resultData = OperandArrayObjects().Allocate(result.id);
+        if (resultData == nullptr) {
+            return false;
+        }
+        resultData->generation = result.generation;
+        resultData->contextInfo = graphBuilder->contextInfo;
+        if (resultData->contextInfo != nullptr) {
+            if (!TrackContextChild(resultData->contextInfo, ObjectType::OperandArray, result.id)) {
+                return false;
+            }
+        }
+        resultData->handle =
+            mProcs.graphBuilderGru(graphBuilder->handle, input->handle, weight->handle,
+                                   recurrentWeight->handle, steps, hiddenSize, options);
+        return true;
+    }
+
+    bool Server::DoGraphBuilderSplitInternal(ObjectId graphBuilderId,
+                                             ObjectId inputId,
+                                             uint32_t const* splits,
+                                             uint32_t splitsCount,
+                                             WNNSplitOptions const* options,
+                                             ObjectHandle result) {
+        auto* graphBuilder = GraphBuilderObjects().Get(graphBuilderId);
+        auto* input = OperandObjects().Get(inputId);
+        if (graphBuilder == nullptr || input == nullptr) {
+            return false;
+        }
+
+        // Create and register the operandArray object.
+        auto* resultData = OperandArrayObjects().Allocate(result.id);
+        if (resultData == nullptr) {
+            return false;
+        }
+        resultData->generation = result.generation;
+        resultData->contextInfo = graphBuilder->contextInfo;
+        if (resultData->contextInfo != nullptr) {
+            if (!TrackContextChild(resultData->contextInfo, ObjectType::OperandArray, result.id)) {
+                return false;
+            }
+        }
+        resultData->handle = mProcs.graphBuilderSplit(graphBuilder->handle, input->handle, splits,
+                                                      splitsCount, options);
+        return true;
+    }
+
 }  // namespace webnn_wire::server
