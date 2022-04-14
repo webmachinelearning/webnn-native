@@ -112,14 +112,7 @@ HRESULT Device::Init()
     allocatorDesc.Device = m_d3d12Device;
     allocatorDesc.IsUMA = arch.UMA;
     allocatorDesc.ResourceHeapTier = options.ResourceHeapTier;
-
-    if (m_useDebugLayer){
-        allocatorDesc.Flags |= gpgmm::d3d12::ALLOCATOR_FLAGS::ALLOCATOR_CHECK_DEVICE_LEAKS;
-    }
-
-    ReturnIfFailed(gpgmm::d3d12::ResourceAllocator::CreateAllocator(allocatorDesc, &m_resourceAllocator));
-
-    m_residencyManager = m_resourceAllocator->GetResidencyManager();
+    ReturnIfFailed(gpgmm::d3d12::ResourceAllocator::CreateAllocator(allocatorDesc, &m_resourceAllocator, &m_residencyManager));
 
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
     descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
