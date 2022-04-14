@@ -531,6 +531,7 @@ namespace webnn_native { namespace dml {
 
         mGraphEdgesMap[constant->PrimaryOutput()] = edge;
         mInputs.push_back(inputEdgeInfo);
+        mConstantSet.insert(constant->PrimaryOutput());
         return {};
     }
 
@@ -1302,6 +1303,119 @@ namespace webnn_native { namespace dml {
             return {};
         }
 
+        MaybeError Graph::AddPad(const op::Pad* pad) {
+            auto inputsOperand = pad->Inputs();
+            DAWN_ASSERT(inputsOperand.size() == 2);
+            DAWN_ASSERT(mGraphEdgesMap.find(inputsOperand[0].Get()) != mGraphEdgesMap.end());
+            DAWN_ASSERT(mGraphEdgesMap.find(inputsOperand[1].Get()) != mGraphEdgesMap.end());
+
+            auto inputEdge = mGraphEdgesMap[inputsOperand[0].Get()];
+            auto paddingEdge = mGraphEdgesMap[inputsOperand[1].Get()];
+            auto inputDims = ConvertDimensions(inputsOperand[0].Get()->Shape());
+            auto paddingDims = ConvertDimensions(inputsOperand[1].Get()->Shape());
+            auto outputDims = ConvertDimensions(pad->Outputs()[0].Get()->Shape());
+            size_t inputRank = inputDims.size();
+
+            // Workaround(mingming): If padding was added in mGraph, it must be used.
+            // Use "Pad_"+std::to_string(mExpression.size()) to generate a unique name for the
+            // output node. This may be a dml issue:
+            // https://github.com/microsoft/DirectML/issues/133.
+            std::string name = "Pad_" + std::to_string(mGraphEdgesMap.size());
+            auto paddingTensorDesc = paddingEdge->outputTensorDESC;
+            // Ensure that the DML_TENSOR_FLAGS of output tensor is DML_TENSOR_FLAG_NONE.
+            std::shared_ptr<DmlTensorDesc> outputPaddingTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputPaddingTensorDesc, &paddingTensorDesc,
+                                     paddingDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            outputPaddingTensorDesc->bufferDesc.Flags = DML_TENSOR_FLAG_NONE;
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputPaddingTensorDesc->bufferDesc};
+            ComPtr<IDMLOperator> dmlOperator;
+            {
+                DML_ELEMENT_WISE_IDENTITY_OPERATOR_DESC dmlSpecificOperatorDesc{};
+                dmlSpecificOperatorDesc.InputTensor = &paddingTensorDesc;
+                dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;
+                dmlSpecificOperatorDesc.ScaleBias = nullptr;
+                DML_OPERATOR_DESC dmlOperatorDesc = {};
+                dmlOperatorDesc.Type = DML_OPERATOR_ELEMENT_WISE_IDENTITY;
+                dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;
+                WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+            }
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+            auto outputEdge = CreateEdgeFromThisNode(paddingTensorDesc, mIntermediateNodes.size());
+            AddEdgesToThisNode({paddingEdge});
+
+            outputEdge->name = name;
+            std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC> outputEdgeDesc(
+                new DML_OUTPUT_GRAPH_EDGE_DESC);
+            auto outputEdgeInfo = reinterpret_cast<EdgeInfo*>(outputEdge.get());
+            outputEdgeDesc->FromNodeIndex = outputEdgeInfo->nodeIndex;
+            outputEdgeDesc->FromNodeOutputIndex = outputEdgeInfo->outputNodeIndex;
+            outputEdgeDesc->GraphOutputIndex = mOutputs.size();
+            mOutputEdges.push_back({DML_GRAPH_EDGE_TYPE_OUTPUT, outputEdgeDesc.get()});
+            mOutputEdgesDesc.push_back(std::move(outputEdgeDesc));
+            mOutputs.push_back(*outputEdgeInfo);
+
+            if (mConstantSet.find(inputsOperand[1].Get()) == mConstantSet.end()) {
+                return DAWN_INTERNAL_ERROR("The padding constant is not found.");
+            }
+
+            const op::Constant* paddingConstant =
+                reinterpret_cast<const op::Constant*>(inputsOperand[1]->Operator());
+            const uint32_t* paddingData =
+                static_cast<const uint32_t*>(paddingConstant->GetBuffer());
+            std::vector<uint32_t> startPadding, endPadding;
+            for (size_t i = 0; i < inputRank; ++i) {
+                startPadding.push_back(paddingData[2 * i]);
+                endPadding.push_back(paddingData[2 * i + 1]);
+            }
+            const PadOptions* options = pad->GetOptions();
+            DML_PADDING_MODE paddingMode;
+            switch (options->mode) {
+                case wnn::PaddingMode::Edge:
+                    paddingMode = DML_PADDING_MODE_EDGE;
+                    break;
+                case wnn::PaddingMode::Reflection:
+                    paddingMode = DML_PADDING_MODE_REFLECTION;
+                    break;
+                case wnn::PaddingMode::Symmetric:
+                    paddingMode = DML_PADDING_MODE_SYMMETRIC;
+                    break;
+                case wnn::PaddingMode::Constant:
+                    paddingMode = DML_PADDING_MODE_CONSTANT;
+                    break;
+                default:
+                    DAWN_ASSERT(0);
+            }
+            auto inputTensorDesc = inputEdge->outputTensorDESC;
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, outputDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            outputTensorDesc = {DML_TENSOR_TYPE_BUFFER, &outputDmlTensorDesc->bufferDesc};
+
+            DML_PADDING_OPERATOR_DESC desc = {};
+            desc.InputTensor = &inputTensorDesc;
+            desc.OutputTensor = &outputTensorDesc;
+            desc.PaddingMode = paddingMode;
+            desc.PaddingValue = options->value;
+            desc.DimensionCount = static_cast<uint32_t>(startPadding.size());
+            desc.StartPadding = startPadding.data();
+            desc.EndPadding = endPadding.data();
+            DML_OPERATOR_DESC dmlOperatorDesc = {};
+            dmlOperatorDesc.Type = DML_OPERATOR_PADDING;
+            dmlOperatorDesc.Desc = &desc;
+
+            WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+            mGraphEdgesMap[pad->PrimaryOutput()] =
+                CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+            AddEdgesToThisNode({inputEdge});
+            return {};
+        }
+
         MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
             DAWN_ASSERT(mGraphEdgesMap.find(output) != mGraphEdgesMap.end());
             auto outputEdge = mGraphEdgesMap[output];
@@ -1343,10 +1457,6 @@ namespace webnn_native { namespace dml {
 
         MaybeError Graph::AddGru(const op::Gru* gru) {
             return DAWN_UNIMPLEMENTED_ERROR("Gru hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddPad(const op::Pad* pad) {
-            return DAWN_UNIMPLEMENTED_ERROR("Pad hasn't been supported on DirectML.");
         }
 
         MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
@@ -1636,19 +1746,26 @@ namespace webnn_native { namespace dml {
             auto namedOutputs = outputs->GetRecords();
             std::vector<ArrayBufferView> outputArrayBufferViews;
             uint64_t outputsResourceSize = 0;
+            ArrayBufferView output;
             for (size_t i = 0; i < mOutputs.size(); ++i) {
                 std::string name = mOutputs[i].name;
                 auto namedOutputs = outputs->GetRecords();
-                ArrayBufferView output;
                 if (namedOutputs.find(name) != namedOutputs.end()) {
                     output = namedOutputs[name];
                     outputArrayBufferViews.push_back(output);
                     DAWN_ASSERT(output.buffer != nullptr && output.byteLength != 0);
-
-                    uint64_t offset = utils::RoundUpToMultiple(
-                        outputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
-                    outputsResourceSize = offset + output.byteLength;
+                } else {
+                    size_t byteLength = reinterpret_cast<const DML_BUFFER_TENSOR_DESC*>(
+                                            mOutputs[i].outputTensorDESC.Desc)
+                                            ->TotalTensorSizeInBytes;
+                    // It is an unuseful output of dml graph. We need not read back and copy buffer
+                    // to it.
+                    output = {nullptr, byteLength, 0};
+                    outputArrayBufferViews.push_back(output);
                 }
+                uint64_t offset = utils::RoundUpToMultiple(
+                    outputsResourceSize, (uint64_t)DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT);
+                outputsResourceSize = offset + output.byteLength;
             }
 
             ComPtr<ID3D12Resource> outputResource;
@@ -1702,8 +1819,10 @@ namespace webnn_native { namespace dml {
                 uint32_t requiredAlignment = DML_MINIMUM_BUFFER_TENSOR_ALIGNMENT;
                 offset = utils::RoundUpToMultiple(offset, (uint64_t)requiredAlignment);
                 ArrayBufferView output = outputArrayBufferViews[i];
-                memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset,
-                       readBackBuffer + offset, output.byteLength);
+                if (output.buffer) {
+                    memcpy(static_cast<int8_t*>(output.buffer) + output.byteOffset,
+                           readBackBuffer + offset, output.byteLength);
+                }
                 offset += output.byteLength;
             }
 

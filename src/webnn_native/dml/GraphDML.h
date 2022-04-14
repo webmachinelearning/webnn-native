@@ -20,6 +20,7 @@
 #include <dxgi1_4.h>
 #include <dxgi1_6.h>
 #include <wrl\client.h>
+#include <unordered_set>
 
 #include "DirectML.h"
 #include "webnn_native/Graph.h"
@@ -186,6 +187,7 @@ namespace webnn_native { namespace dml {
         std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;
         std::vector<std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC>> mOutputEdgesDesc;
         std::vector<std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC>> mIntermediateEdgesDesc;
+        std::unordered_set<const OperandBase*> mConstantSet;
         std::vector<std::unique_ptr<char>> mConstantsBuffer;
     };
 
