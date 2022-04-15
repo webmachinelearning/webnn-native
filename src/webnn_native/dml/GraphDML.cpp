@@ -976,21 +976,18 @@ namespace webnn_native { namespace dml {
         const OperandBase* inputOperand = reshape->Inputs()[0].Get();
         DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
 
-        auto edge = mGraphEdgesMap[inputOperand];
+        auto inputEdge = mGraphEdgesMap[inputOperand];
         auto outputDims = ConvertDimensions(reshape->Outputs()[0].Get()->Shape());
-        if (outputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
-            return DAWN_INTERNAL_ERROR("The size of target new shape is not supported by DML.");
-        }
         std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
         // Reshape needn't new strides, because the layout has not been changed.
-        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &edge->outputTensorDESC,
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &inputEdge->outputTensorDESC,
                                  outputDims)) {
             return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
         }
         DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
                                             &outputDmlTensorDesc->bufferDesc};
         // Reshape is not a real node in DML, just need to update the edge created from it.
-        mGraphEdgesMap[reshape->PrimaryOutput()] = updateEdge(edge, outputTensorDesc);
+        mGraphEdgesMap[reshape->PrimaryOutput()] = updateEdge(inputEdge, outputTensorDesc);
         return {};
     }
 
@@ -1013,13 +1010,7 @@ namespace webnn_native { namespace dml {
 
             auto inputDims = ConvertDimensions(transpose->Inputs()[0].Get()->Shape());
             auto outputDims = ConvertDimensions(transpose->Outputs()[0].Get()->Shape());
-            if (outputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
-                return DAWN_INTERNAL_ERROR("The size of target new shape is not supported by DML.");
-            }
             std::vector<int32_t> permutation = transpose->GetPermutation();
-            if (permutation.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
-                return DAWN_INTERNAL_ERROR("The size of permutation is not supported by DML.");
-            }
 
             // Transpose need new strides, because the layout has been changed.
             std::vector<UINT> strides(outputDims.size()), transposedStrides;
@@ -1149,9 +1140,6 @@ namespace webnn_native { namespace dml {
             DAWN_ASSERT(inputsOperand.size() == 1);
             auto inputEdge = mGraphEdgesMap[inputsOperand[0].Get()];
             auto inputDims = ConvertDimensions(inputsOperand[0].Get()->Shape());
-            if (inputDims.size() > DML_TENSOR_DIMENSION_COUNT_MAX1) {
-                return DAWN_INTERNAL_ERROR("The size of input dimensions is greater than max");
-            }
             mGraphEdgesMap[clamp->PrimaryOutput()] = Clamp(clamp, inputEdge);
             return {};
         }
@@ -1742,7 +1730,24 @@ namespace webnn_native { namespace dml {
         }
 
         MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
-            return DAWN_UNIMPLEMENTED_ERROR("Squeeze hasn't been supported on DirectML.");
+            DAWN_ASSERT(squeeze->Inputs().size() == 1);
+            const OperandBase* inputOperand = squeeze->Inputs()[0].Get();
+            DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+            auto inputEdge = mGraphEdgesMap.at(inputOperand);
+            auto outputDims = ConvertDimensions(squeeze->Outputs()[0].Get()->Shape());
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            // Squeeze perform like reshape which needn't new strides, because the layout has not
+            // been changed.
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc,
+                                     &inputEdge->outputTensorDESC, outputDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputDmlTensorDesc->bufferDesc};
+            // Squeeze is not a real node in DML, just need to update the edge created from it.
+            mGraphEdgesMap[squeeze->PrimaryOutput()] = updateEdge(inputEdge, outputTensorDesc);
+            return {};
         }
 
         MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
