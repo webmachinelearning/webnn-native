@@ -1432,8 +1432,95 @@ namespace webnn_native { namespace dml {
             return DAWN_UNIMPLEMENTED_ERROR("Pool2d hasn't been supported on DirectML.");
         }
 
+#define CREATE_REDUCE_OPERATOR(type, inputTensorDesc, outputTensorDesc, axes, dmlOperator) \
+    DML_REDUCE_OPERATOR_DESC desc = {};                                                    \
+    desc.Function = DML_REDUCE_FUNCTION_##type;                                            \
+    desc.InputTensor = &inputTensorDesc;                                                   \
+    desc.OutputTensor = &outputTensorDesc;                                                 \
+    desc.AxisCount = static_cast<UINT>(axes.size());                                       \
+    desc.Axes = axes.data();                                                               \
+    DML_OPERATOR_DESC dmlOperatorDesc = {};                                                \
+    dmlOperatorDesc.Type = DML_OPERATOR_REDUCE;                                            \
+    dmlOperatorDesc.Desc = &desc;                                                          \
+    WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+
         MaybeError Graph::AddReduce(const op::Reduce* reduce) {
-            return DAWN_UNIMPLEMENTED_ERROR("Reduce hasn't been supported on DirectML.");
+            DAWN_ASSERT(reduce->Inputs().size() == 1);
+            const OperandBase* inputOperand = reduce->Inputs()[0].Get();
+            DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+            auto inputEdge = mGraphEdgesMap[inputOperand];
+            const ReduceOptions* options = reduce->GetOptions();
+            std::vector<std::uint32_t> axes;
+            auto inputDims = ConvertDimensions(inputOperand->Shape());
+            auto outputDims = ConvertDimensions(reduce->Outputs()[0].Get()->Shape());
+
+            auto inputTensorDesc = inputEdge->outputTensorDESC;
+            auto reducedDims = inputDims;
+            for (size_t i = 0; i < options->axesCount; ++i) {
+                // Axes values must be in the range [0, InputTensor.DimensionCount - 1].
+                // The dimensions to reduce where -1 means the last dimension.
+                uint32_t axis = options->axes[i] == -1 ? inputDims.size() - 1 : options->axes[i];
+                axes.push_back(axis);
+                reducedDims[axis] = 1;
+            }
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &inputTensorDesc,
+                                     reducedDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputDmlTensorDesc->bufferDesc};
+
+            ComPtr<IDMLOperator> dmlOperator;
+            switch (reduce->GetType()) {
+                case op::ReduceType::kReduceL1: {
+                    CREATE_REDUCE_OPERATOR(L1, inputTensorDesc, outputTensorDesc, axes, dmlOperator)
+                } break;
+                case op::ReduceType::kReduceL2: {
+                    CREATE_REDUCE_OPERATOR(L2, inputTensorDesc, outputTensorDesc, axes, dmlOperator)
+                } break;
+                case op::ReduceType::kReduceMax: {
+                    CREATE_REDUCE_OPERATOR(MAX, inputTensorDesc, outputTensorDesc, axes,
+                                           dmlOperator)
+                } break;
+                case op::ReduceType::kReduceMean: {
+                    CREATE_REDUCE_OPERATOR(AVERAGE, inputTensorDesc, outputTensorDesc, axes,
+                                           dmlOperator)
+                } break;
+                case op::ReduceType::kReduceMin: {
+                    CREATE_REDUCE_OPERATOR(MIN, inputTensorDesc, outputTensorDesc, axes,
+                                           dmlOperator)
+                } break;
+                case op::ReduceType::kReduceProduct: {
+                    CREATE_REDUCE_OPERATOR(MULTIPLY, inputTensorDesc, outputTensorDesc, axes,
+                                           dmlOperator)
+                } break;
+                case op::ReduceType::kReduceSum: {
+                    CREATE_REDUCE_OPERATOR(SUM, inputTensorDesc, outputTensorDesc, axes,
+                                           dmlOperator)
+                } break;
+                default:
+                    return DAWN_INTERNAL_ERROR("The reduce op type isn't supported.");
+            }
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+            auto outputEdge = CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+            AddEdgesToThisNode({inputEdge});
+            // Reshape if dimensions needn't be kept.
+            if (!options->keepDimensions) {
+                if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc,
+                                         &outputEdge->outputTensorDESC, outputDims)) {
+                    return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+                }
+                DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                    &outputDmlTensorDesc->bufferDesc};
+                // Reshape is not a real node in DML, just need to update the edge created from it.
+                outputEdge = updateEdge(outputEdge, outputTensorDesc);
+            }
+            mGraphEdgesMap[reduce->PrimaryOutput()] = outputEdge;
+
+            return {};
         }
 
         MaybeError Graph::AddResample2d(const op::Resample2d* resample2d) {
@@ -1468,10 +1555,9 @@ namespace webnn_native { namespace dml {
                     break;
             }
 
-            // Scales is computed by dividing the output sizes by the input sizes
-            // InputPixelOffsets = 0.5f for each dimension
-            // OutputPixelOffsets = -0.5f for each dimension
-            DAWN_ASSERT(inputDims.size() == outputDims.size() == 4);
+            // Scales is computed by dividing the output sizes by the input sizes.
+            // InputPixelOffsets = 0.5f for each dimension.
+            // OutputPixelOffsets = -0.5f for each dimension.
             std::vector<float> scales;
             for (size_t i = 0; i < inputDims.size(); ++i) {
                 scales.push_back(outputDims[i] / inputDims[i]);
