@@ -1400,7 +1400,7 @@ namespace webnn_native { namespace dml {
             desc.OutputTensor = &outputTensorDesc;
             desc.PaddingMode = paddingMode;
             desc.PaddingValue = options->value;
-            desc.DimensionCount = static_cast<uint32_t>(startPadding.size());
+            desc.DimensionCount = static_cast<UINT>(startPadding.size());
             desc.StartPadding = startPadding.data();
             desc.EndPadding = endPadding.data();
             DML_OPERATOR_DESC dmlOperatorDesc = {};
@@ -1414,6 +1414,110 @@ namespace webnn_native { namespace dml {
                 CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
             AddEdgesToThisNode({inputEdge});
             return {};
+        }
+
+        MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
+            return DAWN_UNIMPLEMENTED_ERROR("BatchNorm hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
+            return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddGru(const op::Gru* gru) {
+            return DAWN_UNIMPLEMENTED_ERROR("Gru hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
+            return DAWN_UNIMPLEMENTED_ERROR("Pool2d hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddReduce(const op::Reduce* reduce) {
+            return DAWN_UNIMPLEMENTED_ERROR("Reduce hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddResample2d(const op::Resample2d* resample2d) {
+            DAWN_ASSERT(resample2d->Inputs().size() == 1);
+            const OperandBase* inputOperand = resample2d->Inputs()[0].Get();
+            DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+            auto inputEdge = mGraphEdgesMap[inputOperand];
+            auto inputDims = ConvertDimensions(inputOperand->Shape());
+            auto outputDims = ConvertDimensions(resample2d->Outputs()[0].Get()->Shape());
+
+            auto inputTensorDesc = inputEdge->outputTensorDESC;
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &inputTensorDesc,
+                                     outputDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputDmlTensorDesc->bufferDesc};
+
+            const Resample2dOptions* options = resample2d->GetOptions();
+            DML_INTERPOLATION_MODE mode;
+            switch (options->mode) {
+                case wnn::InterpolationMode::NearestNeighbor:
+                    mode = DML_INTERPOLATION_MODE_NEAREST_NEIGHBOR;
+                    break;
+                case wnn::InterpolationMode::Linear:
+                    mode = DML_INTERPOLATION_MODE_LINEAR;
+                    break;
+                default:
+                    DAWN_ASSERT(0);
+                    break;
+            }
+
+            // Scales is computed by dividing the output sizes by the input sizes
+            // InputPixelOffsets = 0.5f for each dimension
+            // OutputPixelOffsets = -0.5f for each dimension
+            DAWN_ASSERT(inputDims.size() == outputDims.size() == 4);
+            std::vector<float> scales;
+            for (size_t i = 0; i < inputDims.size(); ++i) {
+                scales.push_back(outputDims[i] / inputDims[i]);
+            }
+            std::vector<float> inputPixelOffsets(4, 0.5), outputPixelOffsets(4, -0.5);
+
+            DML_RESAMPLE1_OPERATOR_DESC desc = {};
+            desc.InputTensor = &inputTensorDesc;
+            desc.OutputTensor = &outputTensorDesc;
+            desc.InterpolationMode = mode;
+            desc.DimensionCount = 4;
+            desc.Scales = scales.data();
+            desc.InputPixelOffsets = inputPixelOffsets.data();
+            desc.OutputPixelOffsets = outputPixelOffsets.data();
+            DML_OPERATOR_DESC dmlOperatorDesc = {};
+            dmlOperatorDesc.Type = DML_OPERATOR_RESAMPLE1;
+            dmlOperatorDesc.Desc = &desc;
+
+            ComPtr<IDMLOperator> dmlOperator;
+            WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+            mGraphEdgesMap[resample2d->PrimaryOutput()] =
+                CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+            AddEdgesToThisNode({inputEdge});
+            return {};
+        }
+
+        MaybeError Graph::AddSlice(const op::Slice* slice) {
+            return DAWN_UNIMPLEMENTED_ERROR("Slice hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
+            return DAWN_UNIMPLEMENTED_ERROR("Squeeze hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
+            return DAWN_UNIMPLEMENTED_ERROR("InstanceNorm hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddConcat(const op::Concat* concat) {
+            return DAWN_UNIMPLEMENTED_ERROR("Concat hasn't been supported on DirectML.");
+        }
+
+        MaybeError Graph::AddGemm(const op::Gemm* gemm) {
+            return DAWN_UNIMPLEMENTED_ERROR("Gemm hasn't been supported on DirectML.");
         }
 
         MaybeError Graph::AddOutput(const std::string& name, const OperandBase* output) {
@@ -1445,50 +1549,6 @@ namespace webnn_native { namespace dml {
 
             mOutputs.push_back(*outputEdgeInfo);
             return {};
-        }
-
-        MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
-            return DAWN_UNIMPLEMENTED_ERROR("BatchNorm hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
-            return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddGru(const op::Gru* gru) {
-            return DAWN_UNIMPLEMENTED_ERROR("Gru hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
-            return DAWN_UNIMPLEMENTED_ERROR("Pool2d hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddReduce(const op::Reduce* reduce) {
-            return DAWN_UNIMPLEMENTED_ERROR("Reduce hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddResample2d(const op::Resample2d* resample) {
-            return DAWN_UNIMPLEMENTED_ERROR("Resample2d hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddSlice(const op::Slice* slice) {
-            return DAWN_UNIMPLEMENTED_ERROR("Slice hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
-            return DAWN_UNIMPLEMENTED_ERROR("Squeeze hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddInstanceNorm(const op::InstanceNorm* instanceNorm) {
-            return DAWN_UNIMPLEMENTED_ERROR("InstanceNorm hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddConcat(const op::Concat* concat) {
-            return DAWN_UNIMPLEMENTED_ERROR("Concat hasn't been supported on DirectML.");
-        }
-
-        MaybeError Graph::AddGemm(const op::Gemm* gemm) {
-            return DAWN_UNIMPLEMENTED_ERROR("Gemm hasn't been supported on DirectML.");
         }
 
         MaybeError Graph::Finish() {
