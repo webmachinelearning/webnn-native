@@ -1345,7 +1345,6 @@ namespace webnn_native { namespace dml {
             auto padding = options->autoPad == wnn::AutoPad::Explicit
                                ? ExplicitPadding<Pool2dOptions>(options)
                                : ImplicitPadding<Pool2dOptions>(options, newInputDims, windowSizes);
-            // dml::Span just holds the refernces, need a variable to hold the memory.
             std::vector<UINT> startPadding = {padding[0], padding[2]};
             std::vector<UINT> endPadding = {padding[1], padding[3]};
 
@@ -1725,8 +1724,70 @@ namespace webnn_native { namespace dml {
             return {};
         }
 
+#define SLICE_ONE_AXIS(axis, index)                                                       \
+    inputWindowOffsets[axis] =                                                            \
+        starts[index] < 0 ? (starts[index] + inputDims[axis]) : starts[index];            \
+    inputWindowSizes[axis] =                                                              \
+        sizes[index] == -1 ? (inputDims[axis] - inputWindowOffsets[axis]) : sizes[index]; \
+    do {                                                                                  \
+    } while (0)
+
         MaybeError Graph::AddSlice(const op::Slice* slice) {
-            return DAWN_UNIMPLEMENTED_ERROR("Slice hasn't been supported on DirectML.");
+            DAWN_ASSERT(slice->Inputs().size() == 1);
+            const OperandBase* inputOperand = slice->Inputs()[0].Get();
+            DAWN_ASSERT(mGraphEdgesMap.find(inputOperand) != mGraphEdgesMap.end());
+
+            auto inputEdge = mGraphEdgesMap[inputOperand];
+            auto inputDims = ConvertDimensions(inputOperand->Shape());
+            auto outputDims = ConvertDimensions(slice->Outputs()[0].Get()->Shape());
+
+            auto inputTensorDesc = inputEdge->outputTensorDESC;
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &inputTensorDesc,
+                                     outputDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputDmlTensorDesc->bufferDesc};
+
+            std::vector<uint32_t> inputWindowOffsets(inputDims.size(), 0);
+            std::vector<uint32_t> inputWindowSizes(inputDims);
+            auto starts = slice->GetStarts();
+            auto axes = slice->GetAxes();
+            auto sizes = slice->GetSizes();
+            if (axes.empty()) {
+                for (size_t i = 0; i < inputDims.size(); ++i) {
+                    SLICE_ONE_AXIS(i, i);
+                }
+            } else {
+                for (size_t i = 0; i < axes.size(); ++i) {
+                    if (axes[i] < 0) {
+                        axes[i] = inputDims.size() + axes[i];
+                    }
+                    SLICE_ONE_AXIS(axes[i], i);
+                }
+            }
+            std::vector<int32_t> inputWindowStrides(inputDims.size(), 1);
+
+            DML_SLICE1_OPERATOR_DESC desc = {};
+            desc.InputTensor = &inputTensorDesc;
+            desc.OutputTensor = &outputTensorDesc;
+            desc.DimensionCount = static_cast<uint32_t>(inputDims.size());
+            desc.InputWindowOffsets = inputWindowOffsets.data();
+            desc.InputWindowSizes = inputWindowSizes.data();
+            desc.InputWindowStrides = inputWindowStrides.data();
+            DML_OPERATOR_DESC dmlOperatorDesc = {};
+            dmlOperatorDesc.Type = DML_OPERATOR_SLICE1;
+            dmlOperatorDesc.Desc = &desc;
+
+            ComPtr<IDMLOperator> dmlOperator;
+            WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+            mGraphEdgesMap[slice->PrimaryOutput()] =
+                CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+            AddEdgesToThisNode({inputEdge});
+            return {};
         }
 
         MaybeError Graph::AddSqueeze(const op::Squeeze* squeeze) {
