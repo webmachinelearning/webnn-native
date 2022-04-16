@@ -58,7 +58,7 @@ jobs:
         set "PATH=%CD%\..\depot_tools;%PATH%"
         set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
         cd baseline
-        gn gen out\Release --args="webnn_enable_dml=true is_debug=false"
+        gn gen out\Release --args="webnn_enable_dml=true is_debug=false gpgmm_enable_device_checks=true"
 
     - name: Build for main branch
       shell: cmd
@@ -124,7 +124,7 @@ jobs:
         set "PATH=%CD%\..\depot_tools;%PATH%"
         set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
         cd update
-        gn gen out\Release --args="webnn_enable_dml=true is_debug=false"
+        gn gen out\Release --args="webnn_enable_dml=true is_debug=false gpgmm_enable_device_checks=true"
 
     - name: Build for update branch
       shell: cmd
