@@ -97,8 +97,8 @@ namespace webnn_native::xnnpack {
         std::map<std::string, uint32_t> mExternalOutputs;
 
         // For graph building
-        std::vector<const OperandBase*> mOperandsToBuild;
-        std::map<const OperandBase*, std::shared_ptr<OperandInfo>> mOperandInfoMap;
+        std::vector<const OperatorBase*> mOperandsToBuild;
+        std::map<const OperatorBase*, std::shared_ptr<OperandInfo>> mOperandInfoMap;
     };
 
 }  // namespace webnn_native::xnnpack

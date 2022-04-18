@@ -179,7 +179,7 @@ namespace webnn_native::xnnpack {
     }
 
     MaybeError Graph::AddOutput(std::string_view name, const OperandBase* op) {
-        std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(op);
+        std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(const_cast<OperandBase*>(op)->Operator());
         if (info->opType == OperandType::INPUT || info->opType == OperandType::CONSTANT) {
             return DAWN_INTERNAL_ERROR("There is no operator to be created.");
         }
@@ -226,7 +226,7 @@ namespace webnn_native::xnnpack {
         if (mOperandsToBuild.size() == 0) {
             return DAWN_INTERNAL_ERROR("No operators to build.");
         }
-        const OperandBase* op = mOperandsToBuild[0];
+        const OperatorBase* op = mOperandsToBuild[0];
         DAWN_ASSERT(mOperandInfoMap.find(op) != mOperandInfoMap.end());
         std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(op);
         if (mOperandsToBuild.size() == 1) {
@@ -259,7 +259,7 @@ namespace webnn_native::xnnpack {
                         op::BinaryOpType::kAdd) {
                     add = reinterpret_cast<const op::Binary*>(operand);
                 } else if (operandInfo->opType == OperandType::CLAMP) {
-                    clamp = reinterpret_cast<const op::FusionClamp*>(operand);
+                    clamp = reinterpret_cast<const op::Clamp*>(operand);
                 }
             }
             if ((mOperandsToBuild.size() == 2 && !add && !clamp) ||
@@ -274,8 +274,8 @@ namespace webnn_native::xnnpack {
     xnn_status Graph::CreateXnnOp(const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         const OperandBase* inputOperand = unary->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(inputOperand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(inputOperand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
         mInputs.push_back(inputInfo);
         if (inputInfo->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
@@ -297,31 +297,14 @@ namespace webnn_native::xnnpack {
 
     xnn_status Graph::CreateXnnOp(const op::Clamp* clamp) {
         const OperandBase* inputOperand = clamp->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(inputOperand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(inputOperand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
         mInputs.push_back(inputInfo);
         if (inputInfo->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
         }
-        const ClampOptions* options = clamp->GetOptions();
-        float minValue = -std::numeric_limits<float>::infinity();
-        if (options->minValue != nullptr) {
-            const std::shared_ptr<OperandInfo>& minInfo = mOperandInfoMap.at(options->minValue);
-            if (minInfo->opType != OperandType::CONSTANT) {
-                dawn::ErrorLog() << "XNNPACK only supports clamp by value.";
-                return xnn_status_invalid_parameter;
-            }
-            minValue = (reinterpret_cast<float*>(minInfo->buffer.get()))[0];
-        }
-        float maxValue = +std::numeric_limits<float>::infinity();
-        if (options->maxValue != nullptr) {
-            const std::shared_ptr<OperandInfo>& maxInfo = mOperandInfoMap.at(options->maxValue);
-            if (maxInfo->opType != OperandType::CONSTANT) {
-                dawn::ErrorLog() << "XNNPACK only supports clamp by value.";
-                return xnn_status_invalid_parameter;
-            }
-            maxValue = (reinterpret_cast<float*>(maxInfo->buffer.get()))[0];
-        }
+        float minValue = clamp->GetMinValue();
+        float maxValue = clamp->GetMaxValue();
         XNN_TRY(xnn_create_clamp_nc_f32(1, 1, 1, minValue, maxValue, 0, &mXnnOperator));
         mXnnOperatorType = XnnOpType::clamp_nc_f32;
         std::shared_ptr<OperandInfo>& outputInfo = mOperandInfoMap.at(clamp);
@@ -335,15 +318,15 @@ namespace webnn_native::xnnpack {
     xnn_status Graph::CreateXnnOp(const op::Binary* binary) {
         DAWN_ASSERT(binary->Inputs().size() == 2);
         const OperandBase* input0Operand = binary->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(input0Operand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& input0Info = mOperandInfoMap.at(input0Operand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(input0Operand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& input0Info = mOperandInfoMap.at(const_cast<OperandBase*>(input0Operand)->Operator());
         mInputs.push_back(input0Info);
         if (input0Info->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(input0Info->name, mInputs.size() - 1));
         }
         const OperandBase* input1Operand = binary->Inputs()[1].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(input1Operand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& input1Info = mOperandInfoMap.at(input1Operand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(input1Operand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& input1Info = mOperandInfoMap.at(const_cast<OperandBase*>(input1Operand)->Operator());
         mInputs.push_back(input1Info);
         if (input1Info->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(input1Info->name, mInputs.size() - 1));
@@ -373,8 +356,8 @@ namespace webnn_native::xnnpack {
     xnn_status Graph::CreateXnnOp(const op::Pool2d* pool2d) {
         DAWN_ASSERT(pool2d->Inputs().size() == 1);
         const OperandBase* inputOperand = pool2d->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(inputOperand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(inputOperand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
         mInputs.push_back(inputInfo);
         if (inputInfo->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
@@ -471,15 +454,15 @@ namespace webnn_native::xnnpack {
                                   const op::Clamp* clamp) {
         DAWN_ASSERT(conv2d->Inputs().size() == 2);
         const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(inputOperand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(inputOperand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
         mInputs.push_back(inputInfo);
         if (inputInfo->opType == OperandType::INPUT) {
             mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
         }
         const OperandBase* filterOperand = conv2d->Inputs()[1].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(filterOperand) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& filterInfo = mOperandInfoMap.at(filterOperand);
+        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(filterOperand)->Operator()) != mOperandInfoMap.end());
+        const std::shared_ptr<OperandInfo>& filterInfo = mOperandInfoMap.at(const_cast<OperandBase*>(filterOperand)->Operator());
         if (filterInfo->opType != OperandType::CONSTANT) {
             dawn::ErrorLog() << "filter is not a constant.";
             return xnn_status_invalid_parameter;
@@ -502,7 +485,7 @@ namespace webnn_native::xnnpack {
             if (groups != 1 && groups == inputChannels) {
                 // For depthwiseConv2d, xnn pack expects the weights layout hwio
                 //   [filter_height, filter_width, input_channels, channel_multiplier]
-                if (options->filterLayout != wnn::FilterOperandLayout::Hwio) {
+                if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Hwio) {
                     dawn::ErrorLog()
                         << "XNNPACK only supports filter layout hwio for depthwise conv2d.";
                     return xnn_status_invalid_parameter;
@@ -517,7 +500,7 @@ namespace webnn_native::xnnpack {
             } else {
                 // For regular conv2d, xnn pack expects weights layed out like:
                 //   [output_channels, filter_height, filter_width, input_channels]
-                if (options->filterLayout != wnn::FilterOperandLayout::Ohwi) {
+                if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Ohwi) {
                     dawn::ErrorLog() << "XNNPACK only supports filter layout ohwi for conv2d.";
                     return xnn_status_invalid_parameter;
                 }
@@ -587,16 +570,16 @@ namespace webnn_native::xnnpack {
         if (add) {
             DAWN_ASSERT(add->Inputs().size() == 2);
             OperandBase* biasOperand = nullptr;
-            if (conv2d == add->Inputs()[0].Get()) {
+            if (conv2d == add->Inputs()[0].Get()->Operator()) {
                 biasOperand = add->Inputs()[1].Get();
-            } else if (conv2d == add->Inputs()[1].Get()) {
+            } else if (conv2d == add->Inputs()[1].Get()->Operator()) {
                 biasOperand = add->Inputs()[0].Get();
             } else {
                 dawn::ErrorLog() << "The add is not fusable.";
                 return xnn_status_invalid_parameter;
             }
-            DAWN_ASSERT(mOperandInfoMap.find(biasOperand) != mOperandInfoMap.end());
-            const std::shared_ptr<OperandInfo>& biasInfo = mOperandInfoMap.at(biasOperand);
+            DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(biasOperand)->Operator()) != mOperandInfoMap.end());
+            const std::shared_ptr<OperandInfo>& biasInfo = mOperandInfoMap.at(const_cast<OperandBase*>(biasOperand)->Operator());
             if (biasInfo->opType != OperandType::CONSTANT) {
                 dawn::ErrorLog() << "bias is not a constant.";
                 return xnn_status_invalid_parameter;
@@ -612,33 +595,18 @@ namespace webnn_native::xnnpack {
         float outputMax = +std::numeric_limits<float>::infinity();
         if (clamp) {
             if (add) {
-                if (add != clamp->Inputs()[0].Get()) {
+                if (add != clamp->Inputs()[0].Get()->Operator()) {
                     dawn::ErrorLog() << "The clamp is not fusable.";
                     return xnn_status_invalid_parameter;
                 }
             } else {
-                if (conv2d != clamp->Inputs()[0].Get()) {
+                if (conv2d != clamp->Inputs()[0].Get()->Operator()) {
                     dawn::ErrorLog() << "The clamp is not fusable.";
                     return xnn_status_invalid_parameter;
                 }
             }
-            const ClampOptions* options = clamp->GetOptions();
-            if (options->minValue != nullptr) {
-                const std::shared_ptr<OperandInfo>& minInfo = mOperandInfoMap.at(options->minValue);
-                if (minInfo->opType != OperandType::CONSTANT) {
-                    dawn::ErrorLog() << "XNNPACK only supports clamp by value.";
-                    return xnn_status_invalid_parameter;
-                }
-                outputMin = (reinterpret_cast<float*>(minInfo->buffer.get()))[0];
-            }
-            if (options->maxValue != nullptr) {
-                const std::shared_ptr<OperandInfo>& maxInfo = mOperandInfoMap.at(options->maxValue);
-                if (maxInfo->opType != OperandType::CONSTANT) {
-                    dawn::ErrorLog() << "XNNPACK only supports clamp by value.";
-                    return xnn_status_invalid_parameter;
-                }
-                outputMax = (reinterpret_cast<float*>(maxInfo->buffer.get()))[0];
-            }
+            outputMin = clamp->GetMinValue();
+            outputMax = clamp->GetMaxValue();
         }
 
         XNN_TRY(xnn_create_convolution2d_nhwc_f32(
@@ -705,11 +673,11 @@ namespace webnn_native::xnnpack {
             std::vector<int32_t> dimensions(outputInfo->dims.begin(), outputInfo->dims.end());
             size_t bufferLength = SizeOfOperandInfo(outputInfo);
             if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
-                const ArrayBufferView* output =
+                const ArrayBufferView& output =
                     outputs->GetRecords().at(outputName).arrayBufferView;
-                DAWN_ASSERT(output->byteLength >= bufferLength);
+                DAWN_ASSERT(output.byteLength >= bufferLength);
                 outputBuffers[outputIndex] =
-                    static_cast<int8_t*>(output->buffer) + output->byteOffset;
+                    static_cast<int8_t*>(output.buffer) + output.byteOffset;
             }
         }
 
