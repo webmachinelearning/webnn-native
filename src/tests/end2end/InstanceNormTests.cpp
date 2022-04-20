@@ -82,21 +82,21 @@ TEST_F(InstanceNormTests, InstanceNormNhwc) {
     CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
     options = {};
-    options.scale = scale;
-    options.layout = wnn::InputOperandLayout::Nhwc;
-    expectedValue = {-1.2247356, -1.8371035, 0, 0, 1.2247356, 1.8371034};
-    CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
+    // options.scale = scale;
+    // options.layout = wnn::InputOperandLayout::Nhwc;
+    // expectedValue = {-1.2247356, -1.8371035, 0, 0, 1.2247356, 1.8371034};
+    // CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
-    options = {};
-    options.bias = bias;
-    options.layout = wnn::InputOperandLayout::Nhwc;
-    expectedValue = {-1.2247356, -0.2247356, 0, 1., 1.2247356, 2.2247356};
-    CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
+    // options = {};
+    // options.bias = bias;
+    // options.layout = wnn::InputOperandLayout::Nhwc;
+    // expectedValue = {-1.2247356, -0.2247356, 0, 1., 1.2247356, 2.2247356};
+    // CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 
-    options = {};
-    options.layout = wnn::InputOperandLayout::Nhwc;
-    expectedValue = {-1.2247356, -1.2247356, 0, 0., 1.2247356, 1.2247356};
-    CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
+    // options = {};
+    // options.layout = wnn::InputOperandLayout::Nhwc;
+    // expectedValue = {-1.2247356, -1.2247356, 0, 0., 1.2247356, 1.2247356};
+    // CheckInstanceNorm(inputShape, inputData, expectedValue, &options);
 }
 
 TEST_F(InstanceNormTests, InstanceNormWithEpsilon) {
