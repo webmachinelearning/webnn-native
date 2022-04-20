@@ -1814,14 +1814,10 @@ namespace webnn_native::dml {
         return {};
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& [name, inputBinding] : mInputBindingMap) {
-            // All the inputs must be set.
-            if (namedInputs.find(name) == namedInputs.end()) {
-                dawn::ErrorLog() << "The input must be set.";
-                return WNNComputeGraphStatus_Error;
-            }
+            DAWN_INVALID_IF(namedInputs.find(name) == namedInputs.end(), "all inputs must be set.");
 
             auto& resource = namedInputs[name].resource;
             if (resource.arrayBufferView.buffer != nullptr) {
@@ -1882,8 +1878,7 @@ namespace webnn_native::dml {
         std::vector<pydml::TensorData*> outputTensors;
         if (FAILED(mDevice->DispatchOperator(mCompiledModel->op.Get(), inputBindings,
                                              outputExpressions, outputTensors))) {
-            dawn::ErrorLog() << "Failed to dispatch operator.";
-            return WNNComputeGraphStatus_Error;
+            return DAWN_INTERNAL_ERROR("Fail to dispatch operator.");
         }
 
         for (size_t i = 0; i < outputNames.size(); ++i) {
@@ -1903,7 +1898,7 @@ namespace webnn_native::dml {
             delete tensor;
         }
 #endif
-        return WNNComputeGraphStatus_Success;
+        return {};
     }
 
 }  // namespace webnn_native::dml

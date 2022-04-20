@@ -133,9 +133,9 @@ namespace node {
         for (auto& output : outputs) {
             namedOutputs.Set(output.first.data(), &output.second);
         }
-        wnn::ComputeGraphStatus status = mImpl.Compute(namedInputs, namedOutputs);
+        mImpl.Compute(namedInputs, namedOutputs);
 
-        return Napi::Number::New(info.Env(), static_cast<uint32_t>(status));
+        return Napi::Number::New(info.Env(), 0);
     }
 
     Napi::Object Graph::Initialize(Napi::Env env, Napi::Object exports) {

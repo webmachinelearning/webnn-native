@@ -161,7 +161,7 @@ namespace webnn_wire::server {
                                     WNNErrorType type,
                                     const char* message);
         void OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata,
-                                         WNNComputeGraphStatus status,
+                                         WNNErrorType type,
                                          const char* message);
 #include "webnn_wire/server/ServerPrototypes_autogen.inc"
 

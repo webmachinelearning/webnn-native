@@ -32,9 +32,8 @@ namespace webnn_native {
             MaybeError CompileImpl() override {
                 UNREACHABLE();
             }
-            WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                              NamedOutputsBase* outputs) override {
-                return WNNComputeGraphStatus_Error;
+            MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override {
+                return DAWN_INTERNAL_ERROR("fail to build graph!");
             }
         };
     }  // namespace
@@ -138,12 +137,8 @@ namespace webnn_native {
         return CompileImpl();
     }
 
-    WNNComputeGraphStatus GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        if (inputs == nullptr || outputs == nullptr) {
-            return WNNComputeGraphStatus_Error;
-        }
-
-        return ComputeImpl(inputs, outputs);
+    void GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        GetContext()->ConsumedError(ComputeImpl(inputs, outputs));
     }
 
     void GraphBase::ComputeAsync(NamedInputsBase* inputs,
@@ -151,14 +146,17 @@ namespace webnn_native {
                                  WNNComputeAsyncCallback callback,
                                  void* userdata) {
         if (inputs == nullptr || outputs == nullptr) {
-            callback(WNNComputeGraphStatus_Error, "named inputs or outputs is empty.", userdata);
+            callback(WNNErrorType_Validation, "named inputs or outputs is empty.", userdata);
         }
-        // TODO: Get error message from implemenation, ComputeImpl should return MaybeError,
-        // which is tracked with issues-959.
-        WNNComputeGraphStatus status = ComputeImpl(inputs, outputs);
-        std::string messages = status != WNNComputeGraphStatus_Success ? "Failed to async compute"
-                                                                       : "Success async compute";
-        callback(status, messages.c_str(), userdata);
+        MaybeError maybeError = ComputeImpl(inputs, outputs);
+        if (maybeError.IsError()) {
+            std::unique_ptr<ErrorData> errorData = maybeError.AcquireError();
+            callback(static_cast<WNNErrorType>(ToWNNErrorType(errorData->GetType())),
+                 const_cast<char*>(errorData->GetMessage().c_str()), userdata);
+        } else {
+            callback(WNNErrorType_NoError, "", userdata);
+        }
+        
     }
 
     GraphBase::GraphBase(ContextBase* context, ObjectBase::ErrorTag tag)

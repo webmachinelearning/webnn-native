@@ -82,7 +82,7 @@ namespace webnn_native {
         virtual MaybeError Compile();
 
         // Webnn API
-        WNNComputeGraphStatus Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
+        void Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
         void ComputeAsync(NamedInputsBase* inputs,
                           NamedOutputsBase* outputs,
                           WNNComputeAsyncCallback callback,
@@ -93,8 +93,7 @@ namespace webnn_native {
 
       private:
         virtual MaybeError CompileImpl() = 0;
-        virtual WNNComputeGraphStatus ComputeImpl(NamedInputsBase* inputs,
-                                                  NamedOutputsBase* outputs) = 0;
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) = 0;
     };
 }  // namespace webnn_native
 

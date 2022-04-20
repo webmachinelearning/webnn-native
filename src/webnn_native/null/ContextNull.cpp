@@ -68,8 +68,8 @@ namespace webnn_native::null {
         return {};
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        return WNNComputeGraphStatus_Success;
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        return {};
     }
 
     MaybeError Graph::AddConstant(const op::Constant* constant) {

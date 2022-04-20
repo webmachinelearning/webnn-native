@@ -79,15 +79,15 @@ namespace webnn_wire::server {
     }
 
     void Server::OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata,
-                                             WNNComputeGraphStatus status,
+                                             WNNErrorType type,
                                              const char* message) {
-        if (status == WNNComputeGraphStatus_Success) {
+        if (type == WNNErrorType_NoError) {
             SerializeComputeResult(userdata->namedOutputsObjectID);
         }
         ReturnGraphComputeAsyncCallbackCmd cmd;
         cmd.graph = userdata->graph;
         cmd.requestSerial = userdata->requestSerial;
-        cmd.status = status;
+        cmd.type = type;
         cmd.message = message;
 
         SerializeCommand(cmd);

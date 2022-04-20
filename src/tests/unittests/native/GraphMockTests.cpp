@@ -37,11 +37,5 @@ namespace webnn_native { namespace {
         EXPECT_TRUE(graphMock.Compile().IsSuccess());
     }
 
-    TEST_F(GraphMockTests, Compute) {
-        EXPECT_CALL(graphMock, ComputeImpl).Times(1);
-        NamedInputsBase inputs;
-        NamedOutputsBase outputs;
-        EXPECT_TRUE(graphMock.Compute(&inputs, &outputs) == WNNComputeGraphStatus_Success);
-    }
 
 }}  // namespace webnn_native::

@@ -244,12 +244,11 @@ namespace utils {
     };
 
     template <typename T>
-    wnn::ComputeGraphStatus Compute(const wnn::Graph& graph,
-                                    const std::vector<NamedInput<T>>& inputs,
-                                    const std::vector<NamedOutput<T>>& outputs) {
+    void Compute(const wnn::Graph& graph,
+                 const std::vector<NamedInput<T>>& inputs,
+                 const std::vector<NamedOutput<T>>& outputs) {
         if (graph.GetHandle() == nullptr) {
             dawn::ErrorLog() << "The graph is invaild.";
-            return wnn::ComputeGraphStatus::Error;
         }
 
         // The `mlInputs` local variable to hold the input data util computing the graph.
@@ -275,15 +274,13 @@ namespace utils {
             mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        wnn::ComputeGraphStatus status = graph.Compute(namedInputs, namedOutputs);
+        graph.Compute(namedInputs, namedOutputs);
         DoFlush();
-
-        return status;
     }
 
-    wnn::ComputeGraphStatus Compute(const wnn::Graph& graph,
-                                    const std::vector<NamedInput<float>>& inputs,
-                                    const std::vector<NamedOutput<float>>& outputs);
+    void Compute(const wnn::Graph& graph,
+                 const std::vector<NamedInput<float>>& inputs,
+                 const std::vector<NamedOutput<float>>& outputs);
 
     template <class T>
     bool CheckValue(const std::vector<T>& value, const std::vector<T>& expectedValue) {

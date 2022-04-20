@@ -1313,31 +1313,24 @@ namespace webnn_native::ie {
         return {};
     }
 
-    WNNComputeGraphStatus Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         auto namedInputs = inputs->GetRecords();
         for (auto& [name, input] : mInputIdMap) {
-            // All the inputs must be set.
-            if (namedInputs.find(name) == namedInputs.end()) {
-                dawn::ErrorLog() << "The input isn't set";
-                return WNNComputeGraphStatus_Error;
-            }
+            DAWN_INVALID_IF(namedInputs.find(name) == namedInputs.end(), "all inputs must be set.");
             ie_blob_t* blob;
             char* inputName = nullptr;
             IEStatusCode status = ie_network_get_input_name(mInferEngineNetwork, input, &inputName);
             if (status != IEStatusCode::OK) {
-                dawn::ErrorLog() << "IE Failed to ie_network_get_input_name";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("IE Failed to ie_network_get_input_name");
             }
             status = ie_infer_request_get_blob(mInferEngineRequest, inputName, &blob);
             if (status != IEStatusCode::OK) {
-                dawn::ErrorLog() << "IE Failed to ie_infer_request_get_blob";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("IE Failed to ie_infer_request_get_blob");
             }
             ie_blob_buffer_t buffer;
             status = ie_blob_get_buffer(blob, &buffer);
             if (status != IEStatusCode::OK) {
-                dawn::ErrorLog() << "IE Failed to ie_blob_get_buffer";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("IE Failed to ie_blob_get_buffer");
             }
             auto& resource = namedInputs[name].resource.arrayBufferView;
             memcpy(buffer.buffer, static_cast<int8_t*>(resource.buffer) + resource.byteOffset,
@@ -1347,8 +1340,7 @@ namespace webnn_native::ie {
         // Compute the compiled model.
         IEStatusCode code = ie_infer_request_infer(mInferEngineRequest);
         if (code != IEStatusCode::OK) {
-            dawn::ErrorLog() << "IE Failed to compute model";
-            return WNNComputeGraphStatus_Error;
+            return DAWN_INTERNAL_ERROR("IE Failed to compute model");
         }
 
         // Get Data from nGraph with output.
@@ -1358,8 +1350,7 @@ namespace webnn_native::ie {
             // Get output id with friendly name.
             auto originalName = mOutputNameMap[name];
             if (mOriginalNameMap.find(originalName) == mOriginalNameMap.end()) {
-                dawn::ErrorLog() << "IE Failed to compute model";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("IE Failed to get output");
             }
             char* sinkingName;
             IEStatusCode status = ie_network_get_output_name(
@@ -1367,8 +1358,7 @@ namespace webnn_native::ie {
             ie_blob_t* outputBlob;
             status = ie_infer_request_get_blob(mInferEngineRequest, sinkingName, &outputBlob);
             if (status != IEStatusCode::OK) {
-                dawn::ErrorLog() << "IE Failed to ie_infer_request_get_blob";
-                return WNNComputeGraphStatus_Error;
+                return DAWN_INTERNAL_ERROR("IE Failed to ie_infer_request_get_blob");
             }
             ie_blob_buffer_t outputBuffer;
             status = ie_blob_get_cbuffer(outputBlob, &outputBuffer);
@@ -1380,6 +1370,6 @@ namespace webnn_native::ie {
             }
         }
 
-        return WNNComputeGraphStatus_Success;
+        return {};
     }
 }  // namespace webnn_native::ie

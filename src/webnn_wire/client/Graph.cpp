@@ -20,7 +20,7 @@
 
 namespace webnn_wire::client {
 
-    WNNComputeGraphStatus Graph::Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs) {
+    void Graph::Compute(WNNNamedInputs inputs, WNNNamedOutputs outputs) {
         NamedInputs* namedInputs = FromAPI(inputs);
         NamedOutputs* namedOutputs = FromAPI(outputs);
 
@@ -30,8 +30,6 @@ namespace webnn_wire::client {
         cmd.outputsId = namedOutputs->id;
 
         client->SerializeCommand(cmd);
-
-        return WNNComputeGraphStatus::WNNComputeGraphStatus_Success;
     }
 
     void Graph::ComputeAsync(WNNNamedInputs inputs,
@@ -39,7 +37,7 @@ namespace webnn_wire::client {
                              WNNComputeAsyncCallback callback,
                              void* userdata) {
         if (client->IsDisconnected()) {
-            callback(WNNComputeGraphStatus_ContextLost, "WebNN context disconnected", userdata);
+            callback(WNNErrorType_DeviceLost, "WebNN context disconnected", userdata);
             return;
         }
 
@@ -61,7 +59,7 @@ namespace webnn_wire::client {
     }
 
     bool Graph::OnComputeAsyncCallback(uint64_t requestSerial,
-                                       WNNComputeGraphStatus status,
+                                       WNNErrorType type,
                                        const char* message) {
         auto requestIt = mComputeAsyncRequests.find(requestSerial);
         if (requestIt == mComputeAsyncRequests.end()) {
@@ -71,7 +69,7 @@ namespace webnn_wire::client {
         ComputeAsyncRequest request = std::move(requestIt->second);
 
         mComputeAsyncRequests.erase(requestIt);
-        request.callback(status, message, request.userdata);
+        request.callback(type, message, request.userdata);
         return true;
     }
 
