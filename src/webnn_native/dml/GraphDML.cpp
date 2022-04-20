@@ -1854,7 +1854,7 @@ namespace webnn_native::dml {
         for (auto& output : mOutputBindingMap) {
             ::pydml::Binding* binding = output.second;
             auto& bufferView = namedOutputs[output.first];
-            if (bufferView.arrayBufferView.) {
+            if (bufferView.arrayBufferView.buffer != nullptr) {
                 dawn::InfoLog()
                     << "Array Buffer input use expression parameters in DispatchOperator.";
             } else {

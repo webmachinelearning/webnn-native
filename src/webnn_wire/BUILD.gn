@@ -105,6 +105,11 @@ dawn_component("webnn_wire") {
   ]
 
   if (build_with_chromium) {
+    if (is_component_build) {
+      libs = [
+          "dawn_wire.dll.lib",
+        ]
+    }
     deps += [ "${webnn_dawn_root}/src/dawn_wire" ]
   }
 
