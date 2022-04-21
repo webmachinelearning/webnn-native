@@ -27,8 +27,6 @@
 
 #define FAILED(status) (((xnn_status)(status)) != xnn_status_success)
 
-#define XNNPACK_MAX_VALUE_ID 10000
-
 const char* xnn_status2str(xnn_status v) {
     if (v == xnn_status_success)
         return "success";
@@ -78,7 +76,7 @@ const char* xnn_status2str(xnn_status v) {
             COMPLAIN_XNN_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-namespace webnn_native::xnnpack {
+namespace webnn_native { namespace xnnpack {
 
     namespace {
         xnn_status GetXnnDataType(wnn::OperandType operandType, xnn_datatype& xnnDataType) {
@@ -89,385 +87,207 @@ namespace webnn_native::xnnpack {
             }
             return xnn_status_success;
         }
-
-        size_t SizeOfXnnDataType(xnn_datatype dataType) {
-            if (dataType == xnn_datatype_fp32) {
-                return sizeof(float);
-            } else if (dataType == xnn_datatype_fp16) {
-                return sizeof(uint16_t);
-            } else if (dataType == xnn_datatype_qint32) {
-                return sizeof(int32_t);
-            } else if (dataType == xnn_datatype_qint8) {
-                return sizeof(int8_t);
-            }
-            return 0;
-        }
-
-        xnn_status BroadcastDimensions(const std::vector<size_t>& aDims,
-                                       const std::vector<size_t>& bDims,
-                                       std::vector<size_t>& cDims) {
-            cDims.resize(std::max(aDims.size(), bDims.size()));
-            for (size_t i = 0; i < cDims.size(); ++i) {
-                size_t aDim = i < aDims.size() ? aDims[aDims.size() - i - 1] : 1;
-                size_t bDim = i < bDims.size() ? bDims[bDims.size() - i - 1] : 1;
-                size_t cIndex = cDims.size() - i - 1;
-                if (aDim == 1 && bDim != 1) {
-                    cDims[cIndex] = bDim;
-                } else if (aDim != 1 && bDim == 1) {
-                    cDims[cIndex] = aDim;
-                } else if (aDim == bDim) {
-                    cDims[cIndex] = aDim;
-                } else {
-                    return xnn_status_invalid_parameter;
-                }
-            }
-            return xnn_status_success;
-        }
-
-        size_t GetEffectiveFilterSize(size_t filterSize, size_t dilation) {
-            if (dilation <= 1) {
-                return filterSize;
-            }
-            return filterSize + (filterSize - 1) * (dilation - 1);
-        }
-
-        size_t ComputeConv2DOutputSize(size_t input,
-                                       size_t filter,
-                                       size_t padBegin,
-                                       size_t padEnd,
-                                       size_t stride,
-                                       size_t dilation) {
-            size_t effectiveFilter = GetEffectiveFilterSize(filter, dilation);
-            return (input - effectiveFilter + padBegin + padEnd) / stride + 1;
-        }
     }  // anonymous namespace
 
-    Graph::Graph(Context* context) : GraphBase(context), mXnnOperator(nullptr) {
+    Graph::Graph(Context* context) : GraphBase(context), mExternalId(0), mRuntime(nullptr) {
     }
 
     Graph::~Graph() {
-        if (mXnnOperator) {
-            if (FAILED(xnn_delete_operator(mXnnOperator))) {
-                dawn::ErrorLog() << "xnn_delete_operator failed.";
-            }
-        }
-    }
-
-    MaybeError Graph::AddConstant(const op::Constant* constant) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::CONSTANT);
-        const OperandDescriptor* desc = constant->GetOperandDescriptor();
-        DAWN_TRY(GetXnnDataType(desc->type, info->dataType));
-        info->dims.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
-        info->buffer.reset(new char[constant->GetByteLength()]);
-        if (info->buffer.get() == nullptr) {
-            return DAWN_OUT_OF_MEMORY_ERROR("");
-        }
-        memcpy(info->buffer.get(), constant->GetBuffer(), constant->GetByteLength());
-        mConstants.push_back(info);
-        mOperandInfoMap.insert(std::make_pair(constant, info));
-        return {};
     }
 
     MaybeError Graph::AddInput(const op::Input* input) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::INPUT);
-        const OperandDescriptor* desc = input->GetOperandDescriptor();
-        DAWN_TRY(GetXnnDataType(desc->type, info->dataType));
-        info->dims.assign(desc->dimensions, desc->dimensions + desc->dimensionsCount);
-        info->name = input->GetName();
-        mOperandInfoMap.insert(std::make_pair(input, info));
+        mOperators.push_back({OperatorType::Input, input});
+        uint32_t inputId = mExternalId++;
+        mInputs.insert(std::make_pair(input->PrimaryOutput(), inputId));
+        mExternals.insert(std::make_pair(input->GetName(), inputId));
         return {};
     }
 
     MaybeError Graph::AddOutput(std::string_view name, const OperandBase* op) {
-        std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(const_cast<OperandBase*>(op)->Operator());
-        if (info->opType == OperandType::INPUT || info->opType == OperandType::CONSTANT) {
-            return DAWN_INTERNAL_ERROR("There is no operator to be created.");
+        uint32_t outputId = mExternalId++;
+        mOutputs.insert(std::make_pair(op, outputId));
+        mExternals.insert(std::make_pair(name, outputId));
+        return {};
+    }
+
+#define GRAPH_ADD_OP(OpType)                              \
+    MaybeError Graph::Add##OpType(const op::OpType* op) { \
+        mOperators.push_back({OperatorType::OpType, op}); \
+        return {};                                        \
+    }
+
+    GRAPH_ADD_OP(Binary)
+    GRAPH_ADD_OP(Clamp)
+    GRAPH_ADD_OP(Concat)
+    GRAPH_ADD_OP(Conv2d)
+    GRAPH_ADD_OP(Constant)
+    GRAPH_ADD_OP(Gemm)
+    GRAPH_ADD_OP(Pad)
+    GRAPH_ADD_OP(Pool2d)
+    GRAPH_ADD_OP(Reshape)
+    GRAPH_ADD_OP(Unary)
+
+    xnn_status Graph::DefineXnnTensorValue(xnn_subgraph_t subgraph,
+                                           const OperandBase* operand,
+                                           uint32_t* id,
+                                           const void* data) {
+        xnn_datatype datatype = xnn_datatype_invalid;
+        if (GetXnnDataType(operand->Type(), datatype) != xnn_status_success) {
+            // Ignore the unsupproted data type, it may be used for attributes, such as padding
+            return xnn_status_success;
         }
-        info->name = name.data();
-        return {};
-    }
-
-    MaybeError Graph::AddBinary(const op::Binary* binary) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::BINARY);
-        mOperandInfoMap.insert(std::make_pair(binary, info));
-        mOperandsToBuild.push_back(binary);
-        return {};
-    }
-
-    MaybeError Graph::AddClamp(const op::Clamp* clamp) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::CLAMP);
-        mOperandInfoMap.insert(std::make_pair(clamp, info));
-        mOperandsToBuild.push_back(clamp);
-        return {};
-    }
-
-    MaybeError Graph::AddConv2d(const op::Conv2d* conv2d) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::CONV2D);
-        mOperandInfoMap.insert(std::make_pair(conv2d, info));
-        mOperandsToBuild.push_back(conv2d);
-        return {};
-    }
-
-    MaybeError Graph::AddPool2d(const op::Pool2d* pool2d) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::POOL2D);
-        mOperandInfoMap.insert(std::make_pair(pool2d, info));
-        mOperandsToBuild.push_back(pool2d);
-        return {};
-    }
-
-    MaybeError Graph::AddUnary(const op::Unary* unary) {
-        std::shared_ptr<OperandInfo> info = std::make_shared<OperandInfo>(OperandType::UNARY);
-        mOperandInfoMap.insert(std::make_pair(unary, info));
-        mOperandsToBuild.push_back(unary);
-        return {};
-    }
-
-    MaybeError Graph::Finish() {
-        if (mOperandsToBuild.size() == 0) {
-            return DAWN_INTERNAL_ERROR("No operators to build.");
+        std::vector<size_t> dims;
+        for (auto& d : operand->Shape()) {
+            dims.push_back(static_cast<size_t>(d));
         }
-        const OperatorBase* op = mOperandsToBuild[0];
-        DAWN_ASSERT(mOperandInfoMap.find(op) != mOperandInfoMap.end());
-        std::shared_ptr<OperandInfo>& info = mOperandInfoMap.at(op);
-        if (mOperandsToBuild.size() == 1) {
-            if (info->opType == OperandType::UNARY) {
-                DAWN_TRY(CreateXnnOp(reinterpret_cast<const op::Unary*>(op)));
-            } else if (info->opType == OperandType::CLAMP) {
-                DAWN_TRY(CreateXnnOp(reinterpret_cast<const op::Clamp*>(op)));
-            } else if (info->opType == OperandType::BINARY) {
-                DAWN_TRY(CreateXnnOp(reinterpret_cast<const op::Binary*>(op)));
-            } else if (info->opType == OperandType::CONV2D) {
-                DAWN_TRY(CreateXnnOp(reinterpret_cast<const op::Conv2d*>(op)));
-            } else if (info->opType == OperandType::POOL2D) {
-                DAWN_TRY(CreateXnnOp(reinterpret_cast<const op::Pool2d*>(op)));
-            } else {
-                return DAWN_UNIMPLEMENTED_ERROR("");
-            }
-        } else if (info->opType == OperandType::CONV2D) {
-            // Try to fuse add and clamp into conv2d
-            const op::Conv2d* conv2d = reinterpret_cast<const op::Conv2d*>(op);
-            if (mOperandsToBuild.size() > 3) {
-                return DAWN_INTERNAL_ERROR("Cannot fuse conv2d subgraph with more than 3 ops.");
-            }
-            const op::Binary* add = nullptr;
-            const op::Clamp* clamp = nullptr;
-            for (auto& operand : mOperandsToBuild) {
-                DAWN_ASSERT(mOperandInfoMap.find(operand) != mOperandInfoMap.end());
-                std::shared_ptr<OperandInfo>& operandInfo = mOperandInfoMap.at(operand);
-                if (operandInfo->opType == OperandType::BINARY &&
-                    reinterpret_cast<const op::Binary*>(operand)->GetType() ==
-                        op::BinaryOpType::kAdd) {
-                    add = reinterpret_cast<const op::Binary*>(operand);
-                } else if (operandInfo->opType == OperandType::CLAMP) {
-                    clamp = reinterpret_cast<const op::Clamp*>(operand);
-                }
-            }
-            if ((mOperandsToBuild.size() == 2 && !add && !clamp) ||
-                (mOperandsToBuild.size() == 3 && (!add || !clamp))) {
-                return DAWN_INTERNAL_ERROR("Failed to fuse conv2d subgraph.");
-            }
-            DAWN_TRY(CreateXnnOp(conv2d, add, clamp));
-        }
-        return {};
-    }
-
-    xnn_status Graph::CreateXnnOp(const op::Unary* unary) {
-        DAWN_ASSERT(unary->Inputs().size() == 1);
-        const OperandBase* inputOperand = unary->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
-        mInputs.push_back(inputInfo);
-        if (inputInfo->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
-        }
-        if (unary->GetType() == op::UnaryOpType::kRelu) {
-            XNN_TRY(xnn_create_clamp_nc_f32(1, 1, 1, 0, +std::numeric_limits<float>::infinity(), 0,
-                                            &mXnnOperator));
-            mXnnOperatorType = XnnOpType::clamp_nc_f32;
+        uint32_t flags = 0;
+        uint32_t externalId;
+        if (mInputs.find(operand) != mInputs.end()) {
+            externalId = mInputs.at(operand);
+            flags |= XNN_VALUE_FLAG_EXTERNAL_INPUT;
+        } else if (mOutputs.find(operand) != mOutputs.end()) {
+            externalId = mOutputs.at(operand);
+            flags |= XNN_VALUE_FLAG_EXTERNAL_OUTPUT;
         } else {
-            return xnn_status_unsupported_parameter;
+            externalId = XNN_INVALID_VALUE_ID;
         }
-        std::shared_ptr<OperandInfo>& outputInfo = mOperandInfoMap.at(unary);
-        outputInfo->dataType = inputInfo->dataType;
-        outputInfo->dims = inputInfo->dims;
-        mOutputs.push_back(outputInfo);
-        mExternalOutputs.insert(std::make_pair(outputInfo->name, mOutputs.size() - 1));
+        XNN_TRY(xnn_define_tensor_value(subgraph, datatype, dims.size(), dims.data(), data,
+                                        externalId, flags, id));
+        mOperands.insert(std::make_pair(operand, *id));
         return xnn_status_success;
     }
 
-    xnn_status Graph::CreateXnnOp(const op::Clamp* clamp) {
-        const OperandBase* inputOperand = clamp->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
-        mInputs.push_back(inputInfo);
-        if (inputInfo->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Constant* constant) {
+        std::unique_ptr<char> buffer(new char[constant->GetByteLength()]);
+        if (buffer.get() == nullptr) {
+            return xnn_status_out_of_memory;
         }
-        float minValue = clamp->GetMinValue();
-        float maxValue = clamp->GetMaxValue();
-        XNN_TRY(xnn_create_clamp_nc_f32(1, 1, 1, minValue, maxValue, 0, &mXnnOperator));
-        mXnnOperatorType = XnnOpType::clamp_nc_f32;
-        std::shared_ptr<OperandInfo>& outputInfo = mOperandInfoMap.at(clamp);
-        outputInfo->dataType = inputInfo->dataType;
-        outputInfo->dims = inputInfo->dims;
-        mOutputs.push_back(outputInfo);
-        mExternalOutputs.insert(std::make_pair(outputInfo->name, mOutputs.size() - 1));
+        memcpy(buffer.get(), constant->GetBuffer(), constant->GetByteLength());
+        uint32_t id;
+        XNN_TRY(DefineXnnTensorValue(subgraph, constant->PrimaryOutput(), &id, buffer.get()));
+        mOperands.insert(std::make_pair(constant->PrimaryOutput(), id));
+        mBuffers.push_back(std::move(buffer));
         return xnn_status_success;
     }
 
-    xnn_status Graph::CreateXnnOp(const op::Binary* binary) {
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Input* input) {
+        DAWN_ASSERT(mInputs.find(input->PrimaryOutput()) != mInputs.end());
+        uint32_t id;
+        XNN_TRY(DefineXnnTensorValue(subgraph, input->PrimaryOutput(), &id));
+        mOperands.insert(std::make_pair(input->PrimaryOutput(), id));
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Binary* binary) {
         DAWN_ASSERT(binary->Inputs().size() == 2);
         const OperandBase* input0Operand = binary->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(input0Operand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& input0Info = mOperandInfoMap.at(const_cast<OperandBase*>(input0Operand)->Operator());
-        mInputs.push_back(input0Info);
-        if (input0Info->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(input0Info->name, mInputs.size() - 1));
-        }
+        DAWN_ASSERT(mOperands.find(input0Operand) != mOperands.end());
+        uint32_t input0Id = mOperands.at(input0Operand);
         const OperandBase* input1Operand = binary->Inputs()[1].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(input1Operand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& input1Info = mOperandInfoMap.at(const_cast<OperandBase*>(input1Operand)->Operator());
-        mInputs.push_back(input1Info);
-        if (input1Info->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(input1Info->name, mInputs.size() - 1));
-        }
+        DAWN_ASSERT(mOperands.find(input1Operand) != mOperands.end());
+        uint32_t input1Id = mOperands.at(input1Operand);
+        auto outputOperand = binary->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
         const float outputMin = -std::numeric_limits<float>::infinity();
         const float outputMax = +std::numeric_limits<float>::infinity();
-        if (binary->GetType() == op::BinaryOpType::kAdd) {
-            XNN_TRY(xnn_create_add_nd_f32(outputMin, outputMax, 0, &mXnnOperator));
-            mXnnOperatorType = XnnOpType::add_nd_f32;
-        } else if (binary->GetType() == op::BinaryOpType::kMul) {
-            XNN_TRY(xnn_create_multiply_nd_f32(outputMin, outputMax, 0, &mXnnOperator));
-            mXnnOperatorType = XnnOpType::multiply_nd_f32;
-        } else if (binary->GetType() == op::BinaryOpType::kSub) {
-            XNN_TRY(xnn_create_subtract_nd_f32(outputMin, outputMax, 0, &mXnnOperator));
-            mXnnOperatorType = XnnOpType::subtract_nd_f32;
-        } else {
-            return xnn_status_unsupported_parameter;
+        switch (binary->GetType()) {
+            case op::BinaryOpType::kAdd:
+                XNN_TRY(xnn_define_add2(subgraph, outputMin, outputMax, input0Id, input1Id,
+                                        outputId, 0));
+                break;
+            case op::BinaryOpType::kDiv:
+                XNN_TRY(xnn_define_divide(subgraph, outputMin, outputMax, input0Id, input1Id,
+                                          outputId, 0));
+                break;
+            case op::BinaryOpType::kMax:
+                XNN_TRY(xnn_define_maximum2(subgraph, input0Id, input1Id, outputId, 0));
+                break;
+            case op::BinaryOpType::kMin:
+                XNN_TRY(xnn_define_minimum2(subgraph, input0Id, input1Id, outputId, 0));
+                break;
+            case op::BinaryOpType::kMul:
+                XNN_TRY(xnn_define_multiply2(subgraph, outputMin, outputMax, input0Id, input1Id,
+                                             outputId, 0));
+                break;
+            case op::BinaryOpType::kSub:
+                XNN_TRY(xnn_define_subtract(subgraph, outputMin, outputMax, input0Id, input1Id,
+                                            outputId, 0));
+                break;
+            default:
+                dawn::ErrorLog() << "XNNPACK backend doesn't support unary op "
+                                 << static_cast<int>(binary->GetType());
+                return xnn_status_unsupported_parameter;
         }
-        std::shared_ptr<OperandInfo>& outputInfo = mOperandInfoMap.at(binary);
-        outputInfo->dataType = input0Info->dataType;
-        XNN_TRY(BroadcastDimensions(input0Info->dims, input1Info->dims, outputInfo->dims));
-        mOutputs.push_back(outputInfo);
-        mExternalOutputs.insert(std::make_pair(outputInfo->name, mOutputs.size() - 1));
         return xnn_status_success;
     }
 
-    xnn_status Graph::CreateXnnOp(const op::Pool2d* pool2d) {
-        DAWN_ASSERT(pool2d->Inputs().size() == 1);
-        const OperandBase* inputOperand = pool2d->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
-        mInputs.push_back(inputInfo);
-        if (inputInfo->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
-        }
-        const Pool2dOptions* options = pool2d->GetOptions();
-        if (options->layout != wnn::InputOperandLayout::Nhwc) {
-            dawn::ErrorLog() << "XNNPACK only supports input layout nhwc.";
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Clamp* clamp) {
+        DAWN_ASSERT(clamp->Inputs().size() == 1);
+        auto inputOperand = clamp->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        auto outputOperand = clamp->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        XNN_TRY(xnn_define_clamp(subgraph, clamp->GetMinValue(), clamp->GetMaxValue(), inputId,
+                                 outputId, 0));
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Concat* concat) {
+        auto inputOperands = concat->Inputs();
+        DAWN_ASSERT(inputOperands.size() >= 1);
+        if (inputOperands.size() > 4) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support concat inputs size "
+                             << inputOperands.size();
             return xnn_status_invalid_parameter;
         }
-        uint32_t strideHeight = options->strides[0];
-        uint32_t strideWidth = options->strides[1];
-        uint32_t dilationHeight = options->dilations[0];
-        uint32_t dilationWidth = options->dilations[1];
-        // nhwc
-        size_t inputHeight = inputInfo->dims[1];
-        size_t inputWidth = inputInfo->dims[2];
-        size_t channels = inputInfo->dims[3];
-        uint32_t filterHeight, filterWidth;
-        if (options->windowDimensions != nullptr) {
-            filterHeight = options->windowDimensions[0];
-            filterWidth = options->windowDimensions[1];
-        } else {
-            filterHeight = inputHeight;
-            filterWidth = inputWidth;
+        std::vector<uint32_t> inputIds(inputOperands.size());
+        for (size_t i = 0; i < inputOperands.size(); ++i) {
+            DAWN_ASSERT(mOperands.find(inputOperands[i].Get()) != mOperands.end());
+            inputIds[i] = mOperands.at(inputOperands[i].Get());
         }
-
-        size_t outputHeight, outputWidth;
-        uint32_t padTop, padBottom, padLeft, padRight;
-        if (options->autoPad == wnn::AutoPad::Explicit) {
-            // WebNN padding: [beginning_height, ending_height, beginning_width, ending_width]
-            padTop = options->padding[0];
-            padBottom = options->padding[1];
-            padLeft = options->padding[2];
-            padRight = options->padding[3];
-            outputHeight = ComputeConv2DOutputSize(inputHeight, filterHeight, padTop, padBottom,
-                                                   strideHeight, dilationHeight);
-            outputWidth = ComputeConv2DOutputSize(inputWidth, filterWidth, padLeft, padRight,
-                                                  strideWidth, dilationWidth);
-        } else {
-            outputHeight = ceil(inputHeight / strideHeight);
-            outputWidth = ceil(inputWidth / strideWidth);
-            size_t padAlongHeight =
-                std::max(size_t(0), (outputHeight - 1) * strideHeight + filterHeight - inputHeight);
-            size_t padAlongWidth =
-                std::max(size_t(0), (outputWidth - 1) * strideWidth + filterWidth - inputWidth);
-            if (options->autoPad == wnn::AutoPad::SameUpper) {
-                padTop = floor(padAlongHeight / 2);
-                padBottom = padAlongHeight - padTop;
-                padLeft = floor(padAlongWidth / 2);
-                padRight = padAlongWidth - padLeft;
-            } else {
-                padBottom = floor(padAlongHeight / 2);
-                padTop = padAlongHeight - padBottom;
-                padRight = floor(padAlongWidth / 2);
-                padLeft = padAlongWidth - padRight;
-            }
-        }
-
-        float outputMin = -std::numeric_limits<float>::infinity();
-        float outputMax = +std::numeric_limits<float>::infinity();
-        const uint32_t flags = 0;
-        if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {
-            if (dilationHeight != 1 || dilationWidth != 1) {
-                dawn::ErrorLog() << "XNNPACK does not support dilation for averagePool2d.";
+        auto outputOperand = concat->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        size_t axis = concat->GetAxis();
+        switch (concat->Inputs().size()) {
+            case 2:
+                XNN_TRY(
+                    xnn_define_concatenate2(subgraph, axis, inputIds[0], inputIds[1], outputId, 0));
+                break;
+            case 3:
+                XNN_TRY(xnn_define_concatenate3(subgraph, axis, inputIds[0], inputIds[1],
+                                                inputIds[2], outputId, 0));
+                break;
+            case 4:
+                XNN_TRY(xnn_define_concatenate4(subgraph, axis, inputIds[0], inputIds[1],
+                                                inputIds[2], inputIds[3], outputId, 0));
+                break;
+            default:
+                dawn::ErrorLog() << "XNNPACK backend doesn't support concat inputs size "
+                                 << inputOperands.size();
                 return xnn_status_invalid_parameter;
-            }
-            XNN_TRY(xnn_create_average_pooling2d_nhwc_f32(
-                padTop, padRight, padBottom, padLeft, filterHeight, filterWidth, strideHeight,
-                strideWidth, channels, channels, channels, outputMin, outputMax, flags,
-                &mXnnOperator));
-            mXnnOperatorType = XnnOpType::average_pooling2d_nhwc_f32;
-        } else if (pool2d->GetType() == op::Pool2dType::kMaxPool2d) {
-            XNN_TRY(xnn_create_max_pooling2d_nhwc_f32(
-                padTop, padRight, padBottom, padLeft, filterHeight, filterWidth, strideHeight,
-                strideWidth, dilationHeight, dilationWidth, channels, channels, channels, outputMin,
-                outputMax, flags, &mXnnOperator));
-            mXnnOperatorType = XnnOpType::max_pooling2d_nhwc_f32;
-        } else {
-            dawn::ErrorLog() << "XNNPACK does not support l2Pool2d.";
-            return xnn_status_invalid_parameter;
         }
-        const std::shared_ptr<OperandInfo> outputInfo = mOperandInfoMap.at(pool2d);
-        outputInfo->dataType = inputInfo->dataType;
-        size_t batchSize = inputInfo->dims[0];
-        // nchw
-        outputInfo->dims = {batchSize, outputHeight, outputWidth, channels};
-        mOutputs.push_back(outputInfo);
-        mExternalOutputs.insert(std::make_pair(outputInfo->name, mOutputs.size() - 1));
         return xnn_status_success;
     }
 
-    xnn_status Graph::CreateXnnOp(const op::Conv2d* conv2d,
-                                  const op::Binary* add,
-                                  const op::Clamp* clamp) {
-        DAWN_ASSERT(conv2d->Inputs().size() == 2);
-        const OperandBase* inputOperand = conv2d->Inputs()[0].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(inputOperand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& inputInfo = mOperandInfoMap.at(const_cast<OperandBase*>(inputOperand)->Operator());
-        mInputs.push_back(inputInfo);
-        if (inputInfo->opType == OperandType::INPUT) {
-            mExternalInputs.insert(std::make_pair(inputInfo->name, mInputs.size() - 1));
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Conv2d* conv2d) {
+        auto inputOperands = conv2d->Inputs();
+        DAWN_ASSERT(inputOperands.size() == 2 || inputOperands.size() == 3);
+        auto inputOperand = inputOperands[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        auto filterOperand = inputOperands[1].Get();
+        DAWN_ASSERT(mOperands.find(filterOperand) != mOperands.end());
+        uint32_t filterId = mOperands.at(filterOperand);
+        uint32_t biasId = XNN_INVALID_VALUE_ID;
+        if (inputOperands.size() == 3) {
+            DAWN_ASSERT(mOperands.find(inputOperands[2].Get()) != mOperands.end());
+            biasId = mOperands.at(inputOperands[2].Get());
         }
-        const OperandBase* filterOperand = conv2d->Inputs()[1].Get();
-        DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(filterOperand)->Operator()) != mOperandInfoMap.end());
-        const std::shared_ptr<OperandInfo>& filterInfo = mOperandInfoMap.at(const_cast<OperandBase*>(filterOperand)->Operator());
-        if (filterInfo->opType != OperandType::CONSTANT) {
-            dawn::ErrorLog() << "filter is not a constant.";
-            return xnn_status_invalid_parameter;
-        }
-        const float* filter = reinterpret_cast<const float*>(filterInfo->buffer.get());
+        auto outputOperand = conv2d->PrimaryOutput();
 
         const Conv2dOptions* options = conv2d->GetOptions();
         uint32_t groups = options->groups;
@@ -478,61 +298,39 @@ namespace webnn_native::xnnpack {
         size_t inputHeight, inputWidth;
         uint32_t filterHeight, filterWidth;
         size_t inputChannels, outputChannels;
+        bool depthwise = false;
         if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
-            inputHeight = inputInfo->dims[1];
-            inputWidth = inputInfo->dims[2];
-            inputChannels = inputInfo->dims[3];
-            if (groups != 1 && groups == inputChannels) {
-                // For depthwiseConv2d, xnn pack expects the weights layout hwio
-                //   [filter_height, filter_width, input_channels, channel_multiplier]
-                if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Hwio) {
-                    dawn::ErrorLog()
-                        << "XNNPACK only supports filter layout hwio for depthwise conv2d.";
-                    return xnn_status_invalid_parameter;
-                }
-                if (filterInfo->dims[2] != 1) {
-                    dawn::ErrorLog() << "The filter layout is invalid.";
-                    return xnn_status_invalid_parameter;
-                }
-                filterHeight = filterInfo->dims[0];
-                filterWidth = filterInfo->dims[1];
-                outputChannels = filterInfo->dims[3];
-            } else {
-                // For regular conv2d, xnn pack expects weights layed out like:
-                //   [output_channels, filter_height, filter_width, input_channels]
+            inputHeight = inputOperand->Shape()[1];
+            inputWidth = inputOperand->Shape()[2];
+            inputChannels = inputOperand->Shape()[3];
+            depthwise = (groups == inputChannels);
+            if (!depthwise) {
+                // For regular conv2d, xnn pack expects weights layed out like (ohwi):
+                //   [groups * group_output_channels, kernel_height, kernel_width,
+                //   group_input_channels]
                 if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Ohwi) {
-                    dawn::ErrorLog() << "XNNPACK only supports filter layout ohwi for conv2d.";
+                    dawn::ErrorLog()
+                        << "XNNPACK backend only supports filter layout ohwi for conv2d.";
                     return xnn_status_invalid_parameter;
                 }
-                if (filterInfo->dims[3] != inputChannels) {
-                    dawn::ErrorLog() << "The filter layout is invalid.";
+            } else {
+                // For depthwise conv2d, xnn pack expects weights layed out like (ihwo):
+                //   [1, kernel_height, kernel_width, input_channels * depth_multiplier]
+                if (options->filterLayout != wnn::Conv2dFilterOperandLayout::Ihwo) {
+                    dawn::ErrorLog()
+                        << "XNNPACK backend only supports filter layout ihwo for depthwise conv2d.";
                     return xnn_status_invalid_parameter;
                 }
-                outputChannels = filterInfo->dims[0];
-                filterHeight = filterInfo->dims[1];
-                filterWidth = filterInfo->dims[2];
             }
+            filterHeight = filterOperand->Shape()[1];
+            filterWidth = filterOperand->Shape()[2];
+            outputChannels = outputOperand->Shape()[3];
         } else {
-            dawn::ErrorLog() << "XNNPACK only supports input layout nhwc.";
+            dawn::ErrorLog() << "XNNPACK backend only supports input layout nhwc.";
             return xnn_status_invalid_parameter;
         }
-        const size_t inputChannelStride = inputChannels;
-        const size_t outputChannelStride = outputChannels;
-        size_t groupInputChannels;
-        size_t groupOutputChannels;
-        uint32_t flags = 0;
-        if (groups == 1) {
-            groupInputChannels = inputChannels;
-            groupOutputChannels = outputChannels;
-        } else if (groups == inputChannels) {
-            groupInputChannels = 1;
-            groupOutputChannels = outputChannels / groups;
-            flags |= XNN_FLAG_DEPTHWISE_CONVOLUTION;
-        } else {
-            // FIXME(nhu): implement the grouped conv2d.
-            dawn::ErrorLog() << "Grouped conv2d is unimplemented.";
-            return xnn_status_unsupported_parameter;
-        }
+        size_t groupInputChannels = inputChannels / groups;
+        size_t groupOutputChannels = outputChannels / groups;
 
         size_t outputHeight, outputWidth;
         uint32_t padTop, padBottom, padLeft, padRight;
@@ -542,10 +340,6 @@ namespace webnn_native::xnnpack {
             padBottom = options->padding[1];
             padLeft = options->padding[2];
             padRight = options->padding[3];
-            outputHeight = ComputeConv2DOutputSize(inputHeight, filterHeight, padTop, padBottom,
-                                                   strideHeight, dilationHeight);
-            outputWidth = ComputeConv2DOutputSize(inputWidth, filterWidth, padLeft, padRight,
-                                                  strideWidth, dilationWidth);
         } else {
             outputHeight = ceil(inputHeight / strideHeight);
             outputWidth = ceil(inputWidth / strideWidth);
@@ -566,74 +360,302 @@ namespace webnn_native::xnnpack {
             }
         }
 
-        const float* bias = nullptr;
-        if (add) {
-            DAWN_ASSERT(add->Inputs().size() == 2);
-            OperandBase* biasOperand = nullptr;
-            if (conv2d == add->Inputs()[0].Get()->Operator()) {
-                biasOperand = add->Inputs()[1].Get();
-            } else if (conv2d == add->Inputs()[1].Get()->Operator()) {
-                biasOperand = add->Inputs()[0].Get();
-            } else {
-                dawn::ErrorLog() << "The add is not fusable.";
-                return xnn_status_invalid_parameter;
-            }
-            DAWN_ASSERT(mOperandInfoMap.find(const_cast<OperandBase*>(biasOperand)->Operator()) != mOperandInfoMap.end());
-            const std::shared_ptr<OperandInfo>& biasInfo = mOperandInfoMap.at(const_cast<OperandBase*>(biasOperand)->Operator());
-            if (biasInfo->opType != OperandType::CONSTANT) {
-                dawn::ErrorLog() << "bias is not a constant.";
-                return xnn_status_invalid_parameter;
-            }
-            if (biasInfo->dims.size() != 1 && biasInfo->dims[0] != outputChannels) {
-                dawn::ErrorLog() << "bias dimensions is invalid.";
-                return xnn_status_invalid_parameter;
-            }
-            bias = reinterpret_cast<const float*>(biasInfo->buffer.get());
-        }
-
         float outputMin = -std::numeric_limits<float>::infinity();
         float outputMax = +std::numeric_limits<float>::infinity();
-        if (clamp) {
-            if (add) {
-                if (add != clamp->Inputs()[0].Get()->Operator()) {
-                    dawn::ErrorLog() << "The clamp is not fusable.";
-                    return xnn_status_invalid_parameter;
+        if (options->activation) {
+            switch (options->activation->GetFusionType()) {
+                case FusionType::Clamp: {
+                    auto clamp = reinterpret_cast<const op::FusionClamp*>(options->activation);
+                    outputMin = clamp->GetMinValue();
+                    outputMax = clamp->GetMaxValue();
+                    break;
                 }
-            } else {
-                if (conv2d != clamp->Inputs()[0].Get()->Operator()) {
-                    dawn::ErrorLog() << "The clamp is not fusable.";
+                case FusionType::Relu:
+                    outputMin = 0.0f;
+                    outputMax = std::numeric_limits<float>::infinity();
+                    break;
+                default:
+                    dawn::ErrorLog() << "XNNPACK backend doesn't support fused operator "
+                                     << static_cast<int>(options->activation->GetFusionType());
                     return xnn_status_invalid_parameter;
-                }
             }
-            outputMin = clamp->GetMinValue();
-            outputMax = clamp->GetMaxValue();
         }
-
-        XNN_TRY(xnn_create_convolution2d_nhwc_f32(
-            padTop, padRight, padBottom, padLeft, filterHeight, filterWidth, strideHeight,
-            strideWidth, dilationHeight, dilationWidth, groups, groupInputChannels,
-            groupOutputChannels, inputChannelStride, outputChannelStride, filter, bias, outputMin,
-            outputMax, flags, &mXnnOperator));
-        mXnnOperatorType = XnnOpType::convolution2d_nhwc_f32;
-        std::shared_ptr<OperandInfo> outputInfo;
-        if (clamp) {
-            outputInfo = mOperandInfoMap.at(clamp);
-        } else if (add) {
-            outputInfo = mOperandInfoMap.at(add);
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        if (depthwise) {
+            XNN_TRY(xnn_define_depthwise_convolution_2d(
+                subgraph, padTop, padRight, padBottom, padLeft, filterHeight, filterWidth,
+                strideHeight, strideWidth, dilationHeight, dilationWidth, 1, inputChannels,
+                outputMin, outputMax, inputId, filterId, biasId, outputId, 0));
         } else {
-            outputInfo = mOperandInfoMap.at(conv2d);
+            XNN_TRY(xnn_define_convolution_2d(subgraph, padTop, padRight, padBottom, padLeft,
+                                              filterHeight, filterWidth, strideHeight, strideWidth,
+                                              dilationHeight, dilationWidth, groups,
+                                              groupInputChannels, groupOutputChannels, outputMin,
+                                              outputMax, inputId, filterId, biasId, outputId, 0));
         }
-        outputInfo->dataType = inputInfo->dataType;
-        size_t batchSize = inputInfo->dims[0];
-        outputInfo->dims = {batchSize, outputHeight, outputWidth, outputChannels};
-        mOutputs.push_back(outputInfo);
-        mExternalOutputs.insert(std::make_pair(outputInfo->name, mOutputs.size() - 1));
         return xnn_status_success;
     }
 
-    size_t Graph::SizeOfOperandInfo(const std::shared_ptr<OperandInfo>& info) {
-        return std::accumulate(info->dims.begin(), info->dims.end(), 1, std::multiplies<size_t>()) *
-               SizeOfXnnDataType(info->dataType);
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Gemm* gemm) {
+        auto inputs = gemm->Inputs();
+        DAWN_ASSERT(inputs.size() == 2 || inputs.size() == 3);
+        DAWN_ASSERT(mOperands.find(inputs[0].Get()) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputs[0].Get());
+        DAWN_ASSERT(mOperands.find(inputs[1].Get()) != mOperands.end());
+        uint32_t filterId = mOperands.at(inputs[1].Get());
+        uint32_t biasId = XNN_INVALID_VALUE_ID;
+        if (inputs.size() == 3) {
+            DAWN_ASSERT(mOperands.find(inputs[2].Get()) != mOperands.end());
+            biasId = mOperands.at(inputs[2].Get());
+        }
+        const GemmOptions* options = gemm->GetOptions();
+        if (fabs(options->alpha - 1.0f) > std::numeric_limits<float>::epsilon()) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support alpha " << options->alpha;
+            return xnn_status_invalid_parameter;
+        }
+        if (fabs(options->beta - 1.0f) > std::numeric_limits<float>::epsilon()) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support beta " << options->beta;
+            return xnn_status_invalid_parameter;
+        }
+        if (options->aTranspose) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support aTranspose.";
+            return xnn_status_invalid_parameter;
+        }
+        uint32_t flags = 0;
+        if (!options->bTranspose) {
+            flags = XNN_FLAG_TRANSPOSE_WEIGHTS;
+        }
+        auto outputOperand = gemm->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        const float outputMin = -std::numeric_limits<float>::infinity();
+        const float outputMax = +std::numeric_limits<float>::infinity();
+        XNN_TRY(xnn_define_fully_connected(subgraph, outputMin, outputMax, inputId, filterId,
+                                           biasId, outputId, flags));
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Pad* pad) {
+        auto inputOperands = pad->Inputs();
+        DAWN_ASSERT(inputOperands.size() == 2);
+        auto inputOperand = inputOperands[0].Get();
+        size_t inputRank = inputOperand->Shape().size();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        const op::Constant* paddingConstant =
+            reinterpret_cast<const op::Constant*>(inputOperands[1]->Operator());
+        const PadOptions* options = pad->GetOptions();
+        if (options->mode != wnn::PaddingMode::Constant) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support padding mode "
+                             << static_cast<int>(options->mode);
+            return xnn_status_invalid_parameter;
+        }
+        float paddingValue = options->value;
+        std::vector<size_t> startPaddingVector;
+        std::vector<size_t> endPaddingVector;
+        const uint32_t* paddingData = static_cast<const uint32_t*>(paddingConstant->GetBuffer());
+        for (size_t i = 0; i < inputRank; ++i) {
+            startPaddingVector.push_back(paddingData[2 * i]);
+            endPaddingVector.push_back(paddingData[2 * i + 1]);
+        }
+        auto outputOperand = pad->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        XNN_TRY(xnn_define_static_constant_pad(subgraph, startPaddingVector.data(),
+                                               endPaddingVector.data(), paddingValue, inputId,
+                                               outputId, 0));
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Pool2d* pool2d) {
+        DAWN_ASSERT(pool2d->Inputs().size() == 1);
+        auto inputOperand = pool2d->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        const Pool2dOptions* options = pool2d->GetOptions();
+        if (options->layout != wnn::InputOperandLayout::Nhwc) {
+            dawn::ErrorLog() << "XNNPACK only supports input layout nhwc.";
+            return xnn_status_invalid_parameter;
+        }
+        uint32_t strideHeight = options->strides[0];
+        uint32_t strideWidth = options->strides[1];
+        uint32_t dilationHeight = options->dilations[0];
+        uint32_t dilationWidth = options->dilations[1];
+        // nhwc
+        size_t inputHeight = inputOperand->Shape()[1];
+        size_t inputWidth = inputOperand->Shape()[2];
+        uint32_t filterHeight, filterWidth;
+        bool global = false;
+        if (options->windowDimensions != nullptr) {
+            filterHeight = options->windowDimensions[0];
+            filterWidth = options->windowDimensions[1];
+        } else {
+            filterHeight = inputHeight;
+            filterWidth = inputWidth;
+            global = true;
+        }
+
+        size_t outputHeight, outputWidth;
+        uint32_t padTop, padBottom, padLeft, padRight;
+        if (options->autoPad == wnn::AutoPad::Explicit) {
+            // WebNN padding: [beginning_height, ending_height, beginning_width, ending_width]
+            padTop = options->padding[0];
+            padBottom = options->padding[1];
+            padLeft = options->padding[2];
+            padRight = options->padding[3];
+        } else {
+            outputHeight = ceil(inputHeight / strideHeight);
+            outputWidth = ceil(inputWidth / strideWidth);
+            size_t padAlongHeight =
+                std::max(size_t(0), (outputHeight - 1) * strideHeight + filterHeight - inputHeight);
+            size_t padAlongWidth =
+                std::max(size_t(0), (outputWidth - 1) * strideWidth + filterWidth - inputWidth);
+            if (options->autoPad == wnn::AutoPad::SameUpper) {
+                padTop = floor(padAlongHeight / 2);
+                padBottom = padAlongHeight - padTop;
+                padLeft = floor(padAlongWidth / 2);
+                padRight = padAlongWidth - padLeft;
+            } else {
+                padBottom = floor(padAlongHeight / 2);
+                padTop = padAlongHeight - padBottom;
+                padRight = floor(padAlongWidth / 2);
+                padLeft = padAlongWidth - padRight;
+            }
+        }
+
+        auto outputOperand = pool2d->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        float outputMin = -std::numeric_limits<float>::infinity();
+        float outputMax = +std::numeric_limits<float>::infinity();
+        const uint32_t flags = 0;
+        if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {
+            if (dilationHeight != 1 || dilationWidth != 1) {
+                dawn::ErrorLog() << "XNNPACK does not support dilation for averagePool2d.";
+                return xnn_status_invalid_parameter;
+            }
+            if (global) {
+                XNN_TRY(xnn_define_global_average_pooling_2d(subgraph, outputMin, outputMax,
+                                                             inputId, outputId, flags));
+            } else {
+                XNN_TRY(xnn_define_average_pooling_2d(
+                    subgraph, padTop, padRight, padBottom, padLeft, filterHeight, filterWidth,
+                    strideHeight, strideWidth, outputMin, outputMax, inputId, outputId, flags));
+            }
+        } else if (pool2d->GetType() == op::Pool2dType::kMaxPool2d) {
+            XNN_TRY(xnn_define_max_pooling_2d(subgraph, padTop, padRight, padBottom, padLeft,
+                                              filterHeight, filterWidth, strideHeight, strideWidth,
+                                              dilationHeight, dilationWidth, outputMin, outputMax,
+                                              inputId, outputId, flags));
+        } else {
+            dawn::ErrorLog() << "XNNPACK does not support l2Pool2d.";
+            return xnn_status_invalid_parameter;
+        }
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Reshape* reshape) {
+        DAWN_ASSERT(reshape->Inputs().size() == 1);
+        auto inputOperand = reshape->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        auto outputOperand = reshape->PrimaryOutput();
+        std::vector<size_t> newSizes;
+        for (auto& d : outputOperand->Shape()) {
+            newSizes.push_back(static_cast<size_t>(d));
+        }
+        if (newSizes.size() > XNN_MAX_TENSOR_DIMS) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't new shape rank " << newSizes.size();
+            return xnn_status_invalid_parameter;
+        }
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        XNN_TRY(xnn_define_static_reshape(subgraph, newSizes.size(), newSizes.data(), inputId,
+                                          outputId, 0));
+        return xnn_status_success;
+    }
+
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Unary* unary) {
+        DAWN_ASSERT(unary->Inputs().size() == 1);
+        auto inputOperand = unary->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        auto outputOperand = unary->PrimaryOutput();
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        switch (unary->GetType()) {
+            case op::UnaryOpType::kAbs:
+                XNN_TRY(xnn_define_abs(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kCeil:
+                XNN_TRY(xnn_define_ceiling(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kFloor:
+                XNN_TRY(xnn_define_floor(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kHardSwish:
+                XNN_TRY(xnn_define_hardswish(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kLeakyRelu:
+                XNN_TRY(xnn_define_leaky_relu(
+                    subgraph, reinterpret_cast<const op::LeakyRelu*>(unary)->GetAlpha(), inputId,
+                    outputId, 0));
+                break;
+            case op::UnaryOpType::kNeg:
+                XNN_TRY(xnn_define_negate(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kRelu:
+                XNN_TRY(xnn_define_clamp(subgraph, 0.0f, std::numeric_limits<float>::infinity(),
+                                         inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kSigmoid:
+                XNN_TRY(xnn_define_sigmoid(subgraph, inputId, outputId, 0));
+                break;
+            case op::UnaryOpType::kSoftmax:
+                XNN_TRY(xnn_define_softmax(subgraph, inputId, outputId, 0));
+                break;
+            default:
+                dawn::ErrorLog() << "XNNPACK backend doesn't support unary op "
+                                 << static_cast<int>(unary->GetType());
+                return xnn_status_unsupported_parameter;
+        }
+        return xnn_status_success;
+    }
+
+#define HANDLE_OP(OpType)                                                                \
+    case OperatorType::OpType: {                                                         \
+        DAWN_TRY(DefineXnnNode(subgraph, reinterpret_cast<const op::OpType*>(info.op))); \
+        break;                                                                           \
+    }
+
+    MaybeError Graph::Finish() {
+        xnn_subgraph_t subgraph;
+        if (FAILED(xnn_create_subgraph(mExternals.size(), 0, &subgraph))) {
+            return DAWN_INTERNAL_ERROR("xnn_create_subgraph failed.");
+        }
+        for (auto const& info : mOperators) {
+            switch (info.type) {
+                HANDLE_OP(Binary)
+                HANDLE_OP(Clamp)
+                HANDLE_OP(Constant)
+                HANDLE_OP(Concat)
+                HANDLE_OP(Conv2d)
+                HANDLE_OP(Gemm)
+                HANDLE_OP(Input)
+                HANDLE_OP(Pad)
+                HANDLE_OP(Pool2d)
+                HANDLE_OP(Reshape)
+                HANDLE_OP(Unary)
+                default: {
+                    return DAWN_UNIMPLEMENTED_ERROR("");
+                }
+            }
+        }
+        uint32_t flags = XNN_FLAG_YIELD_WORKERS;
+        DAWN_TRY(xnn_create_runtime_v2(subgraph, GetThreadpool(), flags, &mRuntime));
+        DAWN_TRY(xnn_delete_subgraph(subgraph));
+        return {};
     }
 
     pthreadpool_t Graph::GetThreadpool() {
@@ -645,109 +667,33 @@ namespace webnn_native::xnnpack {
     }
 
     MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        std::vector<const void*> inputBuffers(mInputs.size(), nullptr);
-        for (size_t i = 0; i < mInputs.size(); ++i) {
-            if (mInputs[i]->opType == OperandType::CONSTANT) {
-                inputBuffers[i] = mInputs[i]->buffer.get();
+        std::vector<xnn_external_value> externalValues;
+        for (auto& input : inputs->GetRecords()) {
+            if (mExternals.find(input.first) == mExternals.end()) {
+                return DAWN_VALIDATION_ERROR("Invalid input.");
             }
-        }
-        for (auto& [name, input] : inputs->GetRecords()) {
-            if (mExternalInputs.find(name) == mExternalInputs.end()) {
-                return DAWN_INTERNAL_ERROR("Invalid parameters.");
-            }
-            size_t index = mExternalInputs.at(name);
-            auto& resource = input.resource.arrayBufferView;
-            inputBuffers[index] = static_cast<int8_t*>(resource.buffer) + resource.byteOffset;
+            xnn_external_value value = {};
+            value.id = mExternals.at(input.first);
+            value.data = static_cast<int8_t*>(input.second.resource.arrayBufferView.buffer) +
+                         input.second.resource.arrayBufferView.byteOffset;
+            externalValues.push_back(value);
         }
 
-        std::vector<std::string> outputNames;
-        for (auto& [name, _] : outputs->GetRecords()) {
-            outputNames.push_back(name);
+        for (auto& output : outputs->GetRecords()) {
+            if (mExternals.find(output.first) == mExternals.end()) {
+                return DAWN_VALIDATION_ERROR("Invalid output.");
+            }
+            xnn_external_value value = {};
+            value.id = mExternals.at(output.first);
+            value.data = static_cast<int8_t*>(output.second.arrayBufferView.buffer) +
+                         output.second.arrayBufferView.byteOffset;
+            externalValues.push_back(value);
         }
 
-        std::vector<void*> outputBuffers(mOutputs.size(), nullptr);
-        for (size_t i = 0; i < outputNames.size(); ++i) {
-            std::string outputName = outputNames[i];
-            size_t outputIndex = mExternalOutputs.at(outputName);
-            const std::shared_ptr<OperandInfo>& outputInfo = mOutputs[outputIndex];
-            std::vector<int32_t> dimensions(outputInfo->dims.begin(), outputInfo->dims.end());
-            size_t bufferLength = SizeOfOperandInfo(outputInfo);
-            if (outputs->GetRecords().find(outputName) != outputs->GetRecords().end()) {
-                const ArrayBufferView& output =
-                    outputs->GetRecords().at(outputName).arrayBufferView;
-                DAWN_ASSERT(output.byteLength >= bufferLength);
-                outputBuffers[outputIndex] =
-                    static_cast<int8_t*>(output.buffer) + output.byteOffset;
-            }
-        }
-
-        if (mXnnOperatorType == XnnOpType::convolution2d_nhwc_f32 ||
-            mXnnOperatorType == XnnOpType::average_pooling2d_nhwc_f32 ||
-            mXnnOperatorType == XnnOpType::max_pooling2d_nhwc_f32) {
-            std::vector<size_t> inputDims = mInputs[0]->dims;
-            if (!inputBuffers[0] || !outputBuffers[0]) {
-                return DAWN_INTERNAL_ERROR("Invalid parameters.");
-            }
-            const float* input = reinterpret_cast<const float*>(inputBuffers[0]);
-            float* output = reinterpret_cast<float*>(outputBuffers[0]);
-            size_t batchSize = inputDims[0];
-            size_t inputHeight = inputDims[1];
-            size_t inputWidth = inputDims[2];
-            if (mXnnOperatorType == XnnOpType::convolution2d_nhwc_f32) {
-                DAWN_TRY(xnn_setup_convolution2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
-                                                          inputWidth, input, output,
-                                                          GetThreadpool()));
-            } else if (mXnnOperatorType == XnnOpType::average_pooling2d_nhwc_f32) {
-                DAWN_TRY(xnn_setup_average_pooling2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
-                                                              inputWidth, input, output,
-                                                              GetThreadpool()));
-            } else if (mXnnOperatorType == XnnOpType::max_pooling2d_nhwc_f32) {
-                DAWN_TRY(xnn_setup_max_pooling2d_nhwc_f32(mXnnOperator, batchSize, inputHeight,
-                                                          inputWidth, input, output,
-                                                          GetThreadpool()));
-            }
-        } else if (mXnnOperatorType == XnnOpType::clamp_nc_f32) {
-            const std::shared_ptr<OperandInfo>& outputInfo = mOutputs[0];
-            size_t batchSize = std::accumulate(outputInfo->dims.begin(), outputInfo->dims.end(), 1,
-                                               std::multiplies<size_t>());
-            if (!inputBuffers[0] || !outputBuffers[0]) {
-                return DAWN_INTERNAL_ERROR("Invalid parameters.");
-            }
-            const float* input = reinterpret_cast<const float*>(inputBuffers[0]);
-            float* output = reinterpret_cast<float*>(outputBuffers[0]);
-            DAWN_TRY(
-                xnn_setup_clamp_nc_f32(mXnnOperator, batchSize, input, output, GetThreadpool()));
-        } else if (mXnnOperatorType == XnnOpType::add_nd_f32 ||
-                   mXnnOperatorType == XnnOpType::multiply_nd_f32 ||
-                   mXnnOperatorType == XnnOpType::subtract_nd_f32) {
-            std::vector<size_t> dims0 = mInputs[0]->dims;
-            std::vector<size_t> dims1 = mInputs[1]->dims;
-            if (!inputBuffers[0] || !inputBuffers[1] || !outputBuffers[0]) {
-                return DAWN_INTERNAL_ERROR("Invalid parameters.");
-            }
-            const float* input0 = reinterpret_cast<const float*>(inputBuffers[0]);
-            const float* input1 = reinterpret_cast<const float*>(inputBuffers[1]);
-            float* output = reinterpret_cast<float*>(outputBuffers[0]);
-            if (mXnnOperatorType == XnnOpType::add_nd_f32) {
-                DAWN_TRY(xnn_setup_add_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                              dims1.size(), dims1.data(), input0, input1, output,
-                                              GetThreadpool()));
-            } else if (mXnnOperatorType == XnnOpType::multiply_nd_f32) {
-                DAWN_TRY(xnn_setup_multiply_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                                   dims1.size(), dims1.data(), input0, input1,
-                                                   output, GetThreadpool()));
-            } else if (mXnnOperatorType == XnnOpType::subtract_nd_f32) {
-                DAWN_TRY(xnn_setup_subtract_nd_f32(mXnnOperator, dims0.size(), dims0.data(),
-                                                   dims1.size(), dims1.data(), input0, input1,
-                                                   output, GetThreadpool()));
-            }
-        } else {
-            return DAWN_INTERNAL_ERROR("The operator is not supported.");
-        }
-
-        DAWN_TRY(xnn_run_operator(mXnnOperator, GetThreadpool()));
+        DAWN_TRY(xnn_setup_runtime(mRuntime, externalValues.size(), externalValues.data()));
+        DAWN_TRY(xnn_invoke_runtime(mRuntime));
 
         return {};
     }
 
-}  // namespace webnn_native::xnnpack
+}}  // namespace webnn_native::xnnpack

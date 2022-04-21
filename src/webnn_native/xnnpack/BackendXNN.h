@@ -1,4 +1,4 @@
-// Copyright 2021 The WebNN-native Authors
+// Copyright 2022 The Dawn Authors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,30 +12,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_XNNPACK_CONTEXT_XNN_H_
-#define WEBNN_NATIVE_XNNPACK_CONTEXT_XNN_H_
+#ifndef WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_
+#define WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_
 
+#include "webnn_native/BackendConnection.h"
 #include "webnn_native/Context.h"
+#include "webnn_native/Error.h"
 
-#include <xnnpack.h>
+#include <memory>
 
 namespace webnn_native::xnnpack {
 
-    class Context : public ContextBase {
+    class Backend : public BackendConnection {
       public:
-        explicit Context(ContextOptions const* options);
-        ~Context() override;
+        Backend(InstanceBase* instance);
 
-        xnn_status Init();
-
-        pthreadpool_t GetThreadpool();
-
-      private:
-        GraphBase* CreateGraphImpl() override;
-
-        pthreadpool_t mThreadpool;
+        MaybeError Initialize();
+        ContextBase* CreateContext(ContextOptions const* options = nullptr) override;
     };
 
 }  // namespace webnn_native::xnnpack
 
-#endif  // WEBNN_NATIVE_XNNPACK_CONTEXT_XNN_H_
+#endif  // WEBNN_NATIVE_XNNPACK_BACKENDXNN_H_
