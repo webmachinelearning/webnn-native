@@ -33,6 +33,7 @@
 #include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Split.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
@@ -55,6 +56,7 @@ namespace webnn_native { namespace xnnpack {
         virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
         virtual MaybeError AddReshape(const op::Reshape* reshape) override;
+        virtual MaybeError AddSplit(const op::Split* split) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
@@ -78,6 +80,7 @@ namespace webnn_native { namespace xnnpack {
         xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Pad* pad);
         xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Pool2d* pool2d);
         xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Reshape* reshape);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Split* split);
         xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Unary* unary);
 
         enum OperatorType {
@@ -91,6 +94,7 @@ namespace webnn_native { namespace xnnpack {
             Pad,
             Pool2d,
             Reshape,
+            Split,
             Unary
         };
         struct OperatorInfo {

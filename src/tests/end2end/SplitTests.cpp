@@ -54,24 +54,29 @@ class SplitTests : public WebnnTest {
     }
 };
 
-TEST_F(SplitTests, SplitByDefault) {
+TEST_F(SplitTests, SplitEvenByDefault) {
     testSplit({6}, {1, 2, 3, 4, 5, 6}, {3},
               {
                   {{2}, {1, 2}},
                   {{2}, {3, 4}},
                   {{2}, {5, 6}},
               });
+}
 
+TEST_F(SplitTests, SplitByDefault) {
     testSplit({6}, {1, 2, 3, 4, 5, 6}, {2, 4}, {{{2}, {1, 2}}, {{4}, {3, 4, 5, 6}}});
 }
 
-TEST_F(SplitTests, SplitOneDimension) {
+TEST_F(SplitTests, SplitEvenOneDimension) {
     testSplit({2, 6}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {2},
               {
                   {{2, 3}, {1, 2, 3, 7, 8, 9}},
                   {{2, 3}, {4, 5, 6, 10, 11, 12}},
               },
               1);
+}
+
+TEST_F(SplitTests, SplitOneDimension) {
     testSplit({2, 6}, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}, {2, 4},
               {
                   {{2, 2}, {1, 2, 7, 8}},

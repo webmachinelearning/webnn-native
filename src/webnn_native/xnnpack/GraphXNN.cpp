@@ -125,6 +125,7 @@ namespace webnn_native { namespace xnnpack {
     GRAPH_ADD_OP(Pad)
     GRAPH_ADD_OP(Pool2d)
     GRAPH_ADD_OP(Reshape)
+    GRAPH_ADD_OP(Split)
     GRAPH_ADD_OP(Unary)
 
     xnn_status Graph::DefineXnnTensorValue(xnn_subgraph_t subgraph,
@@ -576,6 +577,48 @@ namespace webnn_native { namespace xnnpack {
         return xnn_status_success;
     }
 
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Split* split) {
+        DAWN_ASSERT(split->Inputs().size() == 1);
+        auto inputOperand = split->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        if (split->GetSplits().size() != 1) {
+            dawn::ErrorLog() << "XNNPACK backend only supports even split.";
+            return xnn_status_invalid_parameter;
+        }
+        int32_t axis = split->GetAxis();
+        size_t outputSize = split->Outputs().size();
+        if (outputSize > 4) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't support even split more than 4.";
+            return xnn_status_invalid_parameter;
+        }
+        std::vector<uint32_t> outputIds(outputSize);
+        for (size_t i = 0; i < outputSize; ++i) {
+            uint32_t outputId;
+            auto outputOperand = split->Outputs()[i].Get();
+            XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+            outputIds[i] = outputId;
+        }
+        switch (outputSize) {
+            case 2:
+                XNN_TRY(
+                    xnn_define_even_split2(subgraph, axis, inputId, outputIds[0], outputIds[1], 0));
+                break;
+            case 3:
+                XNN_TRY(xnn_define_even_split3(subgraph, axis, inputId, outputIds[0], outputIds[1],
+                                               outputIds[2], 0));
+                break;
+            case 4:
+                XNN_TRY(xnn_define_even_split4(subgraph, axis, inputId, outputIds[0], outputIds[1],
+                                               outputIds[2], outputIds[3], 0));
+                break;
+            default:
+                dawn::ErrorLog() << "XNNPACK backend doesn't support even split more than 4.";
+                return xnn_status_invalid_parameter;
+        }
+        return xnn_status_success;
+    }
+
     xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         auto inputOperand = unary->Inputs()[0].Get();
@@ -646,6 +689,7 @@ namespace webnn_native { namespace xnnpack {
                 HANDLE_OP(Pad)
                 HANDLE_OP(Pool2d)
                 HANDLE_OP(Reshape)
+                HANDLE_OP(Split)
                 HANDLE_OP(Unary)
                 default: {
                     return DAWN_UNIMPLEMENTED_ERROR("");
