@@ -65,11 +65,14 @@ namespace webnn_native::op {
 #endif
 
         ~Constant() override {
-            if (mBuffer)
-                free(mBuffer);
+#if defined(WEBNN_ENABLE_WIRE)
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
             if (mWGPUBuffer)
                 wgpuBufferReference(mWGPUBuffer);
+#else
+            if (mBuffer)
+                free(mBuffer);
+#endif
 #endif
         }
 

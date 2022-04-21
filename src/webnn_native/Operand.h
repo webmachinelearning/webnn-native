@@ -32,7 +32,7 @@ namespace webnn_native {
         virtual ~OperandBase() = default;
 
         const OperatorBase* Operator() const {
-            return mOperator.Get();
+            return mOperator;
         }
 
         wnn::OperandType Type() const {
@@ -57,7 +57,7 @@ namespace webnn_native {
 
       protected:
         // The operator of generating the operand.
-        Ref<OperatorBase> mOperator;
+        OperatorBase* mOperator;
         // The operand type.
         wnn::OperandType mType;
         // The operand dimensions
