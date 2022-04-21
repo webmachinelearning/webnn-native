@@ -215,6 +215,15 @@ namespace webnn_native { namespace xnnpack {
                 XNN_TRY(xnn_define_subtract(subgraph, outputMin, outputMax, input0Id, input1Id,
                                             outputId, 0));
                 break;
+            case op::BinaryOpType::kMatMul:
+                if (input1Operand->Shape().size() != 2) {
+                    dawn::ErrorLog() << "XNNPACK backend only support 2D operand b of matmul.";
+                    return xnn_status_invalid_parameter;
+                }
+                XNN_TRY(xnn_define_fully_connected(subgraph, outputMin, outputMax, input0Id,
+                                                   input1Id, XNN_INVALID_VALUE_ID, outputId,
+                                                   XNN_FLAG_TRANSPOSE_WEIGHTS));
+                break;
             default:
                 dawn::ErrorLog() << "XNNPACK backend doesn't support unary op "
                                  << static_cast<int>(binary->GetType());
