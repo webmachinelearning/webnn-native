@@ -118,6 +118,7 @@ namespace webnn_native {
       private:
         ResultOrError<Ref<GraphBase>> BuildImpl(NamedOperandsBase const* namedOperands);
 
+        std::vector<Ref<OperatorBase>> mOperators;
         // Topological sort of nodes needed to compute rootNodes
         std::vector<const OperatorBase*> TopologicalSort(
             std::vector<const OperandBase*>& rootNodes);
