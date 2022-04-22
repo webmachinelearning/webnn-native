@@ -104,7 +104,7 @@ Currently "cpu", "gpu" and "default" are supported, more devices are to be suppo
 
 **Notes**:
  * For OpenVINO backend, please [install 2021.4 version](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#install-openvino) and [set the environment variables](https://docs.openvinotoolkit.org/2021.4/openvino_docs_install_guides_installing_openvino_linux.html#set-the-environment-variables) before running the end2end tests.
- * The current implementation of XNNPACK, oneDNN and MLAS backends is mainly for the investigation of WebNN [Operation Level Execution
+ * The current implementation of oneDNN and MLAS backends is mainly for the investigation of WebNN [Operation Level Execution
 ](https://webmachinelearning.github.io/webnn/#usecase-op-level-exec) use case. So only a limited set of tests (such as of conv2d) is expected to pass.
 
 ### Run examples
