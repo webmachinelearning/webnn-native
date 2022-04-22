@@ -126,6 +126,7 @@ namespace webnn_native { namespace xnnpack {
     GRAPH_ADD_OP(Pool2d)
     GRAPH_ADD_OP(Reshape)
     GRAPH_ADD_OP(Split)
+    GRAPH_ADD_OP(Squeeze)
     GRAPH_ADD_OP(Unary)
 
     xnn_status Graph::DefineXnnTensorValue(xnn_subgraph_t subgraph,
@@ -628,6 +629,27 @@ namespace webnn_native { namespace xnnpack {
         return xnn_status_success;
     }
 
+    xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Squeeze* squeeze) {
+        DAWN_ASSERT(squeeze->Inputs().size() == 1);
+        auto inputOperand = squeeze->Inputs()[0].Get();
+        DAWN_ASSERT(mOperands.find(inputOperand) != mOperands.end());
+        uint32_t inputId = mOperands.at(inputOperand);
+        auto outputOperand = squeeze->PrimaryOutput();
+        std::vector<size_t> newSizes;
+        for (auto& d : outputOperand->Shape()) {
+            newSizes.push_back(static_cast<size_t>(d));
+        }
+        if (newSizes.size() > XNN_MAX_TENSOR_DIMS) {
+            dawn::ErrorLog() << "XNNPACK backend doesn't new size rank " << newSizes.size();
+            return xnn_status_invalid_parameter;
+        }
+        uint32_t outputId;
+        XNN_TRY(DefineXnnTensorValue(subgraph, outputOperand, &outputId));
+        XNN_TRY(xnn_define_static_reshape(subgraph, newSizes.size(), newSizes.data(), inputId,
+                                          outputId, 0));
+        return xnn_status_success;
+    }
+
     xnn_status Graph::DefineXnnNode(xnn_subgraph_t subgraph, const op::Unary* unary) {
         DAWN_ASSERT(unary->Inputs().size() == 1);
         auto inputOperand = unary->Inputs()[0].Get();
@@ -699,6 +721,7 @@ namespace webnn_native { namespace xnnpack {
                 HANDLE_OP(Pool2d)
                 HANDLE_OP(Reshape)
                 HANDLE_OP(Split)
+                HANDLE_OP(Squeeze)
                 HANDLE_OP(Unary)
                 default: {
                     return DAWN_UNIMPLEMENTED_ERROR("");
