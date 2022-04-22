@@ -303,6 +303,8 @@ source_set("webnn_native_sources") {
 
   if (webnn_enable_xnnpack) {
     sources += [
+      "xnnpack/BackendXNN.cpp",
+      "xnnpack/BackendXNN.h",
       "xnnpack/ContextXNN.cpp",
       "xnnpack/ContextXNN.h",
       "xnnpack/GraphXNN.cpp",

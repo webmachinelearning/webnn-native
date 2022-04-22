@@ -31,10 +31,16 @@ class GemmTests : public WebnnTest {
                   const std::vector<float>& bData,
                   const std::vector<int32_t>& expectedShape,
                   const std::vector<float>& expectedValue,
-                  const Options* options = nullptr) {
+                  const Options* options = nullptr,
+                  bool constantWeight = false) {
         const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", aShape);
-        const wnn::Operand b = utils::BuildInput(builder, "b", bShape);
+        wnn::Operand b;
+        if (constantWeight) {
+            b = utils::BuildConstant(builder, bShape, bData.data(), bData.size() * sizeof(float));
+        } else {
+            b = utils::BuildInput(builder, "b", bShape);
+        }
         wnn::GemmOptions gemmOptions = {};
         if (options != nullptr) {
             if (!options->cData.empty()) {
@@ -52,7 +58,11 @@ class GemmTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"c", gemm}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
+        if (constantWeight) {
+            utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+        } else {
+            utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
+        }
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };
@@ -192,6 +202,29 @@ TEST_F(GemmTests, NoBias) {
     TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue);
 }
 
+TEST_F(GemmTests, NoBiasWithConstantWeight) {
+    const std::vector<int32_t> inputAShape = {2, 10};
+    const std::vector<float> inputAData = {
+        0.97596496, 0.47531518, 0.7147315, 0.14236908, 0.06151228, 0.05889508, 0.3534669,
+        0.31915423, 0.61336106, 0.5946216, 0.21969128, 0.7347848,  0.4087221,  0.00412959,
+        0.77303815, 0.6495765,  0.3174799, 0.62841094, 0.7002717,  0.63384914,
+    };
+    const std::vector<int32_t> inputBShape = {10, 3};
+    const std::vector<float> inputBData = {
+        0.51739925, 0.25108355, 0.31373033, 0.6488124,  0.9777175,  0.13308926,
+        0.47903556, 0.23692878, 0.0822504,  0.3080891,  0.51966125, 0.969734,
+        0.6691261,  0.59346807, 0.7651862,  0.48655444, 0.48373327, 0.2799068,
+        0.35760838, 0.19906454, 0.3612888,  0.11448191, 0.19188708, 0.00769753,
+        0.3161914,  0.323555,   0.17573832, 0.79587144, 0.91238266, 0.5517277,
+    };
+    const std::vector<int32_t> expectedShape = {2, 3};
+    const std::vector<float> expectedValue = {
+        2.0995352, 1.8906747, 1.1958704, 2.5321422, 2.6342242, 1.5699927,
+    };
+    TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue,
+             nullptr, true);
+}
+
 TEST_F(GemmTests, ScalarBias) {
     const std::vector<int32_t> inputAShape = {2, 3};
     const std::vector<float> inputAData = {
@@ -211,6 +244,27 @@ TEST_F(GemmTests, ScalarBias) {
     options.cData = {3.14};
     TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue,
              &options);
+}
+
+TEST_F(GemmTests, BiasWithConstantWeight) {
+    const std::vector<int32_t> inputAShape = {2, 3};
+    const std::vector<float> inputAData = {
+        0.41595492, 0.7063231, 0.3784654, 0.3524597, 0.41936764, 0.08190536,
+    };
+    const std::vector<int32_t> inputBShape = {3, 4};
+    const std::vector<float> inputBData = {
+        0.38356313, 0.92939967, 0.06164686, 0.09034675, 0.34704673, 0.9492532,
+        0.7738587,  0.93576515, 0.49937814, 0.38543963, 0.02364575, 0.80216527,
+    };
+    const std::vector<int32_t> expectedShape = {2, 4};
+    const std::vector<float> expectedValue = {
+        3.7336695, 4.3429437, 3.7211857, 4.1421247, 3.4616325, 3.8972316, 3.4881961, 3.6299748,
+    };
+    Options options;
+    options.cShape = {4};
+    options.cData = {3.14, 3.14, 3.14, 3.14};
+    TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue,
+             &options, true);
 }
 
 TEST_F(GemmTests, BroadcastingBias) {
@@ -286,4 +340,29 @@ TEST_F(GemmTests, bTranspose) {
     options.bTranspose = true;
     TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue,
              &options);
+}
+
+TEST_F(GemmTests, bTransposeWithConstantWeight) {
+    const std::vector<int32_t> inputAShape = {3, 6};
+    const std::vector<float> inputAData = {
+        0.4520783,  0.25709572, 0.28996432, 0.03766193, 0.0546827,  0.46305302,
+        0.91171485, 0.48380807, 0.09058774, 0.6646215,  0.35773644, 0.03604647,
+        0.21229707, 0.18758385, 0.01589681, 0.9606218,  0.08803706, 0.18099776,
+    };
+    const std::vector<int32_t> inputBShape = {4, 6};
+    const std::vector<float> inputBData = {
+        0.1482661,  0.27676222, 0.10893039, 0.8347901, 0.7146212, 0.7316929,
+        0.97991717, 0.97123116, 0.69798464, 0.8436566, 0.9630883, 0.23252074,
+        0.09898344, 0.08882044, 0.90780985, 0.7116153, 0.5819304, 0.6742051,
+        0.5233705,  0.5594687,  0.963364,   0.1351259, 0.8119938, 0.13756031,
+    };
+    const std::vector<int32_t> expectedShape = {3, 4};
+    const std::vector<float> expectedValue = {
+        0.57909805, 1.0871967, 0.7016311, 0.77297145, 1.1157843, 2.340149,
+        0.92088836, 1.2203549, 1.0823897, 1.3386247,  0.9089607, 0.45756027,
+    };
+    Options options;
+    options.bTranspose = true;
+    TestGemm(inputAShape, inputAData, inputBShape, inputBData, expectedShape, expectedValue,
+             &options, true);
 }

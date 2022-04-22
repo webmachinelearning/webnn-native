@@ -22,17 +22,7 @@
 
 namespace webnn_native::xnnpack {
 
-    ContextBase* Create() {
-        Ref<ContextBase> context = AcquireRef(new Context());
-        xnn_status status = reinterpret_cast<Context*>(context.Get())->Init();
-        if (status != xnn_status_success) {
-            dawn::ErrorLog() << "Failed to init XNNPack:" << status;
-            return nullptr;
-        }
-        return context.Detach();
-    }
-
-    Context::Context() {
+    Context::Context(ContextOptions const* options) {
     }
 
     Context::~Context() {

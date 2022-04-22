@@ -24,12 +24,17 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/ops/Binary.h"
 #include "webnn_native/ops/Clamp.h"
+#include "webnn_native/ops/Concat.h"
 #include "webnn_native/ops/Constant.h"
 #include "webnn_native/ops/Conv2d.h"
+#include "webnn_native/ops/Gemm.h"
 #include "webnn_native/ops/Input.h"
 #include "webnn_native/ops/LeakyRelu.h"
+#include "webnn_native/ops/Pad.h"
 #include "webnn_native/ops/Pool2d.h"
 #include "webnn_native/ops/Reshape.h"
+#include "webnn_native/ops/Split.h"
+#include "webnn_native/ops/Squeeze.h"
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
@@ -45,9 +50,15 @@ namespace webnn_native::xnnpack {
         virtual MaybeError AddInput(const op::Input* input) override;
         virtual MaybeError AddOutput(std::string_view name, const OperandBase* output) override;
         virtual MaybeError AddBinary(const op::Binary* binary) override;
-        virtual MaybeError AddClamp(const op::Clamp* clamp) override;
+        virtual MaybeError AddConcat(const op::Concat* concat) override;
         virtual MaybeError AddConv2d(const op::Conv2d* conv2d) override;
+        virtual MaybeError AddClamp(const op::Clamp* clamp) override;
+        virtual MaybeError AddGemm(const op::Gemm* gemm) override;
+        virtual MaybeError AddPad(const op::Pad* pad) override;
         virtual MaybeError AddPool2d(const op::Pool2d* pool2d) override;
+        virtual MaybeError AddReshape(const op::Reshape* reshape) override;
+        virtual MaybeError AddSplit(const op::Split* split) override;
+        virtual MaybeError AddSqueeze(const op::Squeeze* squeeze) override;
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
@@ -55,50 +66,57 @@ namespace webnn_native::xnnpack {
         MaybeError CompileImpl() override;
         MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
-        enum OperandType { INPUT, CONSTANT, BINARY, CLAMP, CONV2D, POOL2D, UNARY };
-        struct OperandInfo {
-            OperandInfo(OperandType opType) : opType(opType) {
-            }
-            OperandType opType;
-            std::string name = "";
-            xnn_datatype dataType = xnn_datatype_invalid;
-            std::vector<size_t> dims = {};
-            std::unique_ptr<char> buffer = nullptr;
-        };
-
         pthreadpool_t GetThreadpool();
-        size_t SizeOfOperandInfo(const std::shared_ptr<OperandInfo>& info);
-        xnn_status CreateBuffer(std::shared_ptr<OperandInfo>& info,
-                                const void* data = nullptr,
-                                size_t length = 0);
-        xnn_status CreateXnnOp(const op::Unary* unary);
-        xnn_status CreateXnnOp(const op::Clamp* clamp);
-        xnn_status CreateXnnOp(const op::Binary* binary);
-        xnn_status CreateXnnOp(const op::Pool2d* pool2d);
-        xnn_status CreateXnnOp(const op::Conv2d* conv2d,
-                               const op::Binary* add = nullptr,
-                               const op::Clamp* clamp = nullptr);
 
-        enum XnnOpType {
-            add_nd_f32,
-            clamp_nc_f32,
-            multiply_nd_f32,
-            subtract_nd_f32,
-            convolution2d_nhwc_f32,
-            average_pooling2d_nhwc_f32,
-            max_pooling2d_nhwc_f32
+        xnn_status DefineXnnTensorValue(xnn_subgraph_t subgraph,
+                                        const OperandBase* operand,
+                                        uint32_t* id,
+                                        const void* data = nullptr);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Constant* constant);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Input* Input);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Binary* binary);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Clamp* clamp);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Concat* concat);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Conv2d* conv2d);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Gemm* gemm);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Pad* pad);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Pool2d* pool2d);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Reshape* reshape);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Split* split);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Squeeze* squeeze);
+        xnn_status DefineXnnNode(xnn_subgraph_t subgraph, const op::Unary* unary);
+
+        enum OperatorType {
+            Binary,
+            Constant,
+            Clamp,
+            Concat,
+            Conv2d,
+            Input,
+            Gemm,
+            Pad,
+            Pool2d,
+            Reshape,
+            Split,
+            Squeeze,
+            Unary
         };
-        XnnOpType mXnnOperatorType;
-        xnn_operator_t mXnnOperator;
-        std::vector<std::shared_ptr<OperandInfo>> mConstants;
-        std::vector<std::shared_ptr<OperandInfo>> mInputs;
-        std::vector<std::shared_ptr<OperandInfo>> mOutputs;
-        std::map<std::string, uint32_t> mExternalInputs;
-        std::map<std::string, uint32_t> mExternalOutputs;
+        struct OperatorInfo {
+            OperatorInfo(OperatorType type, const OperatorBase* op) : type(type), op(op) {
+            }
+            OperatorType type;
+            const OperatorBase* op;
+        };
+        std::vector<OperatorInfo> mOperators;
+        std::map<const OperandBase*, uint32_t> mOperands;
+        std::map<const OperandBase*, uint32_t> mInputs;
+        std::map<const OperandBase*, uint32_t> mOutputs;
+        uint32_t mExternalId;
 
-        // For graph building
-        std::vector<const OperandBase*> mOperandsToBuild;
-        std::map<const OperandBase*, std::shared_ptr<OperandInfo>> mOperandInfoMap;
+        std::vector<std::unique_ptr<char>> mBuffers;
+        std::map<std::string, uint32_t> mExternals;
+
+        xnn_runtime_t mRuntime;
     };
 
 }  // namespace webnn_native::xnnpack
