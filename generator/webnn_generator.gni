@@ -40,10 +40,10 @@ import("../scripts/webnn_overrides_with_defaults.gni")
 
 webnn_allowed_gen_output_dirs = [
   "src/webnn/",
-  "src/webnn_native/",
-  "src/webnn_wire/client/",
-  "src/webnn_wire/server/",
-  "src/webnn_wire/",
+  "src/webnn/native/",
+  "src/webnn/wire/client/",
+  "src/webnn/wire/server/",
+  "src/webnn/wire/",
   "src/include/webnn/",
 ]
 

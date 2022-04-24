@@ -24,7 +24,7 @@
 #include "webnn_native/NamedOutputs.h"
 #include "webnn_native/ValidationUtils_autogen.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     // Forward definitions of each backend's "Connect" function that creates new BackendConnection.
     // Conditionally compiled declarations are used to avoid using static constructors instead.
@@ -227,4 +227,4 @@ namespace webnn_native {
         return false;
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

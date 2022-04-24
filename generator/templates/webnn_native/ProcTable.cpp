@@ -25,7 +25,7 @@
     {% endif %}
 {% endfor %}
 
-namespace webnn_native {
+namespace webnn::native {
 
     namespace {
 

@@ -20,7 +20,7 @@
 
 #include "webnn_wire/ObjectType_autogen.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     using ObjectId = uint32_t;
     using ObjectGeneration = uint32_t;
@@ -141,6 +141,6 @@ namespace webnn_wire {
         {{write_command_struct(command, True)}}
     {% endfor %}
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif // WEBNN_WIRE_WIRECMD_AUTOGEN_H_

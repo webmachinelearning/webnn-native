@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-namespace webnn_wire {
+namespace webnn::wire {
     WireDeserializeAllocator::WireDeserializeAllocator() {
         Reset();
     }
@@ -57,4 +57,4 @@ namespace webnn_wire {
         mCurrentBuffer = mStaticBuffer;
         mRemainingSize = sizeof(mStaticBuffer);
     }
-}  // namespace webnn_wire
+}  // namespace webnn::wire

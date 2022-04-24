@@ -59,7 +59,6 @@ def as_cTypeDawn(name):
     else:
         return 'Dawn' + name.CamelCase()
 
-
 def as_cTypeEnumSpecialCase(typ):
     if typ.category == 'bitmask':
         return as_cType(typ.name) + 'Flags'

@@ -24,7 +24,7 @@
 #include "webnn_native/Operator.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class OperandBase : public ObjectBase {
       public:
@@ -63,6 +63,6 @@ namespace webnn_native {
         // The operand dimensions
         std::vector<int32_t> mShape;
     };
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_OPERAND_H_

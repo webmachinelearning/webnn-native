@@ -18,7 +18,7 @@
 #include "common/Assert.h"
 #include "webnn_native/GraphBuilder.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     OperandBase::OperandBase(GraphBuilderBase* graphBuilder, OperatorBase* operatorBase)
         : ObjectBase(graphBuilder->GetContext()),
@@ -35,4 +35,4 @@ namespace webnn_native {
         return new OperandBase(GraphBuilder, ObjectBase::kError);
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

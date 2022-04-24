@@ -15,7 +15,7 @@
 
 #include "webnn_native/webnn_structs_autogen.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     {% for type in by_category["structure"] %}
         {% set CppType = as_cppType(type.name) %}

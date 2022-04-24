@@ -26,7 +26,7 @@
 #    include <webgpu/webgpu.h>
 #endif
 
-namespace webnn_wire::server {
+namespace webnn::wire::server {
 
     // CallbackUserdata and its derived classes are intended to be created by
     // Server::MakeUserdata<T> and then passed as the userdata argument for Dawn
@@ -183,6 +183,6 @@ namespace webnn_wire::server {
     bool TrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
     bool UntrackContextChild(ContextInfo* context, ObjectType type, ObjectId id);
 
-}  // namespace webnn_wire::server
+}  // namespace webnn::wire::server
 
 #endif  // WEBNN_WIRE_SERVER_SERVER_H_

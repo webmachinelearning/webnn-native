@@ -16,7 +16,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     Pad::Pad(GraphBuilderBase* builder,
              OperandBase* input,
@@ -86,4 +86,4 @@ namespace webnn_native::op {
         return CalculateShape();
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

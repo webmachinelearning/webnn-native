@@ -15,7 +15,7 @@
 
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire::server {
+namespace webnn::wire::server {
 
     bool Server::DoNamedInputsSet(ObjectId namedInputsId,
                                   char const* name,
@@ -54,4 +54,4 @@ namespace webnn_wire::server {
         return true;
     }
 
-}  // namespace webnn_wire::server
+}  // namespace webnn::wire::server

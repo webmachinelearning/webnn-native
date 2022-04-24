@@ -28,7 +28,7 @@ namespace dawn::wire {
 
 struct WebnnProcTable;
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     namespace server {
         class Server;
@@ -66,6 +66,6 @@ namespace webnn_wire {
         std::unique_ptr<server::Server> mImpl;
     };
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_WIRESERVER_H_

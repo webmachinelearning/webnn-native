@@ -17,7 +17,7 @@
 
 #include "common/Assert.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     ErrorScope::ErrorScope() : mIsRoot(true) {
     }
@@ -140,4 +140,4 @@ namespace webnn_native {
         }
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

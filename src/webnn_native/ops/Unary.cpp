@@ -16,7 +16,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     MaybeError Unary::ValidateAndInferOutputInfo() {
         MaybeError maybeError = OperatorBase::ValidateAndInferOutputInfo();
@@ -37,4 +37,4 @@ namespace webnn_native::op {
         return {};
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

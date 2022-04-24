@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <cstring>
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     ChunkedCommandHandler::~ChunkedCommandHandler() = default;
 
@@ -76,4 +76,4 @@ namespace webnn_wire {
         return ChunkedCommandsResult::Consumed;
     }
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire

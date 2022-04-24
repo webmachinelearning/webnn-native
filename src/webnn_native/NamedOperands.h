@@ -20,7 +20,7 @@
 
 #include "common/RefCounted.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class NamedOperandsBase : public RefCounted {
       public:
@@ -45,6 +45,6 @@ namespace webnn_native {
         std::map<std::string, const OperandBase*> mNamedOperands;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_NAMED_OPERANDS_H_

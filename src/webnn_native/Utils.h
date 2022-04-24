@@ -19,7 +19,7 @@
 #include <webnn_native/webnn_structs_autogen.h>
 #include <vector>
 
-namespace webnn_native::utils {
+namespace webnn::native::utils {
     void ComputeImplicitPaddingForAutoPad(wnn::AutoPad autoPad,
                                           int32_t dilation,
                                           int32_t inputSize,
@@ -46,6 +46,6 @@ namespace webnn_native::utils {
         std::vector<int32_t> inputSize,
         std::vector<int32_t> filterSize);
 
-}  // namespace webnn_native::utils
+}  // namespace webnn::native::utils
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

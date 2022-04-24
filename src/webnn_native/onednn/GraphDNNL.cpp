@@ -75,8 +75,7 @@ const char* dnnl_status2str(dnnl_status_t v) {
             COMPLAIN_DNNL_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-namespace webnn_native::onednn {
-
+namespace webnn::native::onednn {
     namespace {
         dnnl_status_t GetDnnlDataType(wnn::OperandType operandType,
                                       dnnl_data_type_t& dnnlDataType) {
@@ -1072,4 +1071,4 @@ namespace webnn_native::onednn {
         return dnnl_success;
     }
 
-}  // namespace webnn_native::onednn
+}  // namespace webnn::native::onednn

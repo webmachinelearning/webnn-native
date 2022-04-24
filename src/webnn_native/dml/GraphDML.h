@@ -64,7 +64,7 @@
 #    include "webnn_native/dml/deps/src/precomp.h"
 #endif
 
-namespace webnn_native::dml {
+namespace webnn::native::dml {
 
     std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
     std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
@@ -131,6 +131,6 @@ namespace webnn_native::dml {
         std::unique_ptr<pydml::CompiledModel> mCompiledModel;
     };
 
-}  // namespace webnn_native::dml
+}  // namespace webnn::native::dml
 
 #endif  // WEBNN_NATIVE_DML_MODEL_DML_H_

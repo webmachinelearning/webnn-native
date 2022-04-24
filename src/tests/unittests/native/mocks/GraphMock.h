@@ -19,7 +19,7 @@
 
 #include <gmock/gmock.h>
 
-namespace webnn_native {
+namespace webnn::native {
 
     class GraphMock : public GraphBase {
       public:
@@ -62,5 +62,5 @@ namespace webnn_native {
                     (override));
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 #endif  // TESTS_UNITTESTS_NATIVE_MOCKS_GRAPH_MOCK_H_

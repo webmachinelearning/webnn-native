@@ -22,7 +22,7 @@
 #include <memory>
 #include <vector>
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     namespace client {
         class Client;
@@ -88,6 +88,6 @@ namespace webnn_wire {
         std::unique_ptr<client::Client> mImpl;
     };
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_WIRECLIENT_H_

@@ -33,7 +33,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native::onednn {
+namespace webnn::native::onednn {
 
     class Graph : public GraphBase {
       public:
@@ -96,6 +96,6 @@ namespace webnn_native::onednn {
         dnnl_stream_t mStream;
     };
 
-}  // namespace webnn_native::onednn
+}  // namespace webnn::native::onednn
 
 #endif  // WEBNN_NATIVE_ONEDNN_MODEL_DNNL_H_

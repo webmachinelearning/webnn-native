@@ -18,7 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Gemm final : public OperatorBase {
       public:
@@ -39,6 +39,6 @@ namespace webnn_native::op {
         GemmOptions mOptions;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_LEAKYRELU_H_

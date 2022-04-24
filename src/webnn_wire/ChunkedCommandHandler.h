@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <memory>
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     class ChunkedCommandHandler : public CommandHandler {
       public:
@@ -66,6 +66,6 @@ namespace webnn_wire {
         std::unique_ptr<char[]> mChunkedCommandData;
     };
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_CHUNKEDCOMMANDHANDLER_H_

@@ -22,7 +22,7 @@
 #    include <webgpu/webgpu.h>
 #endif
 
-namespace webnn_native::dml {
+namespace webnn::native::dml {
 
     class Context : public ContextBase {
       public:
@@ -36,6 +36,6 @@ namespace webnn_native::dml {
         GraphBase* CreateGraphImpl() override;
     };
 
-}  // namespace webnn_native::dml
+}  // namespace webnn::native::dml
 
 #endif  // WEBNN_NATIVE_DML_CONTEXT_DML_H_

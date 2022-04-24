@@ -376,7 +376,7 @@
     }
 {% endmacro %}
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     // Macro to simplify error handling, similar to DAWN_TRY but for DeserializeResult.
 #define DESERIALIZE_TRY(EXPR) \
@@ -485,4 +485,4 @@ namespace webnn_wire {
         {{ write_command_serialization_methods(command, True) }}
     {% endfor %}
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire

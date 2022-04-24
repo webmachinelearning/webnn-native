@@ -19,7 +19,7 @@
 
 #include <xnnpack.h>
 
-namespace webnn_native::xnnpack {
+namespace webnn::native::xnnpack {
 
     class Context : public ContextBase {
       public:
@@ -34,6 +34,6 @@ namespace webnn_native::xnnpack {
         pthreadpool_t mThreadpool;
     };
 
-}  // namespace webnn_native::xnnpack
+}  // namespace webnn::native::xnnpack
 
 #endif  // WEBNN_NATIVE_XNNPACK_CONTEXT_XNN_H_

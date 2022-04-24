@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace webnn_native::mlas {
+namespace webnn::native::mlas {
 
     class Backend : public BackendConnection {
       public:
@@ -33,6 +33,6 @@ namespace webnn_native::mlas {
       private:
     };
 
-}  // namespace webnn_native::mlas
+}  // namespace webnn::native::mlas
 
 #endif  // WEBNN_NATIVE_MLAS_BACKEND_MLAS_H_

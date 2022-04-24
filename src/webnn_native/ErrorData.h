@@ -31,7 +31,7 @@ namespace dawn {
     using ErrorType = wnn::ErrorType;
 }
 
-namespace webnn_native {
+namespace webnn::native {
     enum class InternalErrorType : uint32_t;
 
     class ErrorData {
@@ -60,6 +60,6 @@ namespace webnn_native {
         std::vector<BacktraceRecord> mBacktrace;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_ERRORDATA_H_

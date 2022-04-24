@@ -22,7 +22,7 @@
 
 #include <memory>
 
-namespace webnn_native {
+namespace webnn::native {
 
     // An common interface for all backends. Mostly used to create adapters for a particular
     // backend.
@@ -45,6 +45,6 @@ namespace webnn_native {
         wnn::BackendType mType;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNNNATIVE_BACKENDCONNECTION_H_

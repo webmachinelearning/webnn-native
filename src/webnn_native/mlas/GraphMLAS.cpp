@@ -28,7 +28,7 @@
 
 #define VERBOSE 0
 
-namespace webnn_native::mlas {
+namespace webnn::native::mlas {
 
     void* AlignedAlloc(size_t size) {
         if (size <= 0)
@@ -1010,4 +1010,4 @@ namespace webnn_native::mlas {
         return {};
     }
 
-}  // namespace webnn_native::mlas
+}  // namespace webnn::native::mlas

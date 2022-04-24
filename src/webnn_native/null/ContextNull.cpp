@@ -17,7 +17,7 @@
 #include "webnn_native/BackendConnection.h"
 #include "webnn_native/Instance.h"
 
-namespace webnn_native::null {
+namespace webnn::native::null {
 
     class Backend : public BackendConnection {
       public:
@@ -160,4 +160,4 @@ namespace webnn_native::null {
         return {};
     }
 
-}  // namespace webnn_native::null
+}  // namespace webnn::native::null

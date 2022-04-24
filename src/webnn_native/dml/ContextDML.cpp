@@ -17,7 +17,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/dml/GraphDML.h"
 
-namespace webnn_native::dml {
+namespace webnn::native::dml {
 
     Context::Context(ContextOptions const* options) : ContextBase(options) {
     }
@@ -31,4 +31,4 @@ namespace webnn_native::dml {
         return new Graph(this);
     }
 
-}  // namespace webnn_native::dml
+}  // namespace webnn::native::dml

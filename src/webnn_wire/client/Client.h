@@ -26,7 +26,7 @@
 #include "webnn_wire/WireDeserializeAllocator.h"
 #include "webnn_wire/client/ClientBase_autogen.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     class Client : public ClientBase {
       public:
@@ -75,6 +75,6 @@ namespace webnn_wire::client {
         bool mDisconnected = false;
     };
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_CLIENT_H_

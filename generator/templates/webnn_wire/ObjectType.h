@@ -18,7 +18,7 @@
 
 #include "common/ityp_array.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     enum class ObjectType : uint32_t {
         {% for type in by_category["object"] %}
@@ -29,7 +29,7 @@ namespace webnn_wire {
     template <typename T>
     using PerObjectType = ityp::array<ObjectType, T, {{len(by_category["object"])}}>;
 
-} // namespace webnn_wire
+} // namespace webnn::wire
 
 
 #endif  // WEBNN_WIRE_OBJECTTPYE_AUTOGEN_H_

@@ -20,7 +20,7 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Graph.h"
 
-namespace webnn_native::ie {
+namespace webnn::native::ie {
 
     class Context : public ContextBase {
       public:
@@ -35,6 +35,6 @@ namespace webnn_native::ie {
         ie_core_t* mInferEngineCore;
     };
 
-}  // namespace webnn_native::ie
+}  // namespace webnn::native::ie
 
 #endif  // WEBNN_NATIVE_IE_CONTEXT_IE_H_

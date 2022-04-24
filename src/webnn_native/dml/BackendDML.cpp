@@ -17,7 +17,7 @@
 #include "webnn_native/Instance.h"
 #include "webnn_native/dml/ContextDML.h"
 
-namespace webnn_native::dml {
+namespace webnn::native::dml {
 
     Backend::Backend(InstanceBase* instance)
         : BackendConnection(instance, wnn::BackendType::DirectML) {
@@ -48,4 +48,4 @@ namespace webnn_native::dml {
         return backend;
     }
 
-}  // namespace webnn_native::dml
+}  // namespace webnn::native::dml

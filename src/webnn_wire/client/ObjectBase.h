@@ -21,7 +21,7 @@
 #include "common/LinkedList.h"
 #include "webnn_wire/ObjectType_autogen.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     class Client;
 
@@ -47,6 +47,6 @@ namespace webnn_wire::client {
         const uint32_t id;
     };
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_OBJECTBASE_H_

@@ -24,7 +24,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     namespace op {
         class Constant;
@@ -95,6 +95,6 @@ namespace webnn_native {
         virtual MaybeError CompileImpl() = 0;
         virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) = 0;
     };
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_MODEL_H_

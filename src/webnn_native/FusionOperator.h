@@ -18,7 +18,7 @@
 #include "webnn_native/GraphBuilder.h"
 #include "webnn_native/ObjectBase.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     enum class FusionType : uint32_t {
         Clamp = 0x00000000,
@@ -43,6 +43,6 @@ namespace webnn_native {
         FusionType mFusionType;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_FUSION_OPERATOR_H_

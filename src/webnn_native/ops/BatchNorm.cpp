@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
     BatchNorm::BatchNorm(GraphBuilderBase* builder,
                          OperandBase* input,
                          OperandBase* mean,
@@ -88,4 +88,4 @@ namespace webnn_native::op {
         return {};
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

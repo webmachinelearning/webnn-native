@@ -18,7 +18,7 @@
 #include "webnn_native/ErrorData.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     void IgnoreErrors(MaybeError maybeError) {
         if (maybeError.IsError()) {
@@ -63,4 +63,4 @@ namespace webnn_native {
         }
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

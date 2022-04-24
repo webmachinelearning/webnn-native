@@ -20,7 +20,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     enum UnaryOpType {
         kAbs = 0,
@@ -66,6 +66,6 @@ namespace webnn_native::op {
         }
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_UNARY_H_

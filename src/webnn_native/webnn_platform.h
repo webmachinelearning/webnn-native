@@ -24,12 +24,12 @@
 #include <webnn_native/webnn_platform_autogen.h>
 #include <webnn_native/webnn_structs_autogen.h>
 
-namespace webnn_native {
+namespace webnn::native {
     // kEnumCount is a constant specifying the number of enums in a WebGPU enum type,
     // if the enums are contiguous, making it suitable for iteration.
     // It is defined in dawn_platform_autogen.h
     template <typename T>
     constexpr uint32_t kEnumCount = EnumCount<T>::value;
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_WEBNNPLATFORM_H_

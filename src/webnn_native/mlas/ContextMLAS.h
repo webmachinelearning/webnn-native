@@ -19,7 +19,7 @@
 
 #include <mlas.h>
 
-namespace webnn_native::mlas {
+namespace webnn::native::mlas {
 
     class Context : public ContextBase {
       public:
@@ -36,6 +36,6 @@ namespace webnn_native::mlas {
         MLAS_THREADPOOL* mThreadPool;
     };
 
-}  // namespace webnn_native::mlas
+}  // namespace webnn::native::mlas
 
 #endif  // WEBNN_NATIVE_MLAS_CONTEXT_MLAS_H_

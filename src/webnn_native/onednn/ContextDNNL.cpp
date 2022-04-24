@@ -17,7 +17,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/onednn/GraphDNNL.h"
 
-namespace webnn_native::onednn {
+namespace webnn::native::onednn {
 
     Context::Context() : mEngine(nullptr) {
     }
@@ -36,4 +36,4 @@ namespace webnn_native::onednn {
         return new Graph(this);
     }
 
-}  // namespace webnn_native::onednn
+}  // namespace webnn::native::onednn

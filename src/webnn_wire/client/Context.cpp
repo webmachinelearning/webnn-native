@@ -17,7 +17,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     void Context::PushErrorScope(WNNErrorFilter filter) {
         mErrorScopeStackSize++;
@@ -83,4 +83,4 @@ namespace webnn_wire::client {
     void Context::SetUncapturedErrorCallback(WNNErrorCallback callback, void* userdata) {
     }
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client

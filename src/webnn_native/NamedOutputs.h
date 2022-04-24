@@ -23,7 +23,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class NamedOutputsBase : public RefCounted {
       public:
@@ -88,6 +88,6 @@ namespace webnn_native {
         std::unordered_map<std::string, Resource> mOutputs;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_NAMED_OUTPUTS_H_

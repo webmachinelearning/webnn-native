@@ -23,7 +23,7 @@
 #include <map>
 #include <string>
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     class NamedOutputs final : public ObjectBase {
       public:
@@ -40,6 +40,6 @@ namespace webnn_wire::client {
         std::map<std::string, WNNArrayBufferView> mNamedOutputMap;
     };
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_NAMED_OUTPUTS_H_

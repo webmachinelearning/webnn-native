@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
     InstanceNorm::InstanceNorm(GraphBuilderBase* builder,
                                OperandBase* input,
                                InstanceNormOptions const* options)
@@ -69,4 +69,4 @@ namespace webnn_native::op {
         return {};
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

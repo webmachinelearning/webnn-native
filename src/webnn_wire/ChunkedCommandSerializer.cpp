@@ -14,7 +14,7 @@
 
 #include "webnn_wire/ChunkedCommandSerializer.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     ChunkedCommandSerializer::ChunkedCommandSerializer(CommandSerializer* serializer)
         : mSerializer(serializer), mMaxAllocationSize(serializer->GetMaximumAllocationSize()) {
@@ -35,4 +35,4 @@ namespace webnn_wire {
         }
     }
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire

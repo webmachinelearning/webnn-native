@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     MaybeError Transpose::CalculateShape() {
         auto inputShape = mInputs[0]->Shape();
@@ -58,4 +58,4 @@ namespace webnn_native::op {
         return CalculateShape();
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

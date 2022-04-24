@@ -17,7 +17,7 @@
 
 #include "common/Compiler.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     namespace {
 
@@ -133,4 +133,4 @@ namespace webnn_wire::client {
         return mDisconnected;
     }
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client

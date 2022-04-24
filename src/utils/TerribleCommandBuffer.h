@@ -19,12 +19,12 @@
 
 namespace utils {
 
-    class TerribleCommandBuffer : public webnn_wire::CommandSerializer {
+    class TerribleCommandBuffer : public webnn::wire::CommandSerializer {
       public:
         TerribleCommandBuffer();
-        TerribleCommandBuffer(webnn_wire::CommandHandler* handler);
+        TerribleCommandBuffer(webnn::wire::CommandHandler* handler);
 
-        void SetHandler(webnn_wire::CommandHandler* handler);
+        void SetHandler(webnn::wire::CommandHandler* handler);
 
         size_t GetMaximumAllocationSize() const override;
 
@@ -32,7 +32,7 @@ namespace utils {
         bool Flush() override;
 
       private:
-        webnn_wire::CommandHandler* mHandler = nullptr;
+        webnn::wire::CommandHandler* mHandler = nullptr;
         size_t mOffset = 0;
         char mBuffer[1000000];
     };

@@ -18,7 +18,7 @@
 #include "webnn/webnn_cpp.h"
 #include "webnn_native/Forward.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     template <typename T>
     struct EnumCount;

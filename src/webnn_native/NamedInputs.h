@@ -22,7 +22,7 @@
 #include "common/Log.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class NamedInputsBase : public RefCounted {
       public:
@@ -91,6 +91,6 @@ namespace webnn_native {
         std::unordered_map<std::string, Input> mInputs;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_NAMED_INPUTS_H_

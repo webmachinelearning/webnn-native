@@ -19,7 +19,7 @@
 
 #include <vector>
 
-namespace webnn_wire {
+namespace webnn::wire {
     // A really really simple implementation of the DeserializeAllocator. It's main feature
     // is that it has some inline storage so as to avoid allocations for the majority of
     // commands.
@@ -38,6 +38,6 @@ namespace webnn_wire {
         char mStaticBuffer[2048];
         std::vector<char*> mAllocations;
     };
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_WIREDESERIALIZEALLOCATOR_H_

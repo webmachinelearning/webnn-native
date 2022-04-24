@@ -21,7 +21,7 @@
 
 #include <string>
 
-namespace webnn_native {
+namespace webnn::native {
 
     enum class InternalErrorType : uint32_t {
         Validation,
@@ -72,7 +72,7 @@ namespace webnn_native {
     //     more clarity.
 
 #define DAWN_MAKE_ERROR(TYPE, MESSAGE) \
-    ::webnn_native::ErrorData::Create(TYPE, MESSAGE, __FILE__, __func__, __LINE__)
+    ::webnn::native::ErrorData::Create(TYPE, MESSAGE, __FILE__, __func__, __LINE__)
 #define DAWN_VALIDATION_ERROR(MESSAGE) DAWN_MAKE_ERROR(InternalErrorType::Validation, MESSAGE)
 #define DAWN_DEVICE_LOST_ERROR(MESSAGE) DAWN_MAKE_ERROR(InternalErrorType::DeviceLost, MESSAGE)
 #define DAWN_INTERNAL_ERROR(MESSAGE) DAWN_MAKE_ERROR(InternalErrorType::Internal, MESSAGE)
@@ -94,16 +94,16 @@ namespace webnn_native {
     // When Errors aren't handled explicitly, calls to functions returning errors should be
     // wrapped in an DAWN_TRY. It will return the error if any, otherwise keep executing
     // the current function.
-#define DAWN_TRY(EXPR)                                                                        \
-    {                                                                                         \
-        auto DAWN_LOCAL_VAR = EXPR;                                                           \
-        if (DAWN_UNLIKELY(DAWN_LOCAL_VAR.IsError())) {                                        \
-            std::unique_ptr<::webnn_native::ErrorData> error = DAWN_LOCAL_VAR.AcquireError(); \
-            error->AppendBacktrace(__FILE__, __func__, __LINE__);                             \
-            return {std::move(error)};                                                        \
-        }                                                                                     \
-    }                                                                                         \
-    for (;;)                                                                                  \
+#define DAWN_TRY(EXPR)                                                                         \
+    {                                                                                          \
+        auto DAWN_LOCAL_VAR = EXPR;                                                            \
+        if (DAWN_UNLIKELY(DAWN_LOCAL_VAR.IsError())) {                                         \
+            std::unique_ptr<::webnn::native::ErrorData> error = DAWN_LOCAL_VAR.AcquireError(); \
+            error->AppendBacktrace(__FILE__, __func__, __LINE__);                              \
+            return {std::move(error)};                                                         \
+        }                                                                                      \
+    }                                                                                          \
+    for (;;)                                                                                   \
     break
 
     // DAWN_TRY_ASSIGN is the same as DAWN_TRY for ResultOrError and assigns the success value, if
@@ -127,6 +127,6 @@ namespace webnn_native {
     wnn::ErrorType ToWNNErrorType(InternalErrorType type);
     InternalErrorType FromWNNErrorType(wnn::ErrorType type);
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_ERROR_H_

@@ -20,7 +20,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/OperatorArray.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Gru final : public OperatorBase {
       public:
@@ -63,6 +63,6 @@ namespace webnn_native::op {
         Ref<OperatorArrayBase> mActivations;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_GRU_H_

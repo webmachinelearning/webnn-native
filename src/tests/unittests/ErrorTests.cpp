@@ -18,7 +18,7 @@
 #include "webnn_native/Error.h"
 #include "webnn_native/ErrorData.h"
 
-using namespace webnn_native;
+using namespace webnn::native;
 
 namespace {
 

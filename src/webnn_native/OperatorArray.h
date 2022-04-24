@@ -17,7 +17,7 @@
 
 #include "webnn_native/Operator.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class OperatorArrayBase : public RefCounted {
       public:
@@ -39,6 +39,6 @@ namespace webnn_native {
 
         std::vector<Ref<FusionOperatorBase>> mOperators;
     };
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_OPERATOR_ARRAY_H_

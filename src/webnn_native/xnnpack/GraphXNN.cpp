@@ -76,8 +76,7 @@ const char* xnn_status2str(xnn_status v) {
             COMPLAIN_XNN_ERROR_AND_RETURN_DAWN_ERROR(#f, s_); \
     } while (0)
 
-namespace webnn_native::xnnpack {
-
+namespace webnn::native::xnnpack {
     namespace {
         xnn_status GetXnnDataType(wnn::OperandType operandType, xnn_datatype& xnnDataType) {
             if (operandType == wnn::OperandType::Float32) {
@@ -797,4 +796,4 @@ namespace webnn_native::xnnpack {
         return {};
     }
 
-}  // namespace webnn_native::xnnpack
+}  // namespace webnn::native::xnnpack

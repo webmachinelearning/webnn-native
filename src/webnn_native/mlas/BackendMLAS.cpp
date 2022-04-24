@@ -17,7 +17,7 @@
 #include "webnn_native/Instance.h"
 #include "webnn_native/mlas/ContextMLAS.h"
 
-namespace webnn_native::mlas {
+namespace webnn::native::mlas {
 
     Backend::Backend(InstanceBase* instance) : BackendConnection(instance, wnn::BackendType::MLAS) {
     }
@@ -41,4 +41,4 @@ namespace webnn_native::mlas {
         return backend;
     }
 
-}  // namespace webnn_native::mlas
+}  // namespace webnn::native::mlas

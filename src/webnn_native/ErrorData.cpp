@@ -18,7 +18,7 @@
 #include "webnn_native/Error.h"
 #include "webnn_native/webnn_platform.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     std::unique_ptr<ErrorData> ErrorData::Create(InternalErrorType type,
                                                  std::string message,
@@ -55,4 +55,4 @@ namespace webnn_native {
         return mBacktrace;
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

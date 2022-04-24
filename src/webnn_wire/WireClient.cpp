@@ -15,7 +15,7 @@
 #include "webnn_wire/WireClient.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     WireClient::WireClient(const WireClientDescriptor& descriptor)
         : mImpl(new client::Client(descriptor.serializer)) {
@@ -53,4 +53,4 @@ namespace webnn_wire {
         mImpl->Disconnect();
     }
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire

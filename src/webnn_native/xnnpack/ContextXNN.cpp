@@ -18,7 +18,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/xnnpack/GraphXNN.h"
 
-namespace webnn_native::xnnpack {
+namespace webnn::native::xnnpack {
 
     Context::Context(pthreadpool_t threadpool) : mThreadpool(threadpool) {
     }
@@ -31,4 +31,4 @@ namespace webnn_native::xnnpack {
         return new Graph(this);
     }
 
-}  // namespace webnn_native::xnnpack
+}  // namespace webnn::native::xnnpack

@@ -20,7 +20,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Concat final : public OperatorBase {
       public:
@@ -42,6 +42,6 @@ namespace webnn_native::op {
         uint32_t mAxis;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_CONCAT_H_

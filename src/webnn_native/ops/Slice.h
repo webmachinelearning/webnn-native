@@ -21,7 +21,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Slice final : public OperatorBase {
       public:
@@ -137,6 +137,6 @@ namespace webnn_native::op {
         std::vector<int32_t> mAxes;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_SLICE_H_

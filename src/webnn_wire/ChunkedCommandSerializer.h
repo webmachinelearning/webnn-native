@@ -24,7 +24,7 @@
 #include <cstring>
 #include <memory>
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     class ChunkedCommandSerializer {
       public:
@@ -98,6 +98,6 @@ namespace webnn_wire {
         size_t mMaxAllocationSize;
     };
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_CHUNKEDCOMMANDSERIALIZER_H_

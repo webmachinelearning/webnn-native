@@ -25,7 +25,7 @@
 #include "webnn_native/Utils.h"
 #include "webnn_native/dml/ContextDML.h"
 
-namespace webnn_native::dml {
+namespace webnn::native::dml {
 
     namespace {
         enum TransposeType { NhwcToNchw, NchwToNhwc };
@@ -1901,4 +1901,4 @@ namespace webnn_native::dml {
         return {};
     }
 
-}  // namespace webnn_native::dml
+}  // namespace webnn::native::dml

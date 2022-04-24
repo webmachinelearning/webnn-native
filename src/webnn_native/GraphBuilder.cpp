@@ -65,7 +65,7 @@
     WEBNN_VALIDATE(ptr, OperandArrayBase); \
     return new OperandArrayBase(this, op->Outputs())
 
-namespace webnn_native {
+namespace webnn::native {
 
     GraphBuilderBase::GraphBuilderBase(ContextBase* context) : ObjectBase(context) {
     }
@@ -441,4 +441,4 @@ namespace webnn_native {
         return result;
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

@@ -18,7 +18,7 @@
 #include "webnn_wire/client/ApiObjects_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     WNNOperand GraphBuilder::Constant(WNNOperandDescriptor const* desc,
                                       WNNArrayBufferView const* value) {
@@ -110,4 +110,4 @@ namespace webnn_wire::client {
         return ToAPI(operandArray);
     }
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client

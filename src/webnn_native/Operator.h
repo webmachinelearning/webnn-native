@@ -19,7 +19,7 @@
 #include "webnn_native/ObjectBase.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class OperatorBase : public ObjectBase {
       public:
@@ -48,6 +48,6 @@ namespace webnn_native {
         std::vector<Ref<OperandBase>> mOutputs;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

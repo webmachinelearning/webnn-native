@@ -17,7 +17,7 @@
 
 #include "common/Assert.h"
 
-namespace webnn_native::utils {
+namespace webnn::native::utils {
     void ComputeImplicitPaddingForAutoPad(wnn::AutoPad autoPad,
                                           int32_t dilation,
                                           int32_t inputSize,
@@ -95,4 +95,4 @@ namespace webnn_native::utils {
         return padding;
     }
 
-}  // namespace webnn_native::utils
+}  // namespace webnn::native::utils

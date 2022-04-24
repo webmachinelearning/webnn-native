@@ -22,7 +22,7 @@
 #include "webnn/webnn.h"
 #include "webnn_wire/webnn_wire_export.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     class WEBNN_WIRE_EXPORT CommandSerializer {
       public:
@@ -43,6 +43,6 @@ namespace webnn_wire {
         virtual const volatile char* HandleCommands(const volatile char* commands, size_t size) = 0;
     };
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire
 
 #endif  // WEBNN_WIRE_WIRE_H_

@@ -19,7 +19,7 @@
 
 #include <gmock/gmock.h>
 
-namespace webnn_native {
+namespace webnn::native {
 
     class ContextMock : public ContextBase {
       public:
@@ -30,5 +30,5 @@ namespace webnn_native {
         MOCK_METHOD(GraphBase*, CreateGraphImpl, (), (override));
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 #endif  // TESTS_UNITTESTS_NATIVE_MOCKS_CONTEXT_MOCK_H_

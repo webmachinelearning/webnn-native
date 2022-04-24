@@ -31,7 +31,7 @@
         DAWN_ASSERT(condition);          \
     } while (0)
 
-namespace webnn_native::ie {
+namespace webnn::native::ie {
 
     namespace {
         enum TransposeType { None, NhwcToNchw, HwncToNchw, NchwToNhwc, NchwToHwnc };
@@ -1381,4 +1381,4 @@ namespace webnn_native::ie {
 
         return {};
     }
-}  // namespace webnn_native::ie
+}  // namespace webnn::native::ie

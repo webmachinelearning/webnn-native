@@ -22,7 +22,7 @@
 
 #include <string>
 
-namespace webnn_native {
+namespace webnn::native {
 
     // Errors can be recorded into an ErrorScope by calling |HandleError|.
     // Because an error scope should not resolve until contained
@@ -66,6 +66,6 @@ namespace webnn_native {
         std::string mErrorMessage = "";
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_ERRORSCOPE_H_

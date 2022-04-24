@@ -18,7 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class InstanceNorm final : public OperatorBase {
       public:
@@ -40,6 +40,6 @@ namespace webnn_native::op {
         InstanceNormOptions mOptions;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_INSTANCENORM_H_

@@ -19,7 +19,7 @@
 #include "webnn_wire/ObjectType_autogen.h"
 #include "webnn_wire/client/ObjectBase.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     template <typename T>
     struct ObjectTypeToTypeEnum {
@@ -49,6 +49,6 @@ namespace webnn_wire::client {
         };
 
     {% endfor %}
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNNNWIRE_CLIENT_APIOBJECTS_AUTOGEN_H_

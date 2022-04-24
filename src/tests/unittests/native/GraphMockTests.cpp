@@ -18,7 +18,7 @@
 #include "webnn_native/NamedInputs.h"
 #include "webnn_native/NamedOutputs.h"
 
-namespace webnn_native { namespace {
+namespace webnn::native { namespace {
 
     using ::testing::Test;
 
@@ -37,5 +37,4 @@ namespace webnn_native { namespace {
         EXPECT_TRUE(graphMock.Compile().IsSuccess());
     }
 
-
-}}  // namespace webnn_native::
+}}  // namespace webnn::native::

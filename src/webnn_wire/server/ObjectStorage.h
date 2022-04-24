@@ -23,7 +23,7 @@
 #include <unordered_set>
 
 // TODO: Refactor the file that fork from dawn Repo.
-namespace webnn_wire::server {
+namespace webnn::wire::server {
 
     struct ContextInfo {
         std::unordered_set<uint64_t> childObjectTypesAndIds;
@@ -224,6 +224,6 @@ namespace webnn_wire::server {
         std::map<T, ObjectId> mTable;
     };
 
-}  // namespace webnn_wire::server
+}  // namespace webnn::wire::server
 
 #endif  // WEBNN_WIRE_SERVER_OBJECTSTORAGE_H_

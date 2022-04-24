@@ -25,7 +25,7 @@
 #endif
 
 class WebGLRenderingContext;
-namespace webnn_native {
+namespace webnn::native {
 
     class ContextBase : public RefCounted {
       public:
@@ -82,6 +82,6 @@ namespace webnn_native {
 #endif
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_CONTEXT_H_

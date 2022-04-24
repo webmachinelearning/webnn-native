@@ -19,7 +19,7 @@
 #include "webnn_native/Error.h"
 #include "webnn_native/Utils.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     Pool2d::Pool2d(GraphBuilderBase* builder,
                    Pool2dType opType,
@@ -184,4 +184,4 @@ namespace webnn_native::op {
         return CalculateShape();
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

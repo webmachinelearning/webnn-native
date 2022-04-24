@@ -28,7 +28,7 @@
 #include <memory>
 #include <unordered_map>
 
-namespace webnn_native {
+namespace webnn::native {
 
     using BackendsBitset = ityp::bitset<wnn::BackendType, kEnumCount<wnn::BackendType>>;
 
@@ -66,6 +66,6 @@ namespace webnn_native {
         std::map<wnn::BackendType, std::unique_ptr<BackendConnection>> mBackends;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNNNATIVE_INSTANCE_H_

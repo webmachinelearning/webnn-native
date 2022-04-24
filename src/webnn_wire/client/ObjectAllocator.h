@@ -24,7 +24,7 @@
 #include <memory>
 #include <vector>
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     template <typename T>
     class ObjectAllocator {
@@ -106,6 +106,6 @@ namespace webnn_wire::client {
         std::vector<uint32_t> mFreeIds;
         std::vector<ObjectAndSerial> mObjects;
     };
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_OBJECTALLOCATOR_H_

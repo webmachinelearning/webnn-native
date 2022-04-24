@@ -21,11 +21,11 @@ namespace utils {
     TerribleCommandBuffer::TerribleCommandBuffer() {
     }
 
-    TerribleCommandBuffer::TerribleCommandBuffer(webnn_wire::CommandHandler* handler)
+    TerribleCommandBuffer::TerribleCommandBuffer(webnn::wire::CommandHandler* handler)
         : mHandler(handler) {
     }
 
-    void TerribleCommandBuffer::SetHandler(webnn_wire::CommandHandler* handler) {
+    void TerribleCommandBuffer::SetHandler(webnn::wire::CommandHandler* handler) {
         mHandler = handler;
     }
 

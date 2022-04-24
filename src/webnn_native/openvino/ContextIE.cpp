@@ -18,7 +18,7 @@
 #include "common/RefCounted.h"
 #include "webnn_native/openvino/GraphIE.h"
 
-namespace webnn_native::ie {
+namespace webnn::native::ie {
 
     Context::Context(ContextOptions const* options) : ContextBase(options) {
         IEStatusCode status = ie_core_create("", &mInferEngineCore);
@@ -39,4 +39,4 @@ namespace webnn_native::ie {
         return new Graph(this);
     }
 
-}  // namespace webnn_native::ie
+}  // namespace webnn::native::ie

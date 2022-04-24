@@ -42,7 +42,7 @@ class ValidationTest : public testing::Test {
     std::string GetLastErrorMessage() const;
 
   protected:
-    std::unique_ptr<webnn_native::Instance> instance;
+    std::unique_ptr<webnn::native::Instance> instance;
     wnn::Context mContext;
     wnn::GraphBuilder mBuilder;
 

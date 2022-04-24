@@ -20,7 +20,7 @@
 #include "common/Log.h"
 #include "common/RefCounted.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     namespace {
         class ErrorGraph final : public GraphBase {
@@ -168,4 +168,4 @@ namespace webnn_native {
         return new ErrorGraph(context);
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

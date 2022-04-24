@@ -18,7 +18,7 @@
 #include "common/Assert.h"
 #include "webnn_native/GraphBuilder.h"
 
-namespace webnn_native {
+namespace webnn::native {
     OperatorBase::OperatorBase(GraphBuilderBase* graphBuilder,
                                std::vector<Ref<OperandBase>> inputs,
                                size_t outputSize)
@@ -68,4 +68,4 @@ namespace webnn_native {
         return new OperatorBase(graphBuilder, ObjectBase::kError);
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

@@ -32,7 +32,7 @@
 #include "webnn_native/ops/Transpose.h"
 #include "webnn_native/ops/Unary.h"
 
-namespace webnn_native::mlas {
+namespace webnn::native::mlas {
 
     class Memory;
     class Kernel;
@@ -64,6 +64,6 @@ namespace webnn_native::mlas {
         std::vector<Ref<Kernel>> mKernels;
     };
 
-}  // namespace webnn_native::mlas
+}  // namespace webnn::native::mlas
 
 #endif  // WEBNN_NATIVE_MLAS_GRAPH_MLAS_H_

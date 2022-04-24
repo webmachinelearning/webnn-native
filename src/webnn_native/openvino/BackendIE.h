@@ -21,7 +21,7 @@
 
 #include <memory>
 
-namespace webnn_native::ie {
+namespace webnn::native::ie {
 
     class Backend : public BackendConnection {
       public:
@@ -33,6 +33,6 @@ namespace webnn_native::ie {
       private:
     };
 
-}  // namespace webnn_native::ie
+}  // namespace webnn::native::ie
 
 #endif  // WEBNN_NATIVE_IE_BACKENDIE_H_

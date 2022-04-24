@@ -23,7 +23,7 @@
 #    include <webgpu/webgpu.h>
 #endif
 
-namespace webnn_native::null {
+namespace webnn::native::null {
 
     // Context
     class Context : public ContextBase {
@@ -79,6 +79,6 @@ namespace webnn_native::null {
         MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
     };
 
-}  // namespace webnn_native::null
+}  // namespace webnn::native::null
 
 #endif  // WEBNN_NATIVE_NULL_CONTEXT_NULL_H_

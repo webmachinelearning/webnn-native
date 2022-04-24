@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire { namespace client {
+namespace webnn::wire { namespace client {
 
     class Instance final : public ObjectBase {
       public:
@@ -31,6 +31,6 @@ namespace webnn_wire { namespace client {
         WNNContext CreateContextWithGpuDevice(WNNGpuDevice const* value);
     };
 
-}}  // namespace webnn_wire::client
+}}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_INSTANCE_H_

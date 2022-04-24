@@ -17,7 +17,7 @@
 
 #include "webnn_native/Context.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class ObjectBase : public RefCounted {
       public:
@@ -37,6 +37,6 @@ namespace webnn_native {
         Ref<ContextBase> mContext;
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_OBJECT_BASE_H_

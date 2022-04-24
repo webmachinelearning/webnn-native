@@ -26,7 +26,7 @@
 #include <functional>
 #include <vector>
 
-namespace webnn_native {
+namespace webnn::native {
 
     class GraphBuilderBase : public ObjectBase {
       public:
@@ -124,6 +124,6 @@ namespace webnn_native {
             std::vector<const OperandBase*>& rootNodes);
     };
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_MODEL_BUILDER_H_

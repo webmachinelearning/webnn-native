@@ -19,7 +19,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/ops/Constant.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Pad final : public OperatorBase {
       public:
@@ -53,6 +53,6 @@ namespace webnn_native::op {
         PadOptions mOptions;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_PAD_H_

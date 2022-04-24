@@ -38,7 +38,7 @@
 #include "webnn_native/ops/Unary.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
 
-namespace webnn_native::xnnpack {
+namespace webnn::native::xnnpack {
 
     class Graph : public GraphBase {
       public:
@@ -120,6 +120,6 @@ namespace webnn_native::xnnpack {
         NamedOutputsBase* mNamedOutputs;
     };
 
-}  // namespace webnn_native::xnnpack
+}  // namespace webnn::native::xnnpack
 
 #endif  // WEBNN_NATIVE_XNNPACK_GRAPH_XNN_H_

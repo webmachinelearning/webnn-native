@@ -15,7 +15,7 @@
 
 #include "webnn_native/BackendConnection.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     BackendConnection::BackendConnection(InstanceBase* instance, wnn::BackendType type)
         : mInstance(instance), mType(type) {
@@ -29,4 +29,4 @@ namespace webnn_native {
         return mInstance;
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

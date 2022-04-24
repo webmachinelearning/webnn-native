@@ -20,13 +20,13 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     // Helper functions to check the value of enums and bitmasks
     {% for type in by_category["enum"] + by_category["bitmask"] %}
         MaybeError Validate{{type.name.CamelCase()}}(wnn::{{as_cppType(type.name)}} value);
     {% endfor %}
 
-} // namespace webnn_native
+} // namespace webnn::native
 
 #endif  // BACKEND_VALIDATIONUTILS_H_

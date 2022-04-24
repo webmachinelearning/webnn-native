@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     class Graph final : public ObjectBase {
       public:
@@ -44,6 +44,6 @@ namespace webnn_wire::client {
         uint64_t mComputeAsyncRequestSerial = 0;
     };
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_GRAPH_H_

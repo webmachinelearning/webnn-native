@@ -22,7 +22,7 @@
 
 #include <map>
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     class GraphBuilder final : public ObjectBase {
       public:
@@ -43,6 +43,6 @@ namespace webnn_wire::client {
                               WNNSplitOptions const* options);
     };
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client
 
 #endif  // WEBNN_WIRE_CLIENT_GRAPH_BUILDER_H_

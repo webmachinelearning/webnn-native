@@ -16,7 +16,7 @@
 
 #include "mocks/ContextMock.h"
 
-namespace webnn_native { namespace {
+namespace webnn::native { namespace {
 
     using ::testing::Test;
 
@@ -30,4 +30,4 @@ namespace webnn_native { namespace {
         EXPECT_TRUE(contextMock.CreateGraph() == nullptr);
     }
 
-}}  // namespace webnn_native::
+}}  // namespace webnn::native::

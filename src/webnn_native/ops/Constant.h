@@ -19,7 +19,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Constant final : public OperatorBase {
       public:
@@ -122,6 +122,6 @@ namespace webnn_native::op {
         size_t mByteOffset;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_CONSTANT_H_

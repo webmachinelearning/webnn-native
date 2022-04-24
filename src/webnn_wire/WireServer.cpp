@@ -15,7 +15,7 @@
 #include "webnn_wire/WireServer.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire {
+namespace webnn::wire {
 
     WireServer::WireServer(const WireServerDescriptor& descriptor)
         : mImpl(new server::Server(*descriptor.procs, descriptor.serializer)) {
@@ -63,4 +63,4 @@ namespace webnn_wire {
         return mImpl->InjectNamedOutputs(namedOutputs, id, generation);
     }
 
-}  // namespace webnn_wire
+}  // namespace webnn::wire

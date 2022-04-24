@@ -26,7 +26,7 @@
 #endif
 
 // Contains the entry-points into webnn_native
-namespace webnn_native {
+namespace webnn::native {
 
     namespace {
 
@@ -84,4 +84,4 @@ namespace webnn_native {
         return GetProcsAutogen();
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

@@ -18,7 +18,7 @@
 #include "webnn_native/Graph.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     enum BinaryOpType {
         kAdd = 0,
@@ -53,6 +53,6 @@ namespace webnn_native::op {
         BinaryOpType mOpType;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_BINARY_H_

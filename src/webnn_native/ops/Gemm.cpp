@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
     Gemm::Gemm(GraphBuilderBase* builder,
                OperandBase* a,
                OperandBase* b,
@@ -85,4 +85,4 @@ namespace webnn_native::op {
         return CalculateShape();
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

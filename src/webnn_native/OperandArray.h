@@ -18,7 +18,7 @@
 #include "webnn_native/ObjectBase.h"
 #include "webnn_native/Operand.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     class OperandArrayBase : public ObjectBase {
       public:
@@ -45,6 +45,6 @@ namespace webnn_native {
 
         std::vector<Ref<OperandBase>> mOperands;
     };
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_OPERAND_ARRAY_H_

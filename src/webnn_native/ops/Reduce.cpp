@@ -18,7 +18,7 @@
 
 #include "webnn_native/Error.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     Reduce::Reduce(GraphBuilderBase* builder,
                    ReduceType opType,
@@ -102,4 +102,4 @@ namespace webnn_native::op {
         return CalculateShape();
     }
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op

@@ -21,7 +21,7 @@
 template <typename T>
 class Ref;
 
-namespace webnn_native {
+namespace webnn::native {
 
     class CompilationBase;
     class GraphBase;
@@ -37,6 +37,6 @@ namespace webnn_native {
     class FusionOperatorBase;
     class ResultBase;
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_FORWARD_H_

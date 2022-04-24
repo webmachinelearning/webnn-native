@@ -20,9 +20,9 @@
 #include "webnn/webnn_proc.h"
 
 void ValidationTest::SetUp() {
-    instance = std::make_unique<webnn_native::Instance>();
+    instance = std::make_unique<webnn::native::Instance>();
     WNNContext context = instance->CreateTestContext();
-    WebnnProcTable backendProcs = webnn_native::GetProcs();
+    WebnnProcTable backendProcs = webnn::native::GetProcs();
     ASSERT_NE(&backendProcs, nullptr);
     webnnProcSetProcs(&backendProcs);
     // GTest will not run test body if fail to create context.

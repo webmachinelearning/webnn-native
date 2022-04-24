@@ -15,7 +15,7 @@
 
 #include "webnn_native/ValidationUtils_autogen.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
     {% for type in by_category["enum"] %}
         MaybeError Validate{{type.name.CamelCase()}}(wnn::{{as_cppType(type.name)}} value) {
@@ -41,4 +41,4 @@ namespace webnn_native {
 
     {% endfor %}
 
-} // namespace webnn_native
+} // namespace webnn::native

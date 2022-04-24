@@ -14,7 +14,7 @@
 
 #include "webnn_native/ObjectBase.h"
 
-namespace webnn_native {
+namespace webnn::native {
     static constexpr uint64_t kErrorPayload = 0;
     static constexpr uint64_t kNotErrorPayload = 1;
 
@@ -33,4 +33,4 @@ namespace webnn_native {
         return GetRefCountPayload() == kErrorPayload;
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

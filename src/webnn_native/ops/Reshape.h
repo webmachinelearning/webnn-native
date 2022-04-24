@@ -19,7 +19,7 @@
 #include "webnn_native/Operand.h"
 #include "webnn_native/Operator.h"
 
-namespace webnn_native::op {
+namespace webnn::native::op {
 
     class Reshape final : public OperatorBase {
       public:
@@ -45,6 +45,6 @@ namespace webnn_native::op {
         std::vector<int32_t> mNewShape;
     };
 
-}  // namespace webnn_native::op
+}  // namespace webnn::native::op
 
 #endif  // WEBNN_NATIVE_OPS_RESHAPE_H_

@@ -16,7 +16,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire::server {
+namespace webnn::wire::server {
 
     bool Server::SerializeComputeResult(ObjectId outputsId) {
         auto* namedOutputs = NamedOutputsObjects().Get(outputsId);
@@ -98,4 +98,4 @@ namespace webnn_wire::server {
         SerializeCommand(cmd);
     }
 
-}  // namespace webnn_wire::server
+}  // namespace webnn::wire::server

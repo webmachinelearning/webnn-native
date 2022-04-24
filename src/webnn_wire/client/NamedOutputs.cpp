@@ -17,7 +17,7 @@
 #include "webnn_wire/WireCmd_autogen.h"
 #include "webnn_wire/client/Client.h"
 
-namespace webnn_wire::client {
+namespace webnn::wire::client {
 
     void NamedOutputs::Set(char const* name, WNNResource const* resource) {
         // The type of output data is WNNArrayBufferView.
@@ -60,4 +60,4 @@ namespace webnn_wire::client {
         return true;
     }
 
-}  // namespace webnn_wire::client
+}  // namespace webnn::wire::client

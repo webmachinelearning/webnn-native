@@ -15,7 +15,7 @@
 
 #include "webnn_wire/server/Server.h"
 
-namespace webnn_wire { namespace server {
+namespace webnn::wire { namespace server {
 
     bool Server::DoInstanceCreateContextWithGpuDeviceInternal(ObjectId instanceId,
                                                               uint8_t const* device,
@@ -50,4 +50,4 @@ namespace webnn_wire { namespace server {
         return true;
     }
 
-}}  // namespace webnn_wire::server
+}}  // namespace webnn::wire::server

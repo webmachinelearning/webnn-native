@@ -26,7 +26,7 @@ namespace wnn {
     struct ContextOptions;
 }
 
-namespace webnn_native {
+namespace webnn::native {
 
     class InstanceBase;
 
@@ -55,6 +55,6 @@ namespace webnn_native {
     // Backend-agnostic API for webnn_native
     WEBNN_NATIVE_EXPORT const WebnnProcTable& GetProcs();
 
-}  // namespace webnn_native
+}  // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_WEBNN_NATIVE_H_

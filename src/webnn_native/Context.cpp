@@ -23,7 +23,7 @@
 #endif
 #include <sstream>
 
-namespace webnn_native {
+namespace webnn::native {
 
     ContextBase::ContextBase(ContextOptions const* options)
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
@@ -115,4 +115,4 @@ namespace webnn_native {
         mCurrentErrorScope->HandleError(ToWNNErrorType(error->GetType()), ss.str().c_str());
     }
 
-}  // namespace webnn_native
+}  // namespace webnn::native

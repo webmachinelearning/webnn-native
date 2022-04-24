@@ -19,7 +19,7 @@
 #include "webnn/webnn_cpp.h"
 #include "webnn_native/Forward.h"
 
-namespace webnn_native {
+namespace webnn::native {
 
 {% macro render_cpp_default_value(member) -%}
     {%- if member.annotation in ["*", "const*", "const*const*"] and member.optional -%}
@@ -64,6 +64,6 @@ namespace webnn_native {
 
     {% endfor %}
 
-} // namespace webnn_native
+} // namespace webnn::native
 
 #endif  // WEBNN_NATIVE_WEBNN_STRUCTS_H_
