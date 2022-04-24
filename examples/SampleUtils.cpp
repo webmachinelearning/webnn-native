@@ -16,17 +16,17 @@
 
 #include "common/Assert.h"
 #include "common/Log.h"
-#include "utils/TerribleCommandBuffer.h"
-#include "webnn_native/NamedInputs.h"
-#include "webnn_native/NamedOperands.h"
-#include "webnn_native/NamedOutputs.h"
+#include "webnn/native/NamedInputs.h"
+#include "webnn/native/NamedOperands.h"
+#include "webnn/native/NamedOutputs.h"
+#include "webnn/utils/TerribleCommandBuffer.h"
+#include "webnn/wire/WireClient.h"
+#include "webnn/wire/WireServer.h"
 
+#include <webnn/native/WebnnNative.h>
 #include <webnn/webnn.h>
 #include <webnn/webnn_cpp.h>
 #include <webnn/webnn_proc.h>
-#include <webnn_native/WebnnNative.h>
-#include <webnn_wire/WireClient.h>
-#include <webnn_wire/WireServer.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>

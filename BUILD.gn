@@ -18,7 +18,7 @@ import("scripts/webnn_overrides_with_defaults.gni")
 
 group("all") {
   testonly = true
-  deps = [ "src/tests:webnn_tests" ]
+  deps = [ "src/webnn/tests:webnn_tests" ]
   if (webnn_standalone) {
     deps += [ "examples:webnn_samples" ]
   }

@@ -1,0 +1,235 @@
+# Copyright 2019 The Dawn Authors
+# Copyright 2021 The WebNN-native Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../../scripts/webnn_overrides_with_defaults.gni")
+
+import("//build_overrides/build.gni")
+import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${webnn_dawn_root}/scripts/dawn_overrides_with_defaults.gni")
+import("${webnn_root}/build_overrides/webnn_features.gni")
+
+# Use Chromium's dcheck_always_on when available so that we respect it when
+# running tests on the GPU builders
+if (build_with_chromium) {
+  import("//build/config/dcheck_always_on.gni")
+} else {
+  dcheck_always_on = false
+}
+
+if (build_with_chromium) {
+  import("//build/config/sanitizers/sanitizers.gni")
+} else {
+  use_fuzzing_engine = false
+}
+
+###############################################################################
+# Common dawn configs
+###############################################################################
+config("internal_config") {
+  include_dirs = [
+    "${target_gen_dir}/../../../src",
+    "${webnn_root}/src",
+    "${webnn_dawn_root}/src",
+    "${webnn_dawn_root}/src/dawn",
+    "${webnn_root}",
+  ]
+
+  defines = []
+  if (dawn_always_assert || dcheck_always_on || is_debug ||
+      use_fuzzing_engine) {
+    defines += [ "DAWN_ENABLE_ASSERTS" ]
+  }
+
+  if (use_fuzzing_engine) {
+    # Does a hard abort when an assertion fails so that fuzzers catch and parse the failure.
+    defines += [ "DAWN_ABORT_ON_ASSERT" ]
+  }
+
+  if (webnn_enable_wire) {
+    defines += [ "WEBNN_ENABLE_WIRE" ]
+  }
+
+  if (webnn_enable_gpu_buffer) {
+    defines += [ "WEBNN_ENABLE_GPU_BUFFER" ]
+  }
+
+  if (webnn_enable_null) {
+    defines += [ "WEBNN_ENABLE_BACKEND_NULL" ]
+  }
+
+  if (webnn_enable_openvino) {
+    defines += [ "WEBNN_ENABLE_BACKEND_OPENVINO" ]
+  }
+
+  if (webnn_enable_dml) {
+    defines += [ "WEBNN_ENABLE_BACKEND_DML" ]
+  }
+
+  if (webnn_enable_onednn) {
+    defines += [ "WEBNN_ENABLE_BACKEND_ONEDNN" ]
+  }
+
+  if (webnn_enable_xnnpack) {
+    defines += [ "WEBNN_ENABLE_BACKEND_XNNPACK" ]
+  }
+
+  if (webnn_enable_mlas) {
+    defines += [ "WEBNN_ENABLE_BACKEND_MLAS" ]
+  }
+
+  # Only internal Dawn targets can use this config, this means only targets in
+  # this BUILD.gn file and related subdirs.
+  visibility = [
+    "${webnn_root}/examples/*",
+    "${webnn_root}/src/*",
+    "${webnn_root}/src/webnn/*",
+  ]
+
+  cflags = []
+
+  # Enable more warnings that were found when using Dawn in other projects
+  if (is_clang) {
+    cflags += [
+      "-Wconditional-uninitialized",
+      "-Wcstring-format-directive",
+      "-Wc++11-narrowing",
+      "-Wdeprecated-copy",
+      "-Wduplicate-enum",
+      "-Wextra-semi-stmt",
+      "-Wimplicit-fallthrough",
+      "-Winconsistent-missing-destructor-override",
+      "-Winvalid-offsetof",
+      "-Wmissing-field-initializers",
+      "-Wnon-c-typedef-for-linkage",
+      "-Wpessimizing-move",
+      "-Wrange-loop-analysis",
+      "-Wshadow-field",
+      "-Wstrict-prototypes",
+      "-Wtautological-unsigned-zero-compare",
+    ]
+
+    # Allow comparison against type limits that might be tautological on 32bit
+    # or 64bit systems. Without this the following produces an error on 64bit:
+    #
+    #   if (myUint64 > std::numeric_limits<size_t>::max()) {...}
+    cflags += [ "-Wno-tautological-type-limit-compare" ]
+
+    if (is_win) {
+      cflags += [
+        # clang-cl doesn't know -pedantic, pass it explicitly to the clang driver
+        "/clang:-pedantic",
+
+        # Allow the use of __uuidof()
+        "-Wno-language-extension-token",
+      ]
+    } else {
+      cflags += [ "-pedantic" ]
+    }
+  }
+
+  if (!is_clang && is_win) {
+    # Dawn extends webnn enums with internal enums.
+    # MSVC considers these invalid switch values. crbug.com/dawn/397.
+    cflags += [ "/wd4063" ]
+
+    # MSVC things that a switch over all the enum values of an enum class is
+    # not sufficient to cover all control paths. Turn off this warning so that
+    # the respective clang warning tells us where to add switch cases
+    # (otherwise we have to add default: UNREACHABLE() that silences clang too)
+    cflags += [ "/wd4715" ]
+
+    # MSVC emits warnings when using constructs deprecated in C++17. Silence
+    # them until they are fixed.
+    # TODO(dawn:824): Fix all uses of C++ features deprecated in C++17.
+    defines += [ "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS" ]
+  }
+
+  if (is_clang && (webnn_enable_dml || webnn_enable_mlas)) {
+    cflags += [
+      # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
+      "-Wno-extra-semi",
+
+      # workaroud for compile error for DirectMLX.h
+      "-Wno-unused-but-set-variable",
+
+      # Allow the use of DMLX_THROW(_hr); in DirectMLX.h
+      "-Wno-extra-semi-stmt",
+
+      # Allow the use of DML_OPERATOR_GRAPH_NODE_DESC{ node.op.Get() } in DirectMLX.h
+      "-Wno-missing-field-initializers",
+
+      # Allow third_party/onnxruntime/include/onnxruntime/core/common/status.h(115,9):
+      # use of the 'nodiscard' attribute is a C++17 extension
+      "-Wno-c++17-extensions",
+    ]
+  }
+}
+
+###############################################################################
+# Common dawn library
+###############################################################################
+
+# This GN file is discovered by all Chromium builds, but common doesn't support
+# all of Chromium's OSes so we explicitly make the target visible only on
+# systems we know Dawn is able to compile on.
+if (is_win || is_linux || is_chromeos || is_mac || is_fuchsia || is_android) {
+  static_library("common") {
+    if (build_with_chromium) {
+      sources = [
+        "//third_party/dawn/src/dawn/common/Assert.cpp",
+        "//third_party/dawn/src/dawn/common/Assert.h",
+        "//third_party/dawn/src/dawn/common/Compiler.h",
+        "//third_party/dawn/src/dawn/common/Log.cpp",
+        "//third_party/dawn/src/dawn/common/Log.h",
+        "//third_party/dawn/src/dawn/common/Math.cpp",
+        "//third_party/dawn/src/dawn/common/Math.h",
+        "//third_party/dawn/src/dawn/common/Platform.h",
+        "//third_party/dawn/src/dawn/common/RefCounted.cpp",
+        "//third_party/dawn/src/dawn/common/RefCounted.h",
+        "//third_party/dawn/src/dawn/common/Result.cpp",
+        "//third_party/dawn/src/dawn/common/Result.h",
+        "//third_party/dawn/src/dawn/common/SystemUtils.cpp",
+        "//third_party/dawn/src/dawn/common/SystemUtils.h",
+      ]
+    } else {
+      # TODO: Remove after upgrading webnn infranstructure align with dawn.
+      sources = [
+        "//third_party/dawn/src/common/Assert.cpp",
+        "//third_party/dawn/src/common/Assert.h",
+        "//third_party/dawn/src/common/Compiler.h",
+        "//third_party/dawn/src/common/Log.cpp",
+        "//third_party/dawn/src/common/Log.h",
+        "//third_party/dawn/src/common/Math.cpp",
+        "//third_party/dawn/src/common/Math.h",
+        "//third_party/dawn/src/common/Platform.h",
+        "//third_party/dawn/src/common/RefCounted.cpp",
+        "//third_party/dawn/src/common/RefCounted.h",
+        "//third_party/dawn/src/common/Result.cpp",
+        "//third_party/dawn/src/common/Result.h",
+        "//third_party/dawn/src/common/SystemUtils.cpp",
+        "//third_party/dawn/src/common/SystemUtils.h",
+      ]
+    }
+
+    public_configs = [ ":internal_config" ]
+    deps = [
+      "${webnn_root}/include/webnn:cpp_headers",
+      "${webnn_root}/include/webnn:headers",
+    ]
+    if (is_android) {
+      libs = [ "log" ]
+    }
+  }
+}

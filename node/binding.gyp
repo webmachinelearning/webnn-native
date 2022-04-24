@@ -40,9 +40,9 @@
       'include_dirs' : [
         '<!@(node -p "require(\'node-addon-api\').include")',
         '<(module_root_dir)/src',
-        '<(WEBNN_NATIVE_DIR)/src/include',
-        '<(WEBNN_NATIVE_LIB_PATH)/gen/src/include',
-        '<(WEBNN_NATIVE_LIB_PATH)/../../src/include',
+        '<(WEBNN_NATIVE_DIR)/include',
+        '<(WEBNN_NATIVE_LIB_PATH)/gen/include',
+        '<(WEBNN_NATIVE_LIB_PATH)/../../include',
       ],
       'library_dirs' : [
         '<(WEBNN_NATIVE_LIB_PATH)',
