@@ -66,8 +66,6 @@ namespace webnn_native { namespace dml {
         DML_TENSOR_DESC outputTensorDESC = {};
         std::string name = "";
         bool isInputEdge = false;
-        // Indicate if the DML_TENSOR_DESC has been updated with new strides.
-        bool isDefault = true;
     };
 
     // Only represent the information of the input edges.
@@ -138,6 +136,8 @@ namespace webnn_native { namespace dml {
         MaybeError EmulateFusedOperator(FusionOperatorBase* activation,
                                         std::shared_ptr<EdgeInfoBase>& inputEdge,
                                         const std::vector<UINT>& inputDims);
+        MaybeError TransposeOutputToNhwc(std::shared_ptr<EdgeInfoBase>& inputEdge,
+                                         const std::vector<UINT>& nchwOutputDims);
 
       private:
         MaybeError CompileImpl() override;
