@@ -1547,7 +1547,149 @@ namespace webnn_native { namespace dml {
         }
 
         MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
-            return DAWN_UNIMPLEMENTED_ERROR("BatchNorm hasn't been supported on DirectML.");
+            auto inputs = batchNorm->Inputs();
+            DAWN_ASSERT(inputs.size() == 3 || inputs.size() == 4 || inputs.size() == 5);
+            DAWN_ASSERT(mGraphEdgesMap.find(batchNorm->Inputs()[0].Get()) != mGraphEdgesMap.end());
+            auto inputEdge = mGraphEdgesMap[batchNorm->Inputs()[0].Get()];
+            auto inputDims = ConvertDimensions(inputs[0].Get()->Shape());
+            auto outputDims = ConvertDimensions(batchNorm->Outputs()[0].Get()->Shape());
+            std::vector<UINT> newInputDims = inputDims, newOutputDims = outputDims, newInputStrides,
+                              newOutputStrides;
+            const BatchNormOptions* options = batchNorm->GetOptions();
+
+            // When input is a 4-D tensor of the "nchw" or "nhwc" layout, options.axis should be set
+            // to 1 or 3 respectively.
+            uint32_t axis = options->axis;
+            DML_TENSOR_DESC inputTensorDesc = inputEdge->outputTensorDESC;
+            if (options->axis == 3) {
+                axis = 1;
+                newInputDims = transposeDimensions(NhwcToNchw, inputDims);
+                newOutputDims = transposeDimensions(NhwcToNchw, outputDims);
+                newInputStrides = transposeStrides(NhwcToNchw, inputDims);
+
+                std::shared_ptr<DmlTensorDesc> inputDmlTensorDesc(new DmlTensorDesc);
+                if (!CreateDmlTensorDesc(mDmlTensorsDesc, inputDmlTensorDesc,
+                                         &inputEdge->outputTensorDESC, newInputDims,
+                                         newInputStrides)) {
+                    return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+                }
+                inputTensorDesc = {DML_TENSOR_TYPE_BUFFER, &inputDmlTensorDesc->bufferDesc};
+            }
+
+            // Reshape 1D mean, variance, scale, bias to 4D with setting 1 to automatically
+            // broadcast.
+            std::vector<DML_TENSOR_DESC> tensorsDesc;
+            std::vector<std::shared_ptr<EdgeInfoBase>> edges;
+            for (size_t i = 1; i < inputs.size(); ++i) {
+                DAWN_ASSERT(mGraphEdgesMap.find(batchNorm->Inputs()[i].Get()) !=
+                            mGraphEdgesMap.end());
+                auto edge = mGraphEdgesMap[batchNorm->Inputs()[i].Get()];
+                auto dims = ConvertDimensions(inputs[i].Get()->Shape());
+                DAWN_ASSERT(dims.size() == 1);
+                if (dims[0] != newInputDims[axis]) {
+                    return DAWN_INTERNAL_ERROR(
+                        "The 1-D tensor of the values whose length size is not equal to the size "
+                        "of "
+                        "the input dimension denoted by options.axis.");
+                }
+                // This tensor's dimensions should be { BatchCount, ChannelCount, Height,Width}.
+                // Set 1 to automatically broadcast those dimensions across the input.
+                std::vector<UINT> expandDims(4, 1);
+                expandDims[axis] = dims[0];
+                std::shared_ptr<DmlTensorDesc> dmlTensorDesc(new DmlTensorDesc);
+                if (!CreateDmlTensorDesc(mDmlTensorsDesc, dmlTensorDesc, &edge->outputTensorDESC,
+                                         expandDims)) {
+                    return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+                }
+                DML_TENSOR_DESC tensorDesc = {DML_TENSOR_TYPE_BUFFER, &dmlTensorDesc->bufferDesc};
+                tensorsDesc.push_back(tensorDesc);
+                edges.push_back(updateEdge(edge, tensorDesc));
+            }
+
+            DML_TENSOR_DESC constantTensorDesc;
+            if (options->scale == nullptr) {
+                float scale = 1.0;
+                std::vector<UINT> scaleDims = {1, newInputDims[1], 1, 1};
+                auto index = mInputs.size() - 1;
+                // Create a constant scale.
+                if (createConstantInput(constantTensorDesc, &scale, sizeof(float), {1, 1, 1, 1}, {},
+                                        DML_TENSOR_DATA_TYPE_FLOAT32)
+                        .IsError()) {
+                    return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                };
+                tensorsDesc.insert(
+                    options->bias == nullptr ? tensorsDesc.end() : tensorsDesc.begin() + 2,
+                    constantTensorDesc);
+                edges.insert(options->bias == nullptr ? edges.end() : edges.begin() + 2,
+                             mInputs[index + 1]);
+            }
+
+            if (options->bias == nullptr) {
+                float bias = 0;
+                std::vector<UINT> biasDims = {1, newInputDims[1], 1, 1};
+                // Create a constant scale.
+                if (createConstantInput(constantTensorDesc, &bias, sizeof(float), {1, 1, 1, 1}, {},
+                                        DML_TENSOR_DATA_TYPE_FLOAT32)
+                        .IsError()) {
+                    return DAWN_INTERNAL_ERROR("Failed to create a constant input tensor.");
+                };
+                tensorsDesc.push_back(constantTensorDesc);
+                edges.push_back(mInputs.back());
+            }
+
+            std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, newOutputDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                &outputDmlTensorDesc->bufferDesc};
+
+            DML_ACTIVATION_LINEAR_OPERATOR_DESC dmlActicationOperatorDesc{};
+            DML_OPERATOR_DESC dmlFusedOperatorDesc = {};
+            DML_OPERATOR_DESC* fusedActivation = CreateFusedOperator(
+                options->activation, dmlActicationOperatorDesc, dmlFusedOperatorDesc);
+
+            DML_BATCH_NORMALIZATION_OPERATOR_DESC desc = {};
+            desc.InputTensor = &inputTensorDesc;
+            desc.MeanTensor = &tensorsDesc[0];
+            desc.VarianceTensor = &tensorsDesc[1];
+            desc.ScaleTensor = &tensorsDesc[2];
+            desc.BiasTensor = &tensorsDesc[3];
+            desc.OutputTensor = &outputTensorDesc;
+            desc.Spatial = true;
+            desc.Epsilon = options->epsilon;
+            desc.FusedActivation = fusedActivation;
+            DML_OPERATOR_DESC dmlOperatorDesc = {};
+            dmlOperatorDesc.Type = DML_OPERATOR_BATCH_NORMALIZATION;
+            dmlOperatorDesc.Desc = &desc;
+
+            ComPtr<IDMLOperator> dmlOperator;
+            WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+            mIntermediateNodesMap[mIntermediateNodes.size()] = dmlOperator;
+
+            // Transpose output from nchw->nhwc.
+            std::shared_ptr<EdgeInfoBase> outputEdge;
+            if (options->axis == 3) {
+                newOutputStrides = transposeStrides(NchwToNhwc, newOutputDims);
+                std::shared_ptr<DmlTensorDesc> nhwcOutputDmlTensorDesc(new DmlTensorDesc);
+                if (!CreateDmlTensorDesc(mDmlTensorsDesc, nhwcOutputDmlTensorDesc,
+                                         &outputTensorDesc, outputDims, newOutputStrides)) {
+                    return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+                }
+                DML_TENSOR_DESC nhwcOutputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                                        &nhwcOutputDmlTensorDesc->bufferDesc};
+                outputEdge = CreateEdgeFromThisNode(nhwcOutputTensorDesc, mIntermediateNodes.size(),
+                                                    0, false);
+            } else {
+                outputEdge = CreateEdgeFromThisNode(outputTensorDesc, mIntermediateNodes.size());
+            }
+
+            AddEdgesToThisNode({inputEdge, edges[0], edges[1], edges[2], edges[3]});
+            if (EmulateFusedOperator(options->activation, outputEdge, inputDims).IsError()) {
+                return DAWN_INTERNAL_ERROR("Failed to emulate fused operator.");
+            };
+            mGraphEdgesMap[batchNorm->PrimaryOutput()] = outputEdge;
+            return {};
         }
 
         MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
