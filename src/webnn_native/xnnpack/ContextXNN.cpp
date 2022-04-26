@@ -14,43 +14,13 @@
 
 #include "webnn_native/xnnpack/ContextXNN.h"
 
-#include <thread>
-
 #include "common/Log.h"
 #include "common/RefCounted.h"
 #include "webnn_native/xnnpack/GraphXNN.h"
 
 namespace webnn_native::xnnpack {
 
-    Context::Context(ContextOptions const* options) {
-    }
-
-    Context::~Context() {
-        xnn_status status = xnn_deinitialize();
-        if (status != xnn_status_success) {
-            dawn::ErrorLog() << "xnn_deinitialize failed: " << status;
-            return;
-        }
-        if (mThreadpool != NULL) {
-            pthreadpool_destroy(mThreadpool);
-        }
-    }
-
-    xnn_status Context::Init() {
-        xnn_status status = xnn_initialize(NULL);
-        if (status != xnn_status_success) {
-            dawn::ErrorLog() << "xnn_initialize failed: " << status;
-            return status;
-        }
-        // Create a thread pool with as half of the logical processors in the system.
-        mThreadpool = pthreadpool_create(std::thread::hardware_concurrency() / 2);
-        if (mThreadpool == NULL) {
-            dawn::ErrorLog() << "pthreadpool_create failed";
-            return xnn_status_out_of_memory;
-        }
-        dawn::InfoLog() << "XNNPACK backend thread numbers: "
-                        << pthreadpool_get_threads_count(mThreadpool);
-        return xnn_status_success;
+    Context::Context(pthreadpool_t threadpool) : mThreadpool(threadpool) {
     }
 
     pthreadpool_t Context::GetThreadpool() {

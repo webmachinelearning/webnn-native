@@ -19,6 +19,8 @@
 #include "webnn_native/Context.h"
 #include "webnn_native/Error.h"
 
+#include <xnnpack.h>
+
 #include <memory>
 
 namespace webnn_native::xnnpack {
@@ -26,9 +28,13 @@ namespace webnn_native::xnnpack {
     class Backend : public BackendConnection {
       public:
         Backend(InstanceBase* instance);
+        virtual ~Backend() override;
 
         MaybeError Initialize();
         ContextBase* CreateContext(ContextOptions const* options = nullptr) override;
+
+      private:
+        pthreadpool_t mThreadpool;
     };
 
 }  // namespace webnn_native::xnnpack

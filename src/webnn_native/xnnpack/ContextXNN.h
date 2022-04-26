@@ -23,10 +23,8 @@ namespace webnn_native::xnnpack {
 
     class Context : public ContextBase {
       public:
-        explicit Context(ContextOptions const* options);
-        ~Context() override;
-
-        xnn_status Init();
+        explicit Context(pthreadpool_t threadpool);
+        ~Context() override = default;
 
         pthreadpool_t GetThreadpool();
 
