@@ -234,7 +234,7 @@ source_set("webnn_native_sources") {
     ]
 
     include_dirs +=
-        [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/include" ]
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.6.0/include" ]
     if (build_with_chromium) {
       include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
     } else {
@@ -242,7 +242,7 @@ source_set("webnn_native_sources") {
     }
 
     lib_dirs +=
-        [ "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/x64-win" ]
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.6.0/bin/x64-win" ]
 
     libs += [
       "dxgi.lib",
@@ -443,7 +443,7 @@ if (webnn_enable_dml) {
   dml_dll = "DirectML.dll"
   os_folder = "x64-win"
   dml_dll_path =
-      "${webnn_root}/third_party/microsoft.ai.directml.1.5.1/bin/${os_folder}"
+      "${webnn_root}/third_party/microsoft.ai.directml.1.6.0/bin/${os_folder}"
   copy("copy_dml_dll") {
     sources = [ "${dml_dll_path}/${dml_dll}" ]
     outputs = [ "$root_out_dir/{{source_file_part}}" ]
