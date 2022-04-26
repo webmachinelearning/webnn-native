@@ -81,7 +81,7 @@ To build with a backend, please set the corresponding option from following tabl
 Then use `ninja -C out/Release` or `ninja -C out/Debug` to build WebNN-native.
 
 **Notes**
- * To build with XNNPACK backend, please build XNNPACK first, e.g. by [`XNNPACK/scripts/build-local.sh`](https://github.com/google/XNNPACK/blob/master/scripts/build-local.sh).
+ * To build with XNNPACK backend, please build XNNPACK first, e.g. by [`./scripts/build-local.sh`](https://github.com/google/XNNPACK/blob/master/scripts/build-local.sh). For Windows build, it requires supplying -DCMAKE_MSVC_RUNTIME_LIBRARY="MultiThreaded$<$<CONFIG:Debug>:Debug>" to set MSVC static runtime library.
  * To build with oneDNN backend, please build oneDNN first by following the [build from source instructions](https://oneapi-src.github.io/oneDNN/dev_guide_build.html).
  * To build with MLAS backend, please build MLAS (part of ONNX Runtime) first by following the [Build ONNX Runtime for inferencing](https://onnxruntime.ai/docs/build/inferencing.html#build-onnx-runtime-for-inferencing), e.g., by `.\build.bat --config Release --parallel --enable_msvc_static_runtime` for Windows build.
 
