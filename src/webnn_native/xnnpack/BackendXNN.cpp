@@ -18,13 +18,39 @@
 #include "webnn_native/Instance.h"
 #include "webnn_native/xnnpack/ContextXNN.h"
 
+#include <thread>
+
 namespace webnn_native::xnnpack {
 
     Backend::Backend(InstanceBase* instance)
         : BackendConnection(instance, wnn::BackendType::XNNPACK) {
     }
 
+    Backend::~Backend() {
+        xnn_status status = xnn_deinitialize();
+        if (status != xnn_status_success) {
+            dawn::ErrorLog() << "xnn_deinitialize failed: " << status;
+            return;
+        }
+        if (mThreadpool != NULL) {
+            pthreadpool_destroy(mThreadpool);
+        }
+    }
+
     MaybeError Backend::Initialize() {
+        xnn_status status = xnn_initialize(NULL);
+        if (status != xnn_status_success) {
+            dawn::ErrorLog() << "xnn_initialize failed: " << status;
+            return DAWN_INTERNAL_ERROR("Failed to intialize XNNPACK.");
+        }
+        // Create a thread pool with as half of the logical processors in the system.
+        mThreadpool = pthreadpool_create(std::thread::hardware_concurrency() / 2);
+        if (mThreadpool == NULL) {
+            dawn::ErrorLog() << "pthreadpool_create failed";
+            return DAWN_INTERNAL_ERROR("Failed to create thread pool.");
+        }
+        dawn::InfoLog() << "backend XNNPACK backend thread numbers: "
+                        << pthreadpool_get_threads_count(mThreadpool);
         return {};
     }
 
@@ -33,12 +59,7 @@ namespace webnn_native::xnnpack {
             dawn::ErrorLog() << "XNNPACK backend only supports CPU device.";
             return nullptr;
         }
-        Ref<ContextBase> context = AcquireRef(new Context(options));
-        xnn_status status = reinterpret_cast<Context*>(context.Get())->Init();
-        if (status != xnn_status_success) {
-            dawn::ErrorLog() << "Failed to init XNNPACK:" << status;
-            return nullptr;
-        }
+        Ref<ContextBase> context = AcquireRef(new Context(mThreadpool));
         return context.Detach();
     }
 
