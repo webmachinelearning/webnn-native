@@ -93,6 +93,9 @@ namespace webnn_native::xnnpack {
     }
 
     Graph::~Graph() {
+        if (mRuntime) {
+            xnn_delete_runtime(mRuntime);
+        }
     }
 
     MaybeError Graph::AddInput(const op::Input* input) {
@@ -697,10 +700,14 @@ namespace webnn_native::xnnpack {
         return xnn_status_success;
     }
 
-#define HANDLE_OP(OpType)                                                                \
-    case OperatorType::OpType: {                                                         \
-        DAWN_TRY(DefineXnnNode(subgraph, reinterpret_cast<const op::OpType*>(info.op))); \
-        break;                                                                           \
+#define HANDLE_OP(OpType)                                                                          \
+    case OperatorType::OpType: {                                                                   \
+        xnn_status status = DefineXnnNode(subgraph, reinterpret_cast<const op::OpType*>(info.op)); \
+        if (status != xnn_status_success) {                                                        \
+            xnn_delete_subgraph(subgraph);                                                         \
+        }                                                                                          \
+        DAWN_TRY(status);                                                                          \
+        break;                                                                                     \
     }
 
     MaybeError Graph::Finish() {
