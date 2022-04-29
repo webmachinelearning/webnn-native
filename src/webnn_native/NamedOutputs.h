@@ -15,9 +15,9 @@
 #ifndef WEBNN_NATIVE_NAMED_OUTPUTS_H_
 #define WEBNN_NATIVE_NAMED_OUTPUTS_H_
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "common/RefCounted.h"
@@ -76,7 +76,7 @@ namespace webnn_native {
         }
 
         // Other methods
-        const std::map<std::string, Resource>& GetRecords() const {
+        const std::unordered_map<std::string, Resource>& GetRecords() const {
             return mOutputs;
         }
 
@@ -85,7 +85,7 @@ namespace webnn_native {
         // the same size memory to hold the result from GraphComputeCmd.
         std::vector<std::unique_ptr<char>> mOutputsBuffer;
 
-        std::map<std::string, Resource> mOutputs;
+        std::unordered_map<std::string, Resource> mOutputs;
     };
 
 }  // namespace webnn_native

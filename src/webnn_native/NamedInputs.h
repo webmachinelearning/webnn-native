@@ -15,9 +15,9 @@
 #ifndef WEBNN_NATIVE_NAMED_INPUTS_H_
 #define WEBNN_NATIVE_NAMED_INPUTS_H_
 
-#include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 #include "common/Log.h"
 #include "webnn_native/webnn_platform.h"
@@ -78,7 +78,7 @@ namespace webnn_native {
         }
 
         // Other methods
-        const std::map<std::string, Input>& GetRecords() const {
+        const std::unordered_map<std::string, Input>& GetRecords() const {
             return mInputs;
         }
 
@@ -88,7 +88,7 @@ namespace webnn_native {
         std::vector<std::unique_ptr<char>> mInputsBuffer;
         std::vector<std::vector<int32_t>> mInputsDimensions;
 
-        std::map<std::string, Input> mInputs;
+        std::unordered_map<std::string, Input> mInputs;
     };
 
 }  // namespace webnn_native

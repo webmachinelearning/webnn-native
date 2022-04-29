@@ -15,8 +15,7 @@
 #ifndef WEBNN_NATIVE_XNNPACK_GRAPH_XNN_H_
 #define WEBNN_NATIVE_XNNPACK_GRAPH_XNN_H_
 
-#include <map>
-#include <set>
+#include <unordered_map>
 
 #include <xnnpack.h>
 
@@ -108,13 +107,13 @@ namespace webnn_native::xnnpack {
             const OperatorBase* op;
         };
         std::vector<OperatorInfo> mOperators;
-        std::map<const OperandBase*, uint32_t> mOperands;
-        std::map<const OperandBase*, uint32_t> mInputs;
-        std::map<const OperandBase*, uint32_t> mOutputs;
+        std::unordered_map<const OperandBase*, uint32_t> mOperands;
+        std::unordered_map<const OperandBase*, uint32_t> mInputs;
+        std::unordered_map<const OperandBase*, uint32_t> mOutputs;
         uint32_t mExternalId;
 
         std::vector<std::unique_ptr<char>> mBuffers;
-        std::map<std::string, xnn_external_value> mExternals;
+        std::unordered_map<std::string, xnn_external_value> mExternals;
 
         xnn_runtime_t mRuntime;
         NamedInputsBase* mNamedInputs;
