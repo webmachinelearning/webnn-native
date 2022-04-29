@@ -114,9 +114,11 @@ namespace webnn_native::xnnpack {
         uint32_t mExternalId;
 
         std::vector<std::unique_ptr<char>> mBuffers;
-        std::map<std::string, uint32_t> mExternals;
+        std::map<std::string, xnn_external_value> mExternals;
 
         xnn_runtime_t mRuntime;
+        NamedInputsBase* mNamedInputs;
+        NamedOutputsBase* mNamedOutputs;
     };
 
 }  // namespace webnn_native::xnnpack
