@@ -24,10 +24,10 @@ class ResNetNhwcTests : public WebnnTest {
                         bool fused = true) {
         ResNet resnet;
         resnet.mFused = fused;
-        const std::string nhwcPath = kModelPath + "/resnet101v2_nhwc/";
+        const std::string nhwcPath = kModelPath + "/resnet50v2_nhwc/";
         resnet.mWeightsPath = nhwcPath + "weights/";
         const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
-        wnn::Operand output = resnet.LoadNHWC(builder, false);
+        wnn::Operand output = resnet.LoadNhwc(builder, true);
         wnn::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();

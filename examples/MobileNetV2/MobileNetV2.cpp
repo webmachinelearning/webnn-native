@@ -225,7 +225,7 @@ const wnn::Operand MobileNetV2::BuildFireMore(const wnn::GraphBuilder& builder,
     }
 }
 
-const wnn::Operand MobileNetV2::LoadNCHW(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand MobileNetV2::LoadNchw(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath;
 
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
@@ -259,7 +259,7 @@ const wnn::Operand MobileNetV2::LoadNCHW(const wnn::GraphBuilder& builder, bool 
     return output;
 }
 
-const wnn::Operand MobileNetV2::LoadNHWC(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand MobileNetV2::LoadNhwc(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath;
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
 
@@ -385,7 +385,7 @@ const wnn::Operand MobileNetV2::LoadNHWC(const wnn::GraphBuilder& builder, bool 
     return output;
 }
 
-const wnn::Operand MobileNetV2::LoadBatchNormNCHW(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand MobileNetV2::LoadBatchNormNchw(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath;
     const std::vector<int32_t> padding = {1, 1, 1, 1};
     const std::vector<int32_t> strides = {2, 2};

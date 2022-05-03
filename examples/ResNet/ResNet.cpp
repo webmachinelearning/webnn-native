@@ -27,8 +27,8 @@ bool ResNet::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
     }
     bool nchw = mLayout == "nchw" ? true : false;
     mLabelPath = nchw ? "examples/labels/labels1000.txt" : "examples/labels/labels1001.txt";
-    mModelHeight = nchw ? 224 : 299;
-    mModelWidth = nchw ? 224 : 299;
+    mModelHeight = 224;
+    mModelWidth = 224;
     mModelChannels = 3;
     mNormalization = nchw ? true : false;
     nchw ? mMean = {0.485, 0.456, 0.406} : mMean = {127.5, 127.5, 127.5};
@@ -257,7 +257,7 @@ const wnn::Operand ResNet::BuildNhwcBottlenectV2(const wnn::GraphBuilder& builde
 const wnn::Operand ResNet::loop(const wnn::GraphBuilder& builder,
                                 const wnn::Operand node,
                                 uint32_t num) {
-    if (num > 22) {
+    if (num > 5) {
         return node;
     } else {
         const wnn::Operand newNode =
@@ -267,7 +267,7 @@ const wnn::Operand ResNet::loop(const wnn::GraphBuilder& builder,
     }
 }
 
-const wnn::Operand ResNet::LoadNCHW(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand ResNet::LoadNchw(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath + "resnetv24_";
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
 
@@ -332,10 +332,9 @@ const wnn::Operand ResNet::LoadNCHW(const wnn::GraphBuilder& builder, bool softm
     return output;
 }
 
-const wnn::Operand ResNet::LoadNHWC(const wnn::GraphBuilder& builder, bool softmax) {
-    mWeightsPath = mWeightsPath + "resnet_v2_101_";
-    const wnn::Operand input = utils::BuildInput(builder, "input", {1, 299, 299, 3});
-
+const wnn::Operand ResNet::LoadNhwc(const wnn::GraphBuilder& builder, bool softmax) {
+    mWeightsPath = mWeightsPath + "resnet_v2_50_";
+    wnn::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
     const std::vector<uint32_t> constant = {0, 0, 3, 3, 3, 3, 0, 0};
     auto paddingData = std::make_shared<std::vector<char>>(constant.size() * sizeof(uint32_t));
     std::memcpy(paddingData->data(), constant.data(), constant.size() * sizeof(int32_t));
@@ -372,7 +371,8 @@ const wnn::Operand ResNet::LoadNHWC(const wnn::GraphBuilder& builder, bool softm
     // Block 3
     const wnn::Operand bottleneck8 = BuildNhwcBottlenectV2(builder, bottleneck7, {"3", "1"}, true);
     const wnn::Operand bottleneck9 = loop(builder, bottleneck8, 2);
-    const wnn::Operand bottleneck10 = BuildNhwcBottlenectV2(builder, bottleneck9, {"3", "23"});
+    const wnn::Operand bottleneck10 =
+        BuildNhwcBottlenectV2(builder, bottleneck9, {"3", std::to_string(6)});
 
     // Block 4
     const wnn::Operand bottleneck11 =

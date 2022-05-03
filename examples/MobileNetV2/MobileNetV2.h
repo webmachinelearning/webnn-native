@@ -23,9 +23,9 @@ class MobileNetV2 : public ExampleBase {
     ~MobileNetV2() override = default;
 
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
-    const wnn::Operand LoadNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand LoadNHWC(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand LoadBatchNormNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNhwc(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadBatchNormNchw(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
                                             const std::string& path);
     const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,

@@ -41,7 +41,7 @@ int main(int argc, const char* argv[]) {
         &squeezenet);
     wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
     wnn::Operand output =
-        squeezenet.mLayout == "nchw" ? squeezenet.LoadNCHW(builder) : squeezenet.LoadNHWC(builder);
+        squeezenet.mLayout == "nchw" ? squeezenet.LoadNchw(builder) : squeezenet.LoadNhwc(builder);
 
     // Build the graph.
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
