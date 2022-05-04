@@ -312,7 +312,7 @@ namespace webnn_native::ie {
                 status = ngraph_reshape(secondaryNode, newShapeNode,
                                         const_cast<ngraph_node_t**>(&secondaryNode));
             }
-            status = ngraph_mat_mul(primaryNode, secondaryNode, matMulNode);
+            status = ngraph_mat_mul(primaryNode, secondaryNode, false, false, matMulNode);
             if (primaryShape.ranks == 1 && secondaryShape.ranks == 1) {
                 auto newShapeNode = AddConstantWithGraph<uint64_t>(precision_e::U64, {}, {1});
                 status = ngraph_reshape(*matMulNode, newShapeNode, matMulNode);
@@ -1227,35 +1227,18 @@ namespace webnn_native::ie {
     MaybeError Graph::AddGemm(const op::Gemm* gemm) {
         auto inputs = gemm->Inputs();
         auto nodeA = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[0].Get()]);
-        dimensions_t inputShape;
-        ngraph_get_shape(nodeA, &inputShape);
-        std::vector<int64_t> inputOrder;
-        inputOrder.reserve(inputShape.ranks);
-        for (uint32_t i = 0; i < inputShape.ranks; ++i) {
-            inputOrder.push_back(inputShape.ranks - i - 1);
-        }
-        const ngraph_node_t* orderNode =
-            AddConstantWithGraph<int64_t>(precision_e::I64, {inputShape.ranks}, inputOrder);
+        auto nodeB = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[1].Get()]);
         auto options = gemm->GetOptions();
         IEStatusCode status;
-        if (options->aTranspose) {
-            status = ngraph_transpose(nodeA, orderNode, &nodeA);
-            DAWN_TRY(CheckStatusCode(status, "ngraph transpose"));
-        }
-        auto nodeB = const_cast<ngraph_node_t*>(mGraphNodeMap[inputs[1].Get()]);
-        if (options->bTranspose) {
-            status = ngraph_transpose(nodeB, orderNode, &nodeB);
-            DAWN_TRY(CheckStatusCode(status, "ngraph transpose"));
-        }
-        ngraph_node_t* gemmNode;
-        status = ngraph_mat_mul(nodeA, nodeB, &gemmNode);
-        DAWN_TRY(CheckStatusCode(status, "ngraph mat mul"));
         const ngraph_node_t* alphaNode =
             AddConstantWithGraph<float>(precision_e::FP32, {}, {options->alpha});
         if (options->alpha != 1) {
-            status = ngraph_mul(gemmNode, alphaNode, &gemmNode);
+            status = ngraph_mul(nodeA, alphaNode, &nodeA);
             DAWN_TRY(CheckStatusCode(status, "ngraph mul"));
         }
+        ngraph_node_t* gemmNode;
+        status = ngraph_mat_mul(nodeA, nodeB, options->aTranspose, options->bTranspose, &gemmNode);
+        DAWN_TRY(CheckStatusCode(status, "ngraph mat mul"));
         if (inputs.size() == 3) {
             auto nodeC = mGraphNodeMap[inputs[2].Get()];
             auto betaNode = AddConstantWithGraph<float>(precision_e::FP32, {}, {options->beta});
