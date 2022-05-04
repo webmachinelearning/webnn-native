@@ -753,9 +753,8 @@ namespace webnn_native::xnnpack {
         if (mNamedInputs != inputs || mNamedOutputs != outputs) {
             bool anyPointersChanged = false;
             for (auto& input : inputs->GetRecords()) {
-                if (mExternals.find(input.first) == mExternals.end()) {
-                    return DAWN_VALIDATION_ERROR("Invalid input.");
-                }
+                DAWN_INVALID_IF(mExternals.find(input.first) == mExternals.end(),
+                                "Invalid inputs.");
                 void* data = static_cast<int8_t*>(input.second.resource.arrayBufferView.buffer) +
                              input.second.resource.arrayBufferView.byteOffset;
                 if (mExternals[input.first].data != data) {
@@ -766,9 +765,8 @@ namespace webnn_native::xnnpack {
             mNamedInputs = inputs;
 
             for (auto& output : outputs->GetRecords()) {
-                if (mExternals.find(output.first) == mExternals.end()) {
-                    return DAWN_VALIDATION_ERROR("Invalid output.");
-                }
+                DAWN_INVALID_IF(mExternals.find(output.first) == mExternals.end(),
+                                "Invalid outputs.");
                 void* data = static_cast<int8_t*>(output.second.arrayBufferView.buffer) +
                              output.second.arrayBufferView.byteOffset;
                 if (mExternals[output.first].data != data) {
