@@ -89,7 +89,12 @@ namespace webnn_native::xnnpack {
         }
     }  // anonymous namespace
 
-    Graph::Graph(Context* context) : GraphBase(context), mExternalId(0), mRuntime(nullptr) {
+    Graph::Graph(Context* context)
+        : GraphBase(context),
+          mExternalId(0),
+          mRuntime(nullptr),
+          mNamedInputs(nullptr),
+          mNamedOutputs(nullptr) {
     }
 
     Graph::~Graph() {
@@ -102,14 +107,16 @@ namespace webnn_native::xnnpack {
         mOperators.push_back({OperatorType::Input, input});
         uint32_t inputId = mExternalId++;
         mInputs.insert(std::make_pair(input->PrimaryOutput(), inputId));
-        mExternals.insert(std::make_pair(input->GetName(), inputId));
+        xnn_external_value externalValue = {inputId, nullptr};
+        mExternals.insert(std::make_pair(input->GetName(), externalValue));
         return {};
     }
 
     MaybeError Graph::AddOutput(std::string_view name, const OperandBase* op) {
         uint32_t outputId = mExternalId++;
         mOutputs.insert(std::make_pair(op, outputId));
-        mExternals.insert(std::make_pair(name, outputId));
+        xnn_external_value externalValue = {outputId, nullptr};
+        mExternals.insert(std::make_pair(name, externalValue));
         return {};
     }
 
@@ -750,30 +757,41 @@ namespace webnn_native::xnnpack {
     }
 
     MaybeError Graph::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        std::vector<xnn_external_value> externalValues;
-        for (auto& input : inputs->GetRecords()) {
-            if (mExternals.find(input.first) == mExternals.end()) {
-                return DAWN_VALIDATION_ERROR("Invalid input.");
+        if (mNamedInputs != inputs || mNamedOutputs != outputs) {
+            bool anyPointersChanged = false;
+            for (auto& input : inputs->GetRecords()) {
+                DAWN_INVALID_IF(mExternals.find(input.first) == mExternals.end(),
+                                "Invalid inputs.");
+                void* data = static_cast<int8_t*>(input.second.resource.arrayBufferView.buffer) +
+                             input.second.resource.arrayBufferView.byteOffset;
+                if (mExternals[input.first].data != data) {
+                    mExternals[input.first].data = data;
+                    anyPointersChanged = true;
+                }
             }
-            xnn_external_value value = {};
-            value.id = mExternals.at(input.first);
-            value.data = static_cast<int8_t*>(input.second.resource.arrayBufferView.buffer) +
-                         input.second.resource.arrayBufferView.byteOffset;
-            externalValues.push_back(value);
+            mNamedInputs = inputs;
+
+            for (auto& output : outputs->GetRecords()) {
+                DAWN_INVALID_IF(mExternals.find(output.first) == mExternals.end(),
+                                "Invalid outputs.");
+                void* data = static_cast<int8_t*>(output.second.arrayBufferView.buffer) +
+                             output.second.arrayBufferView.byteOffset;
+                if (mExternals[output.first].data != data) {
+                    mExternals[output.first].data = data;
+                    anyPointersChanged = true;
+                }
+            }
+            mNamedOutputs = outputs;
+
+            if (anyPointersChanged) {
+                std::vector<xnn_external_value> externalValues;
+                for (auto& iterator : mExternals) {
+                    externalValues.push_back(iterator.second);
+                }
+                DAWN_TRY(xnn_setup_runtime(mRuntime, externalValues.size(), externalValues.data()));
+            }
         }
 
-        for (auto& output : outputs->GetRecords()) {
-            if (mExternals.find(output.first) == mExternals.end()) {
-                return DAWN_VALIDATION_ERROR("Invalid output.");
-            }
-            xnn_external_value value = {};
-            value.id = mExternals.at(output.first);
-            value.data = static_cast<int8_t*>(output.second.arrayBufferView.buffer) +
-                         output.second.arrayBufferView.byteOffset;
-            externalValues.push_back(value);
-        }
-
-        DAWN_TRY(xnn_setup_runtime(mRuntime, externalValues.size(), externalValues.data()));
         DAWN_TRY(xnn_invoke_runtime(mRuntime));
 
         return {};

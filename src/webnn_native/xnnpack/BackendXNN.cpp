@@ -49,7 +49,7 @@ namespace webnn_native::xnnpack {
             dawn::ErrorLog() << "pthreadpool_create failed";
             return DAWN_INTERNAL_ERROR("Failed to create thread pool.");
         }
-        dawn::InfoLog() << "backend XNNPACK backend thread numbers: "
+        dawn::InfoLog() << "XNNPACK backend thread numbers: "
                         << pthreadpool_get_threads_count(mThreadpool);
         return {};
     }
