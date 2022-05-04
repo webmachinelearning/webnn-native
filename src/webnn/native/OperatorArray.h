@@ -25,15 +25,15 @@ namespace webnn::native {
         virtual ~OperatorArrayBase() = default;
 
         // WebNN API
-        size_t Size() {
+        size_t APISize() {
             return mOperators.size();
         }
 
-        void Set(FusionOperatorBase* mlOperator) {
+        void APISetFusionOperator(FusionOperatorBase* mlOperator) {
             mOperators.push_back(Ref<FusionOperatorBase>(mlOperator));
         }
 
-        FusionOperatorBase* Get(size_t index) {
+        FusionOperatorBase* APIGetFusionOperator(size_t index) {
             return mOperators[index].Get();
         }
 

@@ -21,7 +21,7 @@ class Resample2dTests : public WebnnTest {
                         const std::vector<int32_t>& expectedShape,
                         const std::vector<float>& expectedValue,
                         const wnn::Resample2dOptions* options = nullptr) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand inputOperand = utils::BuildInput(builder, "input", inputShape);
         const wnn::Operand output = builder.Resample2d(inputOperand, options);
         const wnn::Graph graph = utils::Build(builder, {{"output", output}});

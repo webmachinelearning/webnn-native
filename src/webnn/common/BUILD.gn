@@ -16,8 +16,8 @@
 import("../../../scripts/webnn_overrides_with_defaults.gni")
 
 import("//build_overrides/build.gni")
-import("${webnn_dawn_root}/scripts/dawn_features.gni")
-import("${webnn_dawn_root}/scripts/dawn_overrides_with_defaults.gni")
+import("${dawn_root}/scripts/dawn_features.gni")
+import("${dawn_root}/scripts/dawn_overrides_with_defaults.gni")
 import("${webnn_root}/build_overrides/webnn_features.gni")
 
 # Use Chromium's dcheck_always_on when available so that we respect it when
@@ -41,10 +41,15 @@ config("internal_config") {
   include_dirs = [
     "${target_gen_dir}/../../../src",
     "${webnn_root}/src",
-    "${webnn_dawn_root}/src",
-    "${webnn_dawn_root}/src/dawn",
-    "${webnn_root}",
+    "${dawn_root}/src",
+    "${dawn_root}/src/dawn",
+    "${webnn_root}/include",
+    "${dawn_root}/include",
   ]
+
+  if (build_with_chromium) {
+    include_dirs += [ "${dawn_gen_root}/include" ]
+  }
 
   defines = []
   if (dawn_always_assert || dcheck_always_on || is_debug ||
@@ -186,42 +191,22 @@ config("internal_config") {
 # systems we know Dawn is able to compile on.
 if (is_win || is_linux || is_chromeos || is_mac || is_fuchsia || is_android) {
   static_library("common") {
-    if (build_with_chromium) {
-      sources = [
-        "//third_party/dawn/src/dawn/common/Assert.cpp",
-        "//third_party/dawn/src/dawn/common/Assert.h",
-        "//third_party/dawn/src/dawn/common/Compiler.h",
-        "//third_party/dawn/src/dawn/common/Log.cpp",
-        "//third_party/dawn/src/dawn/common/Log.h",
-        "//third_party/dawn/src/dawn/common/Math.cpp",
-        "//third_party/dawn/src/dawn/common/Math.h",
-        "//third_party/dawn/src/dawn/common/Platform.h",
-        "//third_party/dawn/src/dawn/common/RefCounted.cpp",
-        "//third_party/dawn/src/dawn/common/RefCounted.h",
-        "//third_party/dawn/src/dawn/common/Result.cpp",
-        "//third_party/dawn/src/dawn/common/Result.h",
-        "//third_party/dawn/src/dawn/common/SystemUtils.cpp",
-        "//third_party/dawn/src/dawn/common/SystemUtils.h",
-      ]
-    } else {
-      # TODO: Remove after upgrading webnn infranstructure align with dawn.
-      sources = [
-        "//third_party/dawn/src/common/Assert.cpp",
-        "//third_party/dawn/src/common/Assert.h",
-        "//third_party/dawn/src/common/Compiler.h",
-        "//third_party/dawn/src/common/Log.cpp",
-        "//third_party/dawn/src/common/Log.h",
-        "//third_party/dawn/src/common/Math.cpp",
-        "//third_party/dawn/src/common/Math.h",
-        "//third_party/dawn/src/common/Platform.h",
-        "//third_party/dawn/src/common/RefCounted.cpp",
-        "//third_party/dawn/src/common/RefCounted.h",
-        "//third_party/dawn/src/common/Result.cpp",
-        "//third_party/dawn/src/common/Result.h",
-        "//third_party/dawn/src/common/SystemUtils.cpp",
-        "//third_party/dawn/src/common/SystemUtils.h",
-      ]
-    }
+    sources = [
+      "${dawn_root}/src/dawn/common/Assert.cpp",
+      "${dawn_root}/src/dawn/common/Assert.h",
+      "${dawn_root}/src/dawn/common/Compiler.h",
+      "${dawn_root}/src/dawn/common/Log.cpp",
+      "${dawn_root}/src/dawn/common/Log.h",
+      "${dawn_root}/src/dawn/common/Math.cpp",
+      "${dawn_root}/src/dawn/common/Math.h",
+      "${dawn_root}/src/dawn/common/Platform.h",
+      "${dawn_root}/src/dawn/common/RefCounted.cpp",
+      "${dawn_root}/src/dawn/common/RefCounted.h",
+      "${dawn_root}/src/dawn/common/Result.cpp",
+      "${dawn_root}/src/dawn/common/Result.h",
+      "${dawn_root}/src/dawn/common/SystemUtils.cpp",
+      "${dawn_root}/src/dawn/common/SystemUtils.h",
+    ]
 
     public_configs = [ ":internal_config" ]
     deps = [

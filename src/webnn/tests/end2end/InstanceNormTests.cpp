@@ -16,7 +16,7 @@
 
 class InstanceNormTests : public WebnnTest {
     void SetUp() override {
-        builder = wnn::CreateGraphBuilder(GetContext());
+        builder = utils::CreateGraphBuilder(GetContext());
     }
 
   protected:

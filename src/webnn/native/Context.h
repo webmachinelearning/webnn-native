@@ -58,11 +58,12 @@ namespace webnn::native {
         WGPUDevice GetWGPUDevice();
 #endif
 
-        // Dawn API
-        void InjectError(wnn::ErrorType type, const char* message);
-        void PushErrorScope(wnn::ErrorFilter filter);
-        bool PopErrorScope(wnn::ErrorCallback callback, void* userdata);
-        void SetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata);
+        // Webnn API
+        void APIInjectError(wnn::ErrorType type, const char* message);
+        void APIPushErrorScope(wnn::ErrorFilter filter);
+        bool APIPopErrorScope(wnn::ErrorCallback callback, void* userdata);
+        void APISetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata);
+
         ContextOptions GetContextOptions() {
             return mContextOptions;
         }

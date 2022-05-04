@@ -20,7 +20,7 @@ class LeakyReluTests : public WebnnTest {
                        const std::vector<float>& inputData,
                        const std::vector<float>& expectedValue,
                        float alpha = 0.01) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
         wnn::LeakyReluOptions options;
         options.alpha = alpha;

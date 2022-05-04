@@ -23,9 +23,10 @@ class Ref;
 
 namespace webnn::native {
 
-    class CompilationBase;
+    class ContextBase;
     class GraphBase;
     class GraphBuilderBase;
+    class InstanceBase;
     class NamedInputsBase;
     class NamedOperandsBase;
     class NamedOutputsBase;

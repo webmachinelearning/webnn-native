@@ -44,9 +44,10 @@ namespace webnn::native::op {
         }
         if (options == nullptr || options->activations == nullptr) {
             mActivations = AcquireRef(new OperatorArrayBase());
-            mActivations->Set(
+            mActivations->APISetFusionOperator(
                 AcquireRef(new FusionOperatorBase(builder, FusionType::Sigmoid)).Get());
-            mActivations->Set(AcquireRef(new FusionOperatorBase(builder, FusionType::Tanh)).Get());
+            mActivations->APISetFusionOperator(
+                AcquireRef(new FusionOperatorBase(builder, FusionType::Tanh)).Get());
         } else {
             mActivations = Ref<OperatorArrayBase>(mOptions.activations);
         }
@@ -108,7 +109,7 @@ namespace webnn::native::op {
             }
         }
         // The activations parameter
-        if (GetActivations().Get()->Size() != 2) {
+        if (GetActivations().Get()->APISize() != 2) {
             return DAWN_VALIDATION_ERROR("Argument activations is not a sequence of length 2.");
         }
 

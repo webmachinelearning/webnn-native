@@ -15,7 +15,7 @@
 #ifndef WEBNN_NATIVE_NATIVEUTILS_H_
 #define WEBNN_NATIVE_NATIVEUTILS_H_
 
-#include <webnn/native/webnn_structs_autogen.h>
+#include <webnn/native/wnn_structs_autogen.h>
 #include <webnn/webnn_cpp.h>
 #include <vector>
 

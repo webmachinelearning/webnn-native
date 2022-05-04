@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
             }
         },
         &resnet);
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(context);
     wnn::Operand output =
         resnet.mLayout == "nchw" ? resnet.LoadNCHW(builder) : resnet.LoadNHWC(builder);
 

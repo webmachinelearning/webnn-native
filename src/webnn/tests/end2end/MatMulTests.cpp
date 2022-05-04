@@ -17,7 +17,7 @@
 class MatMulTests : public WebnnTest {};
 
 TEST_F(MatMulTests, MatMul1d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {4});
     const std::vector<float> bData = {0.8782074, 0.22533207, 0.7134056, 0.04190519};
     const wnn::Operand b =
@@ -33,7 +33,7 @@ TEST_F(MatMulTests, MatMul1d) {
 }
 
 TEST_F(MatMulTests, MatMul1dx2d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {4});
     const std::vector<float> bData = {
         0.3093976, -1.2924036,  -0.64339244, 1.1423386, 1.5052135,  1.8182521,
@@ -52,7 +52,7 @@ TEST_F(MatMulTests, MatMul1dx2d) {
 }
 
 TEST_F(MatMulTests, MatMul2dx1d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4});
     const std::vector<float> bData = {0.25528687, 0.2126722, 0.26320502, 0.8297401};
     const wnn::Operand b =
@@ -71,7 +71,7 @@ TEST_F(MatMulTests, MatMul2dx1d) {
 }
 
 TEST_F(MatMulTests, MatMul2d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4});
     const std::vector<float> bData = {0.17467105,  -1.2045133, -0.02621938, 0.6096196,
                                       1.4499376,   1.3465316,  0.03289436,  1.0754977,
@@ -93,7 +93,7 @@ TEST_F(MatMulTests, MatMul2d) {
 }
 
 TEST_F(MatMulTests, MatMul3d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3, 4});
     const std::vector<float> bData = {-2.7142005,  0.41909233,  0.80572236,  0.19983047, -1.9361104,
                                       1.1919757,   0.61684674,  0.23732206,  0.74679494, 0.4595843,
@@ -122,7 +122,7 @@ TEST_F(MatMulTests, MatMul3d) {
 }
 
 TEST_F(MatMulTests, MatMul3dx2d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3, 4});
     const std::vector<float> bData = {-0.38534147, -0.18395364, -2.548874,   0.4525641,
                                       -0.41875792, 0.57480955,  -0.41603103, 0.6973883,
@@ -147,7 +147,7 @@ TEST_F(MatMulTests, MatMul3dx2d) {
 }
 
 TEST_F(MatMulTests, MatMul3dx2dGet3d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {1, 3, 4});
     const std::vector<float> bData = {0.2545374,  -1.6150205, -0.64508885, -0.3454305,
                                       0.38700557, 1.3147515,  -0.3379386,  1.1804152,
@@ -170,7 +170,7 @@ TEST_F(MatMulTests, MatMul3dx2dGet3d) {
 }
 
 TEST_F(MatMulTests, MatMul4d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {1, 2, 3, 4});
     const std::vector<float> bData = {
         -0.45605758, -0.43318668, 0.61509126, -2.2228749,  0.50257015,  -0.29311436,
@@ -200,7 +200,7 @@ TEST_F(MatMulTests, MatMul4d) {
 }
 
 TEST_F(MatMulTests, MatMul4dx2d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {1, 2, 3, 4});
     const std::vector<float> bData = {
         0.01829041, -0.73948264, -0.95898634, -0.5105271, 2.1705306,  1.2495605,

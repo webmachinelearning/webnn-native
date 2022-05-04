@@ -161,7 +161,7 @@ namespace webnn::native {
         return mBackends[wnn::BackendType::Null]->CreateContext(options);
     }
 
-    ContextBase* InstanceBase::CreateContext(const ContextOptions* options) {
+    ContextBase* InstanceBase::APICreateContext(const ContextOptions* options) {
         if (mBackends.find(wnn::BackendType::DirectML) != mBackends.end()) {
             return mBackends[wnn::BackendType::DirectML]->CreateContext(options);
         } else if (mBackends.find(wnn::BackendType::OpenVINO) != mBackends.end()) {
@@ -177,7 +177,7 @@ namespace webnn::native {
         return nullptr;
     }
 
-    ContextBase* InstanceBase::CreateContextWithGpuDevice(const GpuDevice* wnn_device) {
+    ContextBase* InstanceBase::APICreateContextWithGpuDevice(const GpuDevice* wnn_device) {
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
         WGPUDevice device = reinterpret_cast<WGPUDevice>(wnn_device->device);
         if (mBackends.find(wnn::BackendType::DirectML) != mBackends.end()) {
@@ -194,23 +194,23 @@ namespace webnn::native {
         return nullptr;
     }
 
-    GraphBuilderBase* InstanceBase::CreateGraphBuilder(ContextBase* context) {
+    GraphBuilderBase* InstanceBase::APICreateGraphBuilder(ContextBase* context) {
         return new GraphBuilderBase(context);
     }
 
-    NamedInputsBase* InstanceBase::CreateNamedInputs() {
+    NamedInputsBase* InstanceBase::APICreateNamedInputs() {
         return new NamedInputsBase();
     }
 
-    NamedOperandsBase* InstanceBase::CreateNamedOperands() {
+    NamedOperandsBase* InstanceBase::APICreateNamedOperands() {
         return new NamedOperandsBase();
     }
 
-    NamedOutputsBase* InstanceBase::CreateNamedOutputs() {
+    NamedOutputsBase* InstanceBase::APICreateNamedOutputs() {
         return new NamedOutputsBase();
     }
 
-    OperatorArrayBase* InstanceBase::CreateOperatorArray() {
+    OperatorArrayBase* InstanceBase::APICreateOperatorArray() {
         return new OperatorArrayBase();
     }
 

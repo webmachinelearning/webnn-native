@@ -33,7 +33,7 @@ class ReduceTests : public WebnnTest {
                      const std::vector<float>& expectedValue,
                      const std::vector<int32_t>& axes = {},
                      bool keepDimensions = false) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
         wnn::ReduceOptions options;
         if (!axes.empty()) {

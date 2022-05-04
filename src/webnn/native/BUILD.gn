@@ -16,8 +16,8 @@
 import("../../../scripts/webnn_overrides_with_defaults.gni")
 
 import("//build_overrides/build.gni")
-import("${webnn_dawn_root}/scripts/dawn_component.gni")
-import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${dawn_root}/scripts/dawn_component.gni")
+import("${dawn_root}/scripts/dawn_features.gni")
 import("${webnn_root}/build_overrides/webnn_features.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
@@ -27,6 +27,17 @@ if (is_mac) {
     import("//build/config/mac/mac_sdk.gni")
   } else {
     mac_min_system_version = "10.11.0"
+  }
+}
+
+group("abseil") {
+  # When build_with_chromium=true we need to include "//third_party/abseil-cpp:absl" while
+  # it's beneficial to be more specific with standalone Dawn, especially when it comes to
+  # including it as a dependency in other projects (such as Skia).
+  if (build_with_chromium) {
+    public_deps = [ "$webnn_abseil_dir:absl" ]
+  } else {
+    public_deps = [ "${webnn_root}/third_party/gn/abseil-cpp:str_format" ]
   }
 }
 
@@ -51,12 +62,18 @@ config("internal") {
 webnn_json_generator("utils_gen") {
   target = "native_utils"
   outputs = [
+    "src/webnn/native/ChainUtils_autogen.cpp",
+    "src/webnn/native/ChainUtils_autogen.h",
+    "src/webnn/native/ObjectType_autogen.cpp",
+    "src/webnn/native/ObjectType_autogen.h",
     "src/webnn/native/ProcTable.cpp",
-    "src/webnn/native/webnn_structs_autogen.h",
-    "src/webnn/native/webnn_structs_autogen.cpp",
-    "src/webnn/native/ValidationUtils_autogen.h",
     "src/webnn/native/ValidationUtils_autogen.cpp",
+    "src/webnn/native/ValidationUtils_autogen.h",
+    "src/webnn/native/webnn_absl_format_autogen.cpp",
+    "src/webnn/native/webnn_absl_format_autogen.h",
     "src/webnn/native/webnn_platform_autogen.h",
+    "src/webnn/native/wnn_structs_autogen.cpp",
+    "src/webnn/native/wnn_structs_autogen.h",
   ]
 }
 
@@ -88,6 +105,8 @@ source_set("sources") {
   libs = []
 
   configs += [ ":internal" ]
+
+  public_deps = [ ":abseil" ]
 
   sources = get_target_outputs(":utils_gen")
 
@@ -235,7 +254,7 @@ source_set("sources") {
     include_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/include" ]
     if (build_with_chromium) {
-      include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
+      include_dirs += [ "${dawn_root}/src/dawn/native/dml/deps/src" ]
     } else {
       include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
     }
@@ -256,7 +275,7 @@ source_set("sources") {
           "dawn_wire.dll.lib",
         ]
       }
-      deps += [ "${webnn_dawn_root}/src/dawn/native" ]
+      deps += [ "${dawn_root}/src/dawn/native" ]
     }
 
     cflags = [

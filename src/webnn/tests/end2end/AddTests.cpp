@@ -17,7 +17,7 @@
 class AddTests : public WebnnTest {};
 
 TEST_F(AddTests, AddConstantAndInput) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const std::vector<float> bData = {
         -0.5781865,  -0.49248728, -0.2162451,  -0.13176449, -0.52118045, 1.9125274,   0.6508799,
@@ -60,7 +60,7 @@ TEST_F(AddTests, AddConstantAndInput) {
 }
 
 TEST_F(AddTests, AddTwoInputs) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     const wnn::Operand c = builder.Add(a, b);
@@ -102,7 +102,7 @@ TEST_F(AddTests, AddTwoInputs) {
 }
 
 TEST_F(AddTests, AddBroadcast) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {5});
     const wnn::Operand c = builder.Add(a, b);

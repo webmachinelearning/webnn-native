@@ -32,7 +32,7 @@ class ElementWiseUnaryTests : public WebnnTest {
                                const std::vector<float>& inputData,
                                const std::vector<float>& expectedValue,
                                const std::vector<int32_t>& shape) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", shape);
         wnn::Operand b;
         switch (type) {

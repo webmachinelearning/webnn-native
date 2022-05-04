@@ -17,7 +17,7 @@
 class PowTests : public WebnnTest {};
 
 TEST_F(PowTests, Sqrt1d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3});
     const std::vector<float> bData = {0.5};
     const wnn::Operand b =
@@ -33,7 +33,7 @@ TEST_F(PowTests, Sqrt1d) {
 }
 
 TEST_F(PowTests, Sqrt3d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const std::vector<float> bData = {0.5};
     const wnn::Operand b =
@@ -67,7 +67,7 @@ TEST_F(PowTests, Sqrt3d) {
 }
 
 TEST_F(PowTests, Pow1d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3});
     const std::vector<float> bData = {2};
     const wnn::Operand b =
@@ -83,7 +83,7 @@ TEST_F(PowTests, Pow1d) {
 }
 
 TEST_F(PowTests, PowBroadcastScalar) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3});
     const std::vector<float> bData = {2};
     const wnn::Operand b =
@@ -99,7 +99,7 @@ TEST_F(PowTests, PowBroadcastScalar) {
 }
 
 TEST_F(PowTests, PowBroadcast1d) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {2, 3});
     const std::vector<float> bData = {1, 2, 3};
     const wnn::Operand b =
