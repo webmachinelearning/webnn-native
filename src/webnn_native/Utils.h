@@ -16,6 +16,7 @@
 #define WEBNN_NATIVE_NATIVEUTILS_H_
 
 #include <webnn/webnn_cpp.h>
+#include <webnn_native/webnn_structs_autogen.h>
 #include <vector>
 
 namespace webnn_native::utils {
@@ -26,6 +27,25 @@ namespace webnn_native::utils {
                                           int32_t stride,
                                           int32_t& paddingBegin,
                                           int32_t& paddingEnd);
+
+    std::vector<int32_t> ComputeImplicitPaddingForAutoPad(const Conv2dOptions* options,
+                                                          std::vector<int32_t> inputSize,
+                                                          std::vector<int32_t> filterSize);
+
+    void ComputeImplicitPaddingForConvTranspose2dAutoPad(wnn::AutoPad autoPad,
+                                                         int32_t dilation,
+                                                         int32_t inputSize,
+                                                         int32_t filterSize,
+                                                         int32_t stride,
+                                                         int32_t outputPadding,
+                                                         int32_t& paddingBegin,
+                                                         int32_t& paddingEnd);
+
+    std::vector<int32_t> ComputeImplicitPaddingForConvTranspose2dAutoPad(
+        const ConvTranspose2dOptions* options,
+        std::vector<int32_t> inputSize,
+        std::vector<int32_t> filterSize);
+
 }  // namespace webnn_native::utils
 
 #endif  // WEBNN_NATIVE_OPERATOR_H_

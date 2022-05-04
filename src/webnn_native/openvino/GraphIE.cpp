@@ -697,6 +697,33 @@ namespace webnn_native::ie {
         std::vector<int32_t> outputPadding(options->outputPadding,
                                            options->outputPadding + options->outputPaddingCount);
         DAWN_ASSERT(outputPadding.size() == 2);
+        // Pads values are generated via the autoPad option:
+        if (options->autoPad != wnn::AutoPad::Explicit) {
+            auto inputShape = convTranspose2d->Inputs()[0]->Shape();
+            auto filterShape = convTranspose2d->Inputs()[1]->Shape();
+            bool nchw = options->inputLayout == wnn::InputOperandLayout::Nchw;
+            int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+            int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
+            int32_t filterHeight = 0, filterWidth = 0;
+            switch (options->filterLayout) {
+                case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
+                    filterHeight = filterShape[0];
+                    filterWidth = filterShape[1];
+                    break;
+                case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
+                    filterHeight = filterShape[1];
+                    filterWidth = filterShape[2];
+                    break;
+                default:
+                    filterHeight = filterShape[2];
+                    filterWidth = filterShape[3];
+                    break;
+            }
+            std::vector<int32_t> inputSize = {inputHeight, inputWidth};
+            std::vector<int32_t> filterSize = {filterHeight, filterWidth};
+            padding = utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(options, inputSize,
+                                                                             filterSize);
+        }
         ngraph_node_t* outputShapeNode = nullptr;
         if (options->outputSizes != nullptr) {
             std::vector<int32_t> outputSizes(options->outputSizes,
@@ -730,7 +757,7 @@ namespace webnn_native::ie {
             status = ngraph_group_convolution_backprop_data(
                 input, filterNode, outputShapeNode, strides.data(), strides.size(), padding.data(),
                 padding.size(), dilations.data(), dilations.size(),
-                static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                static_cast<ngraph_auto_pad>(wnn::AutoPad::Explicit), outputPadding.data(),
                 outputPadding.size(), &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph group convolution backprop data"));
 
@@ -738,7 +765,7 @@ namespace webnn_native::ie {
             status = ngraph_convolution_backprop_data(
                 input, filterNode, outputShapeNode, strides.data(), strides.size(), padding.data(),
                 padding.size(), dilations.data(), dilations.size(),
-                static_cast<ngraph_auto_pad>(options->autoPad), outputPadding.data(),
+                static_cast<ngraph_auto_pad>(wnn::AutoPad::Explicit), outputPadding.data(),
                 outputPadding.size(), &conv2dNode);
             DAWN_TRY(CheckStatusCode(status, "ngraph convolution backprop data"));
         }
@@ -765,7 +792,6 @@ namespace webnn_native::ie {
             activationNode = TransposeInputLayout(activationNode, TransposeType::NchwToNhwc);
         }
         mGraphNodeMap[convTranspose2d->PrimaryOutput()] = activationNode;
-        // TODO(Miao Bin): There is some confusion for calculating the output shape.
         DAWN_ASSERT(CheckShape(activationNode, convTranspose2d));
         return {};
     }
