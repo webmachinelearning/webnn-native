@@ -44,6 +44,7 @@ namespace webnn::native {
 
         WNNContext CreateTestContext(const wnn::ContextOptions* options = nullptr);
         WNNContext CreateContext(const wnn::ContextOptions* options = nullptr);
+        WNNGraphBuilder CreateGraphBuilder(const WNNContext context);
 
         // Returns the underlying WNNInstance object.
         WNNInstance Get() const;

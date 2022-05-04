@@ -15,7 +15,8 @@
 webnn_standalone = true
 
 # The paths to WebNN's dependencies
-webnn_dawn_root = "//third_party/dawn"
+webnn_abseil_dir = "//third_party/abseil-cpp"
+dawn_root = "//third_party/dawn"
 webnn_googletest_dir = "//third_party/googletest"
 webnn_jinja2_dir = "//third_party/jinja2"
 webnn_gpgmm_dir = "//third_party/gpgmm"

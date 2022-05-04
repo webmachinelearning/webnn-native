@@ -16,8 +16,10 @@
 #ifndef WEBNN_NATIVE_ERROR_H_
 #define WEBNN_NATIVE_ERROR_H_
 
+#include "absl/strings/str_format.h"
 #include "common/Result.h"
 #include "webnn/native/ErrorData.h"
+#include "webnn/native/webnn_absl_format_autogen.h"
 
 #include <string>
 
@@ -80,11 +82,11 @@ namespace webnn::native {
     DAWN_MAKE_ERROR(InternalErrorType::Internal, std::string("Unimplemented: ") + MESSAGE)
 #define DAWN_OUT_OF_MEMORY_ERROR(MESSAGE) DAWN_MAKE_ERROR(InternalErrorType::OutOfMemory, MESSAGE)
 
-#define DAWN_INVALID_IF(EXPR, ...)                                          \
-    if (DAWN_UNLIKELY(EXPR)) {                                              \
-        return DAWN_MAKE_ERROR(InternalErrorType::Validation, __VA_ARGS__); \
-    }                                                                       \
-    for (;;)                                                                \
+#define DAWN_INVALID_IF(EXPR, ...)                                                           \
+    if (DAWN_UNLIKELY(EXPR)) {                                                               \
+        return DAWN_MAKE_ERROR(InternalErrorType::Validation, absl::StrFormat(__VA_ARGS__)); \
+    }                                                                                        \
+    for (;;)                                                                                 \
     break
 
 #define DAWN_CONCAT1(x, y) x##y

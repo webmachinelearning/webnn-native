@@ -39,7 +39,7 @@ int main(int argc, const char* argv[]) {
             }
         },
         &squeezenet);
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(context);
     wnn::Operand output =
         squeezenet.mLayout == "nchw" ? squeezenet.LoadNchw(builder) : squeezenet.LoadNhwc(builder);
 

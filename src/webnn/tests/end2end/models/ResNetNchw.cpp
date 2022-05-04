@@ -26,8 +26,8 @@ class ResNetNchwTests : public WebnnTest {
         resnet.mFused = fused;
         const std::string nchwPath = kModelPath + "/resnet50v2_nchw/";
         resnet.mWeightsPath = nchwPath + "weights/";
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
-        wnn::Operand output = resnet.LoadNchw(builder, false);
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
+        wnn::Operand output = resnet.LoadNCHW(builder, false);
         wnn::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();

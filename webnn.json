@@ -15,6 +15,21 @@
     "See the License for the specific language governing permissions and",
     "limitations under the License."
   ],
+  
+  "_metadata": {
+    "api": "WebNN",
+    "c_prefix": "WNN",
+    "namespace": "wnn",
+    "native_namespace": "webnn native",
+    "wire_namespace": "webnn wire",
+    "proc_table_prefix": "Webnn"
+  },
+  
+  "proc": {
+    "category": "function pointer",
+    "returns": "void",
+    "args": []
+  },
   "instance descriptor": {
     "category": "structure",
     "members": []
@@ -145,7 +160,7 @@
     ]
   },
   "error callback": {
-    "category": "callback",
+    "category": "function pointer",
     "args": [
         {"name": "type", "type": "error type"},
         {"name": "message", "type": "char", "annotation": "const*"},
@@ -254,7 +269,7 @@
         "returns": "size_t"
       },
       {
-        "name": "get",
+        "name": "get operand",
         "returns": "operand",
         "args": [
           {"name": "index", "type": "size_t"}
@@ -270,14 +285,14 @@
         "returns": "size_t"
       },
       {
-        "name": "set",
+        "name": "set fusion operator",
         "returns": "void",
         "args": [
-          {"name": "operator", "type": "fusion operator"}
+          {"name": "fusion operator", "type": "fusion operator"}
         ]
       },
       {
-        "name": "get",
+        "name": "get fusion operator",
         "returns": "fusion operator",
         "args": [
           {"name": "index", "type": "size_t"}
@@ -1048,14 +1063,14 @@
     "category": "object",
     "methods": [
       {
-        "name": "set",
+        "name": "set output",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
           {"name": "resource", "type": "resource", "annotation": "const*"}
         ]
       },
       {
-        "name": "get",
+        "name": "get output",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
           {"name": "resource", "type": "array buffer view", "annotation": "*"}
@@ -1064,7 +1079,7 @@
     ]
   },
   "compute async callback": {
-    "category": "callback",
+    "category": "function pointer",
     "args": [
 	      {"name": "type", "type": "error type"},
         {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
@@ -1092,6 +1107,12 @@
           {"name": "userdata", "type": "void", "annotation": "*"}
         ]
       }
+    ]
+  },
+  "s type": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "invalid", "valid": false}
     ]
   }
 }

@@ -1842,8 +1842,8 @@ namespace webnn::native::dmlx {
             fActivation = ::dml::FusedActivation::Sigmoid();
             gActivation = ::dml::FusedActivation::Tanh();
         } else {
-            fActivation = CreateFusedActivation(options->activations->Get(0));
-            gActivation = CreateFusedActivation(options->activations->Get(1));
+            fActivation = CreateFusedActivation(options->activations->APIGetFusionOperator(0));
+            gActivation = CreateFusedActivation(options->activations->APIGetFusionOperator(1));
         }
         std::vector<::dml::FusedActivation> activations;
         if (direction ==

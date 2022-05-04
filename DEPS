@@ -8,7 +8,7 @@ gclient_gn_args = [
 
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
-  'dawn_git': 'https://dawn.googlesource.com',
+  'dawn_git': 'https://github.com/fujunwei',
   'github_git': 'https://github.com',
 
   'dawn_standalone': True,
@@ -45,7 +45,7 @@ deps = {
 
   # Dependencies required for code generator and infrastructure code.
   'third_party/dawn': {
-    'url': '{dawn_git}/dawn.git@bf1c0cf52377b4db2bf3a433dc5056620aad7cdd'
+    'url': '{dawn_git}/dawn.git@f4c84e239bf8b5b2c4733d68ca38e1e9049fd895'
   },
 
   # Dependencies required for backends.

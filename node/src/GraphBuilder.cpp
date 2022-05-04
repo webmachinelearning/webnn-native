@@ -79,7 +79,7 @@ namespace node {
         : Napi::ObjectWrap<GraphBuilder>(info) {
         Napi::Object object = info[0].As<Napi::Object>();
         node::Context* context = Napi::ObjectWrap<node::Context>::Unwrap(object);
-        mImpl = wnn::CreateGraphBuilder(context->GetImpl());
+        mImpl = utils::CreateGraphBuilder(context->GetImpl());
     }
 
     Napi::Value GraphBuilder::Constant(const Napi::CallbackInfo& info) {

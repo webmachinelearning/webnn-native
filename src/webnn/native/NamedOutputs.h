@@ -41,7 +41,7 @@ namespace webnn::native {
         }
 
         // WebNN API
-        void Set(char const* name, const Resource* resource) {
+        void APISetOutput(char const* name, const Resource* resource) {
             mOutputs[std::string(name)] = *resource;
             if (resource->gpuBufferView.buffer != nullptr) {
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
@@ -61,7 +61,7 @@ namespace webnn::native {
             }
         }
 
-        void Get(char const* name, ArrayBufferView* arrayBuffer) {
+        void APIGetOutput(char const* name, ArrayBufferView* arrayBuffer) {
             if (mOutputs.find(std::string(name)) == mOutputs.end()) {
                 return;
             }

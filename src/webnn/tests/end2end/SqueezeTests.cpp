@@ -21,7 +21,7 @@ class SqueezeTests : public WebnnTest {
     void CheckSqueeze(const std::vector<int32_t>& inputShape,
                       const std::vector<int32_t>& axes,
                       const std::vector<int32_t>& expectedShape) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand x = utils::BuildInput(builder, "x", inputShape);
         wnn::SqueezeOptions options;
         if (!axes.empty()) {

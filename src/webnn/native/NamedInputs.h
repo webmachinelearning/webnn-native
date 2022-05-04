@@ -40,7 +40,7 @@ namespace webnn::native {
         }
 
         // WebNN API
-        void Set(char const* name, const Input* input) {
+        void APISet(char const* name, const Input* input) {
             mInputs[std::string(name)] = *input;
 #if defined(WEBNN_ENABLE_WIRE)
             // Input data type is Arrary Buffer View.

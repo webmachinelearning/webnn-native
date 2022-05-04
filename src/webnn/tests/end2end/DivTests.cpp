@@ -17,7 +17,7 @@
 class DivTests : public WebnnTest {};
 
 TEST_F(DivTests, Div) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     const wnn::Operand c = builder.Div(a, b);
@@ -62,7 +62,7 @@ TEST_F(DivTests, Div) {
 }
 
 TEST_F(DivTests, DivBroadcast) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {5});
     const wnn::Operand c = builder.Div(a, b);

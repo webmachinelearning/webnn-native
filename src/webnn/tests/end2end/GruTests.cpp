@@ -16,7 +16,7 @@
 
 class GruTests : public WebnnTest {
     void SetUp() override {
-        builder = wnn::CreateGraphBuilder(GetContext());
+        builder = utils::CreateGraphBuilder(GetContext());
     }
 
   protected:
@@ -43,7 +43,7 @@ class GruTests : public WebnnTest {
         const size_t outputSize = Y.Size();
         std::vector<utils::NamedOperand> namedOperands;
         for (size_t i = 0; i < outputSize; ++i) {
-            namedOperands.push_back({"gru" + std::to_string(i), Y.Get(i)});
+            namedOperands.push_back({"gru" + std::to_string(i), Y.GetOperand(i)});
         }
         const wnn::Graph graph = utils::Build(builder, namedOperands);
         ASSERT_TRUE(graph);
@@ -151,9 +151,9 @@ TEST_F(GruTests, GruWithMultiActivitions) {
     auto activations = CreateCppOperatorArray();
     auto activationSigmoid =
         utils::CreateActivationOperator(builder, utils::FusedActivation::SIGMOID);
-    activations.Set(activationSigmoid);
+    activations.SetFusionOperator(activationSigmoid);
     auto activationTanh = utils::CreateActivationOperator(builder, utils::FusedActivation::TANH);
-    activations.Set(activationTanh);
+    activations.SetFusionOperator(activationTanh);
     options.activations = activations;
 
     const std::vector<int32_t> expectedShape = {numDirections, batchSize, hiddenSize};

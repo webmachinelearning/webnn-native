@@ -17,7 +17,7 @@
 class SubTests : public WebnnTest {};
 
 TEST_F(SubTests, SubTwoInputs) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     const wnn::Operand c = builder.Sub(a, b);
@@ -60,7 +60,7 @@ TEST_F(SubTests, SubTwoInputs) {
 }
 
 TEST_F(SubTests, SubBroadcast) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {5});
     const wnn::Operand c = builder.Sub(a, b);

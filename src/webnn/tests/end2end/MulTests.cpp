@@ -17,7 +17,7 @@
 class MulTests : public WebnnTest {};
 
 TEST_F(MulTests, MulInputAndConstant) {
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         2.0435283,  0.07213961,  -1.1644137,  -1.2209045,  0.8982674,   0.21796915,  0.27658972,
@@ -66,7 +66,7 @@ TEST_F(MulTests, MulInputAndConstant) {
 }
 
 TEST_F(MulTests, MulTwoInputs) {
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     wnn::Operand c = builder.Mul(a, b);
@@ -114,7 +114,7 @@ TEST_F(MulTests, MulTwoInputs) {
 }
 
 TEST_F(MulTests, MulBroadcast) {
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     std::vector<float> dataB = {
         0.6338172, 1.630534, -1.3819867, -1.0427561, 1.058136,

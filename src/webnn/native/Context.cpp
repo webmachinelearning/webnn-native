@@ -65,7 +65,7 @@ namespace webnn::native {
     }
 #endif
 
-    void ContextBase::InjectError(wnn::ErrorType type, const char* message) {
+    void ContextBase::APIInjectError(wnn::ErrorType type, const char* message) {
         if (ConsumedError(ValidateErrorType(type))) {
             return;
         }
@@ -80,14 +80,14 @@ namespace webnn::native {
         HandleError(DAWN_MAKE_ERROR(FromWNNErrorType(type), message));
     }
 
-    void ContextBase::PushErrorScope(wnn::ErrorFilter filter) {
+    void ContextBase::APIPushErrorScope(wnn::ErrorFilter filter) {
         if (ConsumedError(ValidateErrorFilter(filter))) {
             return;
         }
         mCurrentErrorScope = AcquireRef(new ErrorScope(filter, mCurrentErrorScope.Get()));
     }
 
-    bool ContextBase::PopErrorScope(wnn::ErrorCallback callback, void* userdata) {
+    bool ContextBase::APIPopErrorScope(wnn::ErrorCallback callback, void* userdata) {
         if (DAWN_UNLIKELY(mCurrentErrorScope.Get() == mRootErrorScope.Get())) {
             return false;
         }
@@ -97,7 +97,7 @@ namespace webnn::native {
         return true;
     }
 
-    void ContextBase::SetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata) {
+    void ContextBase::APISetUncapturedErrorCallback(wnn::ErrorCallback callback, void* userdata) {
         mRootErrorScope->SetCallback(callback, userdata);
     }
 

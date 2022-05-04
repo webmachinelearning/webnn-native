@@ -20,7 +20,7 @@ class ClampTests : public WebnnTest {
                    const std::vector<float>& inputData,
                    const std::vector<float>& expectedValue,
                    const wnn::ClampOptions* options = nullptr) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", inputShape);
         const wnn::Operand b = builder.Clamp(a, options);
         const wnn::Graph graph = utils::Build(builder, {{"b", b}});

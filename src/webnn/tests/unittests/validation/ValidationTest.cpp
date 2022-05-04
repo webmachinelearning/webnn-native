@@ -29,7 +29,7 @@ void ValidationTest::SetUp() {
     ASSERT_TRUE(context != nullptr);
     mContext = wnn::Context::Acquire(context);
     mContext.SetUncapturedErrorCallback(ErrorCallback, this);
-    mBuilder = wnn::CreateGraphBuilder(mContext);
+    mBuilder = wnn::GraphBuilder::Acquire(instance->CreateGraphBuilder(mContext.Get()));
 }
 
 ValidationTest::~ValidationTest() {

@@ -26,7 +26,7 @@ class ConcatTests : public WebnnTest {
                      const std::vector<int32_t>& expectedShape,
                      const std::vector<float>& expectedValue,
                      bool inputsDefined = true) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         std::vector<wnn::Operand> inputsOperand;
         inputsOperand.reserve(inputs.size());
         size_t index = 0;

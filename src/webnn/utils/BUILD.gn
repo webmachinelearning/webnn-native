@@ -15,7 +15,7 @@
 
 import("../../../scripts/webnn_overrides_with_defaults.gni")
 
-import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${dawn_root}/scripts/dawn_features.gni")
 import("${webnn_root}/build_overrides/webnn_features.gni")
 
 ###############################################################################

@@ -23,7 +23,7 @@ class PadTests : public WebnnTest {
                  const std::vector<int32_t>& expectedShape,
                  const std::vector<float>& expectedValue,
                  wnn::PaddingMode mode = wnn::PaddingMode::Constant) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand x = utils::BuildInput(builder, "x", inputShape);
         const wnn::Operand padding =
             utils::BuildConstant(builder, paddingShape, paddingData.data(),

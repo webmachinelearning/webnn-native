@@ -83,6 +83,7 @@ namespace utils {
                                                FusedActivation activation,
                                                const void* options = nullptr);
 
+    wnn::GraphBuilder CreateGraphBuilder(const wnn::Context& context);
     wnn::Operand BuildInput(const wnn::GraphBuilder& builder,
                             std::string name,
                             const std::vector<int32_t>& dimensions,
@@ -247,7 +248,7 @@ namespace utils {
     void Compute(const wnn::Graph& graph,
                  const std::vector<NamedInput<T>>& inputs,
                  const std::vector<NamedOutput<T>>& outputs) {
-        if (graph.GetHandle() == nullptr) {
+        if (graph.Get() == nullptr) {
             dawn::ErrorLog() << "The graph is invaild.";
         }
 
@@ -272,7 +273,7 @@ namespace utils {
             resource.arrayBufferView.buffer = output.resource.data();
             resource.arrayBufferView.byteLength = output.resource.size() * sizeof(float);
             mlOutputs.push_back(resource);
-            namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
+            namedOutputs.SetOutput(output.name.c_str(), &mlOutputs.back());
         }
         graph.Compute(namedInputs, namedOutputs);
         DoFlush();

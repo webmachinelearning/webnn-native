@@ -39,13 +39,13 @@ namespace webnn::native {
         static InstanceBase* Create(const InstanceDescriptor* descriptor = nullptr);
 
         // WebNN API
-        ContextBase* CreateContext(const ContextOptions* options);
-        ContextBase* CreateContextWithGpuDevice(const GpuDevice* device);
-        GraphBuilderBase* CreateGraphBuilder(ContextBase* context);
-        NamedInputsBase* CreateNamedInputs();
-        NamedOperandsBase* CreateNamedOperands();
-        NamedOutputsBase* CreateNamedOutputs();
-        OperatorArrayBase* CreateOperatorArray();
+        ContextBase* APICreateContext(const ContextOptions* options);
+        ContextBase* APICreateContextWithGpuDevice(const GpuDevice* device);
+        GraphBuilderBase* APICreateGraphBuilder(ContextBase* context);
+        NamedInputsBase* APICreateNamedInputs();
+        NamedOperandsBase* APICreateNamedOperands();
+        NamedOutputsBase* APICreateNamedOutputs();
+        OperatorArrayBase* APICreateOperatorArray();
 
         ContextBase* CreateTestContext(const ContextOptions* options);
 

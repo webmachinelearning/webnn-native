@@ -82,11 +82,11 @@ namespace webnn::native {
         virtual MaybeError Compile();
 
         // Webnn API
-        void Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
-        void ComputeAsync(NamedInputsBase* inputs,
-                          NamedOutputsBase* outputs,
-                          WNNComputeAsyncCallback callback,
-                          void* userdata);
+        void APICompute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
+        void APIComputeAsync(NamedInputsBase* inputs,
+                             NamedOutputsBase* outputs,
+                             WNNComputeAsyncCallback callback,
+                             void* userdata);
 
         GraphBase(ContextBase* context, ObjectBase::ErrorTag tag);
         static GraphBase* MakeError(ContextBase* context);

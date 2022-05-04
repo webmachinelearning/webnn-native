@@ -50,7 +50,7 @@ static webnn::wire::WireClient* wireClient = nullptr;
 static utils::TerribleCommandBuffer* c2sBuf = nullptr;
 static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 
-static wnn::Instance clientInstance;
+static wnn::Instance instance;
 static std::unique_ptr<webnn::native::Instance> nativeInstance;
 wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
     nativeInstance = std::make_unique<webnn::native::Instance>();
@@ -67,6 +67,7 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
         case CmdBufType::None:
             procs = backendProcs;
             context = backendContext;
+            instance = wnn::Instance(nativeInstance->Get());
             break;
 
         case CmdBufType::Terrible: {
@@ -94,14 +95,12 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
 
             context = contextReservation.context;
 #else
-            webnnProcSetProcs(&procs);
             auto instanceReservation = wireClient->ReserveInstance();
             wireServer->InjectInstance(nativeInstance->Get(), instanceReservation.id,
                                        instanceReservation.generation);
             // Keep the reference instread of using Acquire.
             // TODO:: make the instance in the client as singleton object.
-            clientInstance = wnn::Instance(instanceReservation.instance);
-            return clientInstance.CreateContext(options);
+            instance = wnn::Instance(instanceReservation.instance);
 #endif
         }
         default:
@@ -109,8 +108,8 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
             DAWN_ASSERT(0);
     }
     webnnProcSetProcs(&procs);
-
-    return wnn::Context::Acquire(context);
+    return instance.CreateContext(options);
+    ;
 }
 
 void DoFlush() {
@@ -123,35 +122,15 @@ void DoFlush() {
 }
 
 wnn::NamedInputs CreateCppNamedInputs() {
-#if defined(WEBNN_ENABLE_WIRE)
-    return clientInstance.CreateNamedInputs();
-#else
-    return wnn::CreateNamedInputs();
-#endif  // defined(WEBNN_ENABLE_WIRE)
-}
-
-wnn::NamedOperands CreateCppNamedOperands() {
-#if defined(WEBNN_ENABLE_WIRE)
-    return clientInstance.CreateNamedOperands();
-#else
-    return wnn::CreateNamedOperands();
-#endif  // defined(WEBNN_ENABLE_WIRE)
+    return instance.CreateNamedInputs();
 }
 
 wnn::NamedOutputs CreateCppNamedOutputs() {
-#if defined(WEBNN_ENABLE_WIRE)
-    return clientInstance.CreateNamedOutputs();
-#else
-    return wnn::CreateNamedOutputs();
-#endif  // defined(WEBNN_ENABLE_WIRE)
+    return instance.CreateNamedOutputs();
 }
 
 wnn::OperatorArray CreateCppOperatorArray() {
-#if defined(WEBNN_ENABLE_WIRE)
-    return clientInstance.CreateOperatorArray();
-#else
-    return wnn::CreateOperatorArray();
-#endif  // defined(WEBNN_ENABLE_WIRE)
+    return instance.CreateOperatorArray();
 }
 
 bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
@@ -264,6 +243,10 @@ namespace utils {
         return activationOperand;
     }
 
+    wnn::GraphBuilder CreateGraphBuilder(const wnn::Context& context) {
+        return instance.CreateGraphBuilder(context);
+    }
+
     wnn::Operand BuildInput(const wnn::GraphBuilder& builder,
                             std::string name,
                             const std::vector<int32_t>& dimensions,
@@ -283,7 +266,7 @@ namespace utils {
     }
 
     wnn::Graph Build(const wnn::GraphBuilder& builder, const std::vector<NamedOperand>& outputs) {
-        wnn::NamedOperands namedOperands = CreateCppNamedOperands();
+        wnn::NamedOperands namedOperands = instance.CreateNamedOperands();
         for (auto& output : outputs) {
             namedOperands.Set(output.name.c_str(), output.operand);
         }

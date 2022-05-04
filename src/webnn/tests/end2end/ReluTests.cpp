@@ -17,7 +17,7 @@
 class ReluTests : public WebnnTest {};
 
 TEST_F(ReluTests, Relu) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = builder.Relu(a);
     const wnn::Graph graph = utils::Build(builder, {{"b", b}});

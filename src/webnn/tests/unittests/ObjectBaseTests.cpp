@@ -23,11 +23,11 @@ class Object : public wnn::ObjectBase<Object, int*> {
     using ObjectBase::ObjectBase;
     using ObjectBase::operator=;
 
-    static void WebnnReference(int* handle) {
+    static void WNNReference(int* handle) {
         ASSERT_LE(0, *handle);
         *handle += 1;
     }
-    static void WebnnRelease(int* handle) {
+    static void WNNRelease(int* handle) {
         ASSERT_LT(0, *handle);
         *handle -= 1;
     }
@@ -54,14 +54,14 @@ TEST(ObjectBase, AcquireConstruction) {
     ASSERT_EQ(0, refcount);
 }
 
-// Test .GetHandle().
+// Test .Get().
 TEST(ObjectBase, Get) {
     int refcount = 1;
     {
         Object obj1(&refcount);
 
         ASSERT_EQ(2, refcount);
-        ASSERT_EQ(&refcount, obj1.GetHandle());
+        ASSERT_EQ(&refcount, obj1.Get());
     }
     ASSERT_EQ(1, refcount);
 }
@@ -74,7 +74,7 @@ TEST(ObjectBase, Release) {
         ASSERT_EQ(2, refcount);
 
         ASSERT_EQ(&refcount, obj.Release());
-        ASSERT_EQ(nullptr, obj.GetHandle());
+        ASSERT_EQ(nullptr, obj.Get());
         ASSERT_EQ(2, refcount);
     }
     ASSERT_EQ(2, refcount);
@@ -98,8 +98,8 @@ TEST(ObjectBase, CopyConstructor) {
     Object source(&refcount);
     Object destination(source);
 
-    ASSERT_EQ(source.GetHandle(), &refcount);
-    ASSERT_EQ(destination.GetHandle(), &refcount);
+    ASSERT_EQ(source.Get(), &refcount);
+    ASSERT_EQ(destination.Get(), &refcount);
     ASSERT_EQ(3, refcount);
 
     destination = Object();
@@ -114,8 +114,8 @@ TEST(ObjectBase, CopyAssignment) {
     Object destination;
     destination = source;
 
-    ASSERT_EQ(source.GetHandle(), &refcount);
-    ASSERT_EQ(destination.GetHandle(), &refcount);
+    ASSERT_EQ(source.Get(), &refcount);
+    ASSERT_EQ(destination.Get(), &refcount);
     ASSERT_EQ(3, refcount);
 
     destination = Object();
@@ -132,7 +132,7 @@ TEST(ObjectBase, CopyAssignmentSelf) {
     Object* objPtr = &obj;
     obj = *objPtr;
 
-    ASSERT_EQ(obj.GetHandle(), &refcount);
+    ASSERT_EQ(obj.Get(), &refcount);
     ASSERT_EQ(refcount, 2);
 }
 
@@ -142,8 +142,8 @@ TEST(ObjectBase, MoveConstructor) {
     Object source(&refcount);
     Object destination(std::move(source));
 
-    ASSERT_EQ(source.GetHandle(), nullptr);
-    ASSERT_EQ(destination.GetHandle(), &refcount);
+    ASSERT_EQ(source.Get(), nullptr);
+    ASSERT_EQ(destination.Get(), &refcount);
     ASSERT_EQ(2, refcount);
 
     destination = Object();
@@ -158,8 +158,8 @@ TEST(ObjectBase, MoveAssignment) {
     Object destination;
     destination = std::move(source);
 
-    ASSERT_EQ(source.GetHandle(), nullptr);
-    ASSERT_EQ(destination.GetHandle(), &refcount);
+    ASSERT_EQ(source.Get(), nullptr);
+    ASSERT_EQ(destination.Get(), &refcount);
     ASSERT_EQ(2, refcount);
 
     destination = Object();
@@ -176,14 +176,14 @@ TEST(ObjectBase, MoveAssignmentSelf) {
     Object* objPtr = &obj;
     obj = std::move(*objPtr);
 
-    ASSERT_EQ(obj.GetHandle(), &refcount);
+    ASSERT_EQ(obj.Get(), &refcount);
     ASSERT_EQ(refcount, 2);
 }
 
 // Test the constructor using nullptr
 TEST(ObjectBase, NullptrConstructor) {
     Object obj(nullptr);
-    ASSERT_EQ(obj.GetHandle(), nullptr);
+    ASSERT_EQ(obj.Get(), nullptr);
 }
 
 // Test assigning nullptr to the object

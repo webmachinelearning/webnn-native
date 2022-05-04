@@ -48,7 +48,7 @@ wnn::Graph LeNet::Build(const std::string& weigthsPath) {
         return nullptr;
     }
 
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(mContext);
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(mContext);
 
     uint32_t byteOffset = 0;
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 1, 28, 28});
