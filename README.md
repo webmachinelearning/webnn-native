@@ -9,6 +9,8 @@
 [![Node Binding (OpenVINO backend / Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_windows.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_windows.yml)
 [![oneDNN backend (Linux)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_onednn_linux.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_onednn_linux.yml)
 [![oneDNN backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_onednn_windows.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_onednn_windows.yml)
+[![XNNPACK backend (Linux)](https://github.com/BruceDai/webnn-native/actions/workflows/build_test_xnnpack_linux.yml/badge.svg)](https://github.com/BruceDai/webnn-native/actions/workflows/build_test_xnnpack_linux.yml)
+[![XNNPACK backend (Windows)](https://github.com/BruceDai/webnn-native/actions/workflows/build_test_xnnpack_windows.yml/badge.svg)](https://github.com/BruceDai/webnn-native/actions/workflows/build_test_xnnpack_windows.yml)
 
 # WebNN-native
 
