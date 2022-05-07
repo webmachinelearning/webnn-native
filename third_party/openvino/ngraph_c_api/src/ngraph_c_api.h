@@ -128,6 +128,8 @@ ngraph_sub(const ngraph_node_t* a,
 NGRAPH_C_API(IEStatusCode)
 ngraph_mat_mul(const ngraph_node_t* a,
                const ngraph_node_t* b,
+               bool transpose_a,
+               bool transpose_b,
                ngraph_node_t** node);
 NGRAPH_C_API(IEStatusCode)
 ngraph_leaky_relu(const ngraph_node_t* a,

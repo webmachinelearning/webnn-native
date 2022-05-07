@@ -316,10 +316,12 @@ IEStatusCode ngraph_leaky_relu(const ngraph_node_t* a,
 
 IEStatusCode ngraph_mat_mul(const ngraph_node_t* a,
                             const ngraph_node_t* b,
+                            bool transpose_a,
+                            bool transpose_b,
                             ngraph_node_t** node) {
   TRY_IE_EXCEPTIONS
-  auto matmul = std::make_shared<ngraph::op::v0::MatMul>(a->object, b->object,
-                                                         false, false);
+  auto matmul = std::make_shared<ngraph::op::v0::MatMul>(
+      a->object, b->object, transpose_a, transpose_b);
   CREATE_NODE_AND_CATCH_EXCEPTIONS(matmul, node);
 }
 
