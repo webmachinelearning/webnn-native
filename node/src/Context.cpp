@@ -15,8 +15,9 @@
 #include "Context.h"
 
 #include <napi.h>
-#include <webnn/webnn_proc.h>
 #include <iostream>
+
+#include "ML.h"
 
 Napi::FunctionReference node::Context::constructor;
 
@@ -68,10 +69,7 @@ namespace node {
             }
         }
 
-        WebnnProcTable backendProcs = webnn_native::GetProcs();
-        webnnProcSetProcs(&backendProcs);
-        instance = std::make_unique<webnn_native::Instance>();
-        mImpl = wnn::Context::Acquire(instance->CreateContext(&options));
+        mImpl = wnn::Context::Acquire(ML::GetInstance()->CreateContext(&options));
         if (!mImpl) {
             Napi::Error::New(info.Env(), "Failed to create Context").ThrowAsJavaScriptException();
             return;

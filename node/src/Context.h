@@ -17,7 +17,6 @@
 
 #include <napi.h>
 #include <webnn/webnn_cpp.h>
-#include <webnn_native/WebnnNative.h>
 
 namespace node {
 
@@ -32,7 +31,6 @@ namespace node {
         wnn::Context GetImpl();
 
       private:
-        std::unique_ptr<webnn_native::Instance> instance;
         wnn::Context mImpl;
     };
 

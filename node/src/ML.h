@@ -16,6 +16,7 @@
 #define NODE_ML_H__
 
 #include <napi.h>
+#include <webnn_native/WebnnNative.h>
 
 namespace node {
 
@@ -27,8 +28,12 @@ namespace node {
         ML(const Napi::CallbackInfo& info);
         ~ML() = default;
 
+        static webnn_native::Instance* GetInstance();
+
       private:
         static Napi::Value CreateContext(const Napi::CallbackInfo& info);
+
+        static std::unique_ptr<webnn_native::Instance> gInstance;
     };
 
 }  // namespace node

@@ -14,6 +14,8 @@
 
 #include "ML.h"
 
+#include <webnn/webnn_proc.h>
+
 #include "Context.h"
 #include "Utils.h"
 
@@ -44,6 +46,17 @@ namespace node {
         constructor.SuppressDestruct();
         exports.Set("ml", func);
         return exports;
+    }
+
+    std::unique_ptr<webnn_native::Instance> ML::gInstance;
+
+    webnn_native::Instance* ML::GetInstance() {
+        if (gInstance == nullptr) {
+            WebnnProcTable backendProcs = webnn_native::GetProcs();
+            webnnProcSetProcs(&backendProcs);
+            gInstance = std::make_unique<webnn_native::Instance>();
+        }
+        return gInstance.get();
     }
 
 }  // namespace node
