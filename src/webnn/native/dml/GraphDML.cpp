@@ -431,23 +431,11 @@ namespace webnn::native::dml {
         std::vector<const uint32_t> ImplicitPadding(const T* options,
                                                     ::dml::Expression input,
                                                     std::vector<uint32_t> filterSize) {
-            ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
-                                                options->stridesCount);
-            ::dml::Span<const uint32_t> dilations(
-                reinterpret_cast<const uint32_t*>(options->dilations), options->dilationsCount);
             ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
-            // {paddingTop, paddingBottom, paddingLeft, paddingRight}
-            int32_t paddingTop, paddingBottom, paddingLeft, paddingRight;
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
-                                                    filterSize[0], strides[0], paddingTop,
-                                                    paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
-                                                    filterSize[1], strides[1], paddingLeft,
-                                                    paddingRight);
-            return {static_cast<const uint32_t>(paddingTop),
-                    static_cast<const uint32_t>(paddingBottom),
-                    static_cast<const uint32_t>(paddingLeft),
-                    static_cast<const uint32_t>(paddingRight)};
+            auto padding = utils::ComputeImplicitPaddingForAutoPad(
+                options, {inputDims[2], inputDims[3]}, filterSize);
+            std::vector<const uint32_t> paddingConst(padding.begin(), padding.end());
+            return paddingConst;
         }
 
         template <typename T>
@@ -456,21 +444,6 @@ namespace webnn::native::dml {
                                                     ::dml::Expression filter) {
             ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
             return ImplicitPadding(options, input, {filterDims[2], filterDims[3]});
-        }
-
-        std::vector<const uint32_t> ImplicitPaddingforConvTranpose2d(
-            const ConvTranspose2dOptions* options,
-            ::dml::TensorDimensions inputDims,
-            ::dml::TensorDimensions filterDims) {
-            std::vector<int32_t> inputSize = {static_cast<int32_t>(inputDims[2]),
-                                              static_cast<int32_t>(inputDims[3])};
-            std::vector<int32_t> filterSize = {static_cast<int32_t>(filterDims[2]),
-                                               static_cast<int32_t>(filterDims[3])};
-            std::vector<int32_t> padding = utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(
-                options, inputSize, filterSize);
-            std::vector<const uint32_t> paddingUint(padding.begin(), padding.end());
-
-            return paddingUint;
         }
 
         template <typename T>
@@ -970,9 +943,16 @@ namespace webnn::native::dml {
 
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
         ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
-        auto padding = options->autoPad == wnn::AutoPad::Explicit
-                           ? ExplicitPadding<ConvTranspose2dOptions>(options)
-                           : ImplicitPaddingforConvTranpose2d(options, inputDims, filterDims);
+        std::vector<const uint32_t> padding(4);
+        if (options->autoPad == wnn::AutoPad::Explicit) {
+            padding = ExplicitPadding<ConvTranspose2dOptions>(options);
+        } else {
+            std::vector<uint32_t> inputSize = {inputDims[2], inputDims[3]};
+            std::vector<uint32_t> filterSize = {filterDims[2], filterDims[3]};
+            auto implicitPadding = utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(
+                options, inputSize, filterSize);
+            padding = std::vector<const uint32_t>(implicitPadding.begin(), implicitPadding.end());
+        }
         // dml::Span just holds the refernces, need a variable to hold the memory.
         std::vector<const uint32_t> startPaddingVector = {padding[0], padding[2]};
         ::dml::Span<const uint32_t> startPadding(startPaddingVector);

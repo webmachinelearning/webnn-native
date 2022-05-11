@@ -118,7 +118,6 @@ source_set("sources") {
     "Operand.h",
     "Operator.cpp",
     "Operator.h",
-    "Utils.cpp",
     "Utils.h",
   ]
 

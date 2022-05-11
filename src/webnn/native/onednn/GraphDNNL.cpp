@@ -656,12 +656,12 @@ namespace webnn::native::onednn {
         int32_t paddingRight = options->padding[3];
 
         if (options->autoPad != wnn::AutoPad::Explicit) {
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0],
-                                                    inputDims[2], filterDims[2], strides[0],
-                                                    paddingTop, paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1],
-                                                    inputDims[3], filterDims[3], strides[1],
-                                                    paddingLeft, paddingRight);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[0], inputDims[2], filterDims[2], strides[0],
+                paddingTop, paddingBottom);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[1], inputDims[3], filterDims[3], strides[1],
+                paddingLeft, paddingRight);
         }
 
         std::vector<dnnl_dim_t> padding_l = {paddingTop, paddingLeft};

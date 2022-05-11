@@ -620,20 +620,11 @@ namespace webnn::native::mlas {
                                            inputOperand->Shape()[2], inputOperand->Shape()[3]};
         std::vector<int64_t> kernelShape = {filterOperand->Shape()[2], filterOperand->Shape()[3]};
         std::vector<int64_t> dilationShape = {options->dilations[0], options->dilations[1]};
-        int32_t paddingBeginningHeight = options->padding[0],
-                paddingEndingHeight = options->padding[1],
-                paddingBeginningWidth = options->padding[2],
-                paddingEndingWidth = options->padding[3];
+        std::vector<int64_t> padding(options->padding, options->padding + options->paddingCount);
         if (options->autoPad != wnn::AutoPad::Explicit) {
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[0],
-                                                    inputHeight, filterHeight, options->strides[0],
-                                                    paddingBeginningHeight, paddingEndingHeight);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1],
-                                                    inputWidth, filterWidth, options->strides[1],
-                                                    paddingBeginningWidth, paddingEndingWidth);
+            std::vector<int64_t> inputSize = {inputHeight, inputWidth};
+            padding = utils::ComputeImplicitPaddingForAutoPad(options, inputSize, kernelShape);
         }
-        std::vector<int64_t> padding = {paddingBeginningHeight, paddingEndingHeight,
-                                        paddingBeginningWidth, paddingEndingWidth};
         std::vector<int64_t> strideShape = {options->strides[0], options->strides[1]};
         const OperandBase* outputOperand = conv2d->PrimaryOutput();
         std::vector<int64_t> outputShape = {outputOperand->Shape()[0], outputOperand->Shape()[1],
@@ -848,20 +839,11 @@ namespace webnn::native::mlas {
             options->windowDimensions ? options->windowDimensions[0] : inputOperand->Shape()[2],
             options->windowDimensions ? options->windowDimensions[1] : inputOperand->Shape()[3]};
         std::vector<int64_t> dilationShape = {options->dilations[0], options->dilations[1]};
-        int32_t paddingBeginningHeight = options->padding[0],
-                paddingEndingHeight = options->padding[1],
-                paddingBeginningWidth = options->padding[2],
-                paddingEndingWidth = options->padding[3];
+        std::vector<int64_t> padding(options->padding, options->padding + options->paddingCount);
         if (options->autoPad != wnn::AutoPad::Explicit) {
-            utils::ComputeImplicitPaddingForAutoPad(
-                options->autoPad, options->dilations[0], inputHeight, kernelShape[0],
-                options->strides[0], paddingBeginningHeight, paddingEndingHeight);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, options->dilations[1],
-                                                    inputWidth, kernelShape[1], options->strides[1],
-                                                    paddingBeginningWidth, paddingEndingWidth);
+            std::vector<int64_t> inputSize = {inputHeight, inputWidth};
+            padding = utils::ComputeImplicitPaddingForAutoPad(options, inputSize, kernelShape);
         }
-        std::vector<int64_t> padding = {paddingBeginningHeight, paddingEndingHeight,
-                                        paddingBeginningWidth, paddingEndingWidth};
         std::vector<int64_t> strideShape = {options->strides[0], options->strides[1]};
 
         bool reorderInput = true;
