@@ -110,6 +110,8 @@ namespace webnn::native::nnapi {
                                     float alpha);
         MaybeError AddSigmoidImpl(const std::shared_ptr<NodeInfo>& inputNode,
                                   std::shared_ptr<NodeInfo> outputNode);
+        MaybeError AddReluImpl(const std::shared_ptr<NodeInfo>& inputNode,
+                               std::shared_ptr<NodeInfo> outputNode);
 
         template <class T>
         std::shared_ptr<NodeInfo> CreateOperand(std::string name,
@@ -224,6 +226,6 @@ namespace webnn::native::nnapi {
         std::vector<std::unique_ptr<int32_t>> memInt32Vec;
     };
 
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NNAPI_MODEL_NN_H_

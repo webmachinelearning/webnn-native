@@ -97,6 +97,6 @@ namespace webnn::native::nnapi {
 
         return {};
     }
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
 
 #endif

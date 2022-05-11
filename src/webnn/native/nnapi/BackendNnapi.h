@@ -33,6 +33,6 @@ namespace webnn::native::nnapi {
       private:
     };
 
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_IE_BACKEND_NNAPI_H_

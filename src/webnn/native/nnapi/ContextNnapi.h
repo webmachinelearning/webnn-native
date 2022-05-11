@@ -29,6 +29,6 @@ namespace webnn::native::nnapi {
         GraphBase* CreateGraphImpl() override;
     };
 
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
 
 #endif  // WEBNN_NATIVE_NNAPI_CONTEXT_NN_H_

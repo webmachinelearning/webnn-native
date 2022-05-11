@@ -72,7 +72,187 @@ namespace webnn::native::nnapi {
     }
 
     MaybeError Graph::AddBatchNorm(const op::BatchNorm* batchNorm) {
-        DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED, "nnapi Batch norm"));
+        const BatchNormOptions* options = batchNorm->GetOptions();
+
+        // Get Inputs
+        auto inputOpIndex = mGraphNodeMap[batchNorm->Inputs()[0].Get()];
+        auto inputNodeInfo = mIndexNodeMap[inputOpIndex];
+
+        auto meanOpIndex = mGraphNodeMap[batchNorm->Inputs()[1].Get()];
+        auto meanNodeInfo = mIndexNodeMap[meanOpIndex];
+
+        auto varianceOpIndex = mGraphNodeMap[batchNorm->Inputs()[2].Get()];
+        auto varianceNodeInfo = mIndexNodeMap[varianceOpIndex];
+
+        float epsilon = options->epsilon;
+        std::vector<float> epsVec(1, epsilon);
+        std::vector<uint32_t> _dims({1});
+        auto epsilonNode = CreateOperand("epsilon", wnn::OperandType::Float32, _dims, &epsVec[0]);
+        DAWN_TRY(CheckForNullNode(epsilonNode, "Failed to create NNAPI operand"));
+
+        uint32_t scaleOpIndex = 99999;
+        std::shared_ptr<NodeInfo> scaleNodeInfo;
+        uint32_t biasOpIndex = 99999;
+        std::shared_ptr<NodeInfo> biasNodeInfo;
+
+        if (batchNorm->Inputs().size() == 5) {
+            scaleOpIndex = mGraphNodeMap[batchNorm->Inputs()[3].Get()];
+            scaleNodeInfo = mIndexNodeMap[scaleOpIndex];
+
+            biasOpIndex = mGraphNodeMap[batchNorm->Inputs()[4].Get()];
+            biasNodeInfo = mIndexNodeMap[biasOpIndex];
+        } else if (batchNorm->Inputs().size() == 4) {
+            if (options->bias) {
+                biasOpIndex = mGraphNodeMap[batchNorm->Inputs()[3].Get()];
+                biasNodeInfo = mIndexNodeMap[biasOpIndex];
+            } else {
+                scaleOpIndex = mGraphNodeMap[batchNorm->Inputs()[3].Get()];
+                scaleNodeInfo = mIndexNodeMap[scaleOpIndex];
+            }
+        } else {
+            dawn::ErrorLog() << "No Scale and bias";
+        }
+
+        // Define Output
+        auto outputDims = batchNorm->PrimaryOutput()->Shape();
+        auto outputNode = CreateOperand("", inputNodeInfo->type, outputDims, nullptr);
+        DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+
+        // Reshape to [1,C,1,1] or [1,1,1,C]
+        auto axis = options->axis;
+        auto dims = inputNodeInfo->dimensions.size();
+        auto noChannels = inputNodeInfo->dimensions[axis];
+        memInt32Vec.emplace_back(new int(dims));
+        int32_t* shapeVec = memInt32Vec.back().get();
+        for (size_t i = 0; i < 4; i++) {
+            shapeVec[i] = static_cast<uint32_t>(1);
+        }
+        shapeVec[axis] = noChannels;
+        auto reshapeNodeDims = std::vector<uint32_t>({static_cast<uint32_t>(dims)});
+        auto shapeNode =
+            CreateOperand("reshape", wnn::OperandType::Int32, reshapeNodeDims, &shapeVec[0]);
+        DAWN_TRY(CheckForNullNode(shapeNode, "Failed to create NNAPI operand"));
+
+        std::vector<int32_t> reshapeDims(dims, 1);
+        reshapeDims[axis] = noChannels;
+        std::vector<uint32_t> inputListReshapeMean = {meanOpIndex, shapeNode->opIndex};
+        auto meanReshapeNode = CreateOperand("", meanNodeInfo->type, reshapeDims, nullptr);
+        DAWN_TRY(CheckForNullNode(meanReshapeNode, "Failed to create NNAPI operand"));
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_RESHAPE, inputListReshapeMean.size(),
+                                         inputListReshapeMean.data(), 1,
+                                         &meanReshapeNode->opIndex));
+        std::vector<uint32_t> inputListReshapeVar = {varianceOpIndex, shapeNode->opIndex};
+        auto varReshapeNode = CreateOperand("", varianceNodeInfo->type, reshapeDims, nullptr);
+        DAWN_TRY(CheckForNullNode(varReshapeNode, "Failed to create NNAPI operand"));
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_RESHAPE, inputListReshapeVar.size(),
+                                         inputListReshapeVar.data(), 1, &varReshapeNode->opIndex));
+
+        // Sub x-xbar
+        int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
+        uint32_t input2OpIndex = 0;
+        DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, input2OpIndex));
+        auto subNode =
+            CreateOperand("", inputNodeInfo->type, batchNorm->PrimaryOutput()->Shape(), nullptr);
+        DAWN_TRY(CheckForNullNode(subNode, "Failed to create NNAPI operand"));
+        std::vector<uint32_t> inputListSub = {inputOpIndex, meanReshapeNode->opIndex,
+                                              input2OpIndex};
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_SUB, inputListSub.size(),
+                                         inputListSub.data(), 1, &subNode->opIndex));
+        // Add var + eps
+        auto addNode = CreateOperand("", varReshapeNode->type, reshapeDims, nullptr);
+        DAWN_TRY(CheckForNullNode(addNode, "Failed to create NNAPI operand"));
+        std::vector<uint32_t> inputListAdd = {varReshapeNode->opIndex, epsilonNode->opIndex,
+                                              input2OpIndex};
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputListAdd.size(),
+                                         inputListAdd.data(), 1, &addNode->opIndex));
+        // sqrt of (var+eps)
+        auto powNode = CreateOperand("", varReshapeNode->type, reshapeDims, nullptr);
+        DAWN_TRY(CheckForNullNode(powNode, "Failed to create NNAPI operand"));
+        float expValue = 0.5;
+        std::vector<float> expValVec(1, expValue);
+        auto expValNode = CreateOperand("expVal", wnn::OperandType::Float32, _dims, &expValVec[0]);
+        DAWN_TRY(CheckForNullNode(expValNode, "Failed to create NNAPI operand"));
+
+        std::vector<uint32_t> inputListPow = {addNode->opIndex, expValNode->opIndex};
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_POW, inputListPow.size(),
+                                         inputListPow.data(), 1, &powNode->opIndex));
+        // Div subnode/pownode
+        std::vector<uint32_t> inputListDiv = {subNode->opIndex, powNode->opIndex, input2OpIndex};
+        DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_DIV, inputListDiv.size(),
+                                         inputListDiv.data(), 1, &outputNode->opIndex));
+        uint32_t outputOpIndex = outputNode->opIndex;
+
+        // multiply scale
+        if (options->scale) {
+            // Reshape
+            auto scaleReshapeNode = CreateOperand("", scaleNodeInfo->type, reshapeDims, nullptr);
+            DAWN_TRY(CheckForNullNode(scaleReshapeNode, "Failed to create NNAPI operand"));
+            std::vector<uint32_t> inputListReshapeScale = {scaleOpIndex, shapeNode->opIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_RESHAPE, inputListReshapeScale.size(),
+                                             inputListReshapeScale.data(), 1,
+                                             &scaleReshapeNode->opIndex));
+
+            // NodeInfo mulNode;
+            auto mulNode = CreateOperand("", inputNodeInfo->type,
+                                         batchNorm->PrimaryOutput()->Shape(), nullptr);
+            DAWN_TRY(CheckForNullNode(mulNode, "Failed to create NNAPI operand"));
+            std::vector<uint32_t> inputListMul = {scaleReshapeNode->opIndex, outputOpIndex,
+                                                  input2OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputListMul.size(),
+                                             inputListMul.data(), 1, &mulNode->opIndex));
+            outputOpIndex = mulNode->opIndex;
+        }
+        // Add shift(bias)
+        if (options->bias) {
+            auto biasReshapeNode = CreateOperand("", biasNodeInfo->type, reshapeDims, nullptr);
+            DAWN_TRY(CheckForNullNode(biasReshapeNode, "Failed to create NNAPI operand"));
+            std::vector<uint32_t> inputListReshapeBias = {biasOpIndex, shapeNode->opIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_RESHAPE, inputListReshapeBias.size(),
+                                             inputListReshapeBias.data(), 1,
+                                             &biasReshapeNode->opIndex));
+
+            auto addBiasNode = CreateOperand("", inputNodeInfo->type,
+                                             batchNorm->PrimaryOutput()->Shape(), nullptr);
+            DAWN_TRY(CheckForNullNode(addBiasNode, "Failed to create NNAPI operand"));
+            std::vector<uint32_t> inputList = {outputOpIndex, biasReshapeNode->opIndex,
+                                               input2OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList.size(),
+                                             inputList.data(), 1, &addBiasNode->opIndex));
+            outputOpIndex = addBiasNode->opIndex;
+        }
+        if (options->activation != nullptr) {
+            std::shared_ptr<NodeInfo> finalOutputNode;
+            finalOutputNode = mIndexNodeMap[outputOpIndex];
+
+            if (options->activation->GetFusionType() == FusionType::Relu) {
+                auto activationNode =
+                    CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
+                DAWN_TRY(AddReluImpl(finalOutputNode, activationNode));
+                outputOpIndex = activationNode->opIndex;
+            } else if (options->activation->GetFusionType() == FusionType::Clamp) {
+                auto activationNode =
+                    CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
+                auto clamp = reinterpret_cast<const op::FusionClamp*>(options->activation);
+                DAWN_TRY(AddClampImpl(finalOutputNode, activationNode, clamp->GetMinValue(),
+                                      clamp->GetMaxValue()));
+                outputOpIndex = activationNode->opIndex;
+            } else if (options->activation->GetFusionType() == FusionType::LeakyRelu) {
+                auto activationNode =
+                    CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
+                auto leakyRelu = reinterpret_cast<const op::FusionLeakyRelu*>(options->activation);
+                DAWN_TRY(AddLeakyReluImpl(finalOutputNode, activationNode, leakyRelu->GetAlpha()));
+                outputOpIndex = activationNode->opIndex;
+            } else if (options->activation->GetFusionType() == FusionType::Sigmoid) {
+                auto activationNode =
+                    CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
+                DAWN_TRY(AddSigmoidImpl(finalOutputNode, activationNode));
+                outputOpIndex = activationNode->opIndex;
+            } else {
+                dawn::ErrorLog() << "Unsupported activation";
+            }
+        }
+        mGraphNodeMap[batchNorm->PrimaryOutput()] = outputOpIndex;
+
         return {};
     }
 
@@ -182,6 +362,60 @@ namespace webnn::native::nnapi {
             std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex, input2OpIndex};
             DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList.size(),
                                              inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kSub) {
+            int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
+            uint32_t input2OpIndex = 0;
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            DAWN_TRY(
+                mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, input2OpIndex));
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex, input2OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_SUB, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kMul) {
+            int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
+            uint32_t input2OpIndex = 0;
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            DAWN_TRY(
+                mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, input2OpIndex));
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex, input2OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kDiv) {
+            int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
+            uint32_t input2OpIndex = 0;
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            DAWN_TRY(
+                mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, input2OpIndex));
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex, input2OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_DIV, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kMax) {
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAXIMUM, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kMin) {
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MINIMUM, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
+        } else if (binary->GetType() == op::BinaryOpType::kPower) {
+            auto outputNode = CreateOperand("", input0NodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
+            mGraphNodeMap[binary->PrimaryOutput()] = outputNode->opIndex;
+            std::vector<uint32_t> inputList = {input0OpIndex, input1OpIndex};
+            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_POW, inputList.size(),
+                                             inputList.data(), 1, &outputNode->opIndex));
         } else if (binary->GetType() == op::BinaryOpType::kMatMul) {
             uint32_t outIndex;
             DAWN_TRY(AddMatMulImpl(input0NodeInfo, input1NodeInfo, outputDims, outIndex));
@@ -232,6 +466,14 @@ namespace webnn::native::nnapi {
         uint32_t inputList = inputNode->opIndex;
         DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_LOGISTIC, 1, &inputList, 1,
                                          &outputNode->opIndex));
+        return {};
+    }
+
+    MaybeError Graph::AddReluImpl(const std::shared_ptr<NodeInfo>& inputNode,
+                                  std::shared_ptr<NodeInfo> outputNode) {
+        uint32_t inputList = inputNode->opIndex;
+        DAWN_TRY(
+            mNnapiMgr->AddOperation(ANEURALNETWORKS_RELU, 1, &inputList, 1, &outputNode->opIndex));
         return {};
     }
 
@@ -326,6 +568,10 @@ namespace webnn::native::nnapi {
         const Pool2dOptions* options = pool2d->GetOptions();
 
         // input
+        auto inputShape = pool2d->Inputs()[0]->Shape();
+        bool nchw = options->layout == wnn::InputOperandLayout::Nchw;
+        int32_t inputHeight = nchw ? inputShape[2] : inputShape[1];
+        int32_t inputWidth = nchw ? inputShape[3] : inputShape[2];
         auto inputOpIndex = mGraphNodeMap[pool2d->Inputs()[0].Get()];
         auto inputNodeInfo = mIndexNodeMap[inputOpIndex];
 
@@ -341,15 +587,17 @@ namespace webnn::native::nnapi {
         int32_t paddingBottom = options->padding ? options->padding[1] : 0;
         int32_t strideWidth = options->strides ? options->strides[1] : 0;
         int32_t strideHeight = options->strides ? options->strides[0] : 0;
-        int32_t filterWidth = options->windowDimensions ? options->windowDimensions[1] : 0;
-        int32_t filterHeight = options->windowDimensions ? options->windowDimensions[0] : 0;
-        int32_t dilationWidth = options->windowDimensions ? options->dilations[1] : 0;
-        int32_t dilationHeight = options->windowDimensions ? options->dilations[0] : 0;
+        int32_t filterWidth =
+            options->windowDimensions == nullptr ? inputWidth : options->windowDimensions[1];
+        int32_t filterHeight =
+            options->windowDimensions == nullptr ? inputHeight : options->windowDimensions[0];
+        int32_t dilationWidth = options->dilations ? options->dilations[1] : 0;
+        int32_t dilationHeight = options->dilations ? options->dilations[0] : 0;
         int8_t layout = (options->layout == wnn::InputOperandLayout::Nhwc) ? 0 : 1;
         uint32_t fuseOperation = 0;
 
         if (dilationWidth > 1 && dilationHeight > 1) {
-            dawn::ErrorLog() << "MaxPool2D: No Dilation support ";
+            dawn::ErrorLog() << "AddPool2D: No Dilation support ";
             return DAWN_VALIDATION_ERROR("Dilation is not yet supported");
         }
 
@@ -381,8 +629,26 @@ namespace webnn::native::nnapi {
                                                strideHOp,     filterWOp,        filterHOp,
                                                fuseOp,        layoutOp};
 
-            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
-                                             inputList.data(), 1, &outputNode->opIndex));
+            switch (pool2d->GetType()) {
+                case op::Pool2dType::kAveragePool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_AVERAGE_POOL_2D,
+                                                     inputList.size(), inputList.data(), 1,
+                                                     &outputNode->opIndex));
+                    break;
+                case op::Pool2dType::kL2Pool2d:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi L2Pool2d unsupported operation"));
+                    break;
+                case op::Pool2dType::kMaxPool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
+                                                     inputList.data(), 1, &outputNode->opIndex));
+                    break;
+                default:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi Pool2D unsupported operation"));
+                    break;
+            }
+
         } else {
             int32_t height = (options->layout == wnn::InputOperandLayout::Nchw)
                                  ? inputNodeInfo->dimensions[2]
@@ -391,12 +657,12 @@ namespace webnn::native::nnapi {
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
-            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[0], height,
-                                                    filterHeight, options->strides[0], paddingTop,
-                                                    paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[1], width,
-                                                    filterWidth, options->strides[1], paddingLeft,
-                                                    paddingRight);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[0], height, filterHeight, options->strides[0],
+                paddingTop, paddingBottom);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[1], width, filterWidth, options->strides[1],
+                paddingLeft, paddingRight);
 
             DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &paddingLeft,
                                                     paddingLeftWOp));
@@ -422,8 +688,25 @@ namespace webnn::native::nnapi {
                                                strideHOp,     filterWOp,        filterHOp,
                                                fuseOp,        layoutOp};
 
-            DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
-                                             inputList.data(), 1, &outputNode->opIndex));
+            switch (pool2d->GetType()) {
+                case op::Pool2dType::kAveragePool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_AVERAGE_POOL_2D,
+                                                     inputList.size(), inputList.data(), 1,
+                                                     &outputNode->opIndex));
+                    break;
+                case op::Pool2dType::kL2Pool2d:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi L2Pool2d unsupported operation"));
+                    break;
+                case op::Pool2dType::kMaxPool2d:
+                    DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MAX_POOL_2D, inputList.size(),
+                                                     inputList.data(), 1, &outputNode->opIndex));
+                    break;
+                default:
+                    DAWN_TRY(CheckStatusCode(ANEURALNETWORKS_OP_FAILED,
+                                             "nnapi Pool2D unsupported operation"));
+                    break;
+            }
         }
         return {};
     }
@@ -588,12 +871,14 @@ namespace webnn::native::nnapi {
                                 ? inputNodeInfo->dimensions[3]
                                 : inputNodeInfo->dimensions[2];
 
-            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[0], height,
-                                                    getFilterHeight(filterNodeInfo->dimensions),
-                                                    options->strides[0], paddingTop, paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad<int32_t>(options->autoPad, options->dilations[1], width,
-                                                    getFilterWidth(filterNodeInfo->dimensions),
-                                                    options->strides[1], paddingLeft, paddingRight);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[0], height,
+                getFilterHeight(filterNodeInfo->dimensions), options->strides[0], paddingTop,
+                paddingBottom);
+            utils::ComputeImplicitPaddingForAutoPad<int32_t>(
+                options->autoPad, options->dilations[1], width,
+                getFilterWidth(filterNodeInfo->dimensions), options->strides[1], paddingLeft,
+                paddingRight);
         }
 
         if (options->activation != nullptr &&
@@ -676,7 +961,7 @@ namespace webnn::native::nnapi {
                 auto activationNode =
                     CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
                 DAWN_TRY(CheckForNullNode(activationNode, "Failed to create NNAPI operand"));
-                auto clamp = reinterpret_cast<const op::Clamp*>(options->activation);
+                auto clamp = reinterpret_cast<const op::FusionClamp*>(options->activation);
                 DAWN_TRY(AddClampImpl(outputNode, activationNode, clamp->GetMinValue(),
                                       clamp->GetMaxValue()));
                 mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode->opIndex;
@@ -684,7 +969,7 @@ namespace webnn::native::nnapi {
                 auto activationNode =
                     CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
                 DAWN_TRY(CheckForNullNode(activationNode, "Failed to create NNAPI operand"));
-                auto leakyRelu = reinterpret_cast<const op::LeakyRelu*>(options->activation);
+                auto leakyRelu = reinterpret_cast<const op::FusionLeakyRelu*>(options->activation);
                 DAWN_TRY(AddLeakyReluImpl(outputNode, activationNode, leakyRelu->GetAlpha()));
                 mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode->opIndex;
             } else if (options->activation->GetFusionType() == FusionType::Sigmoid) {
@@ -692,6 +977,12 @@ namespace webnn::native::nnapi {
                     CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
                 DAWN_TRY(CheckForNullNode(activationNode, "Failed to create NNAPI operand"));
                 DAWN_TRY(AddSigmoidImpl(outputNode, activationNode));
+                mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode->opIndex;
+            } else if (options->activation->GetFusionType() == FusionType::Relu) {
+                auto activationNode =
+                    CreateOperand("", outputNode->type, outputNode->dimensions, nullptr);
+                DAWN_TRY(CheckForNullNode(activationNode, "Failed to create NNAPI operand"));
+                DAWN_TRY(AddReluImpl(outputNode, activationNode));
                 mGraphNodeMap[conv2d->PrimaryOutput()] = activationNode->opIndex;
             } else {
                 mGraphNodeMap[conv2d->PrimaryOutput()] = outputNode->opIndex;
@@ -814,106 +1105,97 @@ namespace webnn::native::nnapi {
 
         // inputs
         auto inputAOpIndex = mGraphNodeMap[gemm->Inputs()[0].Get()];  // A
-        auto inputANodeInfo = mGraphOperandInfo[inputAOpIndex];
+        auto inputANodeInfo = mIndexNodeMap[inputAOpIndex];
         auto inputBOpIndex = mGraphNodeMap[gemm->Inputs()[1].Get()];  // B
-        auto inputBNodeInfo = mGraphOperandInfo[inputBOpIndex];
+        auto inputBNodeInfo = mIndexNodeMap[inputBOpIndex];
 
         // output
         auto outputDims = gemm->PrimaryOutput()->Shape();
 
         if (options->aTranspose) {
-            NodeInfo transposedNodeA;
+            std::shared_ptr<NodeInfo> transposedNodeA;
             memInt32Vec.emplace_back(new int(2));
             int32_t* permute = memInt32Vec.back().get();
             permute[0] = 1;
             permute[1] = 0;
-            DAWN_TRY(AddTransposeImpl(inputANodeInfo, transposedNodeA, permute, 2));
-            mGraphOperandInfo[transposedNodeA.opIndex] = transposedNodeA;
-            inputANodeInfo = mGraphOperandInfo[transposedNodeA.opIndex];
+            DAWN_TRY(AddTransposeImpl(inputANodeInfo, permute, 2, inputAOpIndex));
+            inputANodeInfo = mIndexNodeMap[inputAOpIndex];
         }
         if (options->bTranspose) {
-            NodeInfo transposedNodeB;
+            std::shared_ptr<NodeInfo> transposedNodeB;
             memInt32Vec.emplace_back(new int(2));
             int32_t* permute = memInt32Vec.back().get();
             permute[0] = 1;
             permute[1] = 0;
-            DAWN_TRY(AddTransposeImpl(inputBNodeInfo, transposedNodeB, permute, 2));
-            mGraphOperandInfo[transposedNodeB.opIndex] = transposedNodeB;
-            inputBNodeInfo = mGraphOperandInfo[transposedNodeB.opIndex];
+            DAWN_TRY(AddTransposeImpl(inputBNodeInfo, permute, 2, inputBOpIndex));
+            inputBNodeInfo = mIndexNodeMap[inputBOpIndex];
         }
 
         // operation: gemm = alpha*A*B + beta*C
-        // matMulNode = A*B
-        NodeInfo matMulNode;
-        matMulNode.type = inputANodeInfo.type;
-        matMulNode.dimensions.resize(outputDims.size());
-        DAWN_TRY(AddMatMulImpl(inputANodeInfo, inputBNodeInfo, matMulNode, outputDims,
-                               matMulNode.opIndex));
+        // matMul = A*B
+        uint32_t matMuloutIndex;
+        DAWN_TRY(AddMatMulImpl(inputANodeInfo, inputBNodeInfo, outputDims, matMuloutIndex));
 
-        uint32_t outputOpIndex = 0;
+        uint32_t outputOpIndex = 99999;
         int32_t fuseCode = ANEURALNETWORKS_FUSED_NONE;
         uint32_t fuseCodeOpIndex = 0;
         DAWN_TRY(mNnapiMgr->CreateScalarOperand(ANEURALNETWORKS_INT32, &fuseCode, fuseCodeOpIndex));
 
         if (options->alpha == 1)
-            outputOpIndex = matMulNode.opIndex;
+            outputOpIndex = matMuloutIndex;
         else {
             float alpha = options->alpha;
             std::vector<float> alphaVec(1, alpha);
-            NodeInfo alphaNode;
-            alphaNode.type = ml::OperandType::Float32;
-            alphaNode.dimensions = {1};
-            DAWN_TRY(mNnapiMgr->CreateOperandAndSetMemory("alpha", &alphaNode, &alphaVec[0]));
+            std::vector<uint32_t> dims({1});
+            auto alphaNode = CreateOperand("alpha", wnn::OperandType::Float32, dims, &alphaVec[0]);
+            DAWN_TRY(CheckForNullNode(alphaNode, "Failed to create NNAPI operand"));
 
             // mulNode0 = alpha*matMulNode
-            NodeInfo mulNode0;
-            DAWN_TRY(CreateNode(mulNode0, matMulNode.type, gemm->PrimaryOutput()->Shape()));
-            std::vector<uint32_t> inputList = {alphaNode.opIndex, matMulNode.opIndex,
-                                               fuseCodeOpIndex};
+            auto mulNode0 = CreateOperand("", inputANodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(mulNode0, "Failed to create NNAPI operand"));
+            std::vector<uint32_t> inputList = {alphaNode->opIndex, matMuloutIndex, fuseCodeOpIndex};
             DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputList.size(),
-                                             inputList.data(), 1, &mulNode0.opIndex));
-            mGraphOperandInfo[mulNode0.opIndex] = mulNode0;
-
-            outputOpIndex = mulNode0.opIndex;
+                                             inputList.data(), 1, &mulNode0->opIndex));
+            outputOpIndex = mulNode0->opIndex;
         }
 
         if (inputs.size() > 2) {  // Check for C
             auto inputCOpIndex = mGraphNodeMap[gemm->Inputs()[2].Get()];
-            auto inputCNodeInfo = mGraphOperandInfo[inputCOpIndex];
+            auto inputCNodeInfo = mIndexNodeMap[inputCOpIndex];
 
-            NodeInfo outputNode;
-            DAWN_TRY(CreateNode(outputNode, inputANodeInfo.type, gemm->PrimaryOutput()->Shape()));
+            auto outputNode = CreateOperand("", inputANodeInfo->type, outputDims, nullptr);
+            DAWN_TRY(CheckForNullNode(outputNode, "Failed to create NNAPI operand"));
 
             if (options->beta == 1) {
                 // output = mulNode0 + NodeC
-                std::vector<uint32_t> inputList4 = {outputOpIndex, inputCNodeInfo.opIndex,
+                std::vector<uint32_t> inputList4 = {outputOpIndex, inputCNodeInfo->opIndex,
                                                     fuseCodeOpIndex};
                 DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList4.size(),
-                                                 inputList4.data(), 1, &outputNode.opIndex));
+                                                 inputList4.data(), 1, &outputNode->opIndex));
             } else {
                 // mulNode1 = beta*C
                 float beta = options->beta;
                 std::vector<float> betaVec(1, beta);
-                NodeInfo betaNode;
-                betaNode.type = ml::OperandType::Float32;
-                betaNode.dimensions = {1};
-                DAWN_TRY(mNnapiMgr->CreateOperandAndSetMemory("beta", &betaNode, &betaVec[0]));
+                std::vector<uint32_t> dims({1});
+                auto betaNode = CreateOperand("beta", wnn::OperandType::Float32, dims, &betaVec[0]);
+                DAWN_TRY(CheckForNullNode(betaNode, "Failed to create NNAPI operand"));
 
-                NodeInfo mulNode1;
-                DAWN_TRY(CreateNode(mulNode1, inputCNodeInfo.type, gemm->Inputs()[2]->Shape()));
-                std::vector<uint32_t> inputList2 = {betaNode.opIndex, inputCNodeInfo.opIndex,
+                auto mulNode1 =
+                    CreateOperand("", inputCNodeInfo->type, gemm->Inputs()[2]->Shape(), nullptr);
+                DAWN_TRY(CheckForNullNode(mulNode1, "Failed to create NNAPI operand"));
+
+                std::vector<uint32_t> inputList2 = {betaNode->opIndex, inputCNodeInfo->opIndex,
                                                     fuseCodeOpIndex};
                 DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_MUL, inputList2.size(),
-                                                 inputList2.data(), 1, &mulNode1.opIndex));
+                                                 inputList2.data(), 1, &mulNode1->opIndex));
 
                 // output = mulNode0 + mulNode1
-                std::vector<uint32_t> inputList3 = {outputOpIndex, mulNode1.opIndex,
+                std::vector<uint32_t> inputList3 = {outputOpIndex, mulNode1->opIndex,
                                                     fuseCodeOpIndex};
                 DAWN_TRY(mNnapiMgr->AddOperation(ANEURALNETWORKS_ADD, inputList3.size(),
-                                                 inputList3.data(), 1, &outputNode.opIndex));
+                                                 inputList3.data(), 1, &outputNode->opIndex));
             }
-            mGraphOperandInfo[outputNode.opIndex] = outputNode;
-            mGraphNodeMap[gemm->PrimaryOutput()] = outputNode.opIndex;
+            mGraphNodeMap[gemm->PrimaryOutput()] = outputNode->opIndex;
         } else {
             mGraphNodeMap[gemm->PrimaryOutput()] = outputOpIndex;
         }
@@ -1027,4 +1309,4 @@ namespace webnn::native::nnapi {
 
         return {};
     }
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
