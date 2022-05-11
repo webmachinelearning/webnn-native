@@ -1,4 +1,5 @@
 [![clang format](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml)
+[![Memory leak check - DirectML backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dml.yml)
 [![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
 [![DirectML backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
 [![Node Binding (DirectML backend / Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml)

@@ -1,0 +1,60 @@
+name: Check memory leak for DirectML backend (Windows)
+
+on: [push, pull_request]
+
+jobs:
+
+  job:
+
+    runs-on: windows-2019
+
+    steps:
+    - name: Git config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+    - name: Install depot_tools
+      shell: cmd
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git ..\depot_tools
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        gclient
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - uses: actions/checkout@v2
+      with:
+        path: update
+        fetch-depth: 0
+
+    - name: Sync latest code
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        copy scripts\standalone.gclient .gclient
+        gclient sync
+    - name: Generate project for update branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        gn gen out\Debug --args="webnn_enable_dml=true is_debug=true"
+    - name: Build for update branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        cd update
+        ninja -C out\Debug
+    - name: Check memory leak for update branch
+      shell: cmd
+      run: |
+        cd update
+        echo "Run End2End Tests..."
+        out\Debug\webnn_end2end_tests.exe --gtest_filter=-GemmTests.ScalarBias:Pool2dTests.MaxPool2dDilationsDefault:Pool2dTests.MaxPool2dDilationsNhwc:Pool2dTests.*Pool2dAutoPadExplicitOutputSizes4x4Nhwc:Pool2dTests.*Pool2dAutoPadExplicitRoundingTypeCeilNhwc > update_end2endtests.txt || true
+        python workflow_scripts\memory_leak_check.py update_end2endtests.txt
