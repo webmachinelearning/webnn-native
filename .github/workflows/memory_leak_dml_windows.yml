@@ -56,5 +56,5 @@ jobs:
       run: |
         cd update
         echo "Run End2End Tests..."
-        out\Debug\webnn_end2end_tests.exe --gtest_filter=-GemmTests.ScalarBias:Pool2dTests.MaxPool2dDilationsDefault:Pool2dTests.MaxPool2dDilationsNhwc:Pool2dTests.*Pool2dAutoPadExplicitOutputSizes4x4Nhwc:Pool2dTests.*Pool2dAutoPadExplicitRoundingTypeCeilNhwc > update_end2endtests.txt
-        findstr /s /n "Detected memory leaks!" update_end2endtests.txt && python -c "raise Exception('Detected memory leaks!')"
+        out\Debug\webnn_end2end_tests.exe --gtest_filter=-GemmTests.ScalarBias:Pool2dTests.MaxPool2dDilationsDefault:Pool2dTests.MaxPool2dDilationsNhwc:Pool2dTests.*Pool2dAutoPadExplicitOutputSizes4x4Nhwc:Pool2dTests.*Pool2dAutoPadExplicitRoundingTypeCeilNhwc > update_end2endtests.txt || true
+        python workflow_scripts\memory_leak_check.py update_end2endtests.txt
