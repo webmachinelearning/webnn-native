@@ -280,51 +280,38 @@ namespace webnn::native::dmlx {
                 CalculateConvTranspose2dFilterLayoutStrides(filterLayout, filterDims));
         }
 
-        ::dml::TensorDimensions CalculateInputLayoutStrides(TransposeType transposeType,
-                                                            ::dml::TensorDimensions sizes) {
-            uint32_t nStride = 0, cStride = 0, hStride = 0, wStride = 0;
-            switch (transposeType) {
-                case NhwcToNchw:
-                    nStride = sizes[1] * sizes[2] * sizes[3];
-                    hStride = sizes[2] * sizes[3];
-                    wStride = sizes[3];
-                    cStride = 1;
-                    return {nStride, cStride, hStride, wStride};
-                case NchwToNhwc:
-                    nStride = sizes[1] * sizes[2] * sizes[3];
-                    cStride = sizes[2] * sizes[3];
-                    hStride = sizes[3];
-                    wStride = 1;
-                    return {nStride, hStride, wStride, cStride};
-                default:
-                    DAWN_ASSERT(0);
-                    break;
-            }
-        }
-
         ::dml::Expression ReinterpretInputLayout(TransposeType transposeType,
                                                  ::dml::Expression input) {
             ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
             ::dml::TensorDimensions newInputDims;
-            newInputDims.resize(4);
+            ::dml::TensorStrides newStrides;
             switch (transposeType) {
-                case NhwcToNchw:
-                    newInputDims[0] = inputDims[0];
-                    newInputDims[1] = inputDims[3];
-                    newInputDims[2] = inputDims[1];
-                    newInputDims[3] = inputDims[2];
-                    input = ::dml::Reinterpret(input, newInputDims,
-                                               CalculateInputLayoutStrides(NhwcToNchw, inputDims));
+                case NhwcToNchw: {
+                    input.Impl()->GetGraphBuilder()->SetTensorPolicy(
+                        ::dml::TensorPolicy::InterleavedChannel());
+
+                    newInputDims = {inputDims[0], inputDims[3], inputDims[1], inputDims[2]};
+                    uint32_t nStride = 0, cStride = 0, hStride = 0, wStride = 0;
+                    nStride = inputDims[1] * inputDims[2] * inputDims[3];
+                    hStride = inputDims[2] * inputDims[3];
+                    wStride = inputDims[3];
+                    cStride = 1;
+                    newStrides = {nStride, cStride, hStride, wStride};
+                    input = ::dml::Reinterpret(input, newInputDims, newStrides);
                     break;
-                case NchwToNhwc:
-                    newInputDims.resize(4);
-                    newInputDims[0] = inputDims[0];
-                    newInputDims[1] = inputDims[2];
-                    newInputDims[2] = inputDims[3];
-                    newInputDims[3] = inputDims[1];
-                    input = ::dml::Reinterpret(input, newInputDims,
-                                               CalculateInputLayoutStrides(NchwToNhwc, inputDims));
+                }
+                case NchwToNhwc: {
+                    input.Impl()->GetGraphBuilder()->SetTensorPolicy(
+                        ::dml::TensorPolicy::Default());
+
+                    newInputDims = {inputDims[0], inputDims[2], inputDims[3], inputDims[1]};
+                    ::dml::Optional<::dml::TensorStrides> strides = input.GetOutputDesc().strides;
+                    DAWN_ASSERT(strides != ::dml::NullOpt);
+                    newStrides = {strides.value()[0], strides.value()[2], strides.value()[3],
+                                  strides.value()[1]};
+                    input = ::dml::Reinterpret(input, newInputDims, newStrides);
                     break;
+                }
                 default:
                     DAWN_ASSERT(0);
                     break;
@@ -903,6 +890,7 @@ namespace webnn::native::dmlx {
             ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
             bias = ::dml::Reinterpret(*bias, expandDimens, ::dml::NullOpt);
         }
+
         ::dml::Expression output = ::dml::Convolution(
             input, filter, bias, DML_CONVOLUTION_MODE_CROSS_CORRELATION,
             DML_CONVOLUTION_DIRECTION_FORWARD, strides, dilations, startPadding, endPadding,
@@ -910,10 +898,12 @@ namespace webnn::native::dmlx {
             {},
             // groupCount
             options->groups, CreateFusedActivation(options->activation));
-        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
-            output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
-        }
         output = EmulateFusedActivation(options->activation, output);
+
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            output = ReinterpretInputLayout(NchwToNhwc, output);
+        }
+
         mExpression.insert(std::make_pair(conv2d->PrimaryOutput(), output));
         DAWN_ASSERT(CheckShape(output, conv2d));
         return {};
@@ -987,10 +977,10 @@ namespace webnn::native::dmlx {
                                DML_CONVOLUTION_DIRECTION_BACKWARD, strides, dilations, startPadding,
                                endPadding, outputPadding, options->groups,
                                CreateFusedActivation(options->activation), outputShape);
-        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
-            output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
-        }
         output = EmulateFusedActivation(options->activation, output);
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            output = ReinterpretInputLayout(NchwToNhwc, output);
+        }
         mExpression.insert(std::make_pair(convTranspose2d->PrimaryOutput(), output));
         DAWN_ASSERT(CheckShape(output, convTranspose2d));
         return {};
@@ -1077,9 +1067,11 @@ namespace webnn::native::dmlx {
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
         const Pool2dOptions* options = pool2d->GetOptions();
+
         if (options->layout == wnn::InputOperandLayout::Nhwc) {
             input = ReinterpretInputLayout(NhwcToNchw, input);
         }
+
         ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
 
         ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
@@ -1109,6 +1101,7 @@ namespace webnn::native::dmlx {
         ::dml::TensorDimensions outputShape = {inputDims[0], inputDims[1],
                                                static_cast<uint32_t>(outputSizes[0]),
                                                static_cast<uint32_t>(outputSizes[1])};
+
         if (pool2d->GetType() == op::Pool2dType::kAveragePool2d) {
             if (dilations[0] != 1 || dilations[1] != 1) {
                 return DAWN_INTERNAL_ERROR("The dilations of average pool2d are not supported.");
@@ -1145,8 +1138,9 @@ namespace webnn::native::dmlx {
         }
 
         if (options->layout == wnn::InputOperandLayout::Nhwc) {
-            output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
+            output = ReinterpretInputLayout(NchwToNhwc, output);
         }
+
         mExpression.insert(std::make_pair(pool2d->PrimaryOutput(), output));
         DAWN_ASSERT(CheckShape(output, pool2d));
         return {};
