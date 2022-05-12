@@ -16,7 +16,7 @@ vars = {
   'checkout_polyfill': True,
   'checkout_samples': True,
 
-  'dawn_gn_version': 'git_revision:fc295f3ac7ca4fe7acc6cb5fb052d22909ef3a8f',   
+  'dawn_gn_version': 'git_revision:fc295f3ac7ca4fe7acc6cb5fb052d22909ef3a8f',
   # GN variable required by //testing that will be output in the gclient_args.gni
   'generate_location_tags': False
 }
@@ -32,7 +32,7 @@ deps = {
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@d6e843c134f4fa9eabecda91684d7d2e50d711a2',
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@7e77194153fe87d7d20f3cf4b1545429fb8392b9',
     'condition': 'checkout_samples'
   },
   'node/third_party/webnn-samples/test-data': {

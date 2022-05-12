@@ -17,7 +17,6 @@ module.exports = {
       // Copy WebNN libs, source code and dependences of Webnn-samples
       const node_path = '../../../';
       const copy_list = [
-        {"from": `${node_path}node_setup.js`, "to": 'node_setup.js'},
         {"from": `${node_path}lib`, "to": 'lib'},
         {"from": `${node_path}build`, "to": 'build'},
         {"from": `${node_path}third_party/webnn-samples`, "to": 'webnn-samples'},
