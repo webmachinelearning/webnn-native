@@ -59,7 +59,6 @@ def as_cTypeDawn(name):
     else:
         return 'Dawn' + name.CamelCase()
 
-
 def as_cTypeEnumSpecialCase(typ):
     if typ.category == 'bitmask':
         return as_cType(typ.name) + 'Flags'
@@ -206,8 +205,8 @@ class MultiGeneratorFromWebnnJSON(Generator):
 
     def add_commandline_arguments(self, parser):
         allowed_targets = [
-            'webnn_headers', 'webnncpp_headers', 'webnncpp', 'webnn_proc',
-            'mock_webnn', 'webnn_wire', 'webnn_native_utils'
+            'headers', 'cpp_headers', 'cpp', 'proc',
+            'mock_webnn', 'wire', 'native_utils'
         ]
 
         parser.add_argument('--webnn-json',
@@ -271,26 +270,26 @@ class MultiGeneratorFromWebnnJSON(Generator):
 
         renders = []
 
-        if 'webnn_headers' in targets:
+        if 'headers' in targets:
             renders.append(
-                FileRender('webnn.h', 'src/include/webnn/webnn.h',
+                FileRender('webnn.h', 'include/webnn/webnn.h',
                            [base_params, api_params]))
             renders.append(
                 FileRender('webnn_proc_table.h',
-                           'src/include/webnn/webnn_proc_table.h',
+                           'include/webnn/webnn_proc_table.h',
                            [base_params, api_params]))
 
-        if 'webnncpp_headers' in targets:
+        if 'cpp_headers' in targets:
             renders.append(
-                FileRender('webnn_cpp.h', 'src/include/webnn/webnn_cpp.h',
+                FileRender('webnn_cpp.h', 'include/webnn/webnn_cpp.h',
                            [base_params, api_params]))
 
-        if 'webnn_proc' in targets:
+        if 'proc' in targets:
             renders.append(
                 FileRender('webnn_proc.c', 'src/webnn/webnn_proc.c',
                            [base_params, api_params]))
 
-        if 'webnncpp' in targets:
+        if 'cpp' in targets:
             renders.append(
                 FileRender('webnn_cpp.cpp', 'src/webnn/webnn_cpp.cpp',
                            [base_params, api_params]))
@@ -318,7 +317,7 @@ class MultiGeneratorFromWebnnJSON(Generator):
                 FileRender('mock_webnn.cpp', 'src/webnn/mock_webnn.cpp',
                            mock_params))
 
-        if 'webnn_native_utils' in targets:
+        if 'native_utils' in targets:
             frontend_params = [
                 base_params,
                 api_params,
@@ -331,30 +330,30 @@ class MultiGeneratorFromWebnnJSON(Generator):
             ]
 
             renders.append(
-                FileRender('webnn_native/ValidationUtils.h',
-                           'src/webnn_native/ValidationUtils_autogen.h',
+                FileRender('webnn/native/ValidationUtils.h',
+                           'src/webnn/native/ValidationUtils_autogen.h',
                            frontend_params))
             renders.append(
-                FileRender('webnn_native/ValidationUtils.cpp',
-                           'src/webnn_native/ValidationUtils_autogen.cpp',
+                FileRender('webnn/native/ValidationUtils.cpp',
+                           'src/webnn/native/ValidationUtils_autogen.cpp',
                            frontend_params))
             renders.append(
-                FileRender('webnn_native/webnn_structs.h',
-                           'src/webnn_native/webnn_structs_autogen.h',
+                FileRender('webnn/native/webnn_structs.h',
+                           'src/webnn/native/webnn_structs_autogen.h',
                            frontend_params))
             renders.append(
-                FileRender('webnn_native/webnn_structs.cpp',
-                           'src/webnn_native/webnn_structs_autogen.cpp',
+                FileRender('webnn/native/webnn_structs.cpp',
+                           'src/webnn/native/webnn_structs_autogen.cpp',
                            frontend_params))
             renders.append(
-                FileRender('webnn_native/webnn_platform.h',
-                           'src/webnn_native/webnn_platform_autogen.h',
+                FileRender('webnn/native/webnn_platform.h',
+                           'src/webnn/native/webnn_platform_autogen.h',
                            frontend_params))
             renders.append(
-                FileRender('webnn_native/ProcTable.cpp',
-                           'src/webnn_native/ProcTable.cpp', frontend_params))
+                FileRender('webnn/native/ProcTable.cpp',
+                           'src/webnn/native/ProcTable.cpp', frontend_params))
 
-        if 'webnn_wire' in targets:
+        if 'wire' in targets:
             additional_params = compute_wire_params(api_params, wire_json)
 
             wire_params = [
@@ -365,51 +364,51 @@ class MultiGeneratorFromWebnnJSON(Generator):
                 }, additional_params
             ]
             renders.append(
-                FileRender('webnn_wire/ObjectType.h',
-                           'src/webnn_wire/ObjectType_autogen.h', wire_params))
+                FileRender('webnn/wire/ObjectType.h',
+                           'src/webnn/wire/ObjectType_autogen.h', wire_params))
             renders.append(
-                FileRender('webnn_wire/WireCmd.h',
-                           'src/webnn_wire/WireCmd_autogen.h', wire_params))
+                FileRender('webnn/wire/WireCmd.h',
+                           'src/webnn/wire/WireCmd_autogen.h', wire_params))
             renders.append(
-                FileRender('webnn_wire/WireCmd.cpp',
-                           'src/webnn_wire/WireCmd_autogen.cpp', wire_params))
+                FileRender('webnn/wire/WireCmd.cpp',
+                           'src/webnn/wire/WireCmd_autogen.cpp', wire_params))
             renders.append(
-                FileRender('webnn_wire/client/ApiObjects.h',
-                           'src/webnn_wire/client/ApiObjects_autogen.h',
+                FileRender('webnn/wire/client/ApiObjects.h',
+                           'src/webnn/wire/client/ApiObjects_autogen.h',
                            wire_params))
             renders.append(
-                FileRender('webnn_wire/client/ApiProcs.cpp',
-                           'src/webnn_wire/client/ApiProcs_autogen.cpp',
+                FileRender('webnn/wire/client/ApiProcs.cpp',
+                           'src/webnn/wire/client/ApiProcs_autogen.cpp',
                            wire_params))
             renders.append(
-                FileRender('webnn_wire/client/ClientBase.h',
-                           'src/webnn_wire/client/ClientBase_autogen.h',
+                FileRender('webnn/wire/client/ClientBase.h',
+                           'src/webnn/wire/client/ClientBase_autogen.h',
                            wire_params))
             renders.append(
-                FileRender('webnn_wire/client/ClientHandlers.cpp',
-                           'src/webnn_wire/client/ClientHandlers_autogen.cpp',
+                FileRender('webnn/wire/client/ClientHandlers.cpp',
+                           'src/webnn/wire/client/ClientHandlers_autogen.cpp',
                            wire_params))
             renders.append(
                 FileRender(
-                    'webnn_wire/client/ClientPrototypes.inc',
-                    'src/webnn_wire/client/ClientPrototypes_autogen.inc',
+                    'webnn/wire/client/ClientPrototypes.inc',
+                    'src/webnn/wire/client/ClientPrototypes_autogen.inc',
                     wire_params))
             renders.append(
-                FileRender('webnn_wire/server/ServerBase.h',
-                           'src/webnn_wire/server/ServerBase_autogen.h',
+                FileRender('webnn/wire/server/ServerBase.h',
+                           'src/webnn/wire/server/ServerBase_autogen.h',
                            wire_params))
             renders.append(
-                FileRender('webnn_wire/server/ServerDoers.cpp',
-                           'src/webnn_wire/server/ServerDoers_autogen.cpp',
+                FileRender('webnn/wire/server/ServerDoers.cpp',
+                           'src/webnn/wire/server/ServerDoers_autogen.cpp',
                            wire_params))
             renders.append(
-                FileRender('webnn_wire/server/ServerHandlers.cpp',
-                           'src/webnn_wire/server/ServerHandlers_autogen.cpp',
+                FileRender('webnn/wire/server/ServerHandlers.cpp',
+                           'src/webnn/wire/server/ServerHandlers_autogen.cpp',
                            wire_params))
             renders.append(
                 FileRender(
-                    'webnn_wire/server/ServerPrototypes.inc',
-                    'src/webnn_wire/server/ServerPrototypes_autogen.inc',
+                    'webnn/wire/server/ServerPrototypes.inc',
+                    'src/webnn/wire/server/ServerPrototypes_autogen.inc',
                     wire_params))
 
         return renders

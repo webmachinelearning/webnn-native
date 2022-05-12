@@ -16,17 +16,17 @@
 
 #include "common/Assert.h"
 #include "common/Log.h"
-#include "utils/TerribleCommandBuffer.h"
-#include "webnn_native/NamedInputs.h"
-#include "webnn_native/NamedOperands.h"
-#include "webnn_native/NamedOutputs.h"
+#include "webnn/native/NamedInputs.h"
+#include "webnn/native/NamedOperands.h"
+#include "webnn/native/NamedOutputs.h"
+#include "webnn/utils/TerribleCommandBuffer.h"
+#include "webnn/wire/WireClient.h"
+#include "webnn/wire/WireServer.h"
 
+#include <webnn/native/WebnnNative.h>
 #include <webnn/webnn.h>
 #include <webnn/webnn_cpp.h>
 #include <webnn/webnn_proc.h>
-#include <webnn_native/WebnnNative.h>
-#include <webnn_wire/WireClient.h>
-#include <webnn_wire/WireServer.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
@@ -45,16 +45,16 @@ static CmdBufType cmdBufType = CmdBufType::Terrible;
 #else
 static CmdBufType cmdBufType = CmdBufType::None;
 #endif  // defined(WEBNN_ENABLE_WIRE)
-static webnn_wire::WireServer* wireServer = nullptr;
-static webnn_wire::WireClient* wireClient = nullptr;
+static webnn::wire::WireServer* wireServer = nullptr;
+static webnn::wire::WireClient* wireClient = nullptr;
 static utils::TerribleCommandBuffer* c2sBuf = nullptr;
 static utils::TerribleCommandBuffer* s2cBuf = nullptr;
 
 static wnn::Instance clientInstance;
-static std::unique_ptr<webnn_native::Instance> nativeInstance;
+static std::unique_ptr<webnn::native::Instance> nativeInstance;
 wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
-    nativeInstance = std::make_unique<webnn_native::Instance>();
-    WebnnProcTable backendProcs = webnn_native::GetProcs();
+    nativeInstance = std::make_unique<webnn::native::Instance>();
+    WebnnProcTable backendProcs = webnn::native::GetProcs();
     WNNContext backendContext = nativeInstance->CreateContext(options);
     if (backendContext == nullptr) {
         return wnn::Context();
@@ -73,18 +73,18 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
             c2sBuf = new utils::TerribleCommandBuffer();
             s2cBuf = new utils::TerribleCommandBuffer();
 
-            webnn_wire::WireServerDescriptor serverDesc = {};
+            webnn::wire::WireServerDescriptor serverDesc = {};
             serverDesc.procs = &backendProcs;
             serverDesc.serializer = s2cBuf;
 
-            wireServer = new webnn_wire::WireServer(serverDesc);
+            wireServer = new webnn::wire::WireServer(serverDesc);
             c2sBuf->SetHandler(wireServer);
 
-            webnn_wire::WireClientDescriptor clientDesc = {};
+            webnn::wire::WireClientDescriptor clientDesc = {};
             clientDesc.serializer = c2sBuf;
 
-            wireClient = new webnn_wire::WireClient(clientDesc);
-            procs = webnn_wire::client::GetProcs();
+            wireClient = new webnn::wire::WireClient(clientDesc);
+            procs = webnn::wire::client::GetProcs();
             s2cBuf->SetHandler(wireClient);
 
 #ifdef ENABLE_INJECT_CONTEXT

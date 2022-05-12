@@ -48,13 +48,13 @@ namespace node {
         return exports;
     }
 
-    std::unique_ptr<webnn_native::Instance> ML::gInstance;
+    std::unique_ptr<webnn::native::Instance> ML::gInstance;
 
-    webnn_native::Instance* ML::GetInstance() {
+    webnn::native::Instance* ML::GetInstance() {
         if (gInstance == nullptr) {
-            WebnnProcTable backendProcs = webnn_native::GetProcs();
+            WebnnProcTable backendProcs = webnn::native::GetProcs();
             webnnProcSetProcs(&backendProcs);
-            gInstance = std::make_unique<webnn_native::Instance>();
+            gInstance = std::make_unique<webnn::native::Instance>();
         }
         return gInstance.get();
     }

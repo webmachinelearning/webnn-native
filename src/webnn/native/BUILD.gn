@@ -1,0 +1,472 @@
+# Copyright 2020 The Dawn Authors
+# Copyright 2021 The WebNN-native Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../../scripts/webnn_overrides_with_defaults.gni")
+
+import("//build_overrides/build.gni")
+import("${webnn_dawn_root}/scripts/dawn_component.gni")
+import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${webnn_root}/build_overrides/webnn_features.gni")
+import("${webnn_root}/generator/webnn_generator.gni")
+
+# Import mac_min_system_version
+if (is_mac) {
+  if (dawn_has_build) {
+    import("//build/config/mac/mac_sdk.gni")
+  } else {
+    mac_min_system_version = "10.11.0"
+  }
+}
+
+config("internal") {
+  configs = [ "${webnn_root}/src/webnn/common:internal_config" ]
+
+  # Suppress warnings that Metal isn't in the deployment target of Chrome:
+  # initialization of the Metal backend is behind a IsMetalSupported check so
+  # Dawn won't call Metal functions on macOS 10.10.
+  # At the time this is written Chromium supports 10.10.0 and above, so if we
+  # aren't on 10.11 it means we are on 10.11 and above, and Metal is available.
+  # Skipping this check on 10.11 and above is important as it allows getting
+  # proper compilation warning when using 10.12 and above feature for example.
+  # TODO(cwallez@chromium.org): Consider using API_AVAILABLE annotations on all
+  # metal code in dawn once crbug.com/1004024 is sorted out if Chromium still
+  # supports 10.10 then.
+  if (is_mac && mac_min_system_version == "10.10.0") {
+    cflags_objcc = [ "-Wno-unguarded-availability" ]
+  }
+}
+
+webnn_json_generator("utils_gen") {
+  target = "native_utils"
+  outputs = [
+    "src/webnn/native/ProcTable.cpp",
+    "src/webnn/native/webnn_structs_autogen.h",
+    "src/webnn/native/webnn_structs_autogen.cpp",
+    "src/webnn/native/ValidationUtils_autogen.h",
+    "src/webnn/native/ValidationUtils_autogen.cpp",
+    "src/webnn/native/webnn_platform_autogen.h",
+  ]
+}
+
+# Public webnn_native headers so they can be publicly visible for
+# dependencies of webnn_native
+source_set("headers") {
+  public_deps = [ "${webnn_root}/include/webnn:cpp_headers" ]
+  all_dependent_configs = [ "${webnn_root}/include/webnn:public" ]
+  sources = [
+    "${webnn_root}/include/webnn/native/WebnnNative.h",
+    "${webnn_root}/include/webnn/native/webnn_native_export.h",
+  ]
+}
+
+# The meat of the compilation for webnn_native so that we can cheaply have
+# shared_library / static_library versions of it. It compiles all the files
+# except those that define exported symbols.
+source_set("sources") {
+  deps = [
+    ":headers",
+    ":utils_gen",
+    "${webnn_root}/src/webnn/common",
+  ]
+  defines = []
+  libs = []
+  data_deps = []
+  include_dirs = []
+  lib_dirs = []
+  libs = []
+
+  configs += [ ":internal" ]
+
+  sources = get_target_outputs(":utils_gen")
+
+  sources += [
+    "BackendConnection.cpp",
+    "BackendConnection.h",
+    "Context.cpp",
+    "Context.h",
+    "Error.cpp",
+    "Error.h",
+    "ErrorData.cpp",
+    "ErrorData.h",
+    "ErrorScope.cpp",
+    "ErrorScope.h",
+    "FusionOperator.h",
+    "Graph.cpp",
+    "Graph.h",
+    "GraphBuilder.cpp",
+    "GraphBuilder.h",
+    "Instance.cpp",
+    "Instance.h",
+    "NamedInputs.h",
+    "NamedOutputs.h",
+    "NamedRecords.h",
+    "ObjectBase.cpp",
+    "ObjectBase.h",
+    "Operand.cpp",
+    "Operand.h",
+    "Operator.cpp",
+    "Operator.h",
+    "Utils.cpp",
+    "Utils.h",
+  ]
+
+  sources += [
+    "ops/BatchNorm.cpp",
+    "ops/BatchNorm.h",
+    "ops/Binary.cpp",
+    "ops/Binary.h",
+    "ops/Clamp.h",
+    "ops/Concat.cpp",
+    "ops/Concat.h",
+    "ops/Constant.h",
+    "ops/Conv2d.cpp",
+    "ops/Conv2d.h",
+    "ops/ConvTranspose2d.cpp",
+    "ops/Gemm.cpp",
+    "ops/Gemm.h",
+    "ops/Gru.cpp",
+    "ops/Gru.h",
+    "ops/Input.h",
+    "ops/InstanceNorm.cpp",
+    "ops/InstanceNorm.h",
+    "ops/LeakyRelu.h",
+    "ops/Pad.cpp",
+    "ops/Pad.h",
+    "ops/Pool2d.cpp",
+    "ops/Pool2d.h",
+    "ops/Reduce.cpp",
+    "ops/Reduce.h",
+    "ops/Resample2d.cpp",
+    "ops/Resample2d.h",
+    "ops/Reshape.cpp",
+    "ops/Reshape.h",
+    "ops/Transpose.cpp",
+    "ops/Transpose.h",
+    "ops/Unary.cpp",
+    "ops/Unary.h",
+  ]
+
+  if (webnn_enable_null) {
+    sources += [
+      "null/ContextNull.cpp",
+      "null/ContextNull.h",
+    ]
+  }
+
+  if (webnn_enable_openvino) {
+    sources += [
+      "openvino/BackendIE.cpp",
+      "openvino/BackendIE.h",
+      "openvino/ContextIE.cpp",
+      "openvino/ContextIE.h",
+      "openvino/ErrorIE.cpp",
+      "openvino/ErrorIE.h",
+      "openvino/GraphIE.cpp",
+      "openvino/GraphIE.h",
+    ]
+
+    include_dirs += [
+      "${webnn_root}/third_party/openvino/ngraph_c_api/src",
+      "$root_out_dir/inference_engine/include",
+    ]
+
+    deps += [ ":build_ngraph_c_api" ]
+
+    if (is_win) {
+      lib_dirs += [
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/",
+        "$root_out_dir/inference_engine/lib/intel64/Release",
+      ]
+      libs += [
+        "ngraph_c_api.lib",
+        "inference_engine_c_api.lib",
+      ]
+    }
+
+    if (is_linux) {
+      lib_dirs += [
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build/intel64/Release/lib",
+        "$root_out_dir/inference_engine/lib/intel64/Release",
+      ]
+      libs += [
+        "ngraph_c_api",
+        "inference_engine_c_api",
+      ]
+
+      assert(
+          is_component_build == false,
+          "`is_component_build=false` must be set for OpenVINO backend on Linux.")
+    }
+  }
+
+  if (webnn_enable_dml) {
+    if (webnn_enable_gpu_buffer == false) {
+      sources += [
+        "dml/deps/src/device.cpp",
+        "dml/deps/src/device.h",
+        "dml/deps/src/model.h",
+        "dml/deps/src/precomp.h",
+        "dml/deps/src/typeconvert.h",
+        "dml/deps/src/util.cpp",
+        "dml/deps/src/util.h",
+      ]
+    }
+    sources += [
+      "dml/BackendDML.cpp",
+      "dml/BackendDML.h",
+      "dml/ContextDML.cpp",
+      "dml/ContextDML.h",
+      "dml/GraphDML.cpp",
+      "dml/GraphDML.h",
+    ]
+
+    include_dirs +=
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/include" ]
+    if (build_with_chromium) {
+      include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
+    } else {
+      include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
+    }
+
+    lib_dirs +=
+        [ "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/bin/x64-win" ]
+
+    libs += [
+      "dxgi.lib",
+      "d3d12.lib",
+      "directml.lib",
+    ]
+    if (build_with_chromium) {
+      if (is_component_build) {
+        libs += [
+          "dawn_proc.dll.lib",
+          "dawn_native.dll.lib",
+          "dawn_wire.dll.lib",
+        ]
+      }
+      deps += [ "${webnn_dawn_root}/src/dawn/native" ]
+    }
+
+    cflags = [
+      "/std:c++17",
+      "-Wno-address-of-temporary",
+      "-Wno-logical-not-parentheses",
+      "-Wno-macro-redefined",
+    ]
+
+    data_deps += [ ":copy_dml_dll" ]
+    deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
+  }
+
+  if (webnn_enable_onednn) {
+    sources += [
+      "onednn/BackendDNNL.cpp",
+      "onednn/BackendDNNL.h",
+      "onednn/ContextDNNL.cpp",
+      "onednn/ContextDNNL.h",
+      "onednn/GraphDNNL.cpp",
+      "onednn/GraphDNNL.h",
+    ]
+
+    include_dirs += [
+      "${webnn_root}/third_party/oneDNN/include",
+      "${webnn_root}/third_party/oneDNN/build/include",
+    ]
+
+    if (is_win) {
+      if (is_debug) {
+        lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src/Debug" ]
+      } else {
+        lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src/Release" ]
+      }
+      libs += [ "dnnl.lib" ]
+    }
+
+    if (is_linux) {
+      lib_dirs += [ "${webnn_root}/third_party/oneDNN/build/src" ]
+      libs += [ "dnnl" ]
+    }
+  }
+
+  if (webnn_enable_xnnpack) {
+    sources += [
+      "xnnpack/BackendXNN.cpp",
+      "xnnpack/BackendXNN.h",
+      "xnnpack/ContextXNN.cpp",
+      "xnnpack/ContextXNN.h",
+      "xnnpack/GraphXNN.cpp",
+      "xnnpack/GraphXNN.h",
+    ]
+
+    include_dirs += [
+      "${webnn_root}/third_party/XNNPACK/include",
+      "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool-source/include",
+    ]
+
+    libprefix = ""
+    libext = ""
+    libfolder = ""
+
+    if (is_win) {
+      libext = "lib"
+      if (is_debug) {
+        libfolder = "Debug"
+      } else {
+        libfolder = "Release"
+      }
+    }
+
+    if (is_linux) {
+      libprefix = "lib"
+      libext = "a"
+    }
+
+    libs += [
+      "${webnn_root}/third_party/XNNPACK/build/local/${libfolder}/${libprefix}XNNPACK.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/clog/${libfolder}/${libprefix}clog.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/cpuinfo/${libfolder}/${libprefix}cpuinfo.${libext}",
+      "${webnn_root}/third_party/XNNPACK/build/local/pthreadpool/${libfolder}/${libprefix}pthreadpool.${libext}",
+    ]
+  }
+
+  if (webnn_enable_mlas) {
+    sources += [
+      "mlas/BackendMLAS.cpp",
+      "mlas/BackendMLAS.h",
+      "mlas/ContextMLAS.cpp",
+      "mlas/ContextMLAS.h",
+      "mlas/GraphMLAS.cpp",
+      "mlas/GraphMLAS.h",
+    ]
+
+    include_dirs += [
+      "${webnn_root}/third_party/onnxruntime/onnxruntime/core/mlas/inc",
+      "${webnn_root}/third_party/onnxruntime/include/onnxruntime",
+      "${webnn_root}/third_party/onnxruntime/onnxruntime/",
+    ]
+
+    libprefix = ""
+    libext = ""
+    libfolder = ""
+    libsubfolder = ""
+    libos = ""
+
+    if (is_debug) {
+      libfolder = "Debug"
+    } else {
+      libfolder = "Release"
+    }
+
+    if (is_win) {
+      libext = "lib"
+      libos = "Windows"
+      if (is_debug) {
+        libsubfolder = "Debug"
+      } else {
+        libsubfolder = "Release"
+      }
+    }
+
+    if (is_linux) {
+      libprefix = "lib"
+      libext = "a"
+      libos = "Linux"
+    }
+
+    libs += [
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_mlas.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/${libsubfolder}/${libprefix}onnxruntime_common.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/${libsubfolder}/${libprefix}cpuinfo.${libext}",
+      "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/pytorch_cpuinfo/deps/clog/${libsubfolder}/${libprefix}clog.${libext}",
+    ]
+
+    if (is_linux) {
+      libs += [
+        "${webnn_root}/third_party/onnxruntime/build/${libos}/${libfolder}/external/nsync/${libsubfolder}/${libprefix}nsync_cpp.${libext}",
+        "stdc++",
+      ]
+    }
+  }
+}
+
+# The static and shared libraries for webnn_native. Most of the files are
+# already compiled in webnn_native_sources, but we still need to compile
+# files defining exported symbols.
+dawn_component("webnn_native") {
+  DEFINE_PREFIX = "WEBNN_NATIVE"
+
+  #Make headers publically visible
+  public_deps = [ ":headers" ]
+
+  deps = [
+    ":sources",
+    "${webnn_root}/src/webnn/common",
+  ]
+  sources = [ "WebnnNative.cpp" ]
+  configs = [ ":internal" ]
+  defines = [
+    "WEBNN_NATIVE_SHARED_LIBRARY",
+    "WEBNN_NATIVE_IMPLEMENTATION",
+  ]
+}
+
+# An action that build ngraph_c_api binary that is a c wrapper of nGraph.
+if (webnn_enable_openvino) {
+  action("build_ngraph_c_api") {
+    script =
+        "${webnn_root}/third_party/openvino/ngraph_c_api/build_ngraph_c_api.py"
+
+    args = [
+      "--webnn-native-lib-path",
+      "$root_out_dir/{{source_file_part}}",
+    ]
+
+    # Output a stamp file to never need to be rebuilt.
+    outputs = [ "${webnn_gen_root}/build_ngraph_c_api.stamp" ]
+  }
+}
+
+if (webnn_enable_dml) {
+  dml_dll = "DirectML.dll"
+  os_folder = "x64-win"
+  dml_dll_path =
+      "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/bin/${os_folder}"
+  copy("copy_dml_dll") {
+    sources = [ "${dml_dll_path}/${dml_dll}" ]
+    outputs = [ "$root_out_dir/{{source_file_part}}" ]
+  }
+}
+
+if (webnn_enable_onednn) {
+  if (is_win) {
+    if (is_debug) {
+      dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src/Debug"
+    } else {
+      dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src/Release"
+    }
+    dnnl_dlls = [ "${dnnl_dll_path}/dnnl.dll" ]
+  } else if (is_linux) {
+    dnnl_dll_path = "${webnn_root}/third_party/oneDNN/build/src"
+    dnnl_dlls = [
+      "${dnnl_dll_path}/libdnnl.so",
+      "${dnnl_dll_path}/libdnnl.so.2",
+      "${dnnl_dll_path}/libdnnl.so.2.2",
+    ]
+  }
+  copy("copy_dnnl_dll") {
+    sources = dnnl_dlls
+    outputs = [ "$root_out_dir/{{source_file_part}}" ]
+  }
+}

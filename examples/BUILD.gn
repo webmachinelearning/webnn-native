@@ -36,12 +36,12 @@ static_library("webnn_sample_utils") {
 
   # Export all of these as public deps so that `gn check` allows includes
   public_deps = [
-    "${webnn_root}/src/common",
-    "${webnn_root}/src/utils:webnn_utils",
+    "${webnn_root}/src/webnn:cpp",
     "${webnn_root}/src/webnn:webnn_proc",
-    "${webnn_root}/src/webnn:webnncpp",
-    "${webnn_root}/src/webnn_native",
-    "${webnn_root}/src/webnn_wire",
+    "${webnn_root}/src/webnn/common",
+    "${webnn_root}/src/webnn/native:webnn_native",
+    "${webnn_root}/src/webnn/utils:webnn_utils",
+    "${webnn_root}/src/webnn/wire:webnn_wire",
   ]
 
   defines = [
@@ -58,7 +58,7 @@ static_library("webnn_sample_utils") {
     ]
   }
 
-  public_configs = [ "${webnn_root}/src/common:dawn_internal" ]
+  public_configs = [ "${webnn_root}/src/webnn/common:internal_config" ]
   if (is_linux) {
     public_configs += [ "//build/config//gcc:rpath_for_built_shared_libraries" ]
   }

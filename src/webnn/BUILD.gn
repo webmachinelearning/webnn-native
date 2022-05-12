@@ -19,83 +19,47 @@ import("${webnn_dawn_root}/scripts/dawn_component.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
 ###############################################################################
-# WebNN headers
-###############################################################################
-
-webnn_json_generator("webnn_headers_gen") {
-  target = "webnn_headers"
-  outputs = [
-    "src/include/webnn/webnn_proc_table.h",
-    "src/include/webnn/webnn.h",
-  ]
-}
-
-webnn_json_generator("emscripten_bits_gen") {
-  target = "emscripten_bits"
-  outputs = [
-    "src/webnn/webnn_struct_info.json",
-    "src/webnn/library_webnn_enum_tables.js",
-  ]
-}
-
-source_set("webnn_headers") {
-  all_dependent_configs =
-      [ "${webnn_root}/src/common:dawn_public_include_dirs" ]
-  public_deps = [ ":webnn_headers_gen" ]
-
-  sources = get_target_outputs(":webnn_headers_gen")
-}
-
-###############################################################################
-# WebNN C++ headers
-###############################################################################
-
-webnn_json_generator("webnncpp_headers_gen") {
-  target = "webnncpp_headers"
-  outputs = [ "src/include/webnn/webnn_cpp.h" ]
-}
-
-source_set("webnncpp_headers") {
-  public_deps = [
-    ":webnn_headers",
-    ":webnncpp_headers_gen",
-  ]
-
-  sources = get_target_outputs(":webnncpp_headers_gen")
-  sources += [ "${webnn_root}/src/include/webnn/EnumClassBitmasks.h" ]
-}
-
-###############################################################################
 # WebNN C++ wrapper
 ###############################################################################
 
-webnn_json_generator("webnncpp_gen") {
-  target = "webnncpp"
+webnn_json_generator("cpp_gen") {
+  target = "cpp"
   outputs = [ "src/webnn/webnn_cpp.cpp" ]
 }
 
-source_set("webnncpp") {
+source_set("cpp") {
   deps = [
-    ":webnncpp_gen",
-    ":webnncpp_headers",
+    ":cpp_gen",
+    "${webnn_root}/include/webnn:cpp_headers",
   ]
-  sources = get_target_outputs(":webnncpp_gen")
+  sources = get_target_outputs(":cpp_gen")
 }
 
 ###############################################################################
 # webnn_proc
 ###############################################################################
 
-webnn_json_generator("webnn_proc_gen") {
-  target = "webnn_proc"
+webnn_json_generator("proc_gen") {
+  target = "proc"
   outputs = [ "src/webnn/webnn_proc.c" ]
 }
 
 dawn_component("webnn_proc") {
   DEFINE_PREFIX = "WEBNN"
 
-  public_deps = [ ":webnn_headers" ]
-  deps = [ ":webnn_proc_gen" ]
-  sources = get_target_outputs(":webnn_proc_gen")
-  sources += [ "${webnn_root}/src/include/webnn/webnn_proc.h" ]
+  public_deps = [ "${webnn_root}/include/webnn:headers" ]
+  deps = [ ":proc_gen" ]
+  sources = get_target_outputs(":proc_gen")
+  sources += [ "${webnn_root}/include/webnn/webnn_proc.h" ]
+}
+
+###############################################################################
+# Other generated files (upstream header, emscripten header, emscripten bits)
+###############################################################################
+webnn_json_generator("emscripten_bits_gen") {
+  target = "emscripten_bits"
+  outputs = [
+    "src/webnn/webnn_struct_info.json",
+    "src/webnn/library_webnn_enum_tables.js",
+  ]
 }
