@@ -23,8 +23,8 @@ class ResNet : public ExampleBase {
     ~ResNet() override = default;
 
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
-    const wnn::Operand LoadNCHW(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand LoadNHWC(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax = true);
+    const wnn::Operand LoadNhwc(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
                                             const std::string& path);
     const wnn::Operand BuildNchwConv(const wnn::GraphBuilder& builder,

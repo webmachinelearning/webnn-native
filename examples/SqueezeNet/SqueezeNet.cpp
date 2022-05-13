@@ -92,7 +92,7 @@ const wnn::Operand SqueezeNet::BuildFire(const wnn::GraphBuilder& builder,
     return builder.Concat(inputsOperand.size(), inputsOperand.data(), axis);
 }
 
-const wnn::Operand SqueezeNet::LoadNCHW(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand SqueezeNet::LoadNchw(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath + "squeezenet0_";
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 3, 224, 224});
 
@@ -129,7 +129,7 @@ const wnn::Operand SqueezeNet::LoadNCHW(const wnn::GraphBuilder& builder, bool s
     return output;
 }
 
-const wnn::Operand SqueezeNet::LoadNHWC(const wnn::GraphBuilder& builder, bool softmax) {
+const wnn::Operand SqueezeNet::LoadNhwc(const wnn::GraphBuilder& builder, bool softmax) {
     mWeightsPath = mWeightsPath;
     const wnn::Operand input = utils::BuildInput(builder, "input", {1, 224, 224, 3});
     utils::Conv2dOptions conv1Options;

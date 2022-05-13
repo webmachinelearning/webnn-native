@@ -2,7 +2,7 @@
 
 This example showcases the ResNet-based image classification by WebNN API.
 
-This example leverages the network topology of [ResNet101 V2](https://storage.googleapis.com/download.tensorflow.org/models/tflite_11_05_08/resnet_v2_101.tgz) from TFLite models with "nhwc" layout and [ResNet50 V2](https://github.com/onnx/models/blob/master/vision/classification/resnet/model/resnet50-v2-7.tar.gz) from ONNX models with "nchw" layout. It loads an image as the input by [stb](https://github.com/nothings/stb) library, and loads resnet101v2_nhwc weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/resnet101v2_nhwc/weights) or resnet50v2_nchw weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/resnet50v2_nchw/weights) by [cnpy](https://github.com/rogersce/cnpy) library.
+This example leverages the network topology of [ResNet50 V2](https://storage.googleapis.com/download.tensorflow.org/models/tflite/resnet_v2_50_2018_03_27.zip) from TFLite models with "nhwc" layout and [ResNet50 V2](https://github.com/onnx/models/blob/master/vision/classification/resnet/model/resnet50-v2-7.tar.gz) from ONNX models with "nchw" layout. It loads an image as the input by [stb](https://github.com/nothings/stb) library, and loads resnet101v2_nhwc weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/resnet50v2_nhwc/weights) or resnet50v2_nchw weights/biases from .npy [files](https://github.com/webmachinelearning/test-data/tree/main/models/resnet50v2_nchw/weights) by [cnpy](https://github.com/rogersce/cnpy) library.
 
 ## Usage
 
@@ -23,8 +23,8 @@ Example Options:
 
 ```sh
 > out/Release/ResNet -i examples/images/test.jpg -l nchw -m node/third_party/webnn-polyfill/test-data/models/resnet50v2_nchw/weights/
-Info: Compilation Time: 212.473 ms
-Info: Execution Time: 25.396 ms
+Info: Compilation Time: 196.985 ms
+Info: Execution Time: 18.1029 ms
 
 Prediction Result:
 #   Probability   Label
@@ -36,15 +36,15 @@ Info: Done.
 ```
 
 ```sh
-> out/Release/ResNet -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/resnet101v2_nhwc/weights/
-Info: Compilation Time: 530.819 ms
-Info: Execution Time: 65.3282 ms
+> out/Release/ResNet -i examples/images/test.jpg -l nhwc -m node/third_party/webnn-polyfill/test-data/models/resnet50v2_nhwc/weights/
+Info: Compilation Time: 284.291 ms
+Info: Execution Time: 14.0436 ms
 
 Prediction Result:
 #   Probability   Label
-0   99.46%        lesser panda
-1   0.13%         polecat
-2   0.01%         Pomeranian
+0   99.74%        lesser panda
+1   0.26%         polecat
+2   0.00%         black-footed ferret
 
 Info: Done.
 ```

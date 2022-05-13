@@ -41,7 +41,7 @@ int main(int argc, const char* argv[]) {
         &resnet);
     wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
     wnn::Operand output =
-        resnet.mLayout == "nchw" ? resnet.LoadNCHW(builder) : resnet.LoadNHWC(builder);
+        resnet.mLayout == "nchw" ? resnet.LoadNchw(builder) : resnet.LoadNhwc(builder);
 
     // Build the graph.
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =
