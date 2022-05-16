@@ -20,31 +20,86 @@
 #include <vector>
 
 namespace webnn::native::utils {
+    template <typename T>
     void ComputeImplicitPaddingForAutoPad(wnn::AutoPad autoPad,
-                                          int32_t dilation,
-                                          int32_t inputSize,
-                                          int32_t filterSize,
-                                          int32_t stride,
-                                          int32_t& paddingBegin,
-                                          int32_t& paddingEnd);
+                                          T dilation,
+                                          T inputSize,
+                                          T filterSize,
+                                          T stride,
+                                          T& paddingBegin,
+                                          T& paddingEnd) {
+        T outSize = (inputSize + stride - 1) / stride;
+        T dilatedFilter = (filterSize - 1) * dilation + 1;
+        T neededInput = (outSize - 1) * stride + dilatedFilter;
+        T totalPadding = neededInput > inputSize ? neededInput - inputSize : 0;
+        switch (autoPad) {
+            case wnn::AutoPad::SameUpper:
+                paddingBegin = totalPadding / 2;
+                paddingEnd = (totalPadding + 1) / 2;
+                break;
+            case wnn::AutoPad::SameLower:
+                paddingBegin = (totalPadding + 1) / 2;
+                paddingEnd = totalPadding / 2;
+                break;
+            default:
+                DAWN_UNREACHABLE();
+        }
+    }
 
-    std::vector<int32_t> ComputeImplicitPaddingForAutoPad(const Conv2dOptions* options,
-                                                          std::vector<int32_t> inputSize,
-                                                          std::vector<int32_t> filterSize);
+    template <typename S, typename T>
+    std::vector<T> ComputeImplicitPaddingForAutoPad(const S* options,
+                                                    std::vector<T> inputSize,
+                                                    std::vector<T> filterSize) {
+        std::vector<T> padding(4);
+        utils::ComputeImplicitPaddingForAutoPad<T>(options->autoPad, options->dilations[0],
+                                                   inputSize[0], filterSize[0], options->strides[0],
+                                                   padding[0], padding[1]);
+        utils::ComputeImplicitPaddingForAutoPad<T>(options->autoPad, options->dilations[1],
+                                                   inputSize[1], filterSize[1], options->strides[1],
+                                                   padding[2], padding[3]);
+        return padding;
+    }
 
+    template <typename T>
     void ComputeImplicitPaddingForConvTranspose2dAutoPad(wnn::AutoPad autoPad,
-                                                         int32_t dilation,
-                                                         int32_t inputSize,
-                                                         int32_t filterSize,
-                                                         int32_t stride,
-                                                         int32_t outputPadding,
-                                                         int32_t& paddingBegin,
-                                                         int32_t& paddingEnd);
+                                                         T dilation,
+                                                         T inputSize,
+                                                         T filterSize,
+                                                         T stride,
+                                                         T outputPadding,
+                                                         T& paddingBegin,
+                                                         T& paddingEnd) {
+        T outSize = inputSize * stride;
+        T totalPadding =
+            stride * (inputSize - 1) + outputPadding + ((filterSize - 1) * dilation + 1) - outSize;
+        switch (autoPad) {
+            case wnn::AutoPad::SameUpper:
+                paddingBegin = totalPadding / 2;
+                paddingEnd = totalPadding - totalPadding / 2;
+                break;
+            case wnn::AutoPad::SameLower:
+                paddingBegin = totalPadding - totalPadding / 2;
+                paddingEnd = totalPadding / 2;
+                break;
+            default:
+                DAWN_UNREACHABLE();
+        }
+    }
 
-    std::vector<int32_t> ComputeImplicitPaddingForConvTranspose2dAutoPad(
+    template <typename T>
+    std::vector<T> ComputeImplicitPaddingForConvTranspose2dAutoPad(
         const ConvTranspose2dOptions* options,
-        std::vector<int32_t> inputSize,
-        std::vector<int32_t> filterSize);
+        std::vector<T> inputSize,
+        std::vector<T> filterSize) {
+        std::vector<T> padding(4);
+        utils::ComputeImplicitPaddingForConvTranspose2dAutoPad<T>(
+            options->autoPad, options->dilations[0], inputSize[0], filterSize[0],
+            options->strides[0], options->outputPadding[0], padding[0], padding[1]);
+        utils::ComputeImplicitPaddingForConvTranspose2dAutoPad<T>(
+            options->autoPad, options->dilations[1], inputSize[1], filterSize[1],
+            options->strides[1], options->outputPadding[1], padding[2], padding[3]);
+        return padding;
+    }
 
 }  // namespace webnn::native::utils
 

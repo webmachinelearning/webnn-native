@@ -160,7 +160,7 @@ namespace webnn::native::dml {
             return strides;
         }
 
-        ::dml::TensorDimensions CalculateFilterLayoutStrides(
+        ::dml::TensorDimensions CalculateConv2dFilterLayoutStrides(
             wnn::Conv2dFilterOperandLayout filterLayout,
             ::dml::TensorDimensions sizes) {
             uint32_t hStride = 0, wStride = 0, iStride = 0, oStride = 0;
@@ -190,6 +190,36 @@ namespace webnn::native::dml {
             return {oStride, iStride, hStride, wStride};
         }
 
+        ::dml::TensorDimensions CalculateConvTranspose2dFilterLayoutStrides(
+            wnn::ConvTranspose2dFilterOperandLayout filterLayout,
+            ::dml::TensorDimensions sizes) {
+            uint32_t hStride = 0, wStride = 0, iStride = 0, oStride = 0;
+            switch (filterLayout) {
+                case wnn::ConvTranspose2dFilterOperandLayout::Iohw:
+                    iStride = sizes[1] * sizes[2] * sizes[3];
+                    oStride = sizes[2] * sizes[3];
+                    hStride = sizes[3];
+                    wStride = 1;
+                    break;
+                case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
+                    hStride = sizes[1] * sizes[2] * sizes[3];
+                    wStride = sizes[2] * sizes[3];
+                    oStride = sizes[3];
+                    iStride = 1;
+                    break;
+                case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
+                    oStride = sizes[1] * sizes[2] * sizes[3];
+                    hStride = sizes[2] * sizes[3];
+                    wStride = sizes[3];
+                    iStride = 1;
+                    break;
+                default:
+                    DAWN_ASSERT(0);
+                    break;
+            }
+            return {iStride, oStride, hStride, wStride};
+        }
+
         ::dml::Expression ReinterpretFilterLayoutAsOihw(wnn::Conv2dFilterOperandLayout filterLayout,
                                                         ::dml::Expression filter) {
             ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
@@ -197,41 +227,57 @@ namespace webnn::native::dml {
             newFilterDims.resize(4);
             switch (filterLayout) {
                 case wnn::Conv2dFilterOperandLayout::Ohwi:
-                    newFilterDims.resize(4);
                     newFilterDims[0] = filterDims[0];
                     newFilterDims[1] = filterDims[3];
                     newFilterDims[2] = filterDims[1];
                     newFilterDims[3] = filterDims[2];
-                    filter =
-                        ::dml::Reinterpret(filter, newFilterDims,
-                                           CalculateFilterLayoutStrides(
-                                               wnn::Conv2dFilterOperandLayout::Ohwi, filterDims));
                     break;
                 case wnn::Conv2dFilterOperandLayout::Hwio:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[2];
                     newFilterDims[2] = filterDims[0];
                     newFilterDims[3] = filterDims[1];
-                    filter =
-                        ::dml::Reinterpret(filter, newFilterDims,
-                                           CalculateFilterLayoutStrides(
-                                               wnn::Conv2dFilterOperandLayout::Hwio, filterDims));
                     break;
                 case wnn::Conv2dFilterOperandLayout::Ihwo:
                     newFilterDims[0] = filterDims[3];
                     newFilterDims[1] = filterDims[0];
                     newFilterDims[2] = filterDims[1];
                     newFilterDims[3] = filterDims[2];
-                    filter =
-                        ::dml::Reinterpret(filter, newFilterDims,
-                                           CalculateFilterLayoutStrides(
-                                               wnn::Conv2dFilterOperandLayout::Ihwo, filterDims));
                     break;
                 default:
                     DAWN_ASSERT(0);
                     break;
             }
-            return filter;
+            return ::dml::Reinterpret(filter, newFilterDims,
+                                      CalculateConv2dFilterLayoutStrides(filterLayout, filterDims));
+        }
+
+        ::dml::Expression ReinterpretFilterLayoutAsIohw(
+            wnn::ConvTranspose2dFilterOperandLayout filterLayout,
+            ::dml::Expression filter) {
+            ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
+            ::dml::TensorDimensions newFilterDims;
+            newFilterDims.resize(4);
+            switch (filterLayout) {
+                case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
+                    newFilterDims[0] = filterDims[3];
+                    newFilterDims[1] = filterDims[2];
+                    newFilterDims[2] = filterDims[0];
+                    newFilterDims[3] = filterDims[1];
+                    break;
+                case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
+                    newFilterDims[0] = filterDims[3];
+                    newFilterDims[1] = filterDims[0];
+                    newFilterDims[2] = filterDims[1];
+                    newFilterDims[3] = filterDims[2];
+                    break;
+                default:
+                    DAWN_ASSERT(0);
+                    break;
+            }
+            return ::dml::Reinterpret(
+                filter, newFilterDims,
+                CalculateConvTranspose2dFilterLayoutStrides(filterLayout, filterDims));
         }
 
         ::dml::TensorDimensions CalculateInputLayoutStrides(TransposeType transposeType,
@@ -385,23 +431,11 @@ namespace webnn::native::dml {
         std::vector<const uint32_t> ImplicitPadding(const T* options,
                                                     ::dml::Expression input,
                                                     std::vector<uint32_t> filterSize) {
-            ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
-                                                options->stridesCount);
-            ::dml::Span<const uint32_t> dilations(
-                reinterpret_cast<const uint32_t*>(options->dilations), options->dilationsCount);
             ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
-            // {paddingTop, paddingBottom, paddingLeft, paddingRight}
-            int32_t paddingTop, paddingBottom, paddingLeft, paddingRight;
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[0], inputDims[2],
-                                                    filterSize[0], strides[0], paddingTop,
-                                                    paddingBottom);
-            utils::ComputeImplicitPaddingForAutoPad(options->autoPad, dilations[1], inputDims[3],
-                                                    filterSize[1], strides[1], paddingLeft,
-                                                    paddingRight);
-            return {static_cast<const uint32_t>(paddingTop),
-                    static_cast<const uint32_t>(paddingBottom),
-                    static_cast<const uint32_t>(paddingLeft),
-                    static_cast<const uint32_t>(paddingRight)};
+            auto padding = utils::ComputeImplicitPaddingForAutoPad(
+                options, {inputDims[2], inputDims[3]}, filterSize);
+            std::vector<const uint32_t> paddingConst(padding.begin(), padding.end());
+            return paddingConst;
         }
 
         template <typename T>
@@ -863,10 +897,8 @@ namespace webnn::native::dml {
             DAWN_ASSERT(mExpression.find(inputsOperand[2].Get()) != mExpression.end());
             bias = mExpression.at(inputsOperand[2].Get());
             ::dml::TensorDimensions biasDims = bias->GetOutputDesc().sizes;
-            if (biasDims[0] != filter.GetOutputDesc().sizes[0] || biasDims.size() != 1) {
-                return DAWN_INTERNAL_ERROR(
-                    "The bias should be 1-D tensor with the shape of [output_channels].");
-            }
+            DAWN_INVALID_IF(biasDims[0] != filter.GetOutputDesc().sizes[0] || biasDims.size() != 1,
+                            "The bias should be 1-D tensor with the shape of [output_channels].");
             // Reshape bias from 1-D to 4-D for NCHW layout.
             ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
             bias = ::dml::Reinterpret(*bias, expandDimens, ::dml::NullOpt);
@@ -888,7 +920,80 @@ namespace webnn::native::dml {
     }
 
     MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
-        return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
+        auto inputsOperand = convTranspose2d->Inputs();
+        DAWN_ASSERT(inputsOperand.size() == 2 || inputsOperand.size() == 3);
+        DAWN_ASSERT(mExpression.find(inputsOperand[0].Get()) != mExpression.end());
+        ::dml::Expression input = mExpression.at(inputsOperand[0].Get());
+        DAWN_ASSERT(mExpression.find(inputsOperand[1].Get()) != mExpression.end());
+        ::dml::Expression filter = mExpression.at(inputsOperand[1].Get());
+
+        const ConvTranspose2dOptions* options = convTranspose2d->GetOptions();
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            input = ReinterpretInputLayout(NhwcToNchw, input);
+        }
+        if (options->filterLayout != wnn::ConvTranspose2dFilterOperandLayout::Iohw) {
+            filter = ReinterpretFilterLayoutAsIohw(options->filterLayout, filter);
+        }
+        ::dml::Span<const uint32_t> strides(reinterpret_cast<const uint32_t*>(options->strides),
+                                            options->stridesCount);
+        ::dml::Span<const uint32_t> dilations(reinterpret_cast<const uint32_t*>(options->dilations),
+                                              options->dilationsCount);
+        ::dml::Span<const uint32_t> outputPadding(
+            reinterpret_cast<const uint32_t*>(options->outputPadding), options->outputPaddingCount);
+
+        ::dml::TensorDimensions inputDims = input.GetOutputDesc().sizes;
+        ::dml::TensorDimensions filterDims = filter.GetOutputDesc().sizes;
+        std::vector<const uint32_t> padding(4);
+        if (options->autoPad == wnn::AutoPad::Explicit) {
+            padding = ExplicitPadding<ConvTranspose2dOptions>(options);
+        } else {
+            std::vector<uint32_t> inputSize = {inputDims[2], inputDims[3]};
+            std::vector<uint32_t> filterSize = {filterDims[2], filterDims[3]};
+            auto implicitPadding = utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(
+                options, inputSize, filterSize);
+            padding = std::vector<const uint32_t>(implicitPadding.begin(), implicitPadding.end());
+        }
+        // dml::Span just holds the refernces, need a variable to hold the memory.
+        std::vector<const uint32_t> startPaddingVector = {padding[0], padding[2]};
+        ::dml::Span<const uint32_t> startPadding(startPaddingVector);
+        std::vector<const uint32_t> endPaddingVector = {padding[1], padding[3]};
+        ::dml::Span<const uint32_t> endPadding(endPaddingVector);
+
+        ::dml::TensorDimensions outputShape(4);
+        outputShape[0] = inputDims[0];   // N
+        outputShape[1] = filterDims[1];  // C
+        auto calculatedShape = convTranspose2d->Outputs()[0]->Shape();
+        if (options->inputLayout == wnn::InputOperandLayout::Nchw) {
+            outputShape[2] = calculatedShape[2];
+            outputShape[3] = calculatedShape[3];
+        } else {
+            outputShape[2] = calculatedShape[1];
+            outputShape[3] = calculatedShape[2];
+        }
+
+        ::dml::Optional<::dml::Expression> bias = ::dml::NullOpt;
+        if (options->bias != nullptr) {
+            DAWN_ASSERT(mExpression.find(inputsOperand[2].Get()) != mExpression.end());
+            bias = mExpression.at(inputsOperand[2].Get());
+            ::dml::TensorDimensions biasDims = bias->GetOutputDesc().sizes;
+            DAWN_INVALID_IF(biasDims[0] != filter.GetOutputDesc().sizes[0] || biasDims.size() != 1,
+                            "The bias should be 1-D tensor with the shape of [output_channels].");
+            // Reshape bias from 1-D to 4-D for NCHW layout.
+            ::dml::TensorDimensions expandDimens = {1, biasDims[0], 1, 1};
+            bias = ::dml::Reinterpret(*bias, expandDimens, ::dml::NullOpt);
+        }
+        ::dml::Expression output =
+            ::dml::Convolution(input, filter, bias, DML_CONVOLUTION_MODE_CONVOLUTION,
+                               DML_CONVOLUTION_DIRECTION_BACKWARD, strides, dilations, startPadding,
+                               endPadding, outputPadding, options->groups,
+                               CreateFusedActivation(options->activation), outputShape);
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            output = ::dml::Identity(ReinterpretInputLayout(NchwToNhwc, output));
+        }
+        output = EmulateFusedActivation(options->activation, output);
+        mExpression.insert(std::make_pair(convTranspose2d->PrimaryOutput(), output));
+        DAWN_ASSERT(CheckShape(output, convTranspose2d));
+        return {};
     }
 
     MaybeError Graph::AddPad(const op::Pad* pad) {
