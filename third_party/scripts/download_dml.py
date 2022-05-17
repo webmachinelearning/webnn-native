@@ -25,7 +25,7 @@ dml_feed_url = 'https://api.nuget.org/v3/index.json'
 dml_resource_id = 'microsoft.ai.directml'
 dml_resource_version = '1.8.2'
 
-dependency_dir = '../../../../../../third_party'
+dependency_dir = '../'
 dml_bin_path = f'{dependency_dir}/{dml_resource_id}.{dml_resource_version}/bin/x64-win/'
 base_path = os.path.dirname(os.path.realpath(__file__))
 dependency_path = os.path.join(base_path, dependency_dir)

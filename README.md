@@ -1,8 +1,8 @@
 [![clang format](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/clang_format_check.yml)
-[![Memory leak check - DirectML backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dml.yml)
+[![Memory leak check - DirectMLX backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dmlx.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/memory_leak_check_dmlx.yml)
 [![null backend](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_null.yml)
-[![DirectML backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dml.yml)
-[![Node Binding (DirectML backend / Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dml.yml)
+[![DirectMLX backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dmlx.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_dmlx.yml)
+[![Node Binding (DirectMLX backend / Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dmlx.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_dmlx.yml)
 [![OpenVINO backend (Linux)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_linux.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_linux.yml)
 [![Node Binding (OpenVINO backend / Linux)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_linux.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_node_openvino_linux.yml)
 [![OpenVINO backend (Windows)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_windows.yml/badge.svg)](https://github.com/webmachinelearning/webnn-native/actions/workflows/build_test_openvino_windows.yml)
@@ -22,7 +22,7 @@ It provides several building blocks:
    - The `webnn.h` that is an one-to-one mapping with the WebNN IDL.
    - A C++ wrapper for the `webnn.h`
  - **Backend implementations** that use platforms' ML APIs:
-   - **DirectML** on Windows 10
+   - **DirectMLX** on Windows 10
    - **OpenVINO** on Windows 10 and Linux
    - **oneDNN** on Windows 10 and Linux
    - **XNNPACK** on Windows 10 and Linux
@@ -73,7 +73,7 @@ To build with a backend, please set the corresponding option from following tabl
 
 | Backend | Option |
 |---------|--------------|
-| DirectML | `webnn_enable_dml=true` |
+| DirectMLX | `webnn_enable_dmlx=true` |
 | OpenVINO | `webnn_enable_openvino=true` |
 | XNNPACK | `webnn_enable_xnnpack=true` |
 | oneDNN | `webnn_enable_onednn=true` |

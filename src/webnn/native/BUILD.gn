@@ -210,25 +210,25 @@ source_set("sources") {
     }
   }
 
-  if (webnn_enable_dml) {
+  if (webnn_enable_dmlx) {
     if (webnn_enable_gpu_buffer == false) {
       sources += [
-        "dml/deps/src/device.cpp",
-        "dml/deps/src/device.h",
-        "dml/deps/src/model.h",
-        "dml/deps/src/precomp.h",
-        "dml/deps/src/typeconvert.h",
-        "dml/deps/src/util.cpp",
-        "dml/deps/src/util.h",
+        "dmlx/deps/src/device.cpp",
+        "dmlx/deps/src/device.h",
+        "dmlx/deps/src/model.h",
+        "dmlx/deps/src/precomp.h",
+        "dmlx/deps/src/typeconvert.h",
+        "dmlx/deps/src/util.cpp",
+        "dmlx/deps/src/util.h",
       ]
     }
     sources += [
-      "dml/BackendDML.cpp",
-      "dml/BackendDML.h",
-      "dml/ContextDML.cpp",
-      "dml/ContextDML.h",
-      "dml/GraphDML.cpp",
-      "dml/GraphDML.h",
+      "dmlx/BackendDMLX.cpp",
+      "dmlx/BackendDMLX.h",
+      "dmlx/ContextDMLX.cpp",
+      "dmlx/ContextDMLX.h",
+      "dmlx/GraphDMLX.cpp",
+      "dmlx/GraphDMLX.h",
     ]
 
     include_dirs +=
@@ -437,7 +437,7 @@ if (webnn_enable_openvino) {
   }
 }
 
-if (webnn_enable_dml) {
+if (webnn_enable_dmlx) {
   dml_dll = "DirectML.dll"
   os_folder = "x64-win"
   dml_dll_path =

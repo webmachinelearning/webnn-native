@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_BACKENDDML_H_
-#define WEBNN_NATIVE_DML_BACKENDDML_H_
+#ifndef WEBNN_NATIVE_DMLX_BACKENDDMLX_H_
+#define WEBNN_NATIVE_DMLX_BACKENDDMLX_H_
 
 #include "webnn/native/BackendConnection.h"
 #include "webnn/native/Context.h"
@@ -24,7 +24,7 @@
 #endif
 #include <memory>
 
-namespace webnn::native::dml {
+namespace webnn::native::dmlx {
 
     class Backend : public BackendConnection {
       public:
@@ -40,6 +40,6 @@ namespace webnn::native::dml {
       private:
     };
 
-}  // namespace webnn::native::dml
+}  // namespace webnn::native::dmlx
 
-#endif  // WEBNN_NATIVE_DML_BACKENDDML_H_
+#endif  // WEBNN_NATIVE_DMLX_BACKENDDMLX_H_
