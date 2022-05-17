@@ -94,6 +94,7 @@ template("webnn_generator") {
     deps = [ "${dawn_root}/generator:remove_stale_autogen_files" ]
 
     template_dir = "${dawn_root}/generator/templates"
+
   }
 }
 
@@ -121,5 +122,6 @@ template("webnn_json_generator") {
     ]
 
     forward_variables_from(invoker, "*", [ "target" ])
+
   }
 }

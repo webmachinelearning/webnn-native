@@ -26,7 +26,7 @@ namespace webnn::wire::client {
         // Input type is ArrayBufferView
         WNNArrayBufferView arrayBufferView = input->resource.arrayBufferView;
         if (arrayBufferView.buffer != nullptr) {
-            cmd.buffer = static_cast<const uint8_t*>(arrayBufferView.buffer);
+            cmd.arrayBuffer = static_cast<const uint8_t*>(arrayBufferView.buffer);
             cmd.byteLength = arrayBufferView.byteLength;
             cmd.byteOffset = arrayBufferView.byteOffset;
         } else {

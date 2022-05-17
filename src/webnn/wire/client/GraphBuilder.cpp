@@ -25,7 +25,7 @@ namespace webnn::wire::client {
         GraphBuilderConstantInternalCmd cmd;
         cmd.graphBuilderId = this->id;
         cmd.desc = desc;
-        cmd.buffer = static_cast<const uint8_t*>(value->buffer);
+        cmd.arrayBuffer = static_cast<const uint8_t*>(value->buffer);
         cmd.byteLength = value->byteLength;
         cmd.byteOffset = value->byteOffset;
 
@@ -43,7 +43,7 @@ namespace webnn::wire::client {
         GraphBuilderConstantWithGpuBufferInternalCmd cmd;
         cmd.graphBuilderId = this->id;
         cmd.desc = desc;
-        cmd.buffer = static_cast<const uint8_t*>(value->buffer);
+        cmd.arrayBuffer = static_cast<const uint8_t*>(value->buffer);
         cmd.id = value->id;
         cmd.generation = value->generation;
         cmd.byteLength = value->size;

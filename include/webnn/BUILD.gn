@@ -66,6 +66,8 @@ config("public") {
   include_dirs = [
     "${target_gen_dir}/../../include",
     "${webnn_root}/include",
+    "${dawn_root}/include",
+    "${dawn_gen_root}/include",
   ]
 
   if (build_with_chromium) {

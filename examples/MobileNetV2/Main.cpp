@@ -39,9 +39,10 @@ int main(int argc, const char* argv[]) {
             }
         },
         &mobilevetv2);
+
     wnn::GraphBuilder builder = utils::CreateGraphBuilder(context);
-    wnn::Operand output = mobilevetv2.mLayout == "nchw" ? mobilevetv2.LoadNCHW(builder)
-                                                        : mobilevetv2.LoadNHWC(builder);
+    wnn::Operand output = mobilevetv2.mLayout == "nchw" ? mobilevetv2.LoadNchw(builder)
+                                                        : mobilevetv2.LoadNhwc(builder);
 
     // Build the graph.
     const std::chrono::time_point<std::chrono::high_resolution_clock> compilationStartTime =

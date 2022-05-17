@@ -158,28 +158,6 @@ namespace webnn::wire::server {
         return true;
     }
 
-    bool Server::DoCreateGraphBuilder(ObjectId contextId, ObjectHandle result) {
-        auto* context = ContextObjects().Get(contextId);
-        if (context == nullptr) {
-            return false;
-        }
-
-        // Create and register the GraphBuilder object.
-        auto* resultData = GraphBuilderObjects().Allocate(result.id);
-        if (resultData == nullptr) {
-            return false;
-        }
-        resultData->generation = result.generation;
-        resultData->contextInfo = context->contextInfo;
-        if (resultData->contextInfo != nullptr) {
-            if (!TrackContextChild(resultData->contextInfo, ObjectType::GraphBuilder, result.id)) {
-                return false;
-            }
-        }
-        resultData->handle = mProcs.createGraphBuilder(context->handle);
-        return true;
-    }
-
 #if defined(WEBNN_ENABLE_GPU_BUFFER)
     WGPUDevice Server::GetWGPUDevice(uint32_t id, uint32_t generation) {
         return mDawnWireServer->GetDevice(id, generation);

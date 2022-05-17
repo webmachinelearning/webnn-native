@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "webnn/native/ops/Resample2d.h"
+#include "common/Log.h"
 
 #include <algorithm>
 
@@ -25,13 +26,13 @@ namespace webnn::native::op {
         : OperatorBase(builder, {input}), mScales({1.0, 1.0}), mSizes({}), mAxes({2, 3}) {
         mOptions.mode =
             options == nullptr ? wnn::InterpolationMode::NearestNeighbor : options->mode;
-        if (options != nullptr && options->scales != nullptr) {
+        if (options != nullptr && options->scalesCount != 0) {
             mScales.assign(options->scales, options->scales + options->scalesCount);
         }
-        if (options != nullptr && options->sizes != nullptr) {
+        if (options != nullptr && options->sizesCount != 0) {
             mSizes.assign(options->sizes, options->sizes + options->sizesCount);
         }
-        if (options != nullptr && options->axes != nullptr) {
+        if (options != nullptr && options->axesCount != 0) {
             mAxes.assign(options->axes, options->axes + options->axesCount);
         }
     }

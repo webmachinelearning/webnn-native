@@ -62,12 +62,14 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
     // Choose whether to use the backend procs and context directly, or set up the wire.
     WNNContext context = nullptr;
     WebnnProcTable procs;
+    WNNInstance wnnInstance;
+    
 
     switch (cmdBufType) {
         case CmdBufType::None:
             procs = backendProcs;
             context = backendContext;
-            instance = wnn::Instance(nativeInstance->Get());
+            wnnInstance = nativeInstance->Get();
             break;
 
         case CmdBufType::Terrible: {
@@ -100,7 +102,8 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
                                        instanceReservation.generation);
             // Keep the reference instread of using Acquire.
             // TODO:: make the instance in the client as singleton object.
-            instance = wnn::Instance(instanceReservation.instance);
+            wnnInstance = instanceReservation.instance;
+            break;
 #endif
         }
         default:
@@ -108,6 +111,7 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
             DAWN_ASSERT(0);
     }
     webnnProcSetProcs(&procs);
+    instance = wnn::Instance(wnnInstance);
     return instance.CreateContext(options);
     ;
 }

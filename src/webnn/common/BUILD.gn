@@ -127,6 +127,7 @@ config("internal_config") {
       "-Wshadow-field",
       "-Wstrict-prototypes",
       "-Wtautological-unsigned-zero-compare",
+      "-Wno-unused-function",
     ]
 
     # Allow comparison against type limits that might be tautological on 32bit
@@ -184,6 +185,14 @@ config("internal_config") {
       "-Wno-c++17-extensions",
     ]
   }
+
+   
+  if (is_clang && webnn_enable_wire) {
+    cflags += [
+       "-Wno-unused-function",
+    ]
+  }
+
 }
 
 ###############################################################################

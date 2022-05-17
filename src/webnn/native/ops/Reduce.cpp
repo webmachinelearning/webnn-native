@@ -26,7 +26,7 @@ namespace webnn::native::op {
                    ReduceOptions const* options)
         : OperatorBase(builder, {input}), mOpType(opType) {
         // If axes are not present, all dimensions are reduced.
-        if (options == nullptr || options->axes == nullptr) {
+        if (options == nullptr || options->axesCount == 0) {
             int32_t rank = input->Shape().size();
             mAxes.resize(rank);
             for (auto i = 0; i < rank; ++i) {

@@ -60,14 +60,18 @@ dawn_component("webnn_wire") {
   configs = [ "${webnn_root}/src/webnn/common:internal_config" ]
   sources = get_target_outputs(":gen")
   sources += [
+    "BufferConsumer.h",
+    "BufferConsumer_impl.h",
     "ChunkedCommandHandler.cpp",
     "ChunkedCommandHandler.h",
     "ChunkedCommandSerializer.cpp",
     "ChunkedCommandSerializer.h",
     "WireClient.cpp",
+    "Wire.cpp",
     "WireDeserializeAllocator.cpp",
     "WireDeserializeAllocator.h",
     "WireServer.cpp",
+    "WireResult.h",
     "client/ApiObjects.h",
     "client/Client.cpp",
     "client/Client.h",
