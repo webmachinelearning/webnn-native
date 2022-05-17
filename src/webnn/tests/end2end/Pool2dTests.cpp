@@ -661,7 +661,7 @@ TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dStridesDefault) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesDefault) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
@@ -676,7 +676,7 @@ TEST_F(Pool2dTests, L2Pool2dStridesDefault) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dStrides) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dStrides) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
@@ -692,7 +692,7 @@ TEST_F(Pool2dTests, L2Pool2dStrides) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dStridesNhwc) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesNhwc) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
@@ -708,7 +708,7 @@ TEST_F(Pool2dTests, L2Pool2dStridesNhwc) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dPadsDefault) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsDefault) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
@@ -725,7 +725,7 @@ TEST_F(Pool2dTests, L2Pool2dPadsDefault) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes3x3) {
+TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes3x3) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
@@ -750,7 +750,7 @@ TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes3x3) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes4x4) {
+TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes4x4) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
@@ -776,7 +776,7 @@ TEST_F(Pool2dTests, l2Pool2dPadsOutputSizes4x4) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeFloor) {
+TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeFloor) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
@@ -801,7 +801,7 @@ TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeFloor) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeCeil) {
+TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeCeil) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
@@ -827,7 +827,7 @@ TEST_F(Pool2dTests, l2Pool2dPadsRoundingTypeCeil) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dPadsNhwc) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsNhwc) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
@@ -845,7 +845,7 @@ TEST_F(Pool2dTests, L2Pool2dPadsNhwc) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dSameUpperDefault) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperDefault) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
@@ -862,7 +862,7 @@ TEST_F(Pool2dTests, L2Pool2dSameUpperDefault) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dSameUpperNhwc) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperNhwc) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
@@ -880,7 +880,7 @@ TEST_F(Pool2dTests, L2Pool2dSameUpperNhwc) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dSameLowerDefault) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerDefault) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
@@ -897,7 +897,7 @@ TEST_F(Pool2dTests, L2Pool2dSameLowerDefault) {
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
 
-TEST_F(Pool2dTests, L2Pool2dSameLowerNhwc) {
+TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerNhwc) {
     const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
