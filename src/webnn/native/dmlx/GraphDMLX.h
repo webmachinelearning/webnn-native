@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_MODEL_DML_H_
-#define WEBNN_NATIVE_DML_MODEL_DML_H_
+#ifndef WEBNN_NATIVE_DMLX_GRAPH_DMLX_H_
+#define WEBNN_NATIVE_DMLX_GRAPH_DMLX_H_
 
 #include <map>
 #include <mutex>
@@ -23,7 +23,7 @@
 #include "webnn/native/Graph.h"
 #include "webnn/native/Operand.h"
 #include "webnn/native/Operator.h"
-#include "webnn/native/dml/ContextDML.h"
+#include "webnn/native/dmlx/ContextDMLX.h"
 #include "webnn/native/ops/BatchNorm.h"
 #include "webnn/native/ops/Binary.h"
 #include "webnn/native/ops/Clamp.h"
@@ -61,10 +61,10 @@
 
 #    include "dawn/native/dml/deps/src/dmldevice.h"
 #else
-#    include "webnn/native/dml/deps/src/precomp.h"
+#    include "webnn/native/dmlx/deps/src/precomp.h"
 #endif
 
-namespace webnn::native::dml {
+namespace webnn::native::dmlx {
 
     std::string DmlTensorDimensionsToString(const ::dml::TensorDimensions&);
     std::string DmlTensorDataTypeToString(DML_TENSOR_DATA_TYPE type);
@@ -131,6 +131,6 @@ namespace webnn::native::dml {
         std::unique_ptr<pydml::CompiledModel> mCompiledModel;
     };
 
-}  // namespace webnn::native::dml
+}  // namespace webnn::native::dmlx
 
-#endif  // WEBNN_NATIVE_DML_MODEL_DML_H_
+#endif  // WEBNN_NATIVE_DMLX_GRAPH_DMLX_H_

@@ -1,4 +1,4 @@
-name: Check memory leak for DirectML backend (Windows)
+name: Check memory leak for DirectMLX backend (Windows)
 
 on: [push, pull_request]
 
@@ -43,7 +43,7 @@ jobs:
         set "PATH=%CD%\..\depot_tools;%PATH%"
         set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
         cd update
-        gn gen out\Debug --args="webnn_enable_dml=true is_debug=true"
+        gn gen out\Debug --args="webnn_enable_dmlx=true is_debug=true"
     - name: Build for update branch
       shell: cmd
       run: |

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_CONTEXT_DML_H_
-#define WEBNN_NATIVE_DML_CONTEXT_DML_H_
+#ifndef WEBNN_NATIVE_DMLX_CONTEXT_DMLX_H_
+#define WEBNN_NATIVE_DMLX_CONTEXT_DMLX_H_
 
 #include "webnn/native/Context.h"
 #include "webnn/native/Graph.h"
@@ -22,7 +22,7 @@
 #    include <webgpu/webgpu.h>
 #endif
 
-namespace webnn::native::dml {
+namespace webnn::native::dmlx {
 
     class Context : public ContextBase {
       public:
@@ -36,6 +36,6 @@ namespace webnn::native::dml {
         GraphBase* CreateGraphImpl() override;
     };
 
-}  // namespace webnn::native::dml
+}  // namespace webnn::native::dmlx
 
-#endif  // WEBNN_NATIVE_DML_CONTEXT_DML_H_
+#endif  // WEBNN_NATIVE_DMLX_CONTEXT_DMLX_H_

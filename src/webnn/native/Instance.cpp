@@ -28,11 +28,11 @@ namespace webnn::native {
 
     // Forward definitions of each backend's "Connect" function that creates new BackendConnection.
     // Conditionally compiled declarations are used to avoid using static constructors instead.
-#if defined(WEBNN_ENABLE_BACKEND_DML)
-    namespace dml {
+#if defined(WEBNN_ENABLE_BACKEND_DMLX)
+    namespace dmlx {
         BackendConnection* Connect(InstanceBase* instance);
     }
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+#endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
 #if defined(WEBNN_ENABLE_BACKEND_OPENVINO)
     namespace ie {
         BackendConnection* Connect(InstanceBase* instance);
@@ -66,9 +66,9 @@ namespace webnn::native {
 #if defined(WEBNN_ENABLE_BACKEND_NULL)
             enabledBackends.set(wnn::BackendType::Null);
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
-#if defined(WEBNN_ENABLE_BACKEND_DML)
+#if defined(WEBNN_ENABLE_BACKEND_DMLX)
             enabledBackends.set(wnn::BackendType::DirectML);
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+#endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
 #if defined(WEBNN_ENABLE_BACKEND_OPENVINO)
             enabledBackends.set(wnn::BackendType::OpenVINO);
 #endif  // defined(WEBNN_ENABLE_BACKEND_OPENVINO)
@@ -121,11 +121,11 @@ namespace webnn::native {
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
 
-#if defined(WEBNN_ENABLE_BACKEND_DML)
+#if defined(WEBNN_ENABLE_BACKEND_DMLX)
             case wnn::BackendType::DirectML:
-                Register(dml::Connect(this), wnn::BackendType::DirectML);
+                Register(dmlx::Connect(this), wnn::BackendType::DirectML);
                 break;
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+#endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
 
 #if defined(WEBNN_ENABLE_BACKEND_OPENVINO)
             case wnn::BackendType::OpenVINO:

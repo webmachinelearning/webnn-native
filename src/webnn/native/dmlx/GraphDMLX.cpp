@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn/native/dml/GraphDML.h"
+#include "webnn/native/dmlx/GraphDMLX.h"
 
 #include <algorithm>
 #include <numeric>
@@ -23,9 +23,9 @@
 #include "webnn/native/NamedInputs.h"
 #include "webnn/native/NamedOutputs.h"
 #include "webnn/native/Utils.h"
-#include "webnn/native/dml/ContextDML.h"
+#include "webnn/native/dmlx/ContextDMLX.h"
 
-namespace webnn::native::dml {
+namespace webnn::native::dmlx {
 
     namespace {
         enum TransposeType { NhwcToNchw, NchwToNhwc };
@@ -2006,4 +2006,4 @@ namespace webnn::native::dml {
         return {};
     }
 
-}  // namespace webnn::native::dml
+}  // namespace webnn::native::dmlx

@@ -243,7 +243,7 @@ hooks = [
     'name': 'download_dml_unpkg',
     'pattern': '.',
     'condition': 'checkout_win',
-    'action': ['python3', 'src/webnn/native/dml/deps/script/download_dml.py'],
+    'action': ['python3', 'third_party/scripts/download_dml.py'],
   }
 ]
 

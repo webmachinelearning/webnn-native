@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef WEBNN_NATIVE_DML_BACKENDDML_H_
-#define WEBNN_NATIVE_DML_BACKENDDML_H_
+#ifndef WEBNN_NATIVE_ONEDNN_BACKENDDNNL_H_
+#define WEBNN_NATIVE_ONEDNN_BACKENDDNNL_H_
 
 #include "webnn/native/BackendConnection.h"
 #include "webnn/native/Context.h"
@@ -35,4 +35,4 @@ namespace webnn::native::onednn {
 
 }  // namespace webnn::native::onednn
 
-#endif  // WEBNN_NATIVE_DML_BACKENDDML_H_
+#endif  // WEBNN_NATIVE_ONEDNN_BACKENDDNNL_H_

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn/native/dml/ContextDML.h"
+#include "webnn/native/dmlx/ContextDMLX.h"
 
 #include "common/RefCounted.h"
-#include "webnn/native/dml/GraphDML.h"
+#include "webnn/native/dmlx/GraphDMLX.h"
 
-namespace webnn::native::dml {
+namespace webnn::native::dmlx {
 
     Context::Context(ContextOptions const* options) : ContextBase(options) {
     }
@@ -31,4 +31,4 @@ namespace webnn::native::dml {
         return new Graph(this);
     }
 
-}  // namespace webnn::native::dml
+}  // namespace webnn::native::dmlx
