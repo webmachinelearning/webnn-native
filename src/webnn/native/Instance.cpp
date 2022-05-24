@@ -58,6 +58,11 @@ namespace webnn::native {
         BackendConnection* Connect(InstanceBase* instance);
     }
 #endif  // defined(WEBNN_ENABLE_BACKEND_XNNPACK)
+#if defined(WEBNN_ENABLE_BACKEND_NNAPI)
+    namespace nnapi {
+        BackendConnection* Connect(InstanceBase* instance);
+    }
+#endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
 
     namespace {
 
@@ -81,6 +86,9 @@ namespace webnn::native {
 #if defined(WEBNN_ENABLE_BACKEND_XNNPACK)
             enabledBackends.set(wnn::BackendType::XNNPACK);
 #endif  // defined(WEBNN_ENABLE_BACKEND_XNNPACK)
+#if defined(WEBNN_ENABLE_BACKEND_NNAPI)
+            enabledBackends.set(wnn::BackendType::NNAPI);
+#endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
             return enabledBackends;
         }
 
@@ -151,6 +159,12 @@ namespace webnn::native {
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_XNNPACK)
 
+#if defined(WEBNN_ENABLE_BACKEND_NNAPI)
+            case wnn::BackendType::NNAPI:
+                Register(nnapi::Connect(this), wnn::BackendType::NNAPI);
+                break;
+#endif  // defined(WEBNN_ENABLE_BACKEND_NNAPI)
+
             default:
                 UNREACHABLE();
         }
@@ -172,6 +186,8 @@ namespace webnn::native {
             return mBackends[wnn::BackendType::MLAS]->CreateContext(options);
         } else if (mBackends.find(wnn::BackendType::XNNPACK) != mBackends.end()) {
             return mBackends[wnn::BackendType::XNNPACK]->CreateContext(options);
+        } else if (mBackends.find(wnn::BackendType::NNAPI) != mBackends.end()) {
+            return mBackends[wnn::BackendType::NNAPI]->CreateContext(options);
         }
         UNREACHABLE();
         return nullptr;

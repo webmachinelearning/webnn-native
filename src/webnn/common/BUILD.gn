@@ -89,6 +89,10 @@ config("internal_config") {
     defines += [ "WEBNN_ENABLE_BACKEND_MLAS" ]
   }
 
+  if (webnn_enable_nnapi) {
+    defines += [ "WEBNN_ENABLE_BACKEND_NNAPI" ]
+  }
+
   # Only internal Dawn targets can use this config, this means only targets in
   # this BUILD.gn file and related subdirs.
   visibility = [
@@ -156,7 +160,7 @@ config("internal_config") {
     defines += [ "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS" ]
   }
 
-  if (is_clang && (webnn_enable_dmlx || webnn_enable_mlas)) {
+  if (is_clang && (webnn_enable_dmlx || webnn_enable_mlas || webnn_enable_nnapi)) {
     cflags += [
       # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
       "-Wno-extra-semi",

@@ -32,6 +32,9 @@ declare_args() {
   # (required for unittests, obviously non-conformant)
   webnn_enable_null = true
 
+  # Enables the compilation of NNAPI backend
+  webnn_enable_nnapi = false
+
   webnn_enable_wire = false
   webnn_enable_gpu_buffer = false
 }

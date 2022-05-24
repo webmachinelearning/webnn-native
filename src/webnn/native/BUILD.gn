@@ -398,6 +398,32 @@ source_set("sources") {
       ]
     }
   }
+
+  if (webnn_enable_nnapi) {
+    defines = [ "__CHROMEOS__" ]
+
+    cflags = [
+      "-Wno-error",
+      "-Wno-error=extra-semi-stmt",
+    ]
+
+    sources += [
+      "nnapi/BackendNnapi.cpp",
+      "nnapi/ContextNnapi.cpp",
+      "nnapi/ErrorNnapi.cpp",
+      "nnapi/GraphNnapi.cpp",
+      "nnapi/NnapiManager.cpp",
+      "nnapi/nnapi_implementation.cc",
+    ]
+
+    include_dirs = [
+      "${webnn_root}/third_party/",
+      "${webnn_root}/src",
+      "${webnn_root}/third_party/dawn/src/",
+    ]
+
+    lib_dirs = [ "$root_out_dir/" ]
+  }
 }
 
 # The static and shared libraries for webnn_native. Most of the files are
