@@ -74,7 +74,8 @@
         {"value": 2, "name": "OpenVINO"},
         {"value": 3, "name": "OneDNN"},
         {"value": 4, "name": "MLAS"},
-        {"value": 5, "name": "XNNPACK"}
+        {"value": 5, "name": "XNNPACK"},
+        {"value": 6, "name": "NNAPI"}
     ]
   },
   "error type": {
