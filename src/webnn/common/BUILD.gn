@@ -73,6 +73,10 @@ config("internal_config") {
     defines += [ "WEBNN_ENABLE_BACKEND_OPENVINO" ]
   }
 
+  if (webnn_enable_dml) {
+    defines += [ "WEBNN_ENABLE_BACKEND_DML" ]
+  }
+
   if (webnn_enable_dmlx) {
     defines += [ "WEBNN_ENABLE_BACKEND_DMLX" ]
   }
@@ -160,7 +164,7 @@ config("internal_config") {
     defines += [ "_SILENCE_ALL_CXX17_DEPRECATION_WARNINGS" ]
   }
 
-  if (is_clang && (webnn_enable_dmlx || webnn_enable_mlas || webnn_enable_nnapi)) {
+  if (is_clang && (webnn_enable_dml || webnn_enable_dmlx ||webnn_enable_mlas || webnn_enable_nnapi)) {
     cflags += [
       # Allow the use of DEFINE_ENUM_FLAG_OPERATORS(ENUMTYPE); in DirectML.h
       "-Wno-extra-semi",
