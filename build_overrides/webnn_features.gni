@@ -17,9 +17,6 @@ declare_args() {
   webnn_enable_openvino = false
 
   # Enables the compilation of DirectML backend
-  webnn_enable_dml = false
-
-  # Enables the compilation of DirectMLX backend
   webnn_enable_dmlx = false
 
   # Enables the compilation of oneDNN backend
