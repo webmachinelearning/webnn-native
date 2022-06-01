@@ -71,12 +71,11 @@
     "values": [
         {"value": 0, "name": "null"},
         {"value": 1, "name": "DirectML"},
-        {"value": 2, "name": "DirectMLX"},
-        {"value": 3, "name": "OpenVINO"},
-        {"value": 4, "name": "OneDNN"},
-        {"value": 5, "name": "MLAS"},
-        {"value": 6, "name": "XNNPACK"},
-        {"value": 7, "name": "NNAPI"}
+        {"value": 2, "name": "OpenVINO"},
+        {"value": 3, "name": "OneDNN"},
+        {"value": 4, "name": "MLAS"},
+        {"value": 5, "name": "XNNPACK"},
+        {"value": 6, "name": "NNAPI"}
     ]
   },
   "error type": {

@@ -210,18 +210,6 @@ source_set("sources") {
     }
   }
 
-  if (webnn_enable_dml) {
-   sources += [
-      "dml/BackendDML.cpp",
-      "dml/BackendDML.h",
-      "dml/ContextDML.cpp",
-      "dml/ContextDML.h",
-      "dml/GraphDML.cpp",
-      "dml/GraphDML.h",
-      "dml/DMLUtils.h",
-    ]
-  }
-
   if (webnn_enable_dmlx) {
     if (webnn_enable_gpu_buffer == false) {
       sources += [
@@ -243,14 +231,13 @@ source_set("sources") {
       "dmlx/GraphDMLX.h",
     ]
 
-    if (build_with_chromium == false) {
-      include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
-    }
-  }
-
-  if (webnn_enable_dml || webnn_enable_dmlx) {
     include_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/include" ]
+    if (build_with_chromium) {
+      include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
+    } else {
+      include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
+    }
 
     lib_dirs +=
         [ "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/bin/x64-win" ]
@@ -260,9 +247,7 @@ source_set("sources") {
       "d3d12.lib",
       "directml.lib",
     ]
-
     if (build_with_chromium) {
-      include_dirs += [ "${webnn_dawn_root}/src/dawn/native/dml/deps/src" ]
       if (is_component_build) {
         libs += [
           "dawn_proc.dll.lib",
@@ -478,7 +463,7 @@ if (webnn_enable_openvino) {
   }
 }
 
-if (webnn_enable_dml || webnn_enable_dmlx) {
+if (webnn_enable_dmlx) {
   dml_dll = "DirectML.dll"
   os_folder = "x64-win"
   dml_dll_path =
