@@ -25,7 +25,7 @@ namespace webnn::native::op {
                                      OperandBase* filter,
                                      ConvTranspose2dOptions const* options)
         : Conv2dBase(builder, input, filter, options) {
-        if (options == nullptr || options->outputPadding == nullptr) {
+        if (options == nullptr || options->outputPaddingCount == 0) {
             mOutputPadding = std::vector<int32_t>(2, 0);
         } else {
             mOutputPadding.assign(options->outputPadding,
@@ -34,7 +34,7 @@ namespace webnn::native::op {
         mOptions.outputPadding = mOutputPadding.data();
         mOptions.outputPaddingCount = mOutputPadding.size();
 
-        if (options != nullptr && options->outputSizes != nullptr) {
+        if (options != nullptr && options->outputSizesCount != 0) {
             mOutputSizes.assign(options->outputSizes,
                                 options->outputSizes + options->outputSizesCount);
             mOptions.outputSizes = mOutputSizes.data();
@@ -113,7 +113,7 @@ namespace webnn::native::op {
         }
 
         int32_t outputHeight, outputWidth;
-        if (mOptions.outputSizes != nullptr) {
+        if (mOptions.outputSizesCount != 0) {
             outputHeight = mOptions.outputSizes[0];
             outputWidth = mOptions.outputSizes[1];
         } else {

@@ -39,7 +39,8 @@ int main(int argc, const char* argv[]) {
             }
         },
         &mobilevetv2);
-    wnn::GraphBuilder builder = wnn::CreateGraphBuilder(context);
+
+    wnn::GraphBuilder builder = utils::CreateGraphBuilder(context);
     wnn::Operand output = mobilevetv2.mLayout == "nchw" ? mobilevetv2.LoadNchw(builder)
                                                         : mobilevetv2.LoadNhwc(builder);
 

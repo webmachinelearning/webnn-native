@@ -27,7 +27,7 @@ class MobileNetV2NhwcTests : public WebnnTest {
         const std::string nhwcPath = kModelPath + "/mobilenetv2_nhwc/";
         mobilenetv2.mWeightsPath = nhwcPath + "weights/";
         mobilenetv2.mLayout = "nhwc";
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         wnn::Operand output = mobilenetv2.LoadNhwc(builder);
         wnn::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);

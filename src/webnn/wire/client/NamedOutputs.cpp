@@ -19,9 +19,9 @@
 
 namespace webnn::wire::client {
 
-    void NamedOutputs::Set(char const* name, WNNResource const* resource) {
+    void NamedOutputs::SetOutput(char const* name, WNNResource const* resource) {
         // The type of output data is WNNArrayBufferView.
-        NamedOutputsSetCmd cmd = {};
+        NamedOutputsSetOutputCmd cmd = {};
         cmd.namedOutputsId = this->id;
         cmd.name = name;
         WNNArrayBufferView arrayBufferView = resource->arrayBufferView;
@@ -40,8 +40,16 @@ namespace webnn::wire::client {
         client->SerializeCommand(cmd);
     }
 
-    void NamedOutputs::Get(char const* name, WNNArrayBufferView const* resource) {
-        UNREACHABLE();
+    void NamedOutputs::GetOutput(char const* name, WNNArrayBufferView const* resource) {
+        NamedOutputsGetOutputCmd cmd = {};
+        cmd.namedOutputsId = this->id;
+        cmd.name = name;
+        if (resource->buffer != nullptr) {
+            cmd.arrayBuffer = static_cast<const uint8_t*>(resource->buffer);
+            cmd.byteLength = resource->byteLength;
+            cmd.byteOffset = resource->byteOffset;
+        } 
+        client->SerializeCommand(cmd);
     }
 
     bool NamedOutputs::OutputResult(char const* name,

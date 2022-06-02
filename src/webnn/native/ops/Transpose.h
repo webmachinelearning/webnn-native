@@ -25,7 +25,7 @@ namespace webnn::native::op {
       public:
         Transpose(GraphBuilderBase* builder, OperandBase* input, TransposeOptions const* options)
             : OperatorBase(builder, {input}) {
-            if (options == nullptr || options->permutation == nullptr) {
+            if (options == nullptr || options->permutationCount == 0) {
                 int32_t rank = input->Shape().size();
                 mPermutation.resize(rank);
                 for (auto i = 0; i < rank - 1; i++) {

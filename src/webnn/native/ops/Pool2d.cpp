@@ -26,14 +26,14 @@ namespace webnn::native::op {
                    OperandBase* input,
                    Pool2dOptions const* options)
         : OperatorBase(builder, {input}), mOpType(opType) {
-        if (options != nullptr && options->windowDimensions != nullptr) {
+        if (options != nullptr && options->windowDimensionsCount != 0) {
             mWindowDimensions.assign(options->windowDimensions,
                                      options->windowDimensions + options->windowDimensionsCount);
             mOptions.windowDimensions = mWindowDimensions.data();
             mOptions.windowDimensionsCount = mWindowDimensions.size();
         }
 
-        if (options == nullptr || options->padding == nullptr) {
+        if (options == nullptr || options->paddingCount == 0) {
             mPadding = std::vector<int32_t>(4, 0);
         } else {
             mPadding.assign(options->padding, options->padding + options->paddingCount);
@@ -41,7 +41,7 @@ namespace webnn::native::op {
         mOptions.padding = mPadding.data();
         mOptions.paddingCount = mPadding.size();
 
-        if (options == nullptr || options->strides == nullptr) {
+        if (options == nullptr || options->stridesCount == 0) {
             mStride = std::vector<int32_t>(2, 1);
         } else {
             mStride.assign(options->strides, options->strides + options->stridesCount);
@@ -49,7 +49,7 @@ namespace webnn::native::op {
         mOptions.strides = mStride.data();
         mOptions.stridesCount = mStride.size();
 
-        if (options == nullptr || options->dilations == nullptr) {
+        if (options == nullptr || options->dilationsCount == 0) {
             mDilations = std::vector<int32_t>(2, 1);
         } else {
             mDilations.assign(options->dilations, options->dilations + options->dilationsCount);
@@ -62,7 +62,7 @@ namespace webnn::native::op {
         mOptions.roundingType =
             options == nullptr ? wnn::RoundingType::Floor : options->roundingType;
 
-        if (options != nullptr && options->outputSizes != nullptr) {
+        if (options != nullptr && options->outputSizesCount != 0) {
             mOutputSizes.assign(options->outputSizes,
                                 options->outputSizes + options->outputSizesCount);
             mOptions.outputSizes = mOutputSizes.data();

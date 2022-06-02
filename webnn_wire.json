@@ -23,19 +23,19 @@
     "graph builder constant internal": [
       {"name": "graph builder id", "type": "ObjectId"},
       {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "array buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0},
       {"name": "result", "type": "ObjectHandle", "handle_type": "operand"}
     ],
     "graph builder constant with gpu buffer internal": [
       {"name": "graph builder id", "type": "ObjectId"},
       {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "optional": true},
+      {"name": "array buffer", "type": "uint8_t", "annotation": "const*", "optional": true},
       {"name": "id", "type": "uint32_t", "default": 0},
       {"name": "generation", "type": "uint32_t", "default": 0},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0},
       {"name": "result", "type": "ObjectHandle", "handle_type": "operand"}
     ],
     "graph builder gru internal": [
@@ -83,29 +83,32 @@
     "named inputs set": [
       {"name": "named inputs id", "type": "ObjectId"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "optional": true},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "array buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "default": "nullptr"},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0},
       {"name": "gpu buffer id", "type": "uint32_t", "default": 0},
       {"name": "gpu buffer generation", "type": "uint32_t", "default": 0},
-      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
+      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "default": "nullptr"},
       {"name": "dimensions count", "type": "uint32_t", "default": 0}
     ],
-    "named outputs set": [
+    "named outputs set output": [
       {"name": "named outputs id", "type": "ObjectId"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0},
       {"name": "gpu buffer id", "type": "uint32_t", "default": 0},
       {"name": "gpu buffer generation", "type": "uint32_t", "default": 0}
+    ],
+    "named outputs get output": [
+      {"name": "named outputs id", "type": "ObjectId"},
+      {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
+      {"name": "array buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length", "default": "nullptr"},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0}
     ],
     "destroy object": [
       {"name": "object type", "type": "ObjectType"},
       {"name": "object id", "type": "ObjectId"}
-    ],
-    "create graph builder": [
-      {"name": "context", "type": "ObjectId"},
-      {"name": "result", "type": "ObjectHandle", "handle_type": "graph builder"}
     ]
   },
   "return commands": {
@@ -118,9 +121,9 @@
     "graph compute result": [
       {"name": "named outputs", "type": "ObjectHandle", "handle_type": "named outputs"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
-      {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
-      {"name": "byte length", "type": "size_t"},
-      {"name": "byte offset", "type": "size_t", "default": 0}
+      {"name": "array buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
+      {"name": "byte length", "type": "uint64_t"},
+      {"name": "byte offset", "type": "uint64_t", "default": 0}
     ],
     "graph compute async callback": [
       { "name": "graph", "type": "ObjectHandle", "handle_type": "graph" },
@@ -146,8 +149,8 @@
       "GraphBuilderSplit",
       "InstanceCreateContextWithGpuDevice",
       "NamedInputsSet",
-      "NamedOutputsSet",
-      "NamedOutputsGet",
+      "NamedOutputsSetOutput",
+      "NamedOutputsGetOutput",
       "OperandArraySize",
       "OperatorArraySize",
       "GraphComputeAsync",

@@ -8,7 +8,8 @@ gclient_gn_args = [
 
 vars = {
   'chromium_git': 'https://chromium.googlesource.com',
-  'dawn_git': 'https://dawn.googlesource.com',
+  # 'dawn_git': 'https://github.com/fujunwei',
+  'dawn_git': 'https://github.com/lisa0314',
   'github_git': 'https://github.com',
 
   'dawn_standalone': True,
@@ -45,9 +46,15 @@ deps = {
 
   # Dependencies required for code generator and infrastructure code.
   'third_party/dawn': {
-    'url': '{dawn_git}/dawn.git@bf1c0cf52377b4db2bf3a433dc5056620aad7cdd'
+    # 'url': '{dawn_git}/dawn.git@f4c84e239bf8b5b2c4733d68ca38e1e9049fd895'
+    'url': '{dawn_git}/dawn.git@5e6f6fbfcb038e7a0f7857cda186a8771c6eba05'
   },
 
+  'third_party/abseil-cpp': {
+    'url': '{chromium_git}/chromium/src/third_party/abseil-cpp@789af048b388657987c59d4da406859034fe310f',
+    'condition': 'dawn_standalone',
+  },
+  
   # Dependencies required for backends.
   'third_party/DirectML': {
     'url': '{github_git}/microsoft/DirectML.git@c3f16a701beeeefc9ce5b67c71b554a6903c0f67',
@@ -136,7 +143,7 @@ deps = {
 
   # Jinja2 and MarkupSafe for the code generator
   'third_party/jinja2': {
-    'url': '{chromium_git}/chromium/src/third_party/jinja2@a82a4944a7f2496639f34a89c9923be5908b80aa',
+    'url': '{chromium_git}/chromium/src/third_party/jinja2@ee69aa00ee8536f61db6a451f3858745cf587de6',
     'condition': 'dawn_standalone',
   },
   'third_party/markupsafe': {

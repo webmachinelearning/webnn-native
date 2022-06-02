@@ -17,7 +17,7 @@
 class SigmoidTests : public WebnnTest {};
 
 TEST_F(SigmoidTests, SigmoidWith1DTensor) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3});
     const wnn::Operand b = builder.Sigmoid(a);
     const wnn::Graph graph = utils::Build(builder, {{"b", b}});
@@ -30,7 +30,7 @@ TEST_F(SigmoidTests, SigmoidWith1DTensor) {
 }
 
 TEST_F(SigmoidTests, SigmoidWith3DTensor) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = builder.Sigmoid(a);
     const wnn::Graph graph = utils::Build(builder, {{"b", b}});

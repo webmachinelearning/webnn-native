@@ -67,7 +67,12 @@ namespace webnn::native {
 
     WNNContext Instance::CreateContext(const wnn::ContextOptions* options) {
         return reinterpret_cast<WNNContext>(
-            mImpl->CreateContext(reinterpret_cast<const ContextOptions*>(options)));
+            mImpl->APICreateContext(reinterpret_cast<const ContextOptions*>(options)));
+    }
+
+    WNNGraphBuilder Instance::CreateGraphBuilder(const WNNContext context) {
+        return reinterpret_cast<WNNGraphBuilder>(
+            mImpl->APICreateGraphBuilder(reinterpret_cast<ContextBase*>(context)));
     }
 
     WNNInstance Instance::Get() const {

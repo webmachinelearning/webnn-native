@@ -15,7 +15,7 @@
 
 import("../../scripts/webnn_overrides_with_defaults.gni")
 
-import("${webnn_dawn_root}/scripts/dawn_component.gni")
+import("${dawn_root}/scripts/dawn_component.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
 ###############################################################################
@@ -24,7 +24,7 @@ import("${webnn_root}/generator/webnn_generator.gni")
 
 webnn_json_generator("cpp_gen") {
   target = "cpp"
-  outputs = [ "src/webnn/webnn_cpp.cpp" ]
+  outputs = [ "src/dawn/webnn_cpp.cpp" ]
 }
 
 source_set("cpp") {
@@ -41,11 +41,14 @@ source_set("cpp") {
 
 webnn_json_generator("proc_gen") {
   target = "proc"
-  outputs = [ "src/webnn/webnn_proc.c" ]
+  outputs = [
+    "src/dawn/webnn_proc.c",
+    "src/dawn/webnn_thread_dispatch_proc.cpp",
+  ]
 }
 
 dawn_component("webnn_proc") {
-  DEFINE_PREFIX = "WEBNN"
+  DEFINE_PREFIX = "WNN"
 
   public_deps = [ "${webnn_root}/include/webnn:headers" ]
   deps = [ ":proc_gen" ]
@@ -59,7 +62,10 @@ dawn_component("webnn_proc") {
 webnn_json_generator("emscripten_bits_gen") {
   target = "emscripten_bits"
   outputs = [
-    "src/webnn/webnn_struct_info.json",
-    "src/webnn/library_webnn_enum_tables.js",
+    "emscripten-bits/library_webnn_enum_tables.js",
+    "emscripten-bits/webnn.h",
+    "emscripten-bits/webnn_cpp.cpp",
+    "emscripten-bits/webnn_cpp.h",
+    "emscripten-bits/webnn_struct_info.json",
   ]
 }

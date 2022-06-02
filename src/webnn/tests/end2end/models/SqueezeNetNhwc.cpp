@@ -27,7 +27,7 @@ class SqueezeNetNhwcTests : public WebnnTest {
         const std::string nhwcPath = kModelPath + "/squeezenet1.0_nhwc/";
         squeezenet.mWeightsPath = nhwcPath + "weights/";
         squeezenet.mLayout = "nhwc";
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         wnn::Operand output = squeezenet.LoadNhwc(builder);
         wnn::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nhwcPath + "test_data_set/" + inputFile);

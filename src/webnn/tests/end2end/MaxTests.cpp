@@ -17,7 +17,7 @@
 class MaxTests : public WebnnTest {};
 
 TEST_F(MaxTests, MaxConstantAndInput) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const std::vector<float> bData = {
         -0.00724315, -1.4088361,  0.17466596, 1.1395162,   1.3720452,   -0.35610083, -0.5597993,
@@ -60,7 +60,7 @@ TEST_F(MaxTests, MaxConstantAndInput) {
 }
 
 TEST_F(MaxTests, MaxTwoInputs) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {3, 4, 5});
     const wnn::Operand c = builder.Max(a, b);
@@ -102,7 +102,7 @@ TEST_F(MaxTests, MaxTwoInputs) {
 }
 
 TEST_F(MaxTests, MaxBroadcast) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4, 5});
     const wnn::Operand b = utils::BuildInput(builder, "b", {5});
     const wnn::Operand c = builder.Max(a, b);

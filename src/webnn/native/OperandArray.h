@@ -31,10 +31,10 @@ namespace webnn::native {
             return new OperandArrayBase(graphBuilder, ObjectBase::kError);
         }
         // WebNN API
-        size_t Size() {
+        size_t APISize() {
             return mOperands.size();
         }
-        OperandBase* Get(size_t index) {
+        OperandBase* APIGetOperand(size_t index) {
             return mOperands[index].Get();
         }
 

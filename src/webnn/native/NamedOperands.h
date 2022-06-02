@@ -25,7 +25,7 @@ namespace webnn::native {
     class NamedOperandsBase : public RefCounted {
       public:
         // WebNN API
-        void Set(char const* name, const OperandBase* operand) {
+        void APISet(char const* name, const OperandBase* operand) {
             mNamedOperands[std::string(name)] = operand;
         }
 

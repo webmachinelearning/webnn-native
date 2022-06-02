@@ -26,7 +26,10 @@ namespace webnn::wire {
 
     class WEBNN_WIRE_EXPORT CommandSerializer {
       public:
-        virtual ~CommandSerializer() = default;
+        CommandSerializer();
+        virtual ~CommandSerializer();
+        CommandSerializer(const CommandSerializer& rhs) = delete;
+        CommandSerializer& operator=(const CommandSerializer& rhs) = delete;
 
         // Get space for serializing commands.
         // GetCmdSpace will never be called with a value larger than
@@ -35,6 +38,7 @@ namespace webnn::wire {
         virtual void* GetCmdSpace(size_t size) = 0;
         virtual bool Flush() = 0;
         virtual size_t GetMaximumAllocationSize() const = 0;
+        virtual void OnSerializeError();
     };
 
     class WEBNN_WIRE_EXPORT CommandHandler {

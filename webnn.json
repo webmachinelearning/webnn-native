@@ -15,6 +15,21 @@
     "See the License for the specific language governing permissions and",
     "limitations under the License."
   ],
+  
+  "_metadata": {
+    "api": "WebNN",
+    "c_prefix": "WNN",
+    "namespace": "wnn",
+    "native_namespace": "webnn native",
+    "wire_namespace": "webnn wire",
+    "proc_table_prefix": "Webnn"
+  },
+  
+  "proc": {
+    "category": "function pointer",
+    "returns": "void",
+    "args": []
+  },
   "instance descriptor": {
     "category": "structure",
     "members": []
@@ -145,7 +160,7 @@
     ]
   },
   "error callback": {
-    "category": "callback",
+    "category": "function pointer",
     "args": [
         {"name": "type", "type": "error type"},
         {"name": "message", "type": "char", "annotation": "const*"},
@@ -184,7 +199,7 @@
             {"name": "type", "type": "error type"},
             {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"}
         ],
-        "TODO": "enga@: Make this a Dawn extension"
+        "_TODO": "enga@: Make this a Dawn extension"
       },
       {
         "name": "set uncaptured error callback",
@@ -251,13 +266,14 @@
     "methods": [
       {
         "name": "size",
-        "returns": "size_t"
+        "returns": "uint64_t",
+        "args": []
       },
       {
-        "name": "get",
+        "name": "get operand",
         "returns": "operand",
         "args": [
-          {"name": "index", "type": "size_t"}
+          {"name": "index", "type": "uint64_t"}
         ]
       }
     ]
@@ -267,20 +283,21 @@
     "methods": [
       {
         "name": "size",
-        "returns": "size_t"
+        "returns": "uint64_t",
+        "args": []
       },
       {
-        "name": "set",
+        "name": "set fusion operator",
         "returns": "void",
         "args": [
-          {"name": "operator", "type": "fusion operator"}
+          {"name": "fusion operator", "type": "fusion operator"}
         ]
       },
       {
-        "name": "get",
+        "name": "get fusion operator",
         "returns": "fusion operator",
         "args": [
-          {"name": "index", "type": "size_t"}
+          {"name": "index", "type": "uint64_t"}
         ]
       }
     ]
@@ -366,11 +383,11 @@
     "category": "structure",
     "members": [
       {"name": "padding count", "type": "uint32_t", "default": 0},
-      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "default": "nullptr"},
       {"name": "strides count", "type": "uint32_t", "default": 0},
-      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "default": "nullptr"},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
-      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "default": "nullptr"},
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
@@ -383,15 +400,15 @@
     "category": "structure",
     "members": [
       {"name": "padding count", "type": "uint32_t", "default": 0},
-      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "default": "nullptr"},
       {"name": "strides count", "type": "uint32_t", "default": 0},
-      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "default": "nullptr"},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
-      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "default": "nullptr"},
       {"name": "output padding count", "type": "uint32_t", "default": 0},
-      {"name": "output padding", "type": "int32_t", "annotation": "const*", "length": "output padding count", "optional": true},
+      {"name": "output padding", "type": "int32_t", "annotation": "const*", "length": "output padding count", "default": "nullptr"},
       {"name": "output sizes count", "type": "uint32_t", "default": 0},
-      {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "optional": true},
+      {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "default": "nullptr"},
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "groups", "type": "int32_t", "default": 1},
       {"name": "input layout", "type": "input operand layout", "default": "nchw"},
@@ -404,7 +421,7 @@
     "category": "structure",
     "members": [
       {"name": "axes count", "type": "uint32_t", "default": 0},
-      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "default": "nullptr"}
     ]
   },
   "gru options": {
@@ -431,18 +448,18 @@
     "category": "structure",
     "members": [
       {"name": "window dimensions count", "type": "uint32_t", "default": 0},
-      {"name": "window dimensions", "type": "int32_t", "annotation": "const*", "length": "window dimensions count", "optional": true},
+      {"name": "window dimensions", "type": "int32_t", "annotation": "const*", "length": "window dimensions count", "default": "nullptr"},
       {"name": "padding count", "type": "uint32_t", "default": 0},
-      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "optional": true},
+      {"name": "padding", "type": "int32_t", "annotation": "const*", "length": "padding count", "default": "nullptr"},
       {"name": "strides count", "type": "uint32_t", "default": 0},
-      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "optional": true},
+      {"name": "strides", "type": "int32_t", "annotation": "const*", "length": "strides count", "default": "nullptr"},
       {"name": "dilations count", "type": "uint32_t", "default": 0},
-      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "optional": true},
+      {"name": "dilations", "type": "int32_t", "annotation": "const*", "length": "dilations count", "default": "nullptr"},
       {"name": "auto pad", "type": "auto pad", "default": "explicit"},
       {"name": "layout", "type": "input operand layout", "default": "nchw"},
       {"name": "rounding type", "type": "rounding type", "default": "floor"},
       {"name": "output sizes count", "type": "uint32_t", "default": 0},
-      {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "optional": true}
+      {"name": "output sizes", "type": "int32_t", "annotation": "const*", "length": "output sizes count", "default": "nullptr"}
     ]
   },
   "gemm options": {
@@ -465,7 +482,7 @@
     "category": "structure",
     "members": [
       {"name": "axes count", "type": "uint32_t", "default": 0},
-      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count","optional": true},
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "default": "nullptr"},
       {"name": "keepDimensions", "type": "bool", "default": "false"}
     ]
   },
@@ -474,11 +491,11 @@
     "members": [
       {"name": "mode", "type": "interpolation mode", "default": "nearest neighbor"},
       {"name": "scales count", "type": "uint32_t", "default": 0},
-      {"name": "scales", "type": "float", "annotation": "const*", "length": "scales count", "optional": true},
+      {"name": "scales", "type": "float", "annotation": "const*", "length": "scales count", "default": "nullptr" },
       {"name": "sizes count", "type": "uint32_t", "default": 0},
-      {"name": "sizes", "type": "int32_t", "annotation": "const*", "length": "sizes count", "optional": true},
+      {"name": "sizes", "type": "int32_t", "annotation": "const*", "length": "sizes count", "default": "nullptr"},
       {"name": "axes count", "type": "uint32_t", "default": 0},
-      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "default": "nullptr"}
     ]
   },
   "split options": {
@@ -491,14 +508,14 @@
     "category": "structure",
     "members": [
       {"name": "axes count", "type": "uint32_t", "default": 0},
-      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "optional": true}
+      {"name": "axes", "type": "int32_t", "annotation": "const*", "length": "axes count", "default": "nullptr"}
     ]
   },
   "transpose options": {
     "category": "structure",
     "members": [
       {"name": "permutation count", "type": "uint32_t", "default": 0},
-      {"name": "permutation", "type": "int32_t", "annotation": "const*", "length": "permutation count", "optional": true}
+      {"name": "permutation", "type": "int32_t", "annotation": "const*", "length": "permutation count", "default": "nullptr"}
     ]
   },
   "batchNorm options": {
@@ -721,7 +738,8 @@
       },
       {
         "name": "hard swish operator",
-        "returns": "fusion operator"
+        "returns": "fusion operator",
+        "args": []
       },
       {
         "name": "gemm",
@@ -861,7 +879,8 @@
       },
       {
         "name": "relu operator",
-        "returns": "fusion operator"
+        "returns": "fusion operator",
+        "args": []
       },
       {
         "name": "reshape",
@@ -881,7 +900,8 @@
       },
       {
         "name": "sigmoid operator",
-        "returns": "fusion operator"
+        "returns": "fusion operator",
+        "args": []
       },
       {
         "name": "slice",
@@ -930,7 +950,8 @@
       },
       {
         "name": "tanh operator",
-        "returns": "fusion operator"
+        "returns": "fusion operator",
+        "args": []
       },
       {
         "name": "transpose",
@@ -1002,7 +1023,7 @@
     "category": "structure",
     "members": [
       {"name": "resource", "type": "resource"},
-      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "optional": true},
+      {"name": "dimensions", "type": "int32_t", "annotation": "const*", "length": "dimensions count", "default": "nullptr"},
       {"name": "dimensions count", "type": "uint32_t", "default": 0}
     ]
   },
@@ -1048,14 +1069,14 @@
     "category": "object",
     "methods": [
       {
-        "name": "set",
+        "name": "set output",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
           {"name": "resource", "type": "resource", "annotation": "const*"}
         ]
       },
       {
-        "name": "get",
+        "name": "get output",
         "args": [
           {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
           {"name": "resource", "type": "array buffer view", "annotation": "*"}
@@ -1064,7 +1085,7 @@
     ]
   },
   "compute async callback": {
-    "category": "callback",
+    "category": "function pointer",
     "args": [
 	      {"name": "type", "type": "error type"},
         {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"},
@@ -1092,6 +1113,12 @@
           {"name": "userdata", "type": "void", "annotation": "*"}
         ]
       }
+    ]
+  },
+  "s type": {
+    "category": "enum",
+    "values": [
+        {"value": 0, "name": "invalid", "valid": false}
     ]
   }
 }

@@ -15,7 +15,7 @@
 
 import("../../../scripts/webnn_overrides_with_defaults.gni")
 
-import("${webnn_dawn_root}/scripts/dawn_component.gni")
+import("${dawn_root}/scripts/dawn_component.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
 # Public webnn_wire headers so they can be publically visible for
@@ -35,8 +35,8 @@ webnn_json_generator("gen") {
   target = "wire"
   outputs = [
     "src/webnn/wire/ObjectType_autogen.h",
-    "src/webnn/wire/WireCmd_autogen.h",
     "src/webnn/wire/WireCmd_autogen.cpp",
+    "src/webnn/wire/WireCmd_autogen.h",
     "src/webnn/wire/client/ApiObjects_autogen.h",
     "src/webnn/wire/client/ApiProcs_autogen.cpp",
     "src/webnn/wire/client/ClientBase_autogen.h",
@@ -60,14 +60,18 @@ dawn_component("webnn_wire") {
   configs = [ "${webnn_root}/src/webnn/common:internal_config" ]
   sources = get_target_outputs(":gen")
   sources += [
+    "BufferConsumer.h",
+    "BufferConsumer_impl.h",
     "ChunkedCommandHandler.cpp",
     "ChunkedCommandHandler.h",
     "ChunkedCommandSerializer.cpp",
     "ChunkedCommandSerializer.h",
     "WireClient.cpp",
+    "Wire.cpp",
     "WireDeserializeAllocator.cpp",
     "WireDeserializeAllocator.h",
     "WireServer.cpp",
+    "WireResult.h",
     "client/ApiObjects.h",
     "client/Client.cpp",
     "client/Client.h",
@@ -107,7 +111,7 @@ dawn_component("webnn_wire") {
     if (is_component_build) {
       libs = [ "dawn_wire.dll.lib" ]
     }
-    deps += [ "${webnn_dawn_root}/src/dawn/wire" ]
+    deps += [ "${dawn_root}/src/dawn/wire" ]
   }
 
   # Make headers publicly visible

@@ -16,8 +16,8 @@
 #ifndef WEBNN_WEBNN_PROC_H_
 #define WEBNN_WEBNN_PROC_H_
 
+#include "dawn/webnn_proc_table.h"
 #include "webnn/webnn.h"
-#include "webnn/webnn_proc_table.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +28,7 @@ extern "C" {
 // default value of the proctable. Setting the proctable back to null is good practice when you
 // are done using libdawn_proc since further usage will cause a segfault instead of calling an
 // unexpected function.
-WEBNN_EXPORT void webnnProcSetProcs(const WebnnProcTable* procs);
+WNN_EXPORT void webnnProcSetProcs(const WebnnProcTable* procs);
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -1,0 +1,170 @@
+# Copyright 2021 The Dawn Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("../../../scripts/webnn_overrides_with_defaults.gni")
+
+import("${dawn_root}/scripts/dawn_features.gni")
+
+config("absl_config") {
+  if (webnn_standalone && is_clang) {
+    cflags = [
+      # Allow the use of enable_if()
+      "-Wno-gcc-compat",
+    ]
+  }
+
+  include_dirs = [ "${webnn_abseil_dir}" ]
+}
+
+template("absl_source_set") {
+  source_set(target_name) {
+    forward_variables_from(invoker, "*")
+
+    if (!defined(public_configs)) {
+      public_configs = []
+    }
+    public_configs += [ ":absl_config" ]
+  }
+}
+
+#
+# absl/base
+#
+
+absl_source_set("log_severity") {
+  sources = [ "${webnn_abseil_dir}/absl/base/log_severity.cc" ]
+  public = [ "${webnn_abseil_dir}/absl/base/log_severity.h" ]
+}
+
+absl_source_set("raw_logging_internal") {
+  sources = [ "${webnn_abseil_dir}/absl/base/internal/raw_logging.cc" ]
+  public = [ "${webnn_abseil_dir}/absl/base/internal/raw_logging.h" ]
+  public_deps = [ ":log_severity" ]
+  visibility = [ ":*" ]
+}
+
+absl_source_set("throw_delegate") {
+  sources = [ "${webnn_abseil_dir}/absl/base/internal/throw_delegate.cc" ]
+  public = [ "${webnn_abseil_dir}/absl/base/internal/throw_delegate.h" ]
+  public_deps = [ ":raw_logging_internal" ]
+  visibility = [ ":*" ]
+}
+
+#
+# absl/numeric
+#
+
+absl_source_set("int128") {
+  sources = [
+    "${webnn_abseil_dir}/absl/numeric/int128.cc",
+    "${webnn_abseil_dir}/absl/numeric/int128_have_intrinsic.inc",
+    "${webnn_abseil_dir}/absl/numeric/int128_no_intrinsic.inc",
+  ]
+  public = [ "${webnn_abseil_dir}/absl/numeric/int128.h" ]
+}
+
+#
+# absl/strings
+#
+
+absl_source_set("strings") {
+  sources = [
+    "${webnn_abseil_dir}/absl/strings/ascii.cc",
+    "${webnn_abseil_dir}/absl/strings/charconv.cc",
+    "${webnn_abseil_dir}/absl/strings/escaping.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/charconv_bigint.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/charconv_bigint.h",
+    "${webnn_abseil_dir}/absl/strings/internal/charconv_parse.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/charconv_parse.h",
+    "${webnn_abseil_dir}/absl/strings/internal/memutil.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/memutil.h",
+    "${webnn_abseil_dir}/absl/strings/internal/stl_type_traits.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_join_internal.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_split_internal.h",
+    "${webnn_abseil_dir}/absl/strings/match.cc",
+    "${webnn_abseil_dir}/absl/strings/numbers.cc",
+    "${webnn_abseil_dir}/absl/strings/str_cat.cc",
+    "${webnn_abseil_dir}/absl/strings/str_replace.cc",
+    "${webnn_abseil_dir}/absl/strings/str_split.cc",
+    "${webnn_abseil_dir}/absl/strings/string_view.cc",
+    "${webnn_abseil_dir}/absl/strings/substitute.cc",
+  ]
+  public = [
+    "${webnn_abseil_dir}/absl/strings/ascii.h",
+    "${webnn_abseil_dir}/absl/strings/charconv.h",
+    "${webnn_abseil_dir}/absl/strings/escaping.h",
+    "${webnn_abseil_dir}/absl/strings/internal/string_constant.h",
+    "${webnn_abseil_dir}/absl/strings/match.h",
+    "${webnn_abseil_dir}/absl/strings/numbers.h",
+    "${webnn_abseil_dir}/absl/strings/str_cat.h",
+    "${webnn_abseil_dir}/absl/strings/str_join.h",
+    "${webnn_abseil_dir}/absl/strings/str_replace.h",
+    "${webnn_abseil_dir}/absl/strings/str_split.h",
+    "${webnn_abseil_dir}/absl/strings/string_view.h",
+    "${webnn_abseil_dir}/absl/strings/strip.h",
+    "${webnn_abseil_dir}/absl/strings/substitute.h",
+  ]
+  deps = [
+    ":int128",
+    ":raw_logging_internal",
+    ":strings_internal",
+    ":throw_delegate",
+  ]
+}
+
+absl_source_set("strings_internal") {
+  sources = [
+    "${webnn_abseil_dir}/absl/strings/internal/escaping.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/ostringstream.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/utf8.cc",
+  ]
+  public = [
+    "${webnn_abseil_dir}/absl/strings/internal/char_map.h",
+    "${webnn_abseil_dir}/absl/strings/internal/escaping.h",
+    "${webnn_abseil_dir}/absl/strings/internal/ostringstream.h",
+    "${webnn_abseil_dir}/absl/strings/internal/resize_uninitialized.h",
+    "${webnn_abseil_dir}/absl/strings/internal/utf8.h",
+  ]
+  deps = [ ":raw_logging_internal" ]
+}
+
+absl_source_set("str_format") {
+  public = [ "${webnn_abseil_dir}/absl/strings/str_format.h" ]
+  deps = [ ":str_format_internal" ]
+}
+
+absl_source_set("str_format_internal") {
+  sources = [
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/arg.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/bind.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/extension.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/float_conversion.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/output.cc",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/parser.cc",
+  ]
+  public = [
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/arg.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/bind.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/checker.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/extension.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/float_conversion.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/output.h",
+    "${webnn_abseil_dir}/absl/strings/internal/str_format/parser.h",
+  ]
+  visibility = [ ":*" ]
+  deps = [
+    ":int128",
+    ":strings",
+  ]
+}

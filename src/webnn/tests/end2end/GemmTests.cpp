@@ -33,7 +33,7 @@ class GemmTests : public WebnnTest {
                   const std::vector<float>& expectedValue,
                   const Options* options = nullptr,
                   bool constantWeight = false) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", aShape);
         wnn::Operand b;
         if (constantWeight) {

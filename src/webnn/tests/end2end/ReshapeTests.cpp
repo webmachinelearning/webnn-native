@@ -19,7 +19,7 @@ class ReshapeTests : public WebnnTest {
     void TestReshape(const std::vector<int32_t>& oldShape,
                      const std::vector<int32_t>& newShape,
                      const std::vector<int32_t>& expectedShape) {
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         const wnn::Operand a = utils::BuildInput(builder, "a", oldShape);
         const wnn::Operand b = builder.Reshape(a, newShape.data(), newShape.size());
         const wnn::Graph graph = utils::Build(builder, {{"b", b}});

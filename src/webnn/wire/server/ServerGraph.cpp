@@ -25,7 +25,7 @@ namespace webnn::wire::server {
         }
         for (auto& name : mOutputNamesMap[outputsId]) {
             WNNArrayBufferView arrayBuffer = {};
-            mProcs.namedOutputsGet(namedOutputs->handle, name.data(), &arrayBuffer);
+            mProcs.namedOutputsGetOutput(namedOutputs->handle, name.data(), &arrayBuffer);
             if (arrayBuffer.buffer == nullptr) {
                 return false;
             }
@@ -34,7 +34,7 @@ namespace webnn::wire::server {
             ReturnGraphComputeResultCmd cmd;
             cmd.namedOutputs = ObjectHandle{outputsId, namedOutputs->generation};
             cmd.name = name.data();
-            cmd.buffer = static_cast<uint8_t*>(arrayBuffer.buffer);
+            cmd.arrayBuffer = static_cast<uint8_t*>(arrayBuffer.buffer);
             cmd.byteLength = arrayBuffer.byteLength;
             cmd.byteOffset = arrayBuffer.byteOffset;
             SerializeCommand(cmd);

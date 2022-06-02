@@ -137,14 +137,14 @@ namespace webnn::native {
         return CompileImpl();
     }
 
-    void GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+    void GraphBase::APICompute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
         GetContext()->ConsumedError(ComputeImpl(inputs, outputs));
     }
 
-    void GraphBase::ComputeAsync(NamedInputsBase* inputs,
-                                 NamedOutputsBase* outputs,
-                                 WNNComputeAsyncCallback callback,
-                                 void* userdata) {
+    void GraphBase::APIComputeAsync(NamedInputsBase* inputs,
+                                    NamedOutputsBase* outputs,
+                                    WNNComputeAsyncCallback callback,
+                                    void* userdata) {
         if (inputs == nullptr || outputs == nullptr) {
             callback(WNNErrorType_Validation, "named inputs or outputs is empty.", userdata);
         }

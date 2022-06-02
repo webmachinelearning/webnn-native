@@ -17,7 +17,7 @@
 
 namespace webnn::wire::server {
 
-    bool Server::DoNamedOutputsSet(ObjectId namedOutputsId,
+    bool Server::DoNamedOutputsSetOutput(ObjectId namedOutputsId,
                                    char const* name,
                                    size_t byteLength,
                                    size_t byteOffset,
@@ -50,9 +50,27 @@ namespace webnn::wire::server {
                 outputNames.push_back(std::string(name));
             }
         }
-        mProcs.namedOutputsSet(namedOutputs->handle, name, &resource);
+        mProcs.namedOutputsSetOutput(namedOutputs->handle, name, &resource);
 
         return true;
     }
 
+    bool Server::DoNamedOutputsGetOutput(ObjectId namedOutputsId,
+                                   char const* name,
+                                   uint8_t const* buffer,
+                                   size_t byteLength,
+                                   size_t byteOffset) {
+        auto* namedOutputs = NamedOutputsObjects().Get(namedOutputsId);
+        if (namedOutputs == nullptr) {
+            return false;
+        }
+
+        WNNArrayBufferView arrayBuffer = {};
+        arrayBuffer.buffer = const_cast<void*>(static_cast<const void*>(buffer));
+        arrayBuffer.byteLength = byteLength;
+        arrayBuffer.byteOffset = byteOffset;
+        mProcs.namedOutputsGetOutput(namedOutputs->handle, name, &arrayBuffer);
+
+        return true;
+    }
 }  // namespace webnn::wire::server

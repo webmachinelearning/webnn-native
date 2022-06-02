@@ -17,7 +17,7 @@
 class SoftmaxTests : public WebnnTest {};
 
 TEST_F(SoftmaxTests, Softmax) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand a = utils::BuildInput(builder, "a", {3, 4});
     const wnn::Operand b = builder.Softmax(a);
     const wnn::Graph graph = utils::Build(builder, {{"b", b}});

@@ -17,8 +17,8 @@ if (!defined(webnn_standalone)) {
   webnn_standalone = false
 }
 
-if (!defined(webnn_dawn_root)) {
-  webnn_dawn_root = "//third_party/dawn"
+if (!defined(dawn_root)) {
+  dawn_root = "//third_party/dawn"
 }
 
 if (!defined(webnn_jinja2_dir)) {
@@ -32,4 +32,8 @@ webnn_gen_root = get_path_info("${webnn_root}", "gen_dir")
 
 if (!defined(webnn_googletest_dir)) {
   webnn_googletest_dir = "//third_party/googletest"
+}
+
+if (!defined(webnn_abseil_dir)) {
+  webnn_abseil_dir = "//third_party/abseil-cpp"
 }

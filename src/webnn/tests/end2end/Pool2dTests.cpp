@@ -17,7 +17,7 @@
 class Pool2dTests : public WebnnTest {};
 
 TEST_F(Pool2dTests, MaxPool2dDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -32,7 +32,7 @@ TEST_F(Pool2dTests, MaxPool2dDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -48,7 +48,7 @@ TEST_F(Pool2dTests, MaxPool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dDilationsDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -64,7 +64,7 @@ TEST_F(Pool2dTests, MaxPool2dDilationsDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dDilationsNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -81,7 +81,7 @@ TEST_F(Pool2dTests, MaxPool2dDilationsNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dPadsDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -99,7 +99,7 @@ TEST_F(Pool2dTests, MaxPool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dPadsNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -118,7 +118,7 @@ TEST_F(Pool2dTests, MaxPool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -136,7 +136,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -159,7 +159,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -182,7 +182,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -206,7 +206,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -229,7 +229,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -253,7 +253,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -275,7 +275,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -294,7 +294,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dStridesDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -311,7 +311,7 @@ TEST_F(Pool2dTests, MaxPool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, MaxPool2dStridesNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -329,7 +329,7 @@ TEST_F(Pool2dTests, MaxPool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 4, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -344,7 +344,7 @@ TEST_F(Pool2dTests, AveragePool2dDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 4, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -360,7 +360,7 @@ TEST_F(Pool2dTests, AveragePool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dPadsDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -379,7 +379,7 @@ TEST_F(Pool2dTests, AveragePool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dPadsNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -399,7 +399,7 @@ TEST_F(Pool2dTests, AveragePool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -418,7 +418,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {5, 5};
@@ -438,7 +438,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -461,7 +461,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -484,7 +484,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -508,7 +508,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -531,7 +531,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -555,7 +555,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 7, 7, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -577,7 +577,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 5, 5});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -594,7 +594,7 @@ TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, AveragePool2dStridesNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -612,7 +612,7 @@ TEST_F(Pool2dTests, AveragePool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, GlobalAveragePool2dDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 3, 5, 5});
     const wnn::Operand y = builder.AveragePool2d(x);
     const wnn::Graph graph = utils::Build(builder, {{"y", y}});
@@ -636,7 +636,7 @@ TEST_F(Pool2dTests, GlobalAveragePool2dDefault) {
 }
 
 TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 5, 5, 3});
     utils::Pool2dOptions options;
     options.layout = wnn::InputOperandLayout::Nhwc;
@@ -662,7 +662,7 @@ TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -677,7 +677,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesDefault) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dStrides) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -693,7 +693,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStrides) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -709,7 +709,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesNhwc) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {2, 2};
@@ -726,7 +726,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsDefault) {
 }
 
 TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes3x3) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -751,7 +751,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes3x3) {
 }
 
 TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes4x4) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -777,7 +777,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes4x4) {
 }
 
 TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeFloor) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -802,7 +802,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeFloor) {
 }
 
 TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeCeil) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 7, 7});
     utils::Pool2dOptions options;
     options.windowDimensions = {4, 4};
@@ -828,7 +828,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeCeil) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -846,7 +846,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsNhwc) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -863,7 +863,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperDefault) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -881,7 +881,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperNhwc) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerDefault) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 1, 2, 4});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};
@@ -898,7 +898,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerDefault) {
 }
 
 TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerNhwc) {
-    const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+    const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
     const wnn::Operand x = utils::BuildInput(builder, "x", {1, 2, 4, 1});
     utils::Pool2dOptions options;
     options.windowDimensions = {3, 3};

@@ -15,7 +15,7 @@
 
 import("../../scripts/webnn_overrides_with_defaults.gni")
 
-import("${webnn_dawn_root}/scripts/dawn_component.gni")
+import("${dawn_root}/scripts/dawn_component.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
 ###############################################################################
@@ -25,8 +25,8 @@ import("${webnn_root}/generator/webnn_generator.gni")
 webnn_json_generator("headers_gen") {
   target = "headers"
   outputs = [
-    "include/webnn/webnn_proc_table.h",
-    "include/webnn/webnn.h",
+    "include/dawn/webnn_proc_table.h",
+    "include/dawn/webnn.h",
   ]
 }
 
@@ -43,7 +43,10 @@ source_set("headers") {
 
 webnn_json_generator("cpp_headers_gen") {
   target = "cpp_headers"
-  outputs = [ "include/webnn/webnn_cpp.h" ]
+  outputs = [
+    "include/dawn/webnn_cpp.h",
+    "include/dawn/webnn_cpp_print.h",
+  ]
 }
 
 source_set("cpp_headers") {
@@ -63,18 +66,14 @@ config("public") {
   include_dirs = [
     "${target_gen_dir}/../../include",
     "${webnn_root}/include",
+    "${dawn_root}/include",
+    "${dawn_gen_root}/include",
   ]
 
   if (build_with_chromium) {
     include_dirs += [
-      "${webnn_dawn_root}/include",
+      "${dawn_root}/include",
       "${dawn_gen_root}/include",
-    ]
-  } else {
-    # TODO: Remove after upgrading webnn infranstructure align with dawn.
-    include_dirs += [
-      "${webnn_dawn_root}/src/include",
-      "${dawn_gen_root}/src/include",
     ]
   }
 }

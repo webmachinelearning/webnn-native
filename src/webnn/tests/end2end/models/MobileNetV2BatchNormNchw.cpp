@@ -26,7 +26,7 @@ class MobileNetV2BatchNormNchwTests : public WebnnTest {
         mobilenetv2.mFused = fused;
         const std::string nchwPath = kModelPath + "/mobilenetv2_batchnorm_nchw/";
         mobilenetv2.mWeightsPath = nchwPath + "weights/";
-        const wnn::GraphBuilder builder = wnn::CreateGraphBuilder(GetContext());
+        const wnn::GraphBuilder builder = utils::CreateGraphBuilder(GetContext());
         wnn::Operand output = mobilenetv2.LoadBatchNormNchw(builder, false);
         wnn::Graph graph = utils::Build(builder, {{"output", output}});
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
