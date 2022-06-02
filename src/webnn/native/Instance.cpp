@@ -28,6 +28,11 @@ namespace webnn::native {
 
     // Forward definitions of each backend's "Connect" function that creates new BackendConnection.
     // Conditionally compiled declarations are used to avoid using static constructors instead.
+#if defined(WEBNN_ENABLE_BACKEND_DML)
+    namespace dml {
+        BackendConnection* Connect(InstanceBase* instance);
+    }
+#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
 #if defined(WEBNN_ENABLE_BACKEND_DMLX)
     namespace dmlx {
         BackendConnection* Connect(InstanceBase* instance);
@@ -71,8 +76,11 @@ namespace webnn::native {
 #if defined(WEBNN_ENABLE_BACKEND_NULL)
             enabledBackends.set(wnn::BackendType::Null);
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
-#if defined(WEBNN_ENABLE_BACKEND_DMLX)
+#if defined(WEBNN_ENABLE_BACKEND_DML)
             enabledBackends.set(wnn::BackendType::DirectML);
+#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+#if defined(WEBNN_ENABLE_BACKEND_DMLX)
+            enabledBackends.set(wnn::BackendType::DirectMLX);
 #endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
 #if defined(WEBNN_ENABLE_BACKEND_OPENVINO)
             enabledBackends.set(wnn::BackendType::OpenVINO);
@@ -129,9 +137,15 @@ namespace webnn::native {
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
 
-#if defined(WEBNN_ENABLE_BACKEND_DMLX)
+#if defined(WEBNN_ENABLE_BACKEND_DML)
             case wnn::BackendType::DirectML:
-                Register(dmlx::Connect(this), wnn::BackendType::DirectML);
+                Register(dml::Connect(this), wnn::BackendType::DirectML);
+                break;
+#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+
+#if defined(WEBNN_ENABLE_BACKEND_DMLX)
+            case wnn::BackendType::DirectMLX:
+                Register(dmlx::Connect(this), wnn::BackendType::DirectMLX);
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
 
@@ -178,6 +192,8 @@ namespace webnn::native {
     ContextBase* InstanceBase::CreateContext(const ContextOptions* options) {
         if (mBackends.find(wnn::BackendType::DirectML) != mBackends.end()) {
             return mBackends[wnn::BackendType::DirectML]->CreateContext(options);
+        } else if (mBackends.find(wnn::BackendType::DirectMLX) != mBackends.end()) {
+            return mBackends[wnn::BackendType::DirectMLX]->CreateContext(options);
         } else if (mBackends.find(wnn::BackendType::OpenVINO) != mBackends.end()) {
             return mBackends[wnn::BackendType::OpenVINO]->CreateContext(options);
         } else if (mBackends.find(wnn::BackendType::OneDNN) != mBackends.end()) {

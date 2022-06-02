@@ -19,6 +19,7 @@ It provides several building blocks:
    - The `webnn.h` that is an one-to-one mapping with the WebNN IDL.
    - A C++ wrapper for the `webnn.h`
  - **Backend implementations** that use platforms' ML APIs:
+   - **DirectML** on Windows 10
    - **DirectMLX** on Windows 10
    - **OpenVINO** on Windows 10 and Linux
    - **oneDNN** on Windows 10 and Linux
@@ -70,6 +71,7 @@ To build with a backend, please set the corresponding option from following tabl
 
 | Backend | Option |
 |---------|--------------|
+| DirectML | `webnn_enable_dml=true` |
 | DirectMLX | `webnn_enable_dmlx=true` |
 | OpenVINO | `webnn_enable_openvino=true` |
 | XNNPACK | `webnn_enable_xnnpack=true` |

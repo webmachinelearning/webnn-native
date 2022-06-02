@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "webnn/native/dmlx/BackendDMLX.h"
+#include "webnn/native/dml/BackendDML.h"
 
 #include "webnn/native/Instance.h"
-#include "webnn/native/dmlx/ContextDMLX.h"
+#include "webnn/native/dml/ContextDML.h"
 
-namespace webnn::native::dmlx {
+namespace webnn::native::dml {
 
     Backend::Backend(InstanceBase* instance)
-        : BackendConnection(instance, wnn::BackendType::DirectMLX) {
+        : BackendConnection(instance, wnn::BackendType::DirectML) {
     }
 
     MaybeError Backend::Initialize() {
@@ -48,4 +48,4 @@ namespace webnn::native::dmlx {
         return backend;
     }
 
-}  // namespace webnn::native::dmlx
+}  // namespace webnn::native::dml
