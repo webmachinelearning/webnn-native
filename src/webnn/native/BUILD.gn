@@ -218,8 +218,10 @@ source_set("sources") {
       "dml/ContextDML.h",
       "dml/GraphDML.cpp",
       "dml/GraphDML.h",
-      "dml/DMLUtils.cpp",
-      "dml/DMLUtils.h",
+      "dml/UtilsDML.cpp",
+      "dml/UtilsDML.h",
+      "dml/DeviceDML.cpp",
+      "dml/DeviceDML.h",
     ]
   }
 
