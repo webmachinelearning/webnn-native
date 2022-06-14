@@ -28,4 +28,4 @@ namespace webnn::native::nnapi {
         return new Graph(this);
     }
 
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi

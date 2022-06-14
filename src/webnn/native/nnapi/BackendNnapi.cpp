@@ -41,4 +41,4 @@ namespace webnn::native::nnapi {
         return backend;
     }
 
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi

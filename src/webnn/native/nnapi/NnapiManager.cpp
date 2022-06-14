@@ -264,4 +264,4 @@ namespace webnn::native::nnapi {
 
         return NNAPIComputeGraphStatus_Success;
     }
-} // namespace webnn::native::nnapi
+}  // namespace webnn::native::nnapi
