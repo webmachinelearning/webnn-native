@@ -21,3 +21,4 @@
 # This file is intentionally empty because WebNN-native uses non-standalone
 # GPGMM and non-standalone GPGMM has no dependencies to override but GN
 # must import a gpgmm.gni file to build without overrides.
+gpgmm_enable_vk = false
