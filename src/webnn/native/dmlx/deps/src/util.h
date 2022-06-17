@@ -118,7 +118,7 @@ struct DmlBufferArrayBinding
 
 inline void UpdateResidencyIfNeeded(gpgmm::d3d12::ResourceAllocation* resource, gpgmm::d3d12::ResidencySet* residencySet){
     if (resource == nullptr) return;
-    resource->UpdateResidency(residencySet);
+    residencySet->Insert(resource->GetMemory());
 }
 
 inline HRESULT CreateResource(
