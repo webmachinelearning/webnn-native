@@ -247,6 +247,10 @@ source_set("sources") {
     if (build_with_chromium == false) {
       include_dirs += [ "${webnn_root}/third_party/DirectML/Libraries" ]
     }
+
+    if (webnn_enable_resource_dump) {
+      defines = [ "WEBNN_ENABLE_RESOURCE_DUMP" ]
+    }
   }
 
   if (webnn_enable_dml || webnn_enable_dmlx) {
