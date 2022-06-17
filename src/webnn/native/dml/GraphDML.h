@@ -17,12 +17,10 @@
 
 #define DML_TARGET_VERSION_USE_LATEST 1
 
-#include <dxgi1_4.h>
-#include <dxgi1_6.h>
-#include <wrl\client.h>
 #include <unordered_map>
 #include <unordered_set>
 
+#include "DMLUtils.h"
 #include "DirectML.h"
 #include "webnn/native/Graph.h"
 #include "webnn/native/Operand.h"
@@ -49,45 +47,120 @@
 #include "webnn/native/ops/Squeeze.h"
 #include "webnn/native/ops/Transpose.h"
 #include "webnn/native/ops/Unary.h"
-namespace webnn::native { namespace dml {
+namespace webnn::native::dml {
 
     using namespace Microsoft::WRL;
 
-    // Represent the DirectML tensor description.
-    struct DmlTensorDesc {
-        std::vector<UINT> dimensions = {};
-        std::vector<UINT> strides = {};
-        // Describes a tensor that will be stored in a Direct3D 12 buffer resource.
-        DML_BUFFER_TENSOR_DESC bufferDesc = {};
-    };
+    struct CompiledGraph {
+        CompiledGraph(ComPtr<ID3D12Device> d3d12Device,
+                      ComPtr<IDMLDevice> device,
+                      ComPtr<IDMLDevice1> device1,
+                      const DML_GRAPH_DESC& graphDesc,
+                      DML_EXECUTION_FLAGS flag = DML_EXECUTION_FLAG_NONE)
+            : D3D12Device(d3d12Device) {
+            WEBNN_CHECK(device.Get()->QueryInterface(IID_PPV_ARGS(&device1)));
+            WEBNN_CHECK(device1->CompileGraph(&graphDesc, flag, IID_PPV_ARGS(&compiledOperator)));
+            IDMLCompiledOperator* compiledOperators[] = {compiledOperator.Get()};
+            WEBNN_CHECK(
+                device->CreateOperatorInitializer(ARRAYSIZE(compiledOperators), compiledOperators,
+                                                  IID_PPV_ARGS(&compiledOperatorInitializer)));
+            DML_BINDING_PROPERTIES initializeBindingProperties =
+                compiledOperatorInitializer->GetBindingProperties();
+            DML_BINDING_PROPERTIES executeBindingProperties =
+                compiledOperator->GetBindingProperties();
+            UINT descriptorCount = std::max(initializeBindingProperties.RequiredDescriptorCount,
+                                            executeBindingProperties.RequiredDescriptorCount);
+            initializedTemporaryResourceSize = initializeBindingProperties.TemporaryResourceSize;
+            temporaryResourceSize = std::max(initializedTemporaryResourceSize,
+                                             executeBindingProperties.TemporaryResourceSize);
+            persistentResourceSize = executeBindingProperties.PersistentResourceSize;
 
-    // Represent the information of the graph's edges.
-    struct EdgeInfoBase {
-        virtual ~EdgeInfoBase() = default;
-        DML_TENSOR_DESC outputTensorDESC = {};
-        std::string name = "";
-        bool isInputEdge = false;
-    };
+            // Describe and create a constant buffer view (CBV), Shader resource view (SRV), and
+            // unordered access view (UAV) descriptor heap.
+            D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc{};
+            descriptorHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+            descriptorHeapDesc.NumDescriptors = descriptorCount;
+            descriptorHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+            WEBNN_CHECK(D3D12Device->CreateDescriptorHeap(&descriptorHeapDesc,
+                                                          IID_PPV_ARGS(&descriptorHeap)));
 
-    // Only represent the information of the input edges.
-    struct InputEdgeInfo final : public EdgeInfoBase {
-        ~InputEdgeInfo() override = default;
-        // Indicate the index of the graph's input.
-        size_t inputIndex = 0;
-        void const* buffer = nullptr;
-        size_t byteLength = 0;
-        // Indicate if the input is from constant buffer which need to be
-        // uploaded in the stage of initialization.
-        bool isConstantInput = false;
-    };
+            // Create a binding table over the descriptor heap we just created.
+            bindingTableDesc.Dispatchable = compiledOperatorInitializer.Get();
+            bindingTableDesc.CPUDescriptorHandle =
+                descriptorHeap->GetCPUDescriptorHandleForHeapStart();
+            bindingTableDesc.GPUDescriptorHandle =
+                descriptorHeap->GetGPUDescriptorHandleForHeapStart();
+            // The size of the binding table, in descriptors. This is the maximum number of
+            // descriptors that DirectML is permitted to write, from the start of both the supplied
+            // CPU and GPU descriptor handles.
+            bindingTableDesc.SizeInDescriptors = descriptorCount;
+            WEBNN_CHECK(device->CreateBindingTable(&bindingTableDesc, IID_PPV_ARGS(&bindingTable)));
+        };
 
-    // Represent the information of the intermediate edges and output edges.
-    struct EdgeInfo final : public EdgeInfoBase {
-        ~EdgeInfo() override = default;
-        // Indicate the index of the intermediate node from which this edge was produced.
-        uint32_t nodeIndex = 0;
-        // Indicate the index of the intermediate node' output from which this edge was produced.
-        uint32_t outputNodeIndex = 0;
+        void BindTemporaryResource(bool bindForInitialization = true) {
+            if (temporaryResourceSize != 0) {
+                if (temporaryResource == nullptr) {
+                    D3D12Device->CreateCommittedResource(
+                        &CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
+                        &CreateResourceDesc(temporaryResourceSize,
+                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                        D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
+                        IID_PPV_ARGS(&temporaryResource));
+                }
+
+                if ((bindForInitialization && initializedTemporaryResourceSize != 0) ||
+                    (!bindForInitialization && temporaryResourceSize != 0)) {
+                    DML_BUFFER_BINDING bufferBinding{temporaryResource.Get(), 0,
+                                                     temporaryResourceSize};
+                    DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
+                    bindingTable->BindTemporaryResource(&bindingDesc);
+                }
+            }
+        };
+
+        void BindPersistentResource(bool bindForInitialization = true) {
+            if (persistentResourceSize != 0) {
+                if (persistentResource == nullptr) {
+                    D3D12Device->CreateCommittedResource(
+                        &CreateHeapProperties(), D3D12_HEAP_FLAG_NONE,
+                        &CreateResourceDesc(persistentResourceSize,
+                                            D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS),
+                        D3D12_RESOURCE_STATE_UNORDERED_ACCESS, nullptr,
+                        IID_PPV_ARGS(&persistentResource));
+                }
+
+                DML_BUFFER_BINDING bufferBinding{persistentResource.Get(), 0,
+                                                 persistentResourceSize};
+                DML_BINDING_DESC bindingDesc{DML_BINDING_TYPE_BUFFER, &bufferBinding};
+                if (bindForInitialization) {
+                    bindingTable->BindOutputs(1, &bindingDesc);
+                } else {
+                    bindingTable->BindPersistentResource(&bindingDesc);
+                }
+            }
+        };
+
+        ComPtr<ID3D12Device> D3D12Device;
+        // IDMLCompiledOperator represents the DirectML graph's output which need to be initialized
+        // by IDMLOperatorInitializer.
+        ComPtr<IDMLCompiledOperator> compiledOperator;
+        ComPtr<IDMLOperatorInitializer> compiledOperatorInitializer;
+
+        ComPtr<ID3D12DescriptorHeap> descriptorHeap;
+        ComPtr<IDMLBindingTable> bindingTable;
+        DML_BINDING_TABLE_DESC bindingTableDesc;
+
+        ComPtr<ID3D12Resource> uploadResource;
+        ComPtr<ID3D12Resource> inputResource;
+        ComPtr<ID3D12Resource> outputResource;
+        ComPtr<ID3D12Resource> readBackResource;
+        ComPtr<ID3D12Resource> temporaryResource;
+        ComPtr<ID3D12Resource> persistentResource;
+        uint64_t commonInputsResourceSize = 0;
+        uint64_t outputResourceSize = 0;
+        UINT64 temporaryResourceSize = 0;
+        UINT64 initializedTemporaryResourceSize = 0;
+        UINT64 persistentResourceSize = 0;
     };
 
     class Graph : public GraphBase {
@@ -119,7 +192,6 @@ namespace webnn::native { namespace dml {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
-        void AddEdgesToThisNode(std::vector<std::shared_ptr<EdgeInfoBase>> inputNodes);
         void FillUploadResourceAndInputBindings(
             uint64_t uploadResourceSize,
             std::vector<DML_BUFFER_BINDING>& inputBufferBinding,
@@ -145,63 +217,27 @@ namespace webnn::native { namespace dml {
         MaybeError CompileImpl() override;
         MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
-        // Represents a DirectML device, which is used to create operators, binding tables, command
-        // recorders, and other objects.
         ComPtr<IDMLDevice> mDevice;
-        // The IDMLDevice1 interface inherits from IDMLDevice.
         ComPtr<IDMLDevice1> mDevice1;
-        // Represents a virtual adapter; it is used to create command allocators, command lists,
-        // command queues, fences, resources, pipeline state objects, heaps, root signatures,
-        // samplers, and many resource views.
         ComPtr<ID3D12Device> mD3D12Device;
-
         ComPtr<IDMLCommandRecorder> mCommandRecorder;
         ComPtr<ID3D12CommandQueue> mCommandQueue;
         ComPtr<ID3D12CommandAllocator> mCommandAllocator;
         ComPtr<ID3D12GraphicsCommandList> mCommandList;
-        ComPtr<IDMLBindingTable> mBindingTable;
-        ComPtr<ID3D12DescriptorHeap> mDescriptorHeap;
-
-        ComPtr<ID3D12Resource> mUploadResource;
-        ComPtr<ID3D12Resource> mInputResource;
-        ComPtr<ID3D12Resource> mOutputResource;
-        ComPtr<ID3D12Resource> mReadBackResource;
-        ComPtr<ID3D12Resource> mTemporaryResource;
-        ComPtr<ID3D12Resource> mPersistentResource;
-
-        uint64_t mCommonInputsResourceSize = 0;
-        uint64_t mOutputsResourceSize = 0;
-        UINT64 mTemporaryResourceSize = 0;
-        UINT64 mPersistentResourceSize = 0;
 
         // Describe a graph of DirectML operators used to compile a combined, optimized operator.
         std::vector<std::shared_ptr<InputEdgeInfo>> mInputs;
         std::vector<EdgeInfo> mOutputs;
-        std::vector<DML_GRAPH_NODE_DESC> mIntermediateNodes;
-        std::vector<DML_GRAPH_EDGE_DESC> mInputEdges;
-        std::vector<DML_GRAPH_EDGE_DESC> mOutputEdges;
-        std::vector<DML_GRAPH_EDGE_DESC> mIntermediateEdges;
-
-        // IDMLCompiledOperator represents the DirectML graph's output which need to be initialized
-        // by IDMLOperatorInitializer.
-        ComPtr<IDMLCompiledOperator> mCompiledOperator;
-        DML_BINDING_TABLE_DESC mBindingTableDesc;
+        DmlGraphDesc mGraphDesc;
+        std::unique_ptr<CompiledGraph> mCompiledGraph;
 
         std::map<const OperandBase*, std::shared_ptr<EdgeInfoBase>> mGraphEdgesMap;
-
-        // Keep intermediate nodes here to avoid releasing too early.
-        std::map<uint32_t, ComPtr<IDMLOperator>> mIntermediateNodesMap;
         // Keep the input tensors description here to avoid releasing too early.
         std::vector<std::shared_ptr<DmlTensorDesc>> mDmlTensorsDesc;
-        // Keep the descriptions of nodes and edges here to avoid releasing too early.
-        std::vector<std::unique_ptr<DML_OPERATOR_GRAPH_NODE_DESC>> mIntermediateNodesDesc;
-        std::vector<std::unique_ptr<DML_INPUT_GRAPH_EDGE_DESC>> mInputEdgesDesc;
-        std::vector<std::unique_ptr<DML_OUTPUT_GRAPH_EDGE_DESC>> mOutputEdgesDesc;
-        std::vector<std::unique_ptr<DML_INTERMEDIATE_GRAPH_EDGE_DESC>> mIntermediateEdgesDesc;
         std::unordered_set<const OperandBase*> mConstantSet;
         std::vector<std::unique_ptr<char>> mConstantsBuffer;
     };
 
-}}  // namespace webnn::native::dml
+}  // namespace webnn::native::dml
 
 #endif  // WEBNN_NATIVE_DML_MODEL_DML_H_
