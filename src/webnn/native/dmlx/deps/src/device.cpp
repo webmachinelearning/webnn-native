@@ -112,6 +112,13 @@ HRESULT Device::Init()
     allocatorDesc.Device = m_d3d12Device;
     allocatorDesc.IsUMA = arch.UMA;
     allocatorDesc.ResourceHeapTier = options.ResourceHeapTier;
+
+#ifdef WEBNN_ENABLE_RESOURCE_DUMP
+    allocatorDesc.RecordOptions.Flags |= gpgmm::d3d12::ALLOCATOR_RECORD_FLAG_ALL_EVENTS;
+    allocatorDesc.RecordOptions.MinMessageLevel = D3D12_MESSAGE_SEVERITY_MESSAGE;
+    allocatorDesc.RecordOptions.UseDetailedTimingEvents = true;
+#endif
+
     ReturnIfFailed(gpgmm::d3d12::ResourceAllocator::CreateAllocator(allocatorDesc, &m_resourceAllocator, &m_residencyManager));
 
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
