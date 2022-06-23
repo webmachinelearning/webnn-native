@@ -144,10 +144,14 @@ namespace webnn::native::nnapi {
                                                 const void* buffer = nullptr) {
             std::shared_ptr<NodeInfo> node = std::make_shared<NodeInfo>();
             node->type = desc->type;
-            for (size_t i = 0; i < desc->dimensionsCount; i++) {
-                node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+            if (desc->dimensionsCount == 0) {
+                node->dimensions.push_back(static_cast<uint32_t>(1));
+            } else {
+                for (size_t i = 0; i < desc->dimensionsCount; i++) {
+                    node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
+                }
             }
-
+            
             MaybeError error;
             if (buffer) {
                 error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
