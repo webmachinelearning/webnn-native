@@ -196,7 +196,7 @@ namespace webnn::native::dml {
             uint64_t uploadResourceSize,
             std::vector<DML_BUFFER_BINDING>& inputBufferBinding,
             std::unordered_map<std::string, Input> namedInputs = {});
-        MaybeError createConstantInput(DML_TENSOR_DESC& inputTensorDESC,
+        MaybeError CreateConstantInput(DML_TENSOR_DESC& inputTensorDESC,
                                        void const* value,
                                        size_t size,
                                        const std::vector<UINT>& dmlTensorDims,
@@ -205,6 +205,9 @@ namespace webnn::native::dml {
                                        DML_TENSOR_FLAGS tensorFlag = DML_TENSOR_FLAG_OWNED_BY_DML);
         std::shared_ptr<EdgeInfoBase> Clamp(const op::ClampBase* clamp,
                                             std::shared_ptr<EdgeInfoBase> inputEdge);
+        void AppendIdentity(const DML_TENSOR_DESC& inputTensorDesc,
+                            DML_TENSOR_DESC& outputTensorDesc,
+                            ComPtr<IDMLOperator>& dmlOperator);
         MaybeError HardSwish(std::shared_ptr<EdgeInfoBase>& inputEdge,
                              const std::vector<UINT>& inputDims);
         MaybeError EmulateFusedOperator(FusionOperatorBase* activation,
