@@ -218,7 +218,6 @@ namespace webnn::native ::dml {
         std::vector<UINT> newFilterDims(4);
         switch (filterLayout) {
             case wnn::Conv2dFilterOperandLayout::Ohwi:
-                newFilterDims.resize(4);
                 newFilterDims[0] = filterDims[0];
                 newFilterDims[1] = filterDims[3];
                 newFilterDims[2] = filterDims[1];
@@ -231,6 +230,30 @@ namespace webnn::native ::dml {
                 newFilterDims[3] = filterDims[1];
                 break;
             case wnn::Conv2dFilterOperandLayout::Ihwo:
+                newFilterDims[0] = filterDims[3];
+                newFilterDims[1] = filterDims[0];
+                newFilterDims[2] = filterDims[1];
+                newFilterDims[3] = filterDims[2];
+                break;
+            default:
+                DAWN_ASSERT(0);
+                break;
+        }
+        return newFilterDims;
+    }
+
+    std::vector<UINT> transposeFilterDimensionsAsIohw(
+        wnn::ConvTranspose2dFilterOperandLayout filterLayout,
+        const std::vector<UINT>& filterDims) {
+        std::vector<UINT> newFilterDims(4);
+        switch (filterLayout) {
+            case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
+                newFilterDims[0] = filterDims[3];
+                newFilterDims[1] = filterDims[2];
+                newFilterDims[2] = filterDims[0];
+                newFilterDims[3] = filterDims[1];
+                break;
+            case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
                 newFilterDims[0] = filterDims[3];
                 newFilterDims[1] = filterDims[0];
                 newFilterDims[2] = filterDims[1];
@@ -270,6 +293,30 @@ namespace webnn::native ::dml {
                 break;
         }
         return {oStride, iStride, hStride, wStride};
+    }
+
+    std::vector<UINT> transposeFilterStridesAsIohw(
+        wnn::ConvTranspose2dFilterOperandLayout filterLayout,
+        const std::vector<UINT>& filterDims) {
+        UINT hStride = 0, wStride = 0, iStride = 0, oStride = 0;
+        switch (filterLayout) {
+            case wnn::ConvTranspose2dFilterOperandLayout::Hwoi:
+                hStride = filterDims[1] * filterDims[2] * filterDims[3];
+                wStride = filterDims[2] * filterDims[3];
+                oStride = filterDims[3];
+                iStride = 1;
+                break;
+            case wnn::ConvTranspose2dFilterOperandLayout::Ohwi:
+                oStride = filterDims[1] * filterDims[2] * filterDims[3];
+                hStride = filterDims[2] * filterDims[3];
+                wStride = filterDims[3];
+                iStride = 1;
+                break;
+            default:
+                DAWN_ASSERT(0);
+                break;
+        }
+        return {iStride, oStride, hStride, wStride};
     }
 
     template <typename T>
@@ -1671,7 +1718,161 @@ namespace webnn::native ::dml {
     }
 
     MaybeError Graph::AddConvTranspose2d(const op::ConvTranspose2d* convTranspose2d) {
-        return DAWN_UNIMPLEMENTED_ERROR("ConvTranspose2D has not been supported on DirectML.");
+        auto inputsOperand = convTranspose2d->Inputs();
+        DAWN_ASSERT(inputsOperand.size() == 2 || inputsOperand.size() == 3);
+        DAWN_ASSERT(mGraphEdgesMap.find(inputsOperand[0].Get()) != mGraphEdgesMap.end());
+        DAWN_ASSERT(mGraphEdgesMap.find(inputsOperand[1].Get()) != mGraphEdgesMap.end());
+
+        auto inputEdge = mGraphEdgesMap[inputsOperand[0].Get()];
+        auto filterEdge = mGraphEdgesMap[inputsOperand[1].Get()];
+
+        auto inputDims = ConvertDimensions(inputsOperand[0].Get()->Shape());
+        auto filterDims = ConvertDimensions(inputsOperand[1].Get()->Shape());
+        std::vector<UINT> newInputDims = inputDims, newFilterDims = filterDims, newInputStrides,
+                          newFilterStrides;
+
+        const ConvTranspose2dOptions* options = convTranspose2d->GetOptions();
+
+        DML_TENSOR_DESC inputTensorDesc = inputEdge->outputTensorDESC;
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            newInputDims = transposeDimensions(NhwcToNchw, inputDims);
+            newInputStrides = transposeStridesToNchw(inputDims, inputTensorDesc);
+
+            std::shared_ptr<DmlTensorDesc> inputDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, inputDmlTensorDesc,
+                                     &inputEdge->outputTensorDESC, newInputDims, newInputStrides)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            inputTensorDesc = {DML_TENSOR_TYPE_BUFFER, &inputDmlTensorDesc->bufferDesc};
+        }
+
+        DML_TENSOR_DESC filterTensorDesc = filterEdge->outputTensorDESC;
+        if (options->filterLayout != wnn::ConvTranspose2dFilterOperandLayout::Iohw) {
+            newFilterDims = transposeFilterDimensionsAsIohw(options->filterLayout, filterDims);
+            newFilterStrides = transposeFilterStridesAsIohw(options->filterLayout, filterDims);
+
+            std::shared_ptr<DmlTensorDesc> filterDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, filterDmlTensorDesc,
+                                     &filterEdge->outputTensorDESC, newFilterDims,
+                                     newFilterStrides)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            filterTensorDesc = {DML_TENSOR_TYPE_BUFFER, &filterDmlTensorDesc->bufferDesc};
+        }
+
+        std::vector<std::shared_ptr<EdgeInfoBase>> inputEdges = {inputEdge, filterEdge};
+
+        const DML_TENSOR_DESC* biasTensorDescPtr = nullptr;
+        DML_TENSOR_DESC newBiasTensorDesc = {};
+        if (options->bias != nullptr) {
+            DAWN_ASSERT(mGraphEdgesMap.find(inputsOperand[2].Get()) != mGraphEdgesMap.end());
+            auto biasEdge = mGraphEdgesMap[inputsOperand[2].Get()];
+            auto biasDims = ConvertDimensions(convTranspose2d->Inputs()[2].Get()->Shape());
+            if (biasDims[0] != newFilterDims[0] || biasDims.size() != 1) {
+                return DAWN_INTERNAL_ERROR(
+                    "The bias should be 1-D tensor with the shape of [output_channels].");
+            }
+
+            // Reshape bias from 1-D to 4-D for NCHW layout.
+            std::vector<UINT> newBiasDims = {1, biasDims[0], 1, 1};
+            std::shared_ptr<DmlTensorDesc> biasDmlTensorDesc(new DmlTensorDesc);
+            if (!CreateDmlTensorDesc(mDmlTensorsDesc, biasDmlTensorDesc,
+                                     &biasEdge->outputTensorDESC, newBiasDims)) {
+                return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+            }
+            newBiasTensorDesc = {DML_TENSOR_TYPE_BUFFER, &biasDmlTensorDesc->bufferDesc};
+            biasTensorDescPtr = &newBiasTensorDesc;
+            inputEdges.push_back(biasEdge);
+        }
+
+        std::vector<UINT> outputDims(4);
+        if (options->outputSizes != nullptr) {
+            std::vector<UINT> outputSizes;
+            outputSizes.assign(options->outputSizes,
+                               options->outputSizes + options->outputSizesCount);
+            if (options->inputLayout == wnn::InputOperandLayout::Nchw) {
+                outputDims = {inputDims[0], newFilterDims[1], outputSizes[0], outputSizes[1]};
+            } else {
+                outputDims = {inputDims[0], outputSizes[0], outputSizes[1], newFilterDims[1]};
+            }
+        } else {
+            outputDims = ConvertDimensions(convTranspose2d->Outputs()[0]->Shape());
+        }
+        std::vector<UINT> newOutputDims = outputDims;
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            newOutputDims = transposeDimensions(NhwcToNchw, outputDims);
+        }
+        std::shared_ptr<DmlTensorDesc> outputDmlTensorDesc(new DmlTensorDesc);
+        if (!CreateDmlTensorDesc(mDmlTensorsDesc, outputDmlTensorDesc, &inputEdge->outputTensorDESC,
+                                 newOutputDims, {}, true)) {
+            return DAWN_INTERNAL_ERROR("Failed to create DML tensor description.");
+        }
+        DML_TENSOR_DESC outputTensorDesc = {DML_TENSOR_TYPE_BUFFER,
+                                            &outputDmlTensorDesc->bufferDesc};
+
+        // FIXME(nhu): strides, dilations, padding should be uint32_t
+        // need to fix the spec.
+        std::vector<UINT> strides, dilations, outputPadding;
+        strides.assign(options->strides, options->strides + options->stridesCount);
+        dilations.assign(options->dilations, options->dilations + options->dilationsCount);
+        outputPadding.assign(options->outputPadding,
+                             options->outputPadding + options->outputPaddingCount);
+
+        std::vector<UINT> padding(4);
+        if (options->autoPad == wnn::AutoPad::Explicit) {
+            padding = ExplicitPadding<ConvTranspose2dOptions>(options);
+        } else {
+            std::vector<UINT> inputSize = {inputDims[2], inputDims[3]};
+            std::vector<UINT> filterSize = {filterDims[2], filterDims[3]};
+            padding = webnn::native::utils::ComputeImplicitPaddingForConvTranspose2dAutoPad(
+                options, inputSize, filterSize);
+        }
+        std::vector<UINT> startPadding = {padding[0], padding[2]};
+        std::vector<UINT> endPadding = {padding[1], padding[3]};
+
+        DML_ACTIVATION_LINEAR_OPERATOR_DESC dmlActicationOperatorDesc{};
+        DML_OPERATOR_DESC dmlFusedOperatorDesc = {};
+        DML_OPERATOR_DESC* fusedActivation = CreateFusedOperator(
+            options->activation, dmlActicationOperatorDesc, dmlFusedOperatorDesc);
+
+        ComPtr<IDMLOperator> dmlOperator;
+        DML_CONVOLUTION_OPERATOR_DESC dmlSpecificOperatorDesc{};
+        dmlSpecificOperatorDesc.InputTensor = &inputTensorDesc;
+        dmlSpecificOperatorDesc.FilterTensor = &filterTensorDesc;
+        dmlSpecificOperatorDesc.BiasTensor = biasTensorDescPtr;
+        dmlSpecificOperatorDesc.OutputTensor = &outputTensorDesc;
+
+        dmlSpecificOperatorDesc.Mode = DML_CONVOLUTION_MODE_CONVOLUTION;
+        dmlSpecificOperatorDesc.Direction = DML_CONVOLUTION_DIRECTION_BACKWARD;
+        dmlSpecificOperatorDesc.DimensionCount = inputDims.size() - 2;
+        dmlSpecificOperatorDesc.Strides = strides.data();
+        dmlSpecificOperatorDesc.Dilations = dilations.data();
+        dmlSpecificOperatorDesc.StartPadding = startPadding.data();
+        dmlSpecificOperatorDesc.EndPadding = endPadding.data();
+        dmlSpecificOperatorDesc.OutputPadding = outputPadding.data();
+        dmlSpecificOperatorDesc.GroupCount = static_cast<UINT>(options->groups);
+        dmlSpecificOperatorDesc.FusedActivation = fusedActivation;
+
+        DML_OPERATOR_DESC dmlOperatorDesc = {};
+        dmlOperatorDesc.Type = DML_OPERATOR_CONVOLUTION;
+        dmlOperatorDesc.Desc = &dmlSpecificOperatorDesc;
+        WEBNN_CHECK(mDevice->CreateOperator(&dmlOperatorDesc, IID_PPV_ARGS(&dmlOperator)));
+
+        auto outputEdge = CreateEdgeFromThisNode(outputTensorDesc, mGraphDesc.NodeCount());
+        AddNodeAndEdgesToGraphDesc(mGraphDesc, inputEdges, dmlOperator);
+
+        // Transpose output from nchw->nhwc.
+        if (options->inputLayout == wnn::InputOperandLayout::Nhwc) {
+            if (TransposeOutputToNhwc(outputEdge, newOutputDims).IsError()) {
+                return DAWN_INTERNAL_ERROR("Failed to transpose output from Nchw to Nhwc.");
+            };
+        }
+
+        if (EmulateFusedOperator(options->activation, outputEdge, outputDims).IsError()) {
+            return DAWN_INTERNAL_ERROR("Failed to emulate fused operator.");
+        }
+        mGraphEdgesMap[convTranspose2d->PrimaryOutput()] = outputEdge;
+        return {};
     }
 
     MaybeError Graph::AddGru(const op::Gru* gru) {
