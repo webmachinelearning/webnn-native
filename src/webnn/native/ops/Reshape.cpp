@@ -26,6 +26,10 @@ namespace webnn::native::op {
         }
         int minus1DimIdx = -1;
         bool hasMinus1 = false;
+        // Special case for scalar
+        if (mNewShape.empty()) {
+            mNewShape.push_back(1);
+        }
         std::vector<int32_t> outputShape(mNewShape.size());
         for (size_t i = 0; i < mNewShape.size(); ++i) {
             int32_t dim = mNewShape[i];
