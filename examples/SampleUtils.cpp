@@ -45,10 +45,15 @@ static CmdBufType cmdBufType = CmdBufType::Terrible;
 #else
 static CmdBufType cmdBufType = CmdBufType::None;
 #endif  // defined(WEBNN_ENABLE_WIRE)
-static webnn::wire::WireServer* wireServer = nullptr;
-static webnn::wire::WireClient* wireClient = nullptr;
-static utils::TerribleCommandBuffer* c2sBuf = nullptr;
-static utils::TerribleCommandBuffer* s2cBuf = nullptr;
+
+class WireHelper {
+  public:
+    std::unique_ptr<webnn::wire::WireServer> wireServer;
+    std::unique_ptr<webnn::wire::WireClient> wireClient;
+    std::unique_ptr<utils::TerribleCommandBuffer> c2sBuf;
+    std::unique_ptr<utils::TerribleCommandBuffer> s2cBuf;
+};
+static WireHelper wireHelper;
 
 static wnn::Instance clientInstance;
 static std::unique_ptr<webnn::native::Instance> nativeInstance;
@@ -70,34 +75,35 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
             break;
 
         case CmdBufType::Terrible: {
-            c2sBuf = new utils::TerribleCommandBuffer();
-            s2cBuf = new utils::TerribleCommandBuffer();
+            wireHelper.c2sBuf.reset(new utils::TerribleCommandBuffer());
+            wireHelper.s2cBuf.reset(new utils::TerribleCommandBuffer());
 
             webnn::wire::WireServerDescriptor serverDesc = {};
             serverDesc.procs = &backendProcs;
-            serverDesc.serializer = s2cBuf;
+            serverDesc.serializer = wireHelper.s2cBuf.get();
 
-            wireServer = new webnn::wire::WireServer(serverDesc);
-            c2sBuf->SetHandler(wireServer);
+            wireHelper.wireServer.reset(new webnn::wire::WireServer(serverDesc));
+            wireHelper.c2sBuf->SetHandler(wireHelper.wireServer.get());
 
             webnn::wire::WireClientDescriptor clientDesc = {};
-            clientDesc.serializer = c2sBuf;
+            clientDesc.serializer = wireHelper.c2sBuf.get();
 
-            wireClient = new webnn::wire::WireClient(clientDesc);
+            wireHelper.wireClient.reset(new webnn::wire::WireClient(clientDesc));
             procs = webnn::wire::client::GetProcs();
-            s2cBuf->SetHandler(wireClient);
+            wireHelper.s2cBuf->SetHandler(wireHelper.wireClient.get());
 
 #ifdef ENABLE_INJECT_CONTEXT
-            auto contextReservation = wireClient->ReserveContext();
-            wireServer->InjectContext(backendContext, contextReservation.id,
-                                      contextReservation.generation);
+            auto contextReservation = wireHelper.wireClient->ReserveContext();
+            wireHelper.wireServer->InjectContext(backendContext, contextReservation.id,
+                                                 contextReservation.generation);
 
             context = contextReservation.context;
 #else
             webnnProcSetProcs(&procs);
-            auto instanceReservation = wireClient->ReserveInstance();
-            wireServer->InjectInstance(nativeInstance->Get(), instanceReservation.id,
-                                       instanceReservation.generation);
+            webnn::wire::ReservedInstance instanceReservation =
+                wireHelper.wireClient->ReserveInstance();
+            wireHelper.wireServer->InjectInstance(nativeInstance->Get(), instanceReservation.id,
+                                                  instanceReservation.generation);
             // Keep the reference instread of using Acquire.
             // TODO:: make the instance in the client as singleton object.
             clientInstance = wnn::Instance(instanceReservation.instance);
@@ -115,10 +121,11 @@ wnn::Context CreateCppContext(wnn::ContextOptions const* options) {
 
 void DoFlush() {
     if (cmdBufType == CmdBufType::Terrible) {
-        bool c2sSuccess = c2sBuf->Flush();
-        bool s2cSuccess = s2cBuf->Flush();
+        bool c2sSuccess = wireHelper.c2sBuf->Flush();
+        bool s2cSuccess = wireHelper.s2cBuf->Flush();
 
-        ASSERT(c2sSuccess && s2cSuccess);
+        DAWN_ASSERT(c2sSuccess);
+        DAWN_ASSERT(s2cSuccess);
     }
 }
 
@@ -365,25 +372,30 @@ namespace utils {
     }
 
     bool LoadAndPreprocessImage(const ExampleBase* example, std::vector<float>& processedPixels) {
+        DAWN_ASSERT(example != nullptr);
         // Read an image.
         int imageWidth, imageHeight, imageChannels = 0;
-        uint8_t* inputPixels =
-            stbi_load(example->mImagePath.c_str(), &imageWidth, &imageHeight, &imageChannels, 0);
-        if (inputPixels == 0) {
+        std::unique_ptr<uint8_t> inputPixels(
+            stbi_load(example->mImagePath.c_str(), &imageWidth, &imageHeight, &imageChannels, 0));
+        if (inputPixels == nullptr) {
             dawn::ErrorLog() << "Failed to load and preprocess the image at "
                              << example->mImagePath;
             return false;
         }
         // Resize the image with model's input size
         const size_t imageSize = imageHeight * imageWidth * imageChannels;
-        float* floatPixels = (float*)malloc(imageSize * sizeof(float));
+        std::vector<float> floatPixels(imageSize);
         for (size_t i = 0; i < imageSize; ++i) {
-            floatPixels[i] = inputPixels[i];
+            floatPixels[i] = inputPixels.get()[i];
         }
-        float* resizedPixels = (float*)malloc(example->mModelHeight * example->mModelWidth *
-                                              example->mModelChannels * sizeof(float));
-        stbir_resize_float(floatPixels, imageWidth, imageHeight, 0, resizedPixels,
-                           example->mModelWidth, example->mModelHeight, 0, example->mModelChannels);
+        std::vector<float> resizedPixels(example->mModelHeight * example->mModelWidth *
+                                         example->mModelChannels);
+        if (stbir_resize_float(floatPixels.data(), imageWidth, imageHeight, 0, resizedPixels.data(),
+                               example->mModelWidth, example->mModelHeight, 0,
+                               example->mModelChannels) == 0) {
+            dawn::ErrorLog() << "Failed to resize the image.";
+            return false;
+        };
 
         // Reoder the image to NCHW/NHWC layout.
         for (size_t c = 0; c < example->mModelChannels; ++c) {
@@ -404,8 +416,6 @@ namespace utils {
                 }
             }
         }
-        free(resizedPixels);
-        free(floatPixels);
         return true;
     }
 
