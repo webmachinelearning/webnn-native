@@ -24,8 +24,10 @@ class ReshapeTests : public WebnnTest {
         const wnn::Operand b = builder.Reshape(a, newShape.data(), newShape.size());
         const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
-        const std::vector<float> inputData = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
-                                              13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
+        const std::vector inputData =
+            newShape.empty() ? std::vector<float>{1}
+                             : std::vector<float>{1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12,
+                                                  13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24};
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, inputData));
@@ -58,4 +60,8 @@ TEST_F(ReshapeTests, ReshapeNegativeDim) {
 
 TEST_F(ReshapeTests, ReshapeNegativeDim1) {
     TestReshape({2, 3, 4}, {-1, 2, 3, 4}, {1, 2, 3, 4});
+}
+
+TEST_F(ReshapeTests, ReshapeZeroDim) {
+    TestReshape({}, {}, {});
 }

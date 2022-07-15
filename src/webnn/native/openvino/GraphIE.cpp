@@ -1165,7 +1165,9 @@ namespace webnn::native::ie {
     MaybeError Graph::AddReshape(const op::Reshape* reshape) {
         auto newShape = reshape->GetNewShape();
         const ngraph_node_t* constantNode =
-            AddConstantWithGraph<int32_t>(precision_e::I32, {newShape.size()}, newShape);
+            newShape.empty()
+                ? AddConstantWithGraph<int32_t>(precision_e::I32, {}, {1})
+                : AddConstantWithGraph<int32_t>(precision_e::I32, {newShape.size()}, newShape);
         auto input = mGraphNodeMap[reshape->Inputs()[0].Get()];
         ngraph_node_t* reshapeNode;
         IEStatusCode status = ngraph_reshape(input, constantNode, &reshapeNode);
