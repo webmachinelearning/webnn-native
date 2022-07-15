@@ -10,10 +10,12 @@
 
 namespace pydml
 {
-    class SVDescriptorHeap : public gpgmm::d3d12::Heap {
+    class SVDescriptorHeap {
       public:
-        SVDescriptorHeap(ComPtr<ID3D12DescriptorHeap> heap, uint64_t size);
-        ComPtr<ID3D12DescriptorHeap> m_Heap;
+        SVDescriptorHeap(ComPtr<gpgmm::d3d12::Heap> heap);
+        ID3D12DescriptorHeap* GetDescriptorHeap() const;
+
+        ComPtr<gpgmm::d3d12::Heap> m_Heap;
     };
 
     class Device
