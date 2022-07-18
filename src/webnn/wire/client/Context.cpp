@@ -83,4 +83,62 @@ namespace webnn::wire::client {
     void Context::SetUncapturedErrorCallback(WNNErrorCallback callback, void* userdata) {
     }
 
+    void Context::Compute(WNNGraph wnnGraph,
+                          WNNNamedInputs inputs,
+                          WNNNamedOutputs outputs,
+                          WNNComputeAsyncCallback callback,
+                          void* userdata) {
+        if (client->IsDisconnected()) {
+            callback(WNNErrorType_DeviceLost, "WebNN context disconnected", userdata);
+            return;
+        }
+
+        uint64_t serial = mComputeAsyncRequestSerial++;
+        ASSERT(mComputeAsyncRequests.find(serial) == mComputeAsyncRequests.end());
+
+        mComputeAsyncRequests[serial] = {callback, userdata};
+
+        Graph* graph = FromAPI(wnnGraph);
+        NamedInputs* namedInputs = FromAPI(inputs);
+        NamedOutputs* namedOutputs = FromAPI(outputs);
+
+        ContextComputeCmd cmd;
+        cmd.contextId = this->id;
+        cmd.graphId = graph->id;
+        cmd.requestSerial = serial;
+        cmd.inputsId = namedInputs->id;
+        cmd.outputsId = namedOutputs->id;
+
+        client->SerializeCommand(cmd);
+    }
+
+    void Context::ComputeSync(WNNGraph wnnGraph, WNNNamedInputs inputs, WNNNamedOutputs outputs) {
+        Graph* graph = FromAPI(wnnGraph);
+        NamedInputs* namedInputs = FromAPI(inputs);
+        NamedOutputs* namedOutputs = FromAPI(outputs);
+
+        ContextComputeSyncCmd cmd;
+        cmd.contextId = this->id;
+        cmd.graphId = graph->id;
+        cmd.inputsId = namedInputs->id;
+        cmd.outputsId = namedOutputs->id;
+
+        client->SerializeCommand(cmd);
+    }
+
+    bool Context::OnComputeAsyncCallback(uint64_t requestSerial,
+                                         WNNErrorType type,
+                                         const char* message) {
+        auto requestIt = mComputeAsyncRequests.find(requestSerial);
+        if (requestIt == mComputeAsyncRequests.end()) {
+            return false;
+        }
+
+        ComputeAsyncRequest request = std::move(requestIt->second);
+
+        mComputeAsyncRequests.erase(requestIt);
+        request.callback(type, message, request.userdata);
+        return true;
+    }
+
 }  // namespace webnn::wire::client

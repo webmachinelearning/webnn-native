@@ -33,7 +33,7 @@ TEST_F(ReluTests, Relu) {
         1.1774449,   0.8999488,   -1.1143959,  1.0122099,   -0.48604885, -0.06009902, -0.1766853,
         1.4515465,   -0.7182982,  2.0361354,   0.7899623};
     std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
-    utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+    utils::Compute(GetContext(), graph, {{"a", inputData}}, {{"b", result}});
     const std::vector<float> expectedData(
         {0.,        0.6447428, 0.,        0.,        0.9777725,  0.,         0.,         0.,
          1.3725083, 0.,        0.,        0.,        0.5027815,  0.,         0.,         0.00880813,

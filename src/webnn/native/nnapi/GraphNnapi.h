@@ -85,6 +85,8 @@ namespace webnn::native::nnapi {
         MaybeError AddSoftMax(const std::shared_ptr<NodeInfo>& input0Node,
                               std::shared_ptr<NodeInfo> outputNode);
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         uint32_t getOperandIdx() {
             return mOperandCount++;
@@ -151,7 +153,7 @@ namespace webnn::native::nnapi {
                     node->dimensions.push_back(static_cast<uint32_t>(desc->dimensions[i]));
                 }
             }
-            
+
             MaybeError error;
             if (buffer) {
                 error = mNnapiMgr->CreateOperandAndSetMemory(name, node, buffer);
@@ -212,7 +214,6 @@ namespace webnn::native::nnapi {
         }
 
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
         // Map the input name to NNAPI internal input number.
         std::map<std::string, std::shared_ptr<NodeInfo>> mInputNameMap;
         // Map the output name to NNAPI internal original output name that will be updated after

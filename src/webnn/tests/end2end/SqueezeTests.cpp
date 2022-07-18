@@ -36,7 +36,7 @@ class SqueezeTests : public WebnnTest {
             input = std::rand();
         }
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, {{"x", inputBuffer}}, {{"y", result}});
+        utils::Compute(GetContext(), graph, {{"x", inputBuffer}}, {{"y", result}});
         EXPECT_TRUE(utils::CheckValue(result, inputBuffer));
     }
 };

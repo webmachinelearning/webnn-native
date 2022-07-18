@@ -306,7 +306,6 @@ namespace node {
         Napi::Object object = node::Graph::constructor.New({});
         node::Graph* jsGraph = Napi::ObjectWrap<node::Graph>::Unwrap(object);
         jsGraph->mImpl = graph;
-        jsGraph->mOutputNames = names;
         return object;
     }
 

@@ -36,6 +36,15 @@ namespace webnn::wire::client {
                                      WNNErrorType type,
                                      const char* message);
 
+        void Compute(WNNGraph wnnGraph,
+                     WNNNamedInputs inputs,
+                     WNNNamedOutputs outputs,
+                     WNNComputeAsyncCallback callback,
+                     void* userdata);
+        void ComputeSync(WNNGraph wnnGraph, WNNNamedInputs inputs, WNNNamedOutputs outputs);
+
+        bool OnComputeAsyncCallback(uint64_t requestSerial, WNNErrorType type, const char* message);
+
       private:
         struct ErrorScopeData {
             WNNErrorCallback callback = nullptr;
@@ -44,6 +53,13 @@ namespace webnn::wire::client {
         std::map<uint64_t, ErrorScopeData> mErrorScopes;
         uint64_t mErrorScopeRequestSerial = 0;
         uint64_t mErrorScopeStackSize = 0;
+
+        struct ComputeAsyncRequest {
+            WNNComputeAsyncCallback callback = nullptr;
+            void* userdata = nullptr;
+        };
+        std::map<uint64_t, ComputeAsyncRequest> mComputeAsyncRequests;
+        uint64_t mComputeAsyncRequestSerial = 0;
     };
 
 }  // namespace webnn::wire::client

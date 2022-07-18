@@ -27,7 +27,7 @@ TEST_F(MatMulTests, MatMul1d) {
     ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.9025404, 0.89538723, 0.16789329, 0.7440875};
     std::vector<float> result(utils::SizeOfShape({1}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {1.1453342};
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -46,7 +46,7 @@ TEST_F(MatMulTests, MatMul1dx2d) {
     ASSERT_TRUE(graph);
     const std::vector<float> aData = {0.1309212, 0.9090703, 0.62183434, 0.9195683};
     std::vector<float> result(utils::SizeOfShape({1, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {0.6616409, -0.80990994, 0.8797145};
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -65,7 +65,7 @@ TEST_F(MatMulTests, MatMul2dx1d) {
         0.4122941, 0.6787481,  0.15072346, 0.2820577, 0.67296237, 0.3856028,
     };
     std::vector<float> result(utils::SizeOfShape({3, 1}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {0.8839391, 0.9928265, 0.5955407};
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -85,7 +85,7 @@ TEST_F(MatMulTests, MatMul2d) {
                                       0.40872088, 0.18995902, 0.69355214,  -0.37210146,
                                       0.18104352, 3.270753,   -0.803097,   -0.7268995};
     std::vector<float> result(utils::SizeOfShape({3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {1.5347629,   -0.3981255, 2.6510081,
                                               -0.14295794, 0.6647107,  -0.70315295,
                                               1.3096018,   3.9256358,  3.873897};
@@ -112,7 +112,7 @@ TEST_F(MatMulTests, MatMul3d) {
         0.7644939,  -0.8567167, 0.3942727,   -0.772506,  -0.06412488, -0.9848109,
     };
     std::vector<float> result(utils::SizeOfShape({2, 3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {
         -0.10833447, -0.13393278, 0.8061598,  -1.3357227, 2.449343,    -2.801163,
         0.31218773,  -2.7866507,  1.7064441,  1.5293882,  -0.02957799, 0.5971595,
@@ -138,7 +138,7 @@ TEST_F(MatMulTests, MatMul3dx2d) {
         0.09809388,  0.5084747,   0.76594603, 0.8050488,   -0.03979152, 2.4019558,
         -0.54937273, -0.1696853,  -1.223669,  1.0791223,   -0.61921734, 2.1074235};
     std::vector<float> result(utils::SizeOfShape({2, 3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {
         -0.8885305, 1.0170201, 1.8490261, 1.8789318, -2.3183105, -2.9326258,
         0.775168,   0.2069526, 2.7969716, 0.9437693, -0.5050435, 0.15727985,
@@ -161,7 +161,7 @@ TEST_F(MatMulTests, MatMul3dx2dGet3d) {
                                       0.9875369,   1.3744136,   0.61079186, 0.74018836,
                                       -0.56111795, -0.16432828, 1.3176169,  -0.249416};
     std::vector<float> result(utils::SizeOfShape({1, 3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {
         0.6533069, -1.4796758,  -2.6561086, -1.607665, -0.04264185,
         2.1811159, -0.13444155, 2.297084,   2.762841,
@@ -190,7 +190,7 @@ TEST_F(MatMulTests, MatMul4d) {
         -0.07425678, -1.2638812,  -1.1002079, -1.5324054, -1.1643038, -0.05644368,
     };
     std::vector<float> result(utils::SizeOfShape({1, 2, 3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {
         1.2216457,  -1.0545375, 1.2706597,  -2.2521434, -0.4334606, 2.1588962,
         -0.1886742, 0.66638416, -1.1427099, 0.47668338, 1.464142,   -0.84385866,
@@ -218,7 +218,7 @@ TEST_F(MatMulTests, MatMul4dx2d) {
         -0.9099179,  -0.6195976,  0.38710263, 0.5102191,   -0.03610202, 1.2280966,
     };
     std::vector<float> result(utils::SizeOfShape({1, 2, 3, 3}));
-    utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
     const std::vector<float> expectedValue = {
         3.2632291, 0.19901966, 0.5334567,   -1.3227482, -3.223286,   -2.628851,
         1.118986,  2.7767603,  -0.25850934, -2.185273,  0.3517071,   2.061255,

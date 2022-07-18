@@ -14,6 +14,7 @@
 
 #include "webnn/native/Context.h"
 
+#include "webnn/native/Graph.h"
 #include "webnn/native/ValidationUtils_autogen.h"
 #include "webnn/native/webnn_platform.h"
 
@@ -64,6 +65,36 @@ namespace webnn::native {
         return mWGPUDevice;
     }
 #endif
+
+    void ContextBase::Compute(GraphBase* graph,
+                              NamedInputsBase* inputs,
+                              NamedOutputsBase* outputs,
+                              WNNComputeAsyncCallback callback,
+                              void* userdata) {
+        if (inputs == nullptr || outputs == nullptr) {
+            callback(WNNErrorType_Validation, "named inputs or outputs is empty.", userdata);
+        }
+        MaybeError maybeError = ComputeImpl(graph, inputs, outputs);
+        if (maybeError.IsError()) {
+            std::unique_ptr<ErrorData> errorData = maybeError.AcquireError();
+            callback(static_cast<WNNErrorType>(ToWNNErrorType(errorData->GetType())),
+                     const_cast<char*>(errorData->GetMessage().c_str()), userdata);
+        } else {
+            callback(WNNErrorType_NoError, "", userdata);
+        }
+    }
+
+    void ContextBase::ComputeSync(GraphBase* graph,
+                                  NamedInputsBase* inputs,
+                                  NamedOutputsBase* outputs) {
+        this->ConsumedError(ComputeImpl(graph, inputs, outputs));
+    }
+
+    MaybeError ContextBase::ComputeImpl(GraphBase* graph,
+                                        NamedInputsBase* inputs,
+                                        NamedOutputsBase* outputs) {
+        return graph->ComputeImpl(inputs, outputs);
+    }
 
     void ContextBase::InjectError(wnn::ErrorType type, const char* message) {
         if (ConsumedError(ValidateErrorType(type))) {

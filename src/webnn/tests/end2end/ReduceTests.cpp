@@ -72,7 +72,7 @@ class ReduceTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"b", b}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+        utils::Compute(GetContext(), graph, {{"a", inputData}}, {{"b", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

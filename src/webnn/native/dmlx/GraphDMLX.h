@@ -98,9 +98,10 @@ namespace webnn::native::dmlx {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
         ::dml::Expression BindingConstant(DML_TENSOR_DATA_TYPE dmlTensorType,
                                           ::dml::TensorDimensions dmlTensorDims,

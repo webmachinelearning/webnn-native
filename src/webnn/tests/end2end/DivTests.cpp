@@ -44,7 +44,7 @@ TEST_F(DivTests, Div) {
         2.4229836,   1.3960866,   0.40859735,  2.1244192,  1.7553957,   1.8674074,  0.34353632,
         -1.8345544,  3.116791,    -0.61087835, 0.9642319};
     std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
-    utils::Compute(graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {5.2773511e-01,  1.4511688e+00,  -2.0733004e+00, 2.5239782e-02,  1.2193620e+00,
          1.0799783e+00,  -2.5929454e-01, -9.8252831e+00, -8.9286619e-01, -7.1994968e-02,
@@ -80,7 +80,7 @@ TEST_F(DivTests, DivBroadcast) {
         0.55578697,  0.01034931,  0.72003376,  -1.8242567};
     const std::vector<float> dataB = {1.3041736, 1.5910654, 1.9217191, 1.8052639, 1.7239413};
     std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
-    utils::Compute(graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}, {"b", dataB}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {1.825482,    0.20777069,  0.49395692,  -0.832231,   -1.0311644,  -0.40846005, 0.68554676,
          -0.18017694, -0.44017738, 0.11483412,  0.82959443,  -0.9081589,  -0.62992716, -0.436872,

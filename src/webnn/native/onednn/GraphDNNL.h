@@ -50,6 +50,8 @@ namespace webnn::native::onednn {
         virtual MaybeError AddClamp(const op::Clamp* clamp) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         dnnl_status_t AddConv2dImpl(const op::Conv2d* conv2d,
                                     const op::Binary* add = nullptr,
@@ -62,7 +64,6 @@ namespace webnn::native::onednn {
         dnnl_status_t BuildPrimitives();
 
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
         dnnl_engine_t GetEngine();
         dnnl_status_t GetMemoryDesc(dnnl_memory_t memory, const dnnl_memory_desc_t** desc);
         dnnl_status_t ReorderIfNeeded(const dnnl_memory_desc_t* srcDesc,

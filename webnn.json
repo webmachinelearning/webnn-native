@@ -180,6 +180,26 @@
     "category": "object",
     "methods": [
       {
+        "name": "compute",
+        "returns": "void",
+        "args": [
+          {"name": "graph", "type": "graph"},
+          {"name": "inputs", "type": "named inputs"},
+          {"name": "outputs", "type": "named outputs"},
+          {"name": "callback", "type": "compute async callback"},
+          {"name": "userdata", "type": "void", "annotation": "*"}
+        ]
+      },
+      {
+        "name": "compute sync",
+        "returns": "void",
+        "args": [
+          {"name": "graph", "type": "graph"},
+          {"name": "inputs", "type": "named inputs"},
+          {"name": "outputs", "type": "named outputs"}
+        ]
+      },
+      {
         "name": "inject error",
         "args": [
             {"name": "type", "type": "error type"},
@@ -1073,26 +1093,6 @@
     ]
   },
   "graph": {
-    "category": "object",
-    "methods": [
-      {
-        "name": "compute",
-        "returns": "void",
-        "args": [
-          {"name": "inputs", "type": "named inputs"},
-          {"name": "outputs", "type": "named outputs"}
-        ]
-      },
-      {
-        "name": "compute async",
-        "returns": "void",
-        "args": [
-          {"name": "inputs", "type": "named inputs"},
-          {"name": "outputs", "type": "named outputs"},
-          {"name": "callback", "type": "compute async callback"},
-          {"name": "userdata", "type": "void", "annotation": "*"}
-        ]
-      }
-    ]
+    "category": "object"
   }
 }

@@ -67,9 +67,20 @@ namespace webnn::native {
             return mContextOptions;
         }
 
+        // WebNN API
+        void Compute(GraphBase* graph,
+                     NamedInputsBase* inputs,
+                     NamedOutputsBase* outputs,
+                     WNNComputeAsyncCallback callback,
+                     void* userdata);
+        void ComputeSync(GraphBase* graph, NamedInputsBase* inputs, NamedOutputsBase* outputs);
+
       private:
         // Create concrete model.
         virtual GraphBase* CreateGraphImpl() = 0;
+        MaybeError ComputeImpl(GraphBase* graph,
+                               NamedInputsBase* inputs,
+                               NamedOutputsBase* outputs);
 
         void HandleError(std::unique_ptr<ErrorData> error);
 

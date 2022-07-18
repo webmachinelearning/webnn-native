@@ -27,7 +27,7 @@ class HardSwishTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(inputShape));
-        utils::Compute(graph, {{"x", inputBuffer}}, {{"y", result}});
+        utils::Compute(GetContext(), graph, {{"x", inputBuffer}}, {{"y", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedBuffer));
     }
 };

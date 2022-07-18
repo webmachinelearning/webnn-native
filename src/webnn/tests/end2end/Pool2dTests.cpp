@@ -26,7 +26,7 @@ TEST_F(Pool2dTests, MaxPool2dDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({11, 12, 15, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -42,7 +42,7 @@ TEST_F(Pool2dTests, MaxPool2dNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({11, 12, 15, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -58,7 +58,7 @@ TEST_F(Pool2dTests, MaxPool2dDilationsDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({11, 12, 15, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -75,7 +75,7 @@ TEST_F(Pool2dTests, MaxPool2dDilationsNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({11, 12, 15, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -92,7 +92,7 @@ TEST_F(Pool2dTests, MaxPool2dPadsDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 5, 5}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({13, 14, 15, 15, 15, 18, 19, 20, 20, 20, 23, 24, 25,
                                             25, 25, 23, 24, 25, 25, 25, 23, 24, 25, 25, 25});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -111,7 +111,7 @@ TEST_F(Pool2dTests, MaxPool2dPadsNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 5, 5, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({13, 14, 15, 15, 15, 18, 19, 20, 20, 20, 23, 24, 25,
                                             25, 25, 23, 24, 25, 25, 25, 23, 24, 25, 25, 25});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -129,7 +129,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 5, 5}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({13, 14, 15, 15, 15, 18, 19, 20, 20, 20, 23, 24, 25,
                                             25, 25, 23, 24, 25, 25, 25, 23, 24, 25, 25, 25});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -152,7 +152,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {9, 11, 13, 14, 23, 25, 27, 28, 37, 39, 41, 42, 44, 46, 48, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -176,7 +176,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes3x3Nhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({17, 19, 21, 31, 33, 35, 45, 47, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -199,7 +199,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitOutputSizes4x4Nhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {17, 19, 21, 21, 31, 33, 35, 35, 45, 47, 49, 49, 45, 47, 49, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -223,7 +223,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeFloorNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({17, 19, 21, 31, 33, 35, 45, 47, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -246,7 +246,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadExplicitRoundingTypeCeilNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {17, 19, 21, 21, 31, 33, 35, 35, 45, 47, 49, 49, 45, 47, 49, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -268,7 +268,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameLowerNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {9, 11, 13, 14, 23, 25, 27, 28, 37, 39, 41, 42, 44, 46, 48, 49});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -287,7 +287,7 @@ TEST_F(Pool2dTests, MaxPool2dAutoPadSameUpperNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 5, 5, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({13, 14, 15, 15, 15, 18, 19, 20, 20, 20, 23, 24, 25,
                                             25, 25, 23, 24, 25, 25, 25, 23, 24, 25, 25, 25});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -305,7 +305,7 @@ TEST_F(Pool2dTests, MaxPool2dStridesDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7, 9, 17, 19});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -323,7 +323,7 @@ TEST_F(Pool2dTests, MaxPool2dStridesNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7, 9, 17, 19});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -338,7 +338,7 @@ TEST_F(Pool2dTests, AveragePool2dDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({6, 7, 10, 11});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -354,7 +354,7 @@ TEST_F(Pool2dTests, AveragePool2dNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({6, 7, 10, 11});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -371,7 +371,7 @@ TEST_F(Pool2dTests, AveragePool2dPadsDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 5, 5}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7,    7.5,  8,    8.5,  9,    9.5,  10,   10.5, 11,
                                             11.5, 12,   12.5, 13,   13.5, 14,   14.5, 15,   15.5,
                                             16,   16.5, 17,   17.5, 18,   18.5, 19});
@@ -391,7 +391,7 @@ TEST_F(Pool2dTests, AveragePool2dPadsNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 5, 5, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7,    7.5,  8,    8.5,  9,    9.5,  10,   10.5, 11,
                                             11.5, 12,   12.5, 13,   13.5, 14,   14.5, 15,   15.5,
                                             16,   16.5, 17,   17.5, 18,   18.5, 19});
@@ -410,7 +410,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 5, 5}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7,    7.5,  8,    8.5,  9,    9.5,  10,   10.5, 11,
                                             11.5, 12,   12.5, 13,   13.5, 14,   14.5, 15,   15.5,
                                             16,   16.5, 17,   17.5, 18,   18.5, 19});
@@ -430,7 +430,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameUpperNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 5, 5, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({7,    7.5,  8,    8.5,  9,    9.5,  10,   10.5, 11,
                                             11.5, 12,   12.5, 13,   13.5, 14,   14.5, 15,   15.5,
                                             16,   16.5, 17,   17.5, 18,   18.5, 19});
@@ -454,7 +454,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {5, 6, 8, 9.5, 12, 13, 15, 16.5, 26, 27, 29, 30.5, 36.5, 37.5, 39.5, 41});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -478,7 +478,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes3x3Nhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({9, 10.5, 12.5, 19.5, 21, 23, 33.5, 35, 37});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -501,7 +501,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitOutputSizes4x4Nhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {9, 10.5, 12.5, 13.5, 19.5, 21, 23, 24, 33.5, 35, 37, 38, 40.5, 42, 44, 45});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -525,7 +525,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeFloorNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 3, 3, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({9, 10.5, 12.5, 19.5, 21, 23, 33.5, 35, 37});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -548,7 +548,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadExplicitRoundingTypeCeilNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {9, 10.5, 12.5, 13.5, 19.5, 21, 23, 24, 33.5, 35, 37, 38, 40.5, 42, 44, 45});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -570,7 +570,7 @@ TEST_F(Pool2dTests, AveragePool2dAutoPadSameLowerNhwc) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 4, 4, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {5, 6, 8, 9.5, 12, 13, 15, 16.5, 26, 27, 29, 30.5, 36.5, 37.5, 39.5, 41});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
@@ -588,7 +588,7 @@ TEST_F(Pool2dTests, AveragePool2dStridesDefault) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 1, 2, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({4, 6, 14, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -606,7 +606,7 @@ TEST_F(Pool2dTests, AveragePool2dStridesNhwc) {
     const std::vector<float> dataX = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13,
                                       14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25};
     std::vector<float> result(utils::SizeOfShape({1, 2, 2, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({4, 6, 14, 16});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -630,7 +630,7 @@ TEST_F(Pool2dTests, GlobalAveragePool2dDefault) {
         0.20211531,  0.8832168,   -0.19886094, -0.61088,    0.682026,    -0.5253442,  1.5022339,
         1.0256356,   1.0642492,   -0.4169051,  -0.8740329,  1.1494869};
     std::vector<float> result(utils::SizeOfShape({1, 3, 1, 1}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({0.07170041, 0.05194739, 0.07117923});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -656,7 +656,7 @@ TEST_F(Pool2dTests, GlobalAveragePool2dNhwc) {
         1.1549494,   0.19907428,  1.0642492,   0.24823844,  0.20298219,  -0.4169051,  0.75670505,
         -0.8399954,  -0.8740329,  -1.7108902,  1.3583295,   1.1494869};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 3}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({0.07170041, 0.05194739, 0.07117923});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -671,7 +671,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 3}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 1, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -687,7 +687,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStrides) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -703,7 +703,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dStridesNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -720,7 +720,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -742,7 +742,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes3x3) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 1, 3, 3}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {10.692676544189453, 12.006942749023438, 13.790093421936035, 21.027759552001953,
          22.438806533813477, 24.320772171020508, 34.41172409057617, 35.881752014160156,
@@ -767,7 +767,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsOutputSizes4x4) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 1, 4, 4}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {10.692676544189453, 12.006942749023438, 13.790093421936035, 14.668560981750488,
          21.027759552001953, 22.438806533813477, 24.320772171020508, 25.248762130737305,
@@ -793,7 +793,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeFloor) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 1, 3, 3}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {10.692676544189453, 12.006942749023438, 13.790093421936035, 21.027759552001953,
          22.438806533813477, 24.320772171020508, 34.41172409057617, 35.881752014160156,
@@ -818,7 +818,7 @@ TEST_F(Pool2dTests, DISABLED_l2Pool2dPadsRoundingTypeCeil) {
                                       27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
                                       40, 41, 42, 43, 44, 45, 46, 47, 48, 49};
     std::vector<float> result(utils::SizeOfShape({1, 1, 4, 4}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue(
         {10.692676544189453, 12.006942749023438, 13.790093421936035, 14.668560981750488,
          21.027759552001953, 22.438806533813477, 24.320772171020508, 25.248762130737305,
@@ -840,7 +840,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dPadsNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -857,7 +857,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -875,7 +875,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameUpperNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -892,7 +892,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerDefault) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -910,7 +910,7 @@ TEST_F(Pool2dTests, DISABLED_L2Pool2dSameLowerNhwc) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataX = {-1, 2, 0, 3, -2, 0, 0, -4};
     std::vector<float> result(utils::SizeOfShape({1, 1, 1, 2}));
-    utils::Compute(graph, {{"x", dataX}}, {{"y", result}});
+    utils::Compute(GetContext(), graph, {{"x", dataX}}, {{"y", result}});
     const std::vector<float> expectedValue({1.5, 2.5});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }

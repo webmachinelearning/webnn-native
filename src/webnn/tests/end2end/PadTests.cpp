@@ -34,7 +34,7 @@ class PadTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"y", y}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, {{"x", inputData}}, {{"y", result}});
+        utils::Compute(GetContext(), graph, {{"x", inputData}}, {{"y", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

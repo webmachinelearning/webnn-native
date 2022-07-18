@@ -27,7 +27,7 @@ class Resample2dTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
+        utils::Compute(GetContext(), graph, {{"input", inputData}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

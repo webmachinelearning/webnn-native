@@ -47,7 +47,7 @@ class SplitTests : public WebnnTest {
             results.push_back(std::vector<float>(utils::SizeOfShape(expectedArray[i].shape)));
             namedOutputs.push_back({"split" + std::to_string(i), results.back()});
         }
-        utils::Compute(graph, {{"input", inputBuffer}}, namedOutputs);
+        utils::Compute(GetContext(), graph, {{"input", inputBuffer}}, namedOutputs);
         for (size_t i = 0; i < splittedOperands.Size(); ++i) {
             EXPECT_TRUE(utils::CheckValue(namedOutputs[i].resource, expectedArray[i].buffer));
         }

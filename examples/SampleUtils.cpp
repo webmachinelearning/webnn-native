@@ -304,10 +304,11 @@ namespace utils {
         return builder.Build(namedOperands);
     }
 
-    void Compute(const wnn::Graph& graph,
+    void Compute(const wnn::Context& context,
+                 const wnn::Graph& graph,
                  const std::vector<NamedInput<float>>& inputs,
                  const std::vector<NamedOutput<float>>& outputs) {
-        return Compute<float>(graph, inputs, outputs);
+        return Compute<float>(context, graph, inputs, outputs);
     }
 
     std::vector<std::string> ReadTopKLabel(const std::vector<size_t>& topKIndex,
