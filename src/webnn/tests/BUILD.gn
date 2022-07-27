@@ -132,8 +132,8 @@ test("webnn_unittests") {
     "${webnn_root}/src/webnn:cpp",
     "${webnn_root}/src/webnn:webnn_proc",
     "${webnn_root}/src/webnn/common",
-    "${webnn_root}/src/webnn/native:webnn_native",
     "${webnn_root}/src/webnn/native:sources",
+    "${webnn_root}/src/webnn/native:webnn_native",
     "${webnn_root}/src/webnn/utils:webnn_utils",
   ]
 
@@ -205,6 +205,8 @@ source_set("webnn_end2end_tests_sources") {
     "${webnn_root}/examples/ResNet/ResNet.h",
     "${webnn_root}/examples/SqueezeNet/SqueezeNet.cpp",
     "${webnn_root}/examples/SqueezeNet/SqueezeNet.h",
+    "${webnn_root}/examples/SuperResolution/SuperResolution.cpp",
+    "${webnn_root}/examples/SuperResolution/SuperResolution.h",
     "WebnnTest.cpp",
     "WebnnTest.h",
     "end2end/AddTests.cpp",
@@ -249,6 +251,7 @@ source_set("webnn_end2end_tests_sources") {
     "end2end/models/ResNetNhwc.cpp",
     "end2end/models/SqueezeNetNchw.cpp",
     "end2end/models/SqueezeNetNhwc.cpp",
+    "end2end/models/SuperResolutionNchw.cpp",
   ]
 
   # Validation tests that need OS windows live in end2end tests.
