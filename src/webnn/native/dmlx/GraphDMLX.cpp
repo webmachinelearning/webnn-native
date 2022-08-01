@@ -1270,7 +1270,7 @@ namespace webnn::native::dmlx {
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
         auto newShape = reshape->GetNewShape();
-        if (newShape.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+        if (newShape.size() > DML_TENSOR_DIMENSION_COUNT_MAX1) {
             return DAWN_INTERNAL_ERROR("The size of new shape is not supported by DML.");
         }
         ::dml::TensorDimensions newSizes(newShape.size());
@@ -1424,7 +1424,7 @@ namespace webnn::native::dmlx {
         DAWN_ASSERT(mExpression.find(inputOperand) != mExpression.end());
         ::dml::Expression input = mExpression.at(inputOperand);
         std::vector<int32_t> permutation = transpose->GetPermutation();
-        if (permutation.size() > DML_TENSOR_DIMENSION_COUNT_MAX) {
+        if (permutation.size() > DML_TENSOR_DIMENSION_COUNT_MAX1) {
             return DAWN_INTERNAL_ERROR("The size of permutation is not supported by DML.");
         }
 
