@@ -38,13 +38,6 @@ bool MobileNetV2::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
     return true;
 }
 
-const wnn::Operand MobileNetV2::BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                                     const std::string& path) {
-    const cnpy::NpyArray data = cnpy::npy_load(path);
-    mConstants.push_back(data.data_holder);
-    return utils::BuildConstant(builder, data.shape, data.data<float>(), data.num_bytes());
-}
-
 const wnn::Operand MobileNetV2::BuildConv(const wnn::GraphBuilder& builder,
                                           const wnn::Operand& input,
                                           int32_t convIndex,

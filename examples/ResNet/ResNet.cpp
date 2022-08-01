@@ -37,13 +37,6 @@ bool ResNet::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
     return true;
 }
 
-const wnn::Operand ResNet::BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                                const std::string& path) {
-    const cnpy::NpyArray data = cnpy::npy_load(path);
-    mConstants.push_back(data.data_holder);
-    return utils::BuildConstant(builder, data.shape, data.data<float>(), data.num_bytes());
-}
-
 const wnn::Operand ResNet::BuildNchwConv(const wnn::GraphBuilder& builder,
                                          const wnn::Operand& input,
                                          const std::string& name,

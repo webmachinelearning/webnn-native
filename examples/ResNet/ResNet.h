@@ -25,8 +25,6 @@ class ResNet : public ExampleBase {
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
     const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand LoadNhwc(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                            const std::string& path);
     const wnn::Operand BuildNchwConv(const wnn::GraphBuilder& builder,
                                      const wnn::Operand& input,
                                      const std::string& name,
@@ -62,7 +60,4 @@ class ResNet : public ExampleBase {
     const wnn::Operand loop(const wnn::GraphBuilder& builder,
                             const wnn::Operand node,
                             uint32_t num);
-
-  private:
-    std::vector<SHARED_DATA_TYPE> mConstants;
 };

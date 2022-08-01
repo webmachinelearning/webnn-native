@@ -26,8 +26,6 @@ class MobileNetV2 : public ExampleBase {
     const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand LoadNhwc(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand LoadBatchNormNchw(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                            const std::string& path);
     const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,
                                  const wnn::Operand& input,
                                  int32_t convIndex,
@@ -64,7 +62,4 @@ class MobileNetV2 : public ExampleBase {
     const wnn::Operand BuildGemm(const wnn::GraphBuilder& builder,
                                  const wnn::Operand& input,
                                  int32_t gemmIndex);
-
-  private:
-    std::vector<SHARED_DATA_TYPE> mConstants;
 };

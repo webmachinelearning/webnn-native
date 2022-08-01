@@ -25,15 +25,10 @@ class SuperResolution : public ExampleBase {
     const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax);
 
   private:
-    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                            const std::string& path);
-
     const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,
                                  const wnn::Operand& input,
                                  int32_t convIndex,
                                  bool relu6,
                                  utils::Conv2dOptions* options,
                                  const std::string& biasName = "");
-
-    std::vector<SHARED_DATA_TYPE> mConstants;
 };
