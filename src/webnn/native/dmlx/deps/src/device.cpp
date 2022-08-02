@@ -6,6 +6,8 @@
 
 #include "precomp.h"
 
+#include <DXProgrammableCapture.h>
+
 #pragma warning(push)
 #pragma warning(disable:4238)
 
@@ -23,7 +25,7 @@ ID3D12DescriptorHeap* SVDescriptorHeap::GetDescriptorHeap() const {
     return descriptorHeap.Get();
 }
 
-Device::Device(bool useGpu, bool useDebugLayer, DXGI_GPU_PREFERENCE gpuPreference) : m_useGpu(useGpu), m_useDebugLayer(useDebugLayer), m_gpuPreference(gpuPreference) {}
+Device::Device(bool useGpu, bool useDebugLayer, bool beginCaptureOnStartup, DXGI_GPU_PREFERENCE gpuPreference) : m_useGpu(useGpu), m_useDebugLayer(useDebugLayer), m_beginCaptureOnStartup(beginCaptureOnStartup), m_gpuPreference(gpuPreference) {}
 
 // An adapter called the "Microsoft Basic Render Driver" is always present. This adapter is a render-only device that has no display outputs.
 HRESULT IsWarpAdapter(IDXGIAdapter1* pAdapter, bool* isWarpAdapter) {
@@ -50,6 +52,14 @@ HRESULT Device::Init()
         if (SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController))))
         {
             debugController->EnableDebugLayer();
+        }
+    }
+
+    
+    if (m_beginCaptureOnStartup){
+        ComPtr<IDXGraphicsAnalysis> graphicsAnalysis;
+        if (SUCCEEDED(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&graphicsAnalysis)))) {
+            graphicsAnalysis->BeginCapture();
         }
     }
 
