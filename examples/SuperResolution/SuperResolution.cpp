@@ -17,13 +17,6 @@
 SuperResolution::SuperResolution() : ExampleBase() {
 }
 
-const wnn::Operand SuperResolution::BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                                         const std::string& path) {
-    const cnpy::NpyArray data = cnpy::npy_load(path);
-    mConstants.push_back(data.data_holder);
-    return utils::BuildConstant(builder, data.shape, data.data<float>(), data.num_bytes());
-}
-
 const wnn::Operand SuperResolution::BuildConv(const wnn::GraphBuilder& builder,
                                               const wnn::Operand& input,
                                               int32_t convIndex,

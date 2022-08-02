@@ -25,8 +25,6 @@ class SqueezeNet : public ExampleBase {
     bool ParseAndCheckExampleOptions(int argc, const char* argv[]) override;
     const wnn::Operand LoadNchw(const wnn::GraphBuilder& builder, bool softmax = true);
     const wnn::Operand LoadNhwc(const wnn::GraphBuilder& builder, bool softmax = true);
-    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
-                                            const std::string& path);
     const wnn::Operand BuildConv(const wnn::GraphBuilder& builder,
                                  const wnn::Operand& input,
                                  const std::string& name,
@@ -36,7 +34,4 @@ class SqueezeNet : public ExampleBase {
                                  const std::string& convName,
                                  const std::string& conv1x1Name,
                                  const std::string& conv3x3Name);
-
-  private:
-    std::vector<SHARED_DATA_TYPE> mConstants;
 };

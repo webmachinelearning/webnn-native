@@ -34,6 +34,8 @@ class ExampleBase {
     virtual ~ExampleBase() = default;
 
     virtual bool ParseAndCheckExampleOptions(int argc, const char* argv[]);
+    const wnn::Operand BuildConstantFromNpy(const wnn::GraphBuilder& builder,
+                                            const std::string& path);
 
     std::string mImagePath;
     std::string mWeightsPath;
@@ -51,6 +53,7 @@ class ExampleBase {
     std::string mDevicePreference = "default";
     std::string mPowerPreference = "default";
     bool mFused = true;
+    std::vector<SHARED_DATA_TYPE> mConstants;
 };
 
 wnn::Context CreateCppContext(wnn::ContextOptions const* options = nullptr);

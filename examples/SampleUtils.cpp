@@ -195,6 +195,13 @@ bool ExampleBase::ParseAndCheckExampleOptions(int argc, const char* argv[]) {
     return true;
 }
 
+const wnn::Operand ExampleBase::BuildConstantFromNpy(const wnn::GraphBuilder& builder,
+                                                         const std::string& path) {
+    const cnpy::NpyArray data = cnpy::npy_load(path);
+    mConstants.push_back(data.data_holder);
+    return utils::BuildConstant(builder, data.shape, data.data<float>(), data.num_bytes());
+}
+
 bool Expected(float output, float expected) {
     return (fabs(output - expected) < 0.005f);
 }
