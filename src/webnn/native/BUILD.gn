@@ -210,19 +210,6 @@ source_set("sources") {
     }
   }
 
-  if (webnn_enable_dml) {
-   sources += [
-      "dml/BackendDML.cpp",
-      "dml/BackendDML.h",
-      "dml/ContextDML.cpp",
-      "dml/ContextDML.h",
-      "dml/GraphDML.cpp",
-      "dml/GraphDML.h",
-      "dml/DMLUtils.cpp",
-      "dml/DMLUtils.h",
-    ]
-  }
-
   if (webnn_enable_dmlx) {
     if (webnn_enable_gpu_buffer == false) {
       sources += [
@@ -488,7 +475,7 @@ if (webnn_enable_dml || webnn_enable_dmlx) {
   dml_dll_path =
       "${webnn_root}/third_party/microsoft.ai.directml.1.8.2/bin/${os_folder}"
   copy("copy_dml_dll") {
-    sources = [ "${dml_dll_path}/DirectML.dll"]
+    sources = [ "${dml_dll_path}/DirectML.dll" ]
     if (is_debug) {
       sources += [ "${dml_dll_path}/DirectML.Debug.dll" ]
     }
