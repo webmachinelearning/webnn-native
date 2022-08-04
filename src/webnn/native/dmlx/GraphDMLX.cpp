@@ -522,7 +522,7 @@ namespace webnn::native::dmlx {
                 gpuPreference = DXGI_GPU_PREFERENCE::DXGI_GPU_PREFERENCE_UNSPECIFIED;
         }
 #    if defined(_DEBUG)
-        mDevice.reset(new ::pydml::Device(useGpu, true, gpuPreference));
+        mDevice.reset(new ::pydml::Device(useGpu, true, true, gpuPreference));
 #    else
         mDevice.reset(new ::pydml::Device(useGpu, false, gpuPreference));
 #    endif
