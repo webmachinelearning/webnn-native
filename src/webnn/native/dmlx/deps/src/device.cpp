@@ -19,7 +19,7 @@ SVDescriptorHeap::SVDescriptorHeap(
 
 ID3D12DescriptorHeap* SVDescriptorHeap::GetDescriptorHeap() const {
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;
-    m_Heap->As(&descriptorHeap);
+    m_Heap.As(&descriptorHeap);
     return descriptorHeap.Get();
 }
 
@@ -574,8 +574,8 @@ HRESULT Device::ExecuteCommandListAndWait()
 
     ID3D12CommandList* commandLists[] = { m_commandList.Get() };
     if (m_residencyManager != nullptr){
-        gpgmm::d3d12::ResidencySet* residencySets[] = { &m_residencySet };
-        m_residencyManager->ExecuteCommandLists(m_commandQueue.Get(), commandLists, residencySets, ARRAYSIZE(commandLists));
+        gpgmm::d3d12::ResidencyList* residencyLists[] = { &m_residencyList };
+        m_residencyManager->ExecuteCommandLists(m_commandQueue.Get(), commandLists, residencyLists, ARRAYSIZE(commandLists));
     } else {
         m_commandQueue->ExecuteCommandLists(ARRAYSIZE(commandLists), commandLists);
     }
@@ -584,7 +584,7 @@ HRESULT Device::ExecuteCommandListAndWait()
 
     ReturnIfFailed(m_commandAllocator->Reset());
     ReturnIfFailed(m_commandList->Reset(m_commandAllocator.Get(), nullptr));
-    ReturnIfFailed(m_residencySet.Reset());
+    ReturnIfFailed(m_residencyList.Reset());
     return S_OK;
 }
 
@@ -633,7 +633,7 @@ HRESULT Device::EnsureCpuBufferSize(uint64_t requestedSizeInBytes, _Inout_ ComPt
         ReturnIfFailed(CreateCpuCustomBuffer(m_resourceAllocator.Get(), newSize, buffer));
     }
 
-    UpdateResidencyIfNeeded(buffer.Get(), &m_residencySet);
+    UpdateResidencyIfNeeded(buffer.Get(), &m_residencyList);
     
     return S_OK;
 }
@@ -650,7 +650,7 @@ HRESULT Device::EnsureDefaultBufferSize(uint64_t requestedSizeInBytes, _Inout_ C
         ReturnIfFailed(CreateDefaultBuffer(m_resourceAllocator.Get(), newSize, buffer));
     }
 
-    UpdateResidencyIfNeeded(buffer.Get(), &m_residencySet);
+    UpdateResidencyIfNeeded(buffer.Get(), &m_residencyList);
     
     return S_OK;
 }
@@ -709,7 +709,7 @@ HRESULT Device::EnsureReadBackHeapSize(uint64_t requestedSizeInBytes)
         ReturnIfFailed(CreateReadBackBuffer(m_resourceAllocator.Get(), newSize, m_readbackHeap));
     }
 
-    UpdateResidencyIfNeeded(m_readbackHeap.Get(), &m_residencySet);
+    UpdateResidencyIfNeeded(m_readbackHeap.Get(), &m_residencyList);
     
     return S_OK;
 }
