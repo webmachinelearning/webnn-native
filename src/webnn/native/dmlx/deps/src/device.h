@@ -98,7 +98,7 @@ namespace pydml
         Microsoft::WRL::ComPtr<gpgmm::d3d12::ResourceAllocation> m_temporaryResource;
         Microsoft::WRL::ComPtr<gpgmm::d3d12::ResourceAllocation> m_persistentResource;
 
-        gpgmm::d3d12::ResidencySet m_residencySet;
+        gpgmm::d3d12::ResidencyList m_residencyList;
 
         bool m_useCpuCustomHeapResources = false;
         bool m_useGpu = true;
