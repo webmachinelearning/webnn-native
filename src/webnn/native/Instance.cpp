@@ -28,11 +28,11 @@ namespace webnn::native {
 
     // Forward definitions of each backend's "Connect" function that creates new BackendConnection.
     // Conditionally compiled declarations are used to avoid using static constructors instead.
-#if defined(WEBNN_ENABLE_BACKEND_DML)
-    namespace dml {
-        BackendConnection* Connect(InstanceBase* instance);
-    }
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+// #if defined(WEBNN_ENABLE_BACKEND_DML)
+//     namespace dml {
+//         BackendConnection* Connect(InstanceBase* instance);
+//     }
+// #endif  // defined(WEBNN_ENABLE_BACKEND_DML)
 #if defined(WEBNN_ENABLE_BACKEND_DMLX)
     namespace dmlx {
         BackendConnection* Connect(InstanceBase* instance);
@@ -76,9 +76,9 @@ namespace webnn::native {
 #if defined(WEBNN_ENABLE_BACKEND_NULL)
             enabledBackends.set(wnn::BackendType::Null);
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
-#if defined(WEBNN_ENABLE_BACKEND_DML)
-            enabledBackends.set(wnn::BackendType::DirectML);
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+// #if defined(WEBNN_ENABLE_BACKEND_DML)
+//             enabledBackends.set(wnn::BackendType::DirectML);
+// #endif  // defined(WEBNN_ENABLE_BACKEND_DML)
 #if defined(WEBNN_ENABLE_BACKEND_DMLX)
             enabledBackends.set(wnn::BackendType::DirectMLX);
 #endif  // defined(WEBNN_ENABLE_BACKEND_DMLX)
@@ -137,11 +137,11 @@ namespace webnn::native {
                 break;
 #endif  // defined(WEBNN_ENABLE_BACKEND_NULL)
 
-#if defined(WEBNN_ENABLE_BACKEND_DML)
-            case wnn::BackendType::DirectML:
-                Register(dml::Connect(this), wnn::BackendType::DirectML);
-                break;
-#endif  // defined(WEBNN_ENABLE_BACKEND_DML)
+                // #if defined(WEBNN_ENABLE_BACKEND_DML)
+                //             case wnn::BackendType::DirectML:
+                //                 Register(dml::Connect(this), wnn::BackendType::DirectML);
+                //                 break;
+                // #endif  // defined(WEBNN_ENABLE_BACKEND_DML)
 
 #if defined(WEBNN_ENABLE_BACKEND_DMLX)
             case wnn::BackendType::DirectMLX:
