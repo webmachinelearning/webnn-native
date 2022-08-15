@@ -17,6 +17,7 @@ import("../../../scripts/webnn_overrides_with_defaults.gni")
 
 import("//testing/test.gni")
 import("${webnn_dawn_root}/scripts/dawn_features.gni")
+import("${webnn_root}/build_overrides/webnn_features.gni")
 import("${webnn_root}/generator/webnn_generator.gni")
 
 group("webnn_tests") {
@@ -199,60 +200,65 @@ source_set("webnn_end2end_tests_sources") {
   ]
 
   sources = [
-    "${webnn_root}/examples/MobileNetV2/MobileNetV2.cpp",
-    "${webnn_root}/examples/MobileNetV2/MobileNetV2.h",
-    "${webnn_root}/examples/ResNet/ResNet.cpp",
-    "${webnn_root}/examples/ResNet/ResNet.h",
-    "${webnn_root}/examples/SqueezeNet/SqueezeNet.cpp",
-    "${webnn_root}/examples/SqueezeNet/SqueezeNet.h",
-    "${webnn_root}/examples/SuperResolution/SuperResolution.cpp",
-    "${webnn_root}/examples/SuperResolution/SuperResolution.h",
     "WebnnTest.cpp",
     "WebnnTest.h",
-    "end2end/AddTests.cpp",
-    "end2end/BatchNormTests.cpp",
-    "end2end/ClampTests.cpp",
-    "end2end/ConcatTests.cpp",
-    "end2end/Conv2dTests.cpp",
-    "end2end/ConvTranspose2dTests.cpp",
-    "end2end/DivTests.cpp",
-    "end2end/ElementWiseUnaryTests.cpp",
-    "end2end/GemmTests.cpp",
-    "end2end/GruTests.cpp",
-    "end2end/HardSwishTests.cpp",
-    "end2end/InstanceNormTests.cpp",
-    "end2end/LeakyReluTests.cpp",
-    "end2end/MatMulTests.cpp",
-    "end2end/MaxTests.cpp",
-    "end2end/MinTests.cpp",
-    "end2end/MulTests.cpp",
-    "end2end/PadTests.cpp",
-    "end2end/Pool2dTests.cpp",
-    "end2end/PowTests.cpp",
-    "end2end/ReduceTests.cpp",
-    "end2end/ReluTests.cpp",
-    "end2end/Resample2dTests.cpp",
-    "end2end/ReshapeTests.cpp",
-    "end2end/SigmoidTests.cpp",
-    "end2end/SliceTests.cpp",
-    "end2end/SoftmaxTests.cpp",
-    "end2end/SplitTests.cpp",
-    "end2end/SqueezeTests.cpp",
-    "end2end/SubTests.cpp",
-    "end2end/TanhTests.cpp",
-
-    # Disable to test unimplemented Sub.
-    #"end2end/SubTests.cpp",
-    "end2end/TransposeTests.cpp",
-    "end2end/models/MobileNetV2BatchNormNchw.cpp",
-    "end2end/models/MobileNetV2Nchw.cpp",
-    "end2end/models/MobileNetV2Nhwc.cpp",
-    "end2end/models/ResNetNchw.cpp",
-    "end2end/models/ResNetNhwc.cpp",
-    "end2end/models/SqueezeNetNchw.cpp",
-    "end2end/models/SqueezeNetNhwc.cpp",
-    "end2end/models/SuperResolutionNchw.cpp",
   ]
+
+  if (webnn_enable_dml == false) {
+    sources += [
+      "${webnn_root}/examples/MobileNetV2/MobileNetV2.cpp",
+      "${webnn_root}/examples/MobileNetV2/MobileNetV2.h",
+      "${webnn_root}/examples/ResNet/ResNet.cpp",
+      "${webnn_root}/examples/ResNet/ResNet.h",
+      "${webnn_root}/examples/SqueezeNet/SqueezeNet.cpp",
+      "${webnn_root}/examples/SqueezeNet/SqueezeNet.h",
+      "${webnn_root}/examples/SuperResolution/SuperResolution.cpp",
+      "${webnn_root}/examples/SuperResolution/SuperResolution.h",
+      "end2end/AddTests.cpp",
+      "end2end/BatchNormTests.cpp",
+      "end2end/ClampTests.cpp",
+      "end2end/ConcatTests.cpp",
+      "end2end/Conv2dTests.cpp",
+      "end2end/ConvTranspose2dTests.cpp",
+      "end2end/DivTests.cpp",
+      "end2end/ElementWiseUnaryTests.cpp",
+      "end2end/GemmTests.cpp",
+      "end2end/GruTests.cpp",
+      "end2end/HardSwishTests.cpp",
+      "end2end/InstanceNormTests.cpp",
+      "end2end/LeakyReluTests.cpp",
+      "end2end/MatMulTests.cpp",
+      "end2end/MaxTests.cpp",
+      "end2end/MinTests.cpp",
+      "end2end/MulTests.cpp",
+      "end2end/PadTests.cpp",
+      "end2end/Pool2dTests.cpp",
+      "end2end/PowTests.cpp",
+      "end2end/ReduceTests.cpp",
+      "end2end/ReluTests.cpp",
+      "end2end/Resample2dTests.cpp",
+      "end2end/ReshapeTests.cpp",
+      "end2end/SigmoidTests.cpp",
+      "end2end/SliceTests.cpp",
+      "end2end/SoftmaxTests.cpp",
+      "end2end/SplitTests.cpp",
+      "end2end/SqueezeTests.cpp",
+      "end2end/SubTests.cpp",
+      "end2end/TanhTests.cpp",
+
+      # Disable to test unimplemented Sub.
+      #"end2end/SubTests.cpp",
+      "end2end/TransposeTests.cpp",
+      "end2end/models/MobileNetV2BatchNormNchw.cpp",
+      "end2end/models/MobileNetV2Nchw.cpp",
+      "end2end/models/MobileNetV2Nhwc.cpp",
+      "end2end/models/ResNetNchw.cpp",
+      "end2end/models/ResNetNhwc.cpp",
+      "end2end/models/SqueezeNetNchw.cpp",
+      "end2end/models/SqueezeNetNhwc.cpp",
+      "end2end/models/SuperResolutionNchw.cpp",
+    ]
+  }
 
   # Validation tests that need OS windows live in end2end tests.
 
