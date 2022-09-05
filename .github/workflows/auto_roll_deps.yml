@@ -4,13 +4,8 @@ on:
   workflow_dispatch:
 
   schedule:
-    # Every Monday at 3 am
-    - cron: "0 3 * * 1"
-
-permissions:
-  actions: read/write
-  contents: read
-  pull-requests: write
+    # Every Monday at 12 am
+    - cron: "0 12 * * 1"
 
 jobs:
   deps:
