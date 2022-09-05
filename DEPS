@@ -28,7 +28,7 @@ deps = {
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-polyfill/test-data': {
-    'url': '{github_git}/webmachinelearning/test-data.git@fc566a1acfd8750e270261c369e58e7087489bc7',
+    'url': '{github_git}/webmachinelearning/test-data.git@045017d38ea0133807fa26af9e5b030147cb2314',
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-samples': {
