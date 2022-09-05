@@ -5,6 +5,7 @@ on: [push, pull_request]
 jobs:
 
   job:
+    name: Build, Test XNNPACK backend (Windows)
     runs-on: windows-2019
 
     steps:
