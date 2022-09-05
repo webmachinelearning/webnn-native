@@ -36,7 +36,7 @@ deps = {
     'condition': 'checkout_samples'
   },
   'node/third_party/webnn-samples/test-data': {
-    'url': '{github_git}/webmachinelearning/test-data.git@d9f1537096b0fcbbef0889b540bf8ce6c8833969',
+    'url': '{github_git}/webmachinelearning/test-data.git@045017d38ea0133807fa26af9e5b030147cb2314',
     'condition': 'checkout_samples'
   },
   'third_party/stb': {
