@@ -692,7 +692,7 @@ HRESULT Device::EnsureDescriptorHeapSize(uint32_t requestedSizeInDescriptors)
 
         gpgmm::d3d12::HEAP_DESC heapDesc = {};
         heapDesc.SizeInBytes = newSize * m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        heapDesc.MemorySegment = gpgmm::d3d12::RESIDENCY_SEGMENT_LOCAL;
+        heapDesc.MemorySegmentGroup = DXGI_MEMORY_SEGMENT_GROUP_LOCAL;
 
         ComPtr<gpgmm::d3d12::Heap> descriptorHeap;
         ReturnIfFailed(gpgmm::d3d12::Heap::CreateHeap(heapDesc, m_residencyManager.Get(), createHeapFn,
