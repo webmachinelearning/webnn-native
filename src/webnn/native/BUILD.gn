@@ -273,7 +273,21 @@ source_set("sources") {
     ]
 
     data_deps += [ ":copy_dml_dll" ]
-    deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
+
+    # Build the GPGMM MVI which uses the GMM interface provided by GPGMM with a pass-through GMM implementation.
+    if (webnn_use_min_gpgmm) {
+      include_dirs += [ "${webnn_gpgmm_dir}/src/include/min" ]
+      sources += [
+        "${webnn_gpgmm_dir}/src/include/min/gpgmm.cpp",
+        "${webnn_gpgmm_dir}/src/include/min/gpgmm.h",
+        "${webnn_gpgmm_dir}/src/include/min/gpgmm_d3d12.cpp",
+        "${webnn_gpgmm_dir}/src/include/min/gpgmm_d3d12.h",
+      ]
+
+      # Build GPGMM which brings the full GMM implementation.
+    } else {
+      deps += [ "${webnn_gpgmm_dir}/src:gpgmm" ]
+    }
   }
 
   if (webnn_enable_onednn) {
