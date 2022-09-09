@@ -24,6 +24,8 @@ third_party/stb
 tools
 out
 
+.gclient_previous_sync_commits
+
 # Modified from https://www.gitignore.io/api/vim,macos,linux,emacs,windows,sublimetext,visualstudio,visualstudiocode
 
 ### Emacs ###

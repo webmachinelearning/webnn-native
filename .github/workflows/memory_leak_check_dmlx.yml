@@ -5,7 +5,7 @@ on: [push, pull_request]
 jobs:
 
   job:
-
+    name: Memory leak check DirectMLX backend (Windows)
     runs-on: windows-2019
 
     steps:
