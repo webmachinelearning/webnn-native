@@ -123,6 +123,11 @@ HRESULT Device::Init()
     allocatorDesc.Device = m_d3d12Device;
     allocatorDesc.ResourceHeapTier = options.ResourceHeapTier;
 
+    // DML validation has a bug when binding a resource using a custom-equivalent default heap type as output.
+    // To workaround this DML bug, disable using custom heap types.
+    // TODO: Remove once MSFT fixes it.
+    allocatorDesc.Flags |= gpgmm::d3d12::ALLOCATOR_FLAG_DISABLE_CUSTOM_HEAPS;
+
 #ifdef WEBNN_ENABLE_RESOURCE_DUMP
     allocatorDesc.RecordOptions.Flags |= gpgmm::d3d12::EVENT_RECORD_FLAG_ALL_EVENTS;
     allocatorDesc.RecordOptions.MinMessageLevel = D3D12_MESSAGE_SEVERITY_MESSAGE;
@@ -692,7 +697,7 @@ HRESULT Device::EnsureDescriptorHeapSize(uint32_t requestedSizeInDescriptors)
 
         gpgmm::d3d12::HEAP_DESC heapDesc = {};
         heapDesc.SizeInBytes = newSize * m_d3d12Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-        heapDesc.MemorySegment = gpgmm::d3d12::RESIDENCY_SEGMENT_LOCAL;
+        heapDesc.MemorySegmentGroup = DXGI_MEMORY_SEGMENT_GROUP_LOCAL;
 
         ComPtr<gpgmm::d3d12::Heap> descriptorHeap;
         ReturnIfFailed(gpgmm::d3d12::Heap::CreateHeap(heapDesc, m_residencyManager.Get(), createHeapFn,
