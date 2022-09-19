@@ -1,0 +1,65 @@
+name: 'Auto Roll DEPS / XNNPACK'
+
+on:
+  workflow_dispatch:
+
+  schedule:
+    # Every Monday/Wednesday at 5 am
+    - cron: "0 5 * * 1,3"
+
+jobs:
+  deps:
+    runs-on: windows-2019
+
+    steps:
+    - name: Git config
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
+        git config --global user.email "webnn-native-autoroll@users.noreply.github.com"
+        git config --global user.name "WebNN Native Autoroller"
+    - name: Install depot_tools
+      shell: cmd
+      run: |
+        git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git ..\depot_tools
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        gclient
+    - name: Set up Python 3.x
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - uses: actions/checkout@v3
+
+    - name: Sync code for main branch
+      shell: cmd
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        copy scripts\standalone.gclient .gclient
+        gclient sync
+    - name: Roll third_party/XNNPACK
+      shell: cmd
+      continue-on-error: true
+      run: |
+        set "PATH=%CD%\..\depot_tools;%PATH%"
+        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
+        roll-dep --no-log --ignore-dirty-tree third_party/XNNPACK
+
+    - name: Create Pull Request
+      id: cpr
+      uses: peter-evans/create-pull-request@v4
+      with:
+        title: Roll third_party DEPS
+        token: ${{ secrets.GITHUB_TOKEN }}
+        branch: autoroller/roll
+        branch-suffix: short-commit-hash
+        delete-branch: true
+
+    - name: Enable Pull Request Automerge
+      if: steps.cpr.outputs.pull-request-operation == 'created'
+      uses: peter-evans/enable-pull-request-automerge@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
+        merge-method: squash

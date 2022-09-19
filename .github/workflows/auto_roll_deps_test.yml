@@ -1,11 +1,11 @@
-name: 'Auto Roll DEPS'
+name: 'Auto Roll DEPS / Test'
 
 on:
   workflow_dispatch:
 
   schedule:
-    # Every Monday at 12 am
-    - cron: "0 12 * * 1"
+    # Every Monday/Wednesday at 5 am
+    - cron: "0 5 * * 1,3"
 
 jobs:
   deps:
@@ -73,41 +73,7 @@ jobs:
         set "PATH=%CD%\..\depot_tools;%PATH%"
         set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
         roll-dep --no-log --ignore-dirty-tree third_party/stb
-    - name: Roll third_party/DirectML
-      shell: cmd
-      continue-on-error: true
-      run: |
-        set "PATH=%CD%\..\depot_tools;%PATH%"
-        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
-        roll-dep --no-log --ignore-dirty-tree third_party/DirectML
-    - name: Roll third_party/gpgmm
-      shell: cmd
-      continue-on-error: true
-      run: |
-        set "PATH=%CD%\..\depot_tools;%PATH%"
-        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
-        roll-dep --no-log --ignore-dirty-tree third_party/gpgmm
-    - name: Roll third_party/oneDNN
-      shell: cmd
-      continue-on-error: true
-      run: |
-        set "PATH=%CD%\..\depot_tools;%PATH%"
-        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
-        roll-dep --no-log --ignore-dirty-tree third_party/oneDNN
-    - name: Roll third_party/XNNPACK
-      shell: cmd
-      continue-on-error: true
-      run: |
-        set "PATH=%CD%\..\depot_tools;%PATH%"
-        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
-        roll-dep --no-log --ignore-dirty-tree third_party/XNNPACK
-    - name: Roll third_party/onnxruntime
-      shell: cmd
-      continue-on-error: true
-      run: |
-        set "PATH=%CD%\..\depot_tools;%PATH%"
-        set "DEPOT_TOOLS_WIN_TOOLCHAIN=0"
-        roll-dep --no-log --ignore-dirty-tree third_party/onnxruntime
+
     - name: Create Pull Request
       id: cpr
       uses: peter-evans/create-pull-request@v4
