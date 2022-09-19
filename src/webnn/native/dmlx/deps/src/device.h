@@ -8,6 +8,8 @@
 
 #include <gpgmm_d3d12.h>
 
+using Microsoft::WRL::ComPtr;
+
 namespace pydml
 {
     class SVDescriptorHeap {
