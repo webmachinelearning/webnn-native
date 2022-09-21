@@ -59,7 +59,7 @@ deps = {
     'condition': 'checkout_win',
   },
   'third_party/oneDNN': {
-    'url': '{github_git}/oneapi-src/oneDNN.git@4a129541fd4e67e6897072186ea2817a3154eddd',
+    'url': '{github_git}/oneapi-src/oneDNN.git@f03046f2331a586905b2d41ede028af52ffe9590',
   },
   'third_party/XNNPACK': {
     'url': '{github_git}/google/XNNPACK.git@42806cdefa7c48247b640a43024040c735d97f29'
