@@ -40,7 +40,7 @@ deps = {
     'condition': 'checkout_samples'
   },
   'third_party/stb': {
-    'url': '{github_git}/nothings/stb@af1a5bc352164740c1cc1354942b1c6b72eacb8a'
+    'url': '{github_git}/nothings/stb@8b5f1f37b5b75829fc72d38e7b5d4bcbf8a26d55'
   },
 
   # Dependencies required for code generator and infrastructure code.
