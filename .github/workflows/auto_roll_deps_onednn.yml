@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
   schedule:
-    # Every Monday/Wednesday at 5 am
-    - cron: "0 5 * * 1,3"
+    # Every Monday/Wednesday at 1 am
+    - cron: "0 1 * * 1,3"
 
 jobs:
   deps:
@@ -50,7 +50,7 @@ jobs:
       id: cpr
       uses: peter-evans/create-pull-request@v4
       with:
-        title: Roll third_party DEPS
+        title: Roll third_party DEPS / oneDNN
         token: ${{ secrets.GITHUB_TOKEN }}
         branch: autoroller/roll
         branch-suffix: short-commit-hash
