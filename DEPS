@@ -50,7 +50,7 @@ deps = {
 
   # Dependencies required for backends.
   'third_party/DirectML': {
-    'url': '{github_git}/microsoft/DirectML.git@c3f16a701beeeefc9ce5b67c71b554a6903c0f67',
+    'url': '{github_git}/microsoft/DirectML.git@9b0360b2c83db2d68077d9c1545ea516588e0ee4',
     'condition': 'checkout_win',
   },
   # GPGMM support for fast DML allocation and residency management.
