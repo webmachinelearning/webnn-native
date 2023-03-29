@@ -18,7 +18,12 @@ vars = {
 
   'dawn_gn_version': 'git_revision:fc295f3ac7ca4fe7acc6cb5fb052d22909ef3a8f',
   # GN variable required by //testing that will be output in the gclient_args.gni
-  'generate_location_tags': False
+  'generate_location_tags': False,
+
+  # ninja CIPD package version.
+  # https://chrome-infra-packages.appspot.com/p/infra/3pp/tools/ninja
+  # This has to stay in sync with the version in src/third_party/ninja/README.chromium.
+  'ninja_version': 'version:2@1.11.1.chromium.6',
 }
 
 deps = {
@@ -57,6 +62,13 @@ deps = {
   'third_party/gpgmm': {
     'url': '{github_git}/intel/gpgmm.git@f972e83bc3ce86941adae7c22f6d2646aa706ea2',
     'condition': 'checkout_win',
+  },
+  'third_party/ninja': {
+    'packages': [{
+        'package': 'infra/3pp/tools/ninja/${{platform}}',
+        'version': Var('ninja_version'),
+      }],
+    'dep_type': 'cipd',
   },
   'third_party/oneDNN': {
     'url': '{github_git}/oneapi-src/oneDNN.git@4a129541fd4e67e6897072186ea2817a3154eddd',
