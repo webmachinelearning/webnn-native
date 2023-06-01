@@ -210,6 +210,19 @@ source_set("sources") {
     }
   }
 
+  if (webnn_enable_dml) {
+    sources += [
+      "dml/BackendDML.cpp",
+      "dml/BackendDML.h",
+      "dml/ContextDML.cpp",
+      "dml/ContextDML.h",
+      "dml/GraphDML.cpp",
+      "dml/GraphDML.h",
+      "dml/CommandRecorderDML.cpp",
+      "dml/CommandRecorderDML.h",
+    ]
+  }
+
   if (webnn_enable_dmlx) {
     if (webnn_enable_gpu_buffer == false) {
       sources += [
