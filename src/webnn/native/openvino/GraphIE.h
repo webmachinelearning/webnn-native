@@ -78,9 +78,10 @@ namespace webnn::native::ie {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* InstanceNorm) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
         // Map the input name to IE internal input number.
         std::map<std::string, size_t> mInputIdMap;

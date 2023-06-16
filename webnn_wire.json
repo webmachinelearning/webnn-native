@@ -20,6 +20,19 @@
       {"name": "context id", "type": "ObjectId"},
       {"name": "request serial", "type": "uint64_t"}
     ],
+    "context compute": [
+      {"name": "context id", "type": "ObjectId"},
+      { "name": "graph id", "type": "ObjectId" },
+      { "name": "request serial", "type": "uint64_t" },
+      {"name": "inputs id", "type": "ObjectId"},
+      {"name": "outputs id", "type": "ObjectId"}
+    ],
+    "context compute sync": [
+      {"name": "context id", "type": "ObjectId"},
+      {"name": "graph id", "type": "ObjectId"},
+      {"name": "inputs id", "type": "ObjectId"},
+      {"name": "outputs id", "type": "ObjectId"}
+    ],
     "graph builder constant internal": [
       {"name": "graph builder id", "type": "ObjectId"},
       {"name": "desc", "type": "operand descriptor", "annotation": "const*"},
@@ -63,17 +76,6 @@
       {"name": "generation", "type": "uint32_t", "default": 0},
       {"name": "result", "type": "ObjectHandle", "handle_type": "context"}
     ],
-    "graph compute": [
-      {"name": "graph id", "type": "ObjectId"},
-      {"name": "inputs id", "type": "ObjectId"},
-      {"name": "outputs id", "type": "ObjectId"}
-    ],
-    "graph compute async": [
-      { "name": "graph id", "type": "ObjectId" },
-      { "name": "request serial", "type": "uint64_t" },
-      {"name": "inputs id", "type": "ObjectId"},
-      {"name": "outputs id", "type": "ObjectId"}
-    ],
     "operand array size": [
       {"name": "operand array id", "type": "ObjectId"}
     ],
@@ -115,18 +117,18 @@
       {"name": "type", "type": "error type"},
       {"name": "message", "type": "char", "annotation": "const*", "length": "strlen"}
     ],
-    "graph compute result": [
+    "context compute callback": [
+      { "name": "context", "type": "ObjectHandle", "handle_type": "context" },
+      { "name": "request serial", "type": "uint64_t" },
+      { "name": "type", "type": "error type"},
+      { "name": "message", "type": "char", "annotation": "const*", "length": "strlen" }
+    ],
+    "context compute sync result": [
       {"name": "named outputs", "type": "ObjectHandle", "handle_type": "named outputs"},
       {"name": "name", "type": "char", "annotation": "const*", "length": "strlen"},
       {"name": "buffer", "type": "uint8_t", "annotation": "const*", "length": "byte length"},
       {"name": "byte length", "type": "size_t"},
       {"name": "byte offset", "type": "size_t", "default": 0}
-    ],
-    "graph compute async callback": [
-      { "name": "graph", "type": "ObjectHandle", "handle_type": "graph" },
-      { "name": "request serial", "type": "uint64_t" },
-      { "name": "type", "type": "error type"},
-      { "name": "message", "type": "char", "annotation": "const*", "length": "strlen" }
     ]
   },
   "special items": {
@@ -140,6 +142,8 @@
     "client_side_commands": [
       "ContextPopErrorScope",
       "ContextSetUncapturedErrorCallback",
+      "ContextCompute",
+      "ContextComputeSync",
       "GraphBuilderConstant",
       "GraphBuilderConstantWithGpuBuffer",
       "GraphBuilderGru",
@@ -149,9 +153,7 @@
       "NamedOutputsSet",
       "NamedOutputsGet",
       "OperandArraySize",
-      "OperatorArraySize",
-      "GraphComputeAsync",
-      "GraphCompute"
+      "OperatorArraySize"
     ],
     "client_handwritten_commands": [
       "ContextPushErrorScope"

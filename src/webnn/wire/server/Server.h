@@ -101,7 +101,7 @@ namespace webnn::wire::server {
     struct ComputeAsyncUserdata : CallbackUserdata {
         using CallbackUserdata::CallbackUserdata;
 
-        ObjectHandle graph;
+        ObjectHandle context;
         uint64_t requestSerial;
         ObjectId namedOutputsObjectID;
     };
@@ -159,9 +159,9 @@ namespace webnn::wire::server {
         void OnContextPopErrorScope(ErrorScopeUserdata* userdata,
                                     WNNErrorType type,
                                     const char* message);
-        void OnGraphComputeAsyncCallback(ComputeAsyncUserdata* userdata,
-                                         WNNErrorType type,
-                                         const char* message);
+        void OnContextComputeCallback(ComputeAsyncUserdata* userdata,
+                                      WNNErrorType type,
+                                      const char* message);
 #include "webnn/wire/server/ServerPrototypes_autogen.inc"
 
         WireDeserializeAllocator mAllocator;

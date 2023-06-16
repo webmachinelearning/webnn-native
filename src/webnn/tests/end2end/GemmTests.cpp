@@ -59,9 +59,9 @@ class GemmTests : public WebnnTest {
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
         if (constantWeight) {
-            utils::Compute(graph, {{"a", aData}}, {{"c", result}});
+            utils::Compute(GetContext(), graph, {{"a", aData}}, {{"c", result}});
         } else {
-            utils::Compute(graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
+            utils::Compute(GetContext(), graph, {{"a", aData}, {"b", bData}}, {{"c", result}});
         }
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }

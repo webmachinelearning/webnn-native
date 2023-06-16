@@ -24,7 +24,7 @@ TEST_F(SigmoidTests, SigmoidWith1DTensor) {
     ASSERT_TRUE(graph);
     const std::vector<float> inputData = {-1, 0, 1};
     std::vector<float> result(utils::SizeOfShape({3}));
-    utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+    utils::Compute(GetContext(), graph, {{"a", inputData}}, {{"b", result}});
     const std::vector<float> expectedData = {0.26894143, 0.5, 0.7310586};
     EXPECT_TRUE(utils::CheckValue(result, expectedData));
 }
@@ -47,7 +47,7 @@ TEST_F(SigmoidTests, SigmoidWith3DTensor) {
         2.0984166,   -1.2020895,  1.5637838,  -0.7114222,
     };
     std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
-    utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+    utils::Compute(GetContext(), graph, {{"a", inputData}}, {{"b", result}});
     const std::vector<float> expectedData = {
         0.4541994,  0.61787516, 0.9381,     0.50759846, 0.5104914,  0.23981662, 0.11790343,
         0.29200357, 0.43591312, 0.7340212,  0.44518682, 0.53401446, 0.7021274,  0.4601159,

@@ -32,7 +32,7 @@ class MobileNetV2BatchNormNchwTests : public WebnnTest {
         const cnpy::NpyArray inputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + inputFile);
         const std::vector<float> inputData = inputNpy.as_vec<float>();
         std::vector<float> result(utils::SizeOfShape({1, 1000}));
-        utils::Compute(graph, {{"input", inputData}}, {{"output", result}});
+        utils::Compute(GetContext(), graph, {{"input", inputData}}, {{"output", result}});
         const cnpy::NpyArray outputNpy = cnpy::npy_load(nchwPath + "test_data_set/" + expectedFile);
         EXPECT_TRUE(utils::CheckValue(result, outputNpy.as_vec<float>()));
     }

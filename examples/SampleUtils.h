@@ -247,7 +247,8 @@ namespace utils {
     };
 
     template <typename T>
-    void Compute(const wnn::Graph& graph,
+    void Compute(const wnn::Context& context,
+                 const wnn::Graph& graph,
                  const std::vector<NamedInput<T>>& inputs,
                  const std::vector<NamedOutput<T>>& outputs) {
         if (graph.GetHandle() == nullptr) {
@@ -277,11 +278,12 @@ namespace utils {
             mlOutputs.push_back(resource);
             namedOutputs.Set(output.name.c_str(), &mlOutputs.back());
         }
-        graph.Compute(namedInputs, namedOutputs);
+        context.ComputeSync(graph, namedInputs, namedOutputs);
         DoFlush();
     }
 
-    void Compute(const wnn::Graph& graph,
+    void Compute(const wnn::Context& context,
+                 const wnn::Graph& graph,
                  const std::vector<NamedInput<float>>& inputs,
                  const std::vector<NamedOutput<float>>& outputs);
 

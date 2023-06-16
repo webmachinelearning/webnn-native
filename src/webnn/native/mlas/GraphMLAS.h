@@ -53,9 +53,10 @@ namespace webnn::native::mlas {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
         std::unordered_map<std::string, Ref<Memory>> mInputs;
         std::unordered_map<std::string, Ref<Memory>> mOutputs;

@@ -74,9 +74,10 @@ namespace webnn::native::null {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
     };
 
 }  // namespace webnn::native::null

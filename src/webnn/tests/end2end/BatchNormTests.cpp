@@ -53,7 +53,7 @@ class BatchNormTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{"output", output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(input.shape));
-        utils::Compute(graph, {{"input", input.value}}, {{"output", result}});
+        utils::Compute(GetContext(), graph, {{"input", input.value}}, {{"output", result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 

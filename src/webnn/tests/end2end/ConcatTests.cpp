@@ -47,7 +47,7 @@ class ConcatTests : public WebnnTest {
         const wnn::Graph graph = utils::Build(builder, {{outputName, output}});
         ASSERT_TRUE(graph);
         std::vector<float> result(utils::SizeOfShape(expectedShape));
-        utils::Compute(graph, namedInputs, {{outputName, result}});
+        utils::Compute(GetContext(), graph, namedInputs, {{outputName, result}});
         EXPECT_TRUE(utils::CheckValue(result, expectedValue));
     }
 };

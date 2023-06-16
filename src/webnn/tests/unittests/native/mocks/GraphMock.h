@@ -56,10 +56,6 @@ namespace webnn::native {
                     (override));
         MOCK_METHOD(MaybeError, Finish, (), (override));
         MOCK_METHOD(MaybeError, CompileImpl, (), (override));
-        MOCK_METHOD(MaybeError,
-                    ComputeImpl,
-                    (NamedInputsBase * inputs, NamedOutputsBase* outputs),
-                    (override));
     };
 
 }  // namespace webnn::native

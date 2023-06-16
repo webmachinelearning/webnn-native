@@ -32,9 +32,6 @@ namespace webnn::native {
             MaybeError CompileImpl() override {
                 UNREACHABLE();
             }
-            MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override {
-                return DAWN_INTERNAL_ERROR("fail to build graph!");
-            }
         };
     }  // namespace
 
@@ -137,25 +134,8 @@ namespace webnn::native {
         return CompileImpl();
     }
 
-    void GraphBase::Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
-        GetContext()->ConsumedError(ComputeImpl(inputs, outputs));
-    }
-
-    void GraphBase::ComputeAsync(NamedInputsBase* inputs,
-                                 NamedOutputsBase* outputs,
-                                 WNNComputeAsyncCallback callback,
-                                 void* userdata) {
-        if (inputs == nullptr || outputs == nullptr) {
-            callback(WNNErrorType_Validation, "named inputs or outputs is empty.", userdata);
-        }
-        MaybeError maybeError = ComputeImpl(inputs, outputs);
-        if (maybeError.IsError()) {
-            std::unique_ptr<ErrorData> errorData = maybeError.AcquireError();
-            callback(static_cast<WNNErrorType>(ToWNNErrorType(errorData->GetType())),
-                     const_cast<char*>(errorData->GetMessage().c_str()), userdata);
-        } else {
-            callback(WNNErrorType_NoError, "", userdata);
-        }
+    MaybeError GraphBase::ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) {
+        return DAWN_INTERNAL_ERROR("fail to build graph!");
     }
 
     GraphBase::GraphBase(ContextBase* context, ObjectBase::ErrorTag tag)

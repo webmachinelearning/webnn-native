@@ -61,9 +61,10 @@ namespace webnn::native::xnnpack {
         virtual MaybeError AddUnary(const op::Unary* unary) override;
         virtual MaybeError Finish() override;
 
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
+
       private:
         MaybeError CompileImpl() override;
-        MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) override;
 
         pthreadpool_t GetThreadpool();
 

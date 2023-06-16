@@ -17,7 +17,9 @@
 #include <napi.h>
 #include <iostream>
 
+#include "Graph.h"
 #include "ML.h"
+#include "Utils.h"
 
 Napi::FunctionReference node::Context::constructor;
 
@@ -90,10 +92,37 @@ namespace node {
 
     Napi::Object Context::Initialize(Napi::Env env, Napi::Object exports) {
         Napi::HandleScope scope(env);
-        Napi::Function func = DefineClass(env, "MLContext", {});
+        Napi::Function func = DefineClass(
+            env, "MLContext", {InstanceMethod("compute", &Context::Compute, napi_enumerable)});
         constructor = Napi::Persistent(func);
         constructor.SuppressDestruct();
         exports.Set("MLContext", func);
         return exports;
     }
+
+    Napi::Value Context::Compute(const Napi::CallbackInfo& info) {
+        // status compute(NamedInputs inputs, NamedOutputs outputs);
+        WEBNN_NODE_ASSERT(info.Length() == 3, "The number of arguments is invalid.");
+        Napi::Object object = info[0].As<Napi::Object>();
+        node::Graph* jsGraph = Napi::ObjectWrap<node::Graph>::Unwrap(object);
+
+        std::map<std::string, Input> inputs;
+        WEBNN_NODE_ASSERT(GetNamedInputs(info[1], inputs), "The inputs parameter is invalid.");
+
+        std::map<std::string, wnn::Resource> outputs;
+        WEBNN_NODE_ASSERT(GetNamedOutputs(info[2], outputs), "The outputs parameter is invalid.");
+
+        wnn::NamedInputs namedInputs = wnn::CreateNamedInputs();
+        for (auto& input : inputs) {
+            namedInputs.Set(input.first.data(), input.second.AsPtr());
+        }
+        wnn::NamedOutputs namedOutputs = wnn::CreateNamedOutputs();
+        for (auto& output : outputs) {
+            namedOutputs.Set(output.first.data(), &output.second);
+        }
+        mImpl.ComputeSync(jsGraph->GetImpl(), namedInputs, namedOutputs);
+
+        return Napi::Number::New(info.Env(), 0);
+    }
+
 }  // namespace node

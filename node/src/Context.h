@@ -31,6 +31,7 @@ namespace node {
         wnn::Context GetImpl();
 
       private:
+        Napi::Value Compute(const Napi::CallbackInfo& info);
         wnn::Context mImpl;
     };
 

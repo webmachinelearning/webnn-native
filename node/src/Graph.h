@@ -32,14 +32,13 @@ namespace node {
         explicit Graph(const Napi::CallbackInfo& info);
         ~Graph() = default;
 
+        wnn::Graph GetImpl();
+
       private:
         friend BuildGraphWorker;
         friend GraphBuilder;
 
-        Napi::Value Compute(const Napi::CallbackInfo& info);
-
         wnn::Graph mImpl;
-        std::vector<std::string> mOutputNames;
     };
 
 }  // namespace node

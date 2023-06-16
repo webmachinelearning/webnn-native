@@ -26,7 +26,7 @@ TEST_F(SoftmaxTests, Softmax) {
                                           0.58390397,  0.1735679,   0.539724,   -0.953514,
                                           -0.59202826, -0.17344485, 0.14395015, -0.37920907};
     std::vector<float> result(utils::SizeOfShape({3, 4}));
-    utils::Compute(graph, {{"a", inputData}}, {{"b", result}});
+    utils::Compute(GetContext(), graph, {{"a", inputData}}, {{"b", result}});
     const std::vector<float> expectedData = {0.32165375, 0.36157736, 0.0653337,  0.25143513,
                                              0.35271573, 0.23400122, 0.33747196, 0.07581109,
                                              0.17110129, 0.26004094, 0.35717794, 0.21167983};

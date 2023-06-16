@@ -28,19 +28,19 @@ namespace webnn::wire::client {
         return context->OnPopErrorScopeCallback(requestSerial, errorType, message);
     }
 
-    bool Client::DoGraphComputeResult(NamedOutputs* namedOutputs,
-                                      char const* name,
-                                      uint8_t const* buffer,
-                                      size_t byteLength,
-                                      size_t byteOffset) {
-        return namedOutputs->OutputResult(name, buffer, byteLength, byteOffset);
+    bool Client::DoContextComputeCallback(Context* context,
+                                          uint64_t requestSerial,
+                                          WNNErrorType type,
+                                          const char* message) {
+        return context->OnComputeAsyncCallback(requestSerial, type, message);
     }
 
-    bool Client::DoGraphComputeAsyncCallback(Graph* graph,
-                                             uint64_t requestSerial,
-                                             WNNErrorType type,
-                                             const char* message) {
-        return graph->OnComputeAsyncCallback(requestSerial, type, message);
+    bool Client::DoContextComputeSyncResult(NamedOutputs* namedOutputs,
+                                            char const* name,
+                                            uint8_t const* buffer,
+                                            size_t byteLength,
+                                            size_t byteOffset) {
+        return namedOutputs->OutputResult(name, buffer, byteLength, byteOffset);
     }
 
 }  // namespace webnn::wire::client

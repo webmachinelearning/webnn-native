@@ -80,20 +80,13 @@ namespace webnn::native {
         virtual MaybeError AddInstanceNorm(const op::InstanceNorm* instanceNorm);
         virtual MaybeError Finish();
         virtual MaybeError Compile();
-
-        // Webnn API
-        void Compute(NamedInputsBase* inputs, NamedOutputsBase* outputs);
-        void ComputeAsync(NamedInputsBase* inputs,
-                          NamedOutputsBase* outputs,
-                          WNNComputeAsyncCallback callback,
-                          void* userdata);
+        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs);
 
         GraphBase(ContextBase* context, ObjectBase::ErrorTag tag);
         static GraphBase* MakeError(ContextBase* context);
 
       private:
         virtual MaybeError CompileImpl() = 0;
-        virtual MaybeError ComputeImpl(NamedInputsBase* inputs, NamedOutputsBase* outputs) = 0;
     };
 }  // namespace webnn::native
 

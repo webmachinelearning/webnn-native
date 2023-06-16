@@ -27,7 +27,7 @@ TEST_F(PowTests, Sqrt1d) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 4, 9};
     std::vector<float> result(utils::SizeOfShape({3}));
-    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue({1, 2, 3});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -52,7 +52,7 @@ TEST_F(PowTests, Sqrt3d) {
         0.6550839,  0.7919175,  0.21990986, 0.2881369,  0.5660939,  0.54675615, 0.70638055,
         0.82219034, 0.6266006,  0.89149487, 0.36557788};
     std::vector<float> result(utils::SizeOfShape({3, 4, 5}));
-    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue(
         {0.5782331,  0.7559077,  0.1920685,  0.88435894, 0.8785719,  0.4208243,  1.0277354,
          1.5064393,  1.0163065,  1.2666107,  1.4384935,  1.3356625,  1.2201996,  0.75858086,
@@ -77,7 +77,7 @@ TEST_F(PowTests, Pow1d) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3};
     std::vector<float> result(utils::SizeOfShape({3}));
-    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue({1, 4, 9});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -93,7 +93,7 @@ TEST_F(PowTests, PowBroadcastScalar) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3, 4, 5, 6};
     std::vector<float> result(utils::SizeOfShape({2, 3}));
-    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue({1, 4, 9, 16, 25, 36});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }
@@ -109,7 +109,7 @@ TEST_F(PowTests, PowBroadcast1d) {
     ASSERT_TRUE(graph);
     const std::vector<float> dataA = {1, 2, 3, 4, 5, 6};
     std::vector<float> result(utils::SizeOfShape({2, 3}));
-    utils::Compute(graph, {{"a", dataA}}, {{"c", result}});
+    utils::Compute(GetContext(), graph, {{"a", dataA}}, {{"c", result}});
     const std::vector<float> expectedValue({1, 4, 27, 4, 25, 216});
     EXPECT_TRUE(utils::CheckValue(result, expectedValue));
 }

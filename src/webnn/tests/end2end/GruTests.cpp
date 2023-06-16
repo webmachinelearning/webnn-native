@@ -16,7 +16,8 @@
 
 class GruTests : public WebnnTest {
     void SetUp() override {
-        builder = wnn::CreateGraphBuilder(GetContext());
+        context = GetContext();
+        builder = wnn::CreateGraphBuilder(context);
     }
 
   protected:
@@ -55,12 +56,13 @@ class GruTests : public WebnnTest {
             results.push_back(std::vector<float>(utils::SizeOfShape(expected[i].shape)));
             namedOutputs.push_back({"gru" + std::to_string(i), results[i]});
         }
-        utils::Compute(graph, {{"a", input.value}}, namedOutputs);
+        utils::Compute(context, graph, {{"a", input.value}}, namedOutputs);
 
         for (size_t i = 0; i < outputSize; ++i) {
             EXPECT_TRUE(utils::CheckValue(namedOutputs[i].resource, expected[i].value));
         }
     }
+    wnn::Context context;
     wnn::GraphBuilder builder;
 };
 

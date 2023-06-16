@@ -60,14 +60,14 @@ int main(int argc, const char* argv[]) {
     std::vector<float> result(utils::SizeOfShape(resnet.mOutputShape));
     // Do the first inference for warming up if nIter > 1.
     if (resnet.mNIter > 1) {
-        utils::Compute(graph, {{"input", processedPixels}}, {{"output", result}});
+        utils::Compute(context, graph, {{"input", processedPixels}}, {{"output", result}});
     }
 
     std::vector<TIME_TYPE> executionTime;
     for (int i = 0; i < resnet.mNIter; ++i) {
         std::chrono::time_point<std::chrono::high_resolution_clock> executionStartTime =
             std::chrono::high_resolution_clock::now();
-        utils::Compute(graph, {{"input", processedPixels}}, {{"output", result}});
+        utils::Compute(context, graph, {{"input", processedPixels}}, {{"output", result}});
         executionTime.push_back(std::chrono::high_resolution_clock::now() - executionStartTime);
     }
 
