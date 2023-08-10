@@ -29,7 +29,7 @@ vars = {
 deps = {
   # Dependencies required for tests.
   'node/third_party/webnn-polyfill': {
-    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@09c8026ec5974846e82aa5074881bebc553548c0',
+    'url': '{github_git}/webmachinelearning/webnn-polyfill.git@6b3c7d67cda4a417815d7dfc51195d3f44042b94',
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-polyfill/test-data': {
@@ -37,7 +37,7 @@ deps = {
     'condition': 'checkout_polyfill',
   },
   'node/third_party/webnn-samples': {
-    'url': '{github_git}/webmachinelearning/webnn-samples.git@d3a1463c8714429dc5ff5d5ef500b029c7e2efa9',
+    'url': '{github_git}/webmachinelearning/webnn-samples.git@f203083c89b246d94d3c62a2ddcf4cb13190759a',
     'condition': 'checkout_samples'
   },
   'node/third_party/webnn-samples/test-data': {
